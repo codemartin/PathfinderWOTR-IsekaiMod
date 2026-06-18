@@ -1,4 +1,5 @@
 ﻿using Kingmaker.Blueprints.Classes;
+using Kingmaker.Blueprints.JsonSystem;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.Enums;
 using Kingmaker.UnitLogic.FactLogic;
@@ -20,19 +21,9 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower {
                 bp.SetDescription(IsekaiContext, "Through relentless training and an unwavering desire to better yourself, you gain a +2 bonus to all attributes at level 1, increasing by +1 every 4 levels (to a maximum of +8 at level 20).");
                 bp.m_Icon = Icon_LegendaryProportions;
 
-                // Initial +2 bonus to all stats
-                foreach (StatType stat in new[] {
-                    StatType.Strength, StatType.Dexterity, StatType.Constitution,
-                    StatType.Intelligence, StatType.Wisdom, StatType.Charisma
-                }) {
-                    bp.AddComponent<AddStatBonus>(c => {
-                        c.Descriptor = ModifierDescriptor.UntypedStackable;
-                        c.Stat = stat;
-                        c.Value = 2; // Starting bonus
-                    });
-                }
-
-                // Scaling bonuses based on character level
+                // Scaling bonus based on character level. ScalingStatBonus already includes the
+                // initial +2 (InitialValue), so the previous separate flat +2 AddStatBonus loop was
+                // removed — it double-counted, granting +4 at level 1 instead of the intended +2.
                 foreach (StatType stat in new[] {
                     StatType.Strength, StatType.Dexterity, StatType.Constitution,
                     StatType.Intelligence, StatType.Wisdom, StatType.Charisma
@@ -44,6 +35,10 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower {
                         c.MaxBonus = 8; // Max bonus at level 20
                     });
                 }
+
+                // Recalculate the level-scaled bonus when the character levels up; without this the
+                // bonus is computed once when the feature is gained and stays frozen at that level.
+                bp.ReapplyOnLevelUp = true;
             });
 
             // Add Training Montage to the Special Power selection
@@ -51,7 +46,11 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower {
         }
     }
 
-    // Custom component for scaling bonuses
+    // Custom component for scaling bonuses.
+    // TypeId is REQUIRED for the blueprint component to bind/serialize correctly (every other custom
+    // component in this mod has one); without it the component could be dropped, so Training Montage
+    // would grant no bonus at all.
+    [TypeId("b838cfc5d0c04a5497a60a8a40e37eaa")]
     public class ScalingStatBonus : UnitFactComponentDelegate {
         public StatType Stat;
         public int LevelDivisor = 4; // Divisor for character level scaling

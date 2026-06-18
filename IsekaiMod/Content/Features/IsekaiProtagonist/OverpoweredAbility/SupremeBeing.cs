@@ -1,5 +1,6 @@
 ﻿using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Selection;
+using Kingmaker.Blueprints.JsonSystem;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic;
@@ -83,15 +84,22 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility {
                     c.LevelDivisor = 2;
                     c.MythicMultiplier = 1;
                 });
+
+                // Recalculate the level/mythic-scaled bonus on level up; without this the bonus is
+                // computed once when the ability is gained and stays frozen at that level/rank.
+                bp.ReapplyOnLevelUp = true;
             });
 
             OverpoweredAbilitySelection.AddToSelection(SupremeBeing);
         }
     }
 
-    // Custom component for scaling bonuses
-    // Custom component for scaling bonuses
-    // Custom component for scaling bonuses
+    // Custom component for scaling bonuses.
+    // TypeId is REQUIRED for the blueprint component to bind/serialize correctly (every other custom
+    // component in this mod has one); without it the component could be dropped, so Supreme Being
+    // would grant no scaling bonus at all. This GUID must differ from the Training Montage
+    // ScalingStatBonus TypeId since they are two distinct component types.
+    [TypeId("0c7ca938bb574bad870d1e2f5cc0d1df")]
     public class ScalingStatBonus : UnitFactComponentDelegate {
         public StatType Stat;
         public int LevelDivisor = 1; // Divisor for character level scaling
