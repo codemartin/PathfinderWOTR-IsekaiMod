@@ -28,16 +28,69 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility {
                     bp.SetDescription(IsekaiMod.Main.IsekaiContext, PerfectRollDesc);
                     bp.m_Icon = Icon_TrickFate;
 
-                    // Add ModifyD20 component for a +5 bonus
-                    bp.AddComponent<ModifyD20>(c => {
-                        c.Rule = RuleType.All; // Applies to all d20 rolls
-                        c.AddBonus = true; // Enable adding a bonus
-                        c.Bonus = new Kingmaker.UnitLogic.Mechanics.ContextValue() {
-                            ValueType = Kingmaker.UnitLogic.Mechanics.ContextValueType.Simple,
-                            Value = 5 // Flat +5 bonus
-                        };
-                        c.BonusDescriptor = ModifierDescriptor.UntypedStackable; // Untyped bonus, stacks with other bonuses
+                    // PERFORMANCE FIX: the previous implementation used a single
+                    // ModifyD20 { Rule = RuleType.All, AddBonus = +5 }. ModifyD20 registers a
+                    // per-roll rule handler that runs on EVERY d20 in the game, including the
+                    // many simulated rolls the engine fires each frame for hit-chance previews
+                    // and AI decision-making. That is what caused the stutter/freeze on attack
+                    // and even when buffing, and the sluggish combat log.
+                    //
+                    // The same flat +5 is now granted as static stat modifiers instead. These
+                    // are summed once into the relevant stat (no per-roll handler), so they are
+                    // effectively free at runtime while still applying to all the d20 rolls a
+                    // character actually makes: attack rolls, all saving throws, initiative, and
+                    // every skill check.
+                    const int PerfectRollBonus = 5;
+
+                    // Attack rolls (also feeds combat maneuvers).
+                    bp.AddComponent<AddStatBonus>(c => {
+                        c.Stat = Kingmaker.EntitySystem.Stats.StatType.AdditionalAttackBonus;
+                        c.Value = PerfectRollBonus;
+                        c.Descriptor = ModifierDescriptor.UntypedStackable;
                     });
+
+                    // Saving throws.
+                    foreach (var saveStat in new[] {
+                        Kingmaker.EntitySystem.Stats.StatType.SaveFortitude,
+                        Kingmaker.EntitySystem.Stats.StatType.SaveReflex,
+                        Kingmaker.EntitySystem.Stats.StatType.SaveWill,
+                    }) {
+                        var stat = saveStat;
+                        bp.AddComponent<AddStatBonus>(c => {
+                            c.Stat = stat;
+                            c.Value = PerfectRollBonus;
+                            c.Descriptor = ModifierDescriptor.UntypedStackable;
+                        });
+                    }
+
+                    // Initiative.
+                    bp.AddComponent<AddStatBonus>(c => {
+                        c.Stat = Kingmaker.EntitySystem.Stats.StatType.Initiative;
+                        c.Value = PerfectRollBonus;
+                        c.Descriptor = ModifierDescriptor.UntypedStackable;
+                    });
+
+                    // All skill checks.
+                    foreach (var skillStat in new[] {
+                        Kingmaker.EntitySystem.Stats.StatType.SkillAthletics,
+                        Kingmaker.EntitySystem.Stats.StatType.SkillMobility,
+                        Kingmaker.EntitySystem.Stats.StatType.SkillThievery,
+                        Kingmaker.EntitySystem.Stats.StatType.SkillStealth,
+                        Kingmaker.EntitySystem.Stats.StatType.SkillKnowledgeArcana,
+                        Kingmaker.EntitySystem.Stats.StatType.SkillKnowledgeWorld,
+                        Kingmaker.EntitySystem.Stats.StatType.SkillLoreNature,
+                        Kingmaker.EntitySystem.Stats.StatType.SkillLoreReligion,
+                        Kingmaker.EntitySystem.Stats.StatType.SkillPerception,
+                        Kingmaker.EntitySystem.Stats.StatType.SkillPersuasion,
+                        Kingmaker.EntitySystem.Stats.StatType.SkillUseMagicDevice,
+                    }) {
+                        var stat = skillStat;
+                        bp.AddComponent<AddStatBonus>(c => {
+                            c.Stat = stat;
+                            c.Value = PerfectRollBonus;
+                            c.Descriptor = ModifierDescriptor.UntypedStackable;
+                        });
+                    }
                 });
 
             // Add the feature to the Overpowered Ability selection

@@ -1,4 +1,5 @@
-﻿using IsekaiMod.Utilities;
+﻿using IsekaiMod.Content.Classes.IsekaiProtagonist;
+using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Spells;
@@ -24,7 +25,6 @@ namespace IsekaiMod.Content.Heritages {
     internal class IsekaiAngelHeritage {
 
         public static void Add() {
-            var AasimarSpellLikeResource = BlueprintTools.GetBlueprint<BlueprintAbilityResource>("a4ea5b9becd98dd47b51c8742aeb70ec");
             var AngelBoltOfJusticeAbility = BlueprintTools.GetBlueprint<BlueprintAbility>("c82168800b665324f8b4807b531fea46");
             var AngelWingsFeature = BlueprintTools.GetBlueprint<BlueprintFeature>("d9bd0fde6deb2e44a93268f2dfb3e169");
             var BlackWingsAbility = BlueprintTools.GetModBlueprint<BlueprintActivatableAbility>(IsekaiContext, "BlackWingsAbility");
@@ -74,12 +74,21 @@ namespace IsekaiMod.Content.Heritages {
                 bp.AddComponent<ContextSetAbilityParams>(c => {
                     c.DC = Values.CreateContextCasterCustomPropertyValue(AngelicBoltUnitProperty);
                 });
+                // USES-PER-DAY FIX: previously borrowed the base-game AasimarSpellLikeResource
+                // ("a4ea5b9b..."), which is granted by — and counts the levels of — the Aasimar
+                // spell-like racial features. An Isekai Angel never has those, so the pool didn't
+                // register/scale with their level and the ability was effectively unusable. Use a
+                // dedicated resource that counts IsekaiProtagonist levels (mirrors MindControl.cs).
                 bp.AddComponent<AbilityResourceLogic>(c => {
-                    c.m_RequiredResource = AasimarSpellLikeResource.ToReference<BlueprintAbilityResourceReference>();
+                    c.m_RequiredResource = Helpers.CreateBlueprint<BlueprintAbilityResource>(IsekaiContext, "AngelicBoltResource", resource => {
+                        resource.m_MaxAmount = new BlueprintAbilityResource.Amount() {
+                            BaseValue = 1,
+                            IncreasedByLevel = true,
+                            LevelIncrease = 1, // 1 additional use per character level
+                            m_Class = new BlueprintCharacterClassReference[] { IsekaiProtagonistClass.GetReference() }
+                        };
+                    }).ToReference<BlueprintAbilityResourceReference>();
                     c.m_IsSpendResource = true;
-                    c.Amount = 1;
-                    c.ResourceCostIncreasingFacts = new List<BlueprintUnitFactReference>();
-                    c.ResourceCostDecreasingFacts = new List<BlueprintUnitFactReference>();
                 });
                 bp.Type = AbilityType.SpellLike;
                 bp.Range = AbilityRange.Long;
@@ -104,7 +113,7 @@ namespace IsekaiMod.Content.Heritages {
                     + "and a +2 racial bonus on {g|Encyclopedia:Persuasion}Persuasion{/g} and {g|Encyclopedia:Lore_Religion}Lore (religion){/g} checks. "
                     + "They have DR 10/Evil, and have spell resistance equal to 10 + their character level. "
                     + "They have immunity to acid, cold, and petrification as well as fire and electricity resistance 20. "
-                    + "They can also use the Angelic Bolt spell once per day.");
+                    + "They can also use the Angelic Bolt ability a number of times per day equal to 1 + their character level.");
                 bp.m_Icon = Icon_Angel;
 
                 // Attributes

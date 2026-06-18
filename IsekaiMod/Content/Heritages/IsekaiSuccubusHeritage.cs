@@ -1,4 +1,5 @@
-﻿using IsekaiMod.Utilities;
+﻿using IsekaiMod.Content.Classes.IsekaiProtagonist;
+using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Spells;
@@ -29,7 +30,6 @@ namespace IsekaiMod.Content.Heritages {
     internal class IsekaiSuccubusHeritage {
         private static readonly BlueprintFeature DestinyBeyondBirthMythicFeat = BlueprintTools.GetBlueprint<BlueprintFeature>("325f078c584318849bfe3da9ea245b9d");
         private static readonly BlueprintBuff DominatePersonBuff = BlueprintTools.GetBlueprint<BlueprintBuff>("c0f4e1c24c9cd334ca988ed1bd9d201f");
-        private static readonly BlueprintAbilityResource TieflingSpellLikeResource = BlueprintTools.GetBlueprint<BlueprintAbilityResource>("803d7e39e05fa2a47a7e2424d0e4b623");
 
         public static void Add() {
             // Succubus Abilities
@@ -80,13 +80,34 @@ namespace IsekaiMod.Content.Heritages {
                 bp.AddComponent<ContextSetAbilityParams>(c => {
                     c.DC = Values.CreateContextCasterCustomPropertyValue(SuccubusCharmUnitProperty);
                 });
+                // The dominate buff's duration uses CreateContextRankValue(AbilityRankType.Default)
+                // (see DurationValue above) but the ability had NO ContextRankConfig of that type,
+                // so the per-level "1 minute per level" duration resolved to a flat unconfigured
+                // rank instead of scaling with character level. This config makes it count level.
+                bp.AddComponent<ContextRankConfig>(c => {
+                    c.m_Type = AbilityRankType.Default;
+                    c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
+                    c.m_Progression = ContextRankProgression.AsIs;
+                });
+                // USES-PER-DAY FIX: this ability previously borrowed the base-game
+                // TieflingSpellLikeResource ("803d7e39..."). That pool is granted by the
+                // Tiefling spell-like racial features and counts Tiefling-class levels, so an
+                // Isekai Succubus (who never has those features) effectively got a pool that
+                // doesn't scale with — or even register — their levels, leaving the ability
+                // stuck/unusable. Mirroring MindControl.cs, we create a dedicated resource that
+                // counts IsekaiProtagonist levels so the number of uses scales correctly.
                 bp.AddComponent<AbilityResourceLogic>(c => {
-                    c.m_RequiredResource = TieflingSpellLikeResource.ToReference<BlueprintAbilityResourceReference>();
+                    c.m_RequiredResource = Helpers.CreateBlueprint<BlueprintAbilityResource>(IsekaiContext, "SuccubusCharmResource", resource => {
+                        resource.m_MaxAmount = new BlueprintAbilityResource.Amount() {
+                            BaseValue = 1,
+                            IncreasedByLevel = true,
+                            LevelIncrease = 1, // 1 additional use per character level
+                            // REQUIRED: without a class list the counted level is 0, so the
+                            // resource stays at BaseValue forever and never scales with level.
+                            m_Class = new BlueprintCharacterClassReference[] { IsekaiProtagonistClass.GetReference() }
+                        };
+                    }).ToReference<BlueprintAbilityResourceReference>();
                     c.m_IsSpendResource = true;
-                    c.CostIsCustom = false;
-                    c.Amount = 1;
-                    c.ResourceCostIncreasingFacts = new List<BlueprintUnitFactReference>();
-                    c.ResourceCostDecreasingFacts = new List<BlueprintUnitFactReference>();
                 });
                 bp.Type = AbilityType.SpellLike;
                 bp.Range = AbilityRange.Medium;
@@ -114,7 +135,7 @@ namespace IsekaiMod.Content.Heritages {
                     + "{g|Encyclopedia:Perception}Perception checks{/g}. "
                     + "They have DR 10/Cold Iron or Good, and have spell resistance equal to 10 + their character level. "
                     + "They have immunity to fire, electricity, and poisons as well as acid and cold resistance 20. "
-                    + "They can also use the Charm spell once per day.");
+                    + "They can also use the Charm ability a number of times per day equal to 1 + their character level.");
                 bp.m_Icon = Icon_Succubus;
 
                 // Attributes

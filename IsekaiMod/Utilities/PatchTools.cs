@@ -40,6 +40,42 @@ namespace IsekaiMod.Utilities {
             BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("f1add10c87fa4563ad5f71779eecde19") // GriffonheartShifterFeatSelection
         };
 
+        // Session-level patch cache: one shared "already visited / patched" set per
+        // (myClass, referenceClass) pair. Previously every top-level patch entry
+        // (e.g. each Shifter claw feature, every inherited progression feature) started
+        // a brand new loopPrevention set, so shared sub-trees were re-walked from
+        // scratch over and over. That redundant traversal was the main driver of the
+        // long patch stall and the ~10k progression-tree log lines at load. Sharing the
+        // set across all entry calls for the same class pair means each feature is
+        // walked at most once per pair: far less traversal, far fewer depth bailouts,
+        // and top-level features get claimed at the shallowest depth first (which also
+        // reduces silently half-patched features).
+        private static readonly Dictionary<(string, string), HashSet<BlueprintFact>> PatchedFeaturesByClassPair = new();
+
+        private static HashSet<BlueprintFact> GetSharedLoopSet(BlueprintCharacterClassReference myClass, BlueprintCharacterClassReference referenceClass) {
+            // Fall back to the old per-call behaviour if either class is null; the
+            // existing null checks downstream will log/handle it.
+            if (myClass == null || referenceClass == null) {
+                return new HashSet<BlueprintFact>();
+            }
+            var key = (myClass.Guid.ToString(), referenceClass.Guid.ToString());
+            if (!PatchedFeaturesByClassPair.TryGetValue(key, out HashSet<BlueprintFact> set)) {
+                set = new HashSet<BlueprintFact>();
+                PatchedFeaturesByClassPair[key] = set;
+            }
+            return set;
+        }
+
+        /// <summary>
+        /// Releases the cached patch-progress sets. Optional: call once after all class
+        /// patching is finished to free the references. Safe to leave uncalled -- the
+        /// blueprints it references are permanently loaded anyway -- but calling it lets
+        /// a later, intentional re-patch of the same class pair run from a clean slate.
+        /// </summary>
+        public static void ClearPatchCache() {
+            PatchedFeaturesByClassPair.Clear();
+        }
+
         public static void RegisterSpellbook(BlueprintSpellbook spellbook) {
             if (spellbook == null) return;
             BlueprintSpellbookReference spellbookRef = spellbook.ToReference<BlueprintSpellbookReference>();
@@ -202,7 +238,11 @@ namespace IsekaiMod.Utilities {
         }
 
         public static void PatchClassIntoFeatureOfReferenceClass(BlueprintFact feature, BlueprintCharacterClassReference myClass, BlueprintCharacterClassReference referenceClass, int level = 0, HashSet<BlueprintFact> loopPrevention = null) {
-            loopPrevention ??= new();
+            // Only the top-level entry calls leave loopPrevention null; recursive calls
+            // pass it down. Seeding it from the shared per-pair cache makes every entry
+            // call for the same class pair reuse one visited set, so shared sub-trees
+            // aren't re-walked. Cycle prevention is unchanged (still a visited-set check).
+            loopPrevention ??= GetSharedLoopSet(myClass, referenceClass);
             int mylevel = level + 1;
             if (mylevel > 10) {
                 // NOTE: every Logger.LogError call captures a full stack trace via the Owlcat
