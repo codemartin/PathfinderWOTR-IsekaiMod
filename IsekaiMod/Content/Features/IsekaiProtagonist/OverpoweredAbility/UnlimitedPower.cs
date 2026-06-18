@@ -1,4 +1,5 @@
 ﻿using IsekaiMod.Utilities;
+using IsekaiMod.Content.Classes.IsekaiProtagonist;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Designers.EventConditionActionSystem.Evaluators;
@@ -39,6 +40,9 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility {
                     LevelStep = 4, // Gain 1 use every 4 levels
                     PerStepIncrease = 1, // Each step grants 1 use
                     MinClassLevelIncrease = 0, // Minimum is 0 if level is below StartingLevel
+                    // REQUIRED: the StartPlusDivStep scaling counts levels from this class list.
+                    // Without it the level is 0, so the resource stays at BaseValue (1 use) forever.
+                    m_Class = new BlueprintCharacterClassReference[] { IsekaiProtagonistClass.GetReference() }
                 };
                 bp.m_UseMax = true; // Enforce a maximum cap
                 bp.m_Max = 5; // Limit to 5 max uses

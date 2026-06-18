@@ -1,4 +1,5 @@
 ﻿using IsekaiMod.Utilities;
+using IsekaiMod.Content.Classes.IsekaiProtagonist;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Spells;
@@ -108,7 +109,10 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility {
                         resource.m_MaxAmount = new BlueprintAbilityResource.Amount() {
                             BaseValue = 1,
                             IncreasedByLevel = true,
-                            LevelIncrease = 1 // Gains 1 additional use per level
+                            LevelIncrease = 1, // Gains 1 additional use per level
+                            // REQUIRED: without a class list the level counted is 0, so the resource
+                            // stays at BaseValue (1 use) forever and never scales with level.
+                            m_Class = new BlueprintCharacterClassReference[] { IsekaiProtagonistClass.GetReference() }
                         };
                     }).ToReference<BlueprintAbilityResourceReference>();
                     c.m_IsSpendResource = true;
