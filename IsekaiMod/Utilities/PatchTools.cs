@@ -205,14 +205,15 @@ namespace IsekaiMod.Utilities {
             loopPrevention ??= new();
             int mylevel = level + 1;
             if (mylevel > 10) {
-                IsekaiContext.Logger.LogError("Attempt to patch Progression Tree stopped at Level 10 to prevent endless loop, if you see this message please report so we can figure out if someone created a loop here or if this limit needs to be higher");
+                // NOTE: every Logger.LogError call captures a full stack trace via the Owlcat
+                // logger, which is very expensive. This guard trips many times during load, so the
+                // call-trace is emitted as a SINGLE joined log line instead of one LogError per
+                // GUID (previously this loop produced ~10k stack-trace-capturing lines at load).
                 if (feature.name != null) {
-                    IsekaiContext.Logger.LogError($"reference class={referenceClass.Guid} Stop Feature={feature.AssetGuid} name={feature.name}");
-                    foreach (BlueprintFeatureBase calltrace in loopPrevention) {
-                        IsekaiContext.Logger.LogError($"guid={calltrace.AssetGuid}");
-                    }
+                    string callTrace = string.Join(", ", loopPrevention.Select(c => c.AssetGuid.ToString()));
+                    IsekaiContext.Logger.LogError($"Attempt to patch Progression Tree stopped at Level 10 to prevent endless loop. reference class={referenceClass.Guid} Stop Feature={feature.AssetGuid} name={feature.name} calltrace=[{callTrace}]");
                 } else {
-                    IsekaiContext.Logger.LogError($"reference class={referenceClass.Guid} Stop Feature={feature.AssetGuid}");
+                    IsekaiContext.Logger.LogError($"Attempt to patch Progression Tree stopped at Level 10 to prevent endless loop. reference class={referenceClass.Guid} Stop Feature={feature.AssetGuid}");
                 }
                 return;
             }

@@ -20,11 +20,18 @@ using UnityEngine;
 namespace IsekaiMod.Components {
     [TypeId("bd8d467121614c95a058bf66b6dcd1fa")]
     internal class ContextCalculateAbilityParamsBasedOnClasses : ContextAbilityParamsCalculator {
+        // Resolved blueprints are fixed after load, so cache them once instead of
+        // allocating a new array + resolving every reference on every ability-params
+        // calculation (this runs for every spell/ability cast in combat).
+        private BlueprintCharacterClass[] m_CachedCharacterClasses;
+
         public BlueprintCharacterClass[] CharacterClasses {
             get {
+                if (m_CachedCharacterClasses != null) return m_CachedCharacterClasses;
                 BlueprintCharacterClassReference[] classReferences = m_CharacterClasses;
                 if (classReferences == null) return null;
-                return m_CharacterClasses.Select(bp => bp.Get()).ToArray();
+                m_CachedCharacterClasses = classReferences.Select(bp => bp.Get()).ToArray();
+                return m_CachedCharacterClasses;
             }
         }
 
