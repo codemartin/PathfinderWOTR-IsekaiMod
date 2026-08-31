@@ -52,7 +52,7 @@
   <Target Name="CreateLib" BeforeTargets="BeforeBuild" AfterTargets="RemoveLib" Condition="!Exists('$(SolutionDir)lib')">
     <MakeDir Directories="$(SolutionDir)lib" />
   </Target>
-  <Target Name="Publicise" AfterTargets="CreateLib">
+  <Target Name="Publicise" AfterTargets="CreateLib" Condition="!Exists('$(SolutionDir)lib/Assembly-CSharp.dll')">
     <ItemGroup>
       <PubliciseAssemblyCSharp Include="$(WrathPath)\Wrath_Data\Managed\Assembly-CSharp.dll" />
     </ItemGroup>

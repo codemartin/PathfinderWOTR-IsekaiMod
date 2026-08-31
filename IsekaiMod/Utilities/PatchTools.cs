@@ -330,6 +330,10 @@ namespace IsekaiMod.Utilities {
                 || selectionGuid.Equals("99999999000900000009000000000001") // InquisitorDomains (In our mod)
                 || selectionGuid.Equals("58d6f8e9eea63f6418b107ce64f315ea") // InfusionSelection
                 || selectionGuid.Equals("5c883ae0cd6d7d5448b7a420f51f8459") // WildTalentSelection
+                || selectionGuid.Equals("6b894365217f47049765067a303ed5a6") // ArcanistFaithMagic
+                || selectionGuid.Equals("94e2cd84bf3a8e04f8609fe502892f4f") // BardTalentSelection
+                || selectionGuid.Equals("ad6b9cecb5286d841a66e23cea3ef7bf") // HexcrafterMagusHexArcanaSelection
+                || selectionGuid.Equals("b78d146cea711a84598f0acef69462ea") // FinesseTrainingSelection
                 )) {
                 IsekaiContext.Logger.LogError($"reference class={referenceClass.Guid} Stop Feature={selectionGuid} name={selection.name} reason=selection contains too many features and thus likely is a basic feat variation");
                 return;
@@ -395,14 +399,34 @@ namespace IsekaiMod.Utilities {
             try {
                 // check if component is add facts because features could also be added as facts rather than on level...
                 if (component is AddFacts addFact) {
-                    foreach (BlueprintUnitFact factRef in addFact.Facts) {
-                        if (factRef != null) {
-                            if (factRef is BlueprintFact nestedFact) {
-                                PatchClassIntoFeatureOfReferenceClass(nestedFact, myClass, referenceClass, mylevel, loopPrevention);
-                            }
+                    BlueprintUnitFactReference[] factReferences = addFact.m_Facts ?? Array.Empty<BlueprintUnitFactReference>();
+                    bool hasMissingFact = false;
+                    foreach (BlueprintUnitFactReference factReference in factReferences) {
+                        BlueprintUnitFact fact = factReference?.Get();
+                        if (fact is BlueprintFact nestedFact) {
+                            PatchClassIntoFeatureOfReferenceClass(nestedFact, myClass, referenceClass, mylevel, loopPrevention);
                         } else {
-                            IsekaiContext.Logger.LogError($"{featureGuid} component cast AddFacts factRef was null");
+                            hasMissingFact = true;
                         }
+                    }
+
+                    // Expanded Content 0.13.68 constructs TouchOfProfaneCorruptionFeature
+                    // before CrueltyFact is available and leaves a null AddFacts entry behind.
+                    // Restore the known reference so both Expanded Content and this legacy work.
+                    if (hasMissingFact && featureGuid.ToString().Equals("3910a52a11134219ad17ed7a9f0e353e")) {
+                        BlueprintUnitFact crueltyFact = BlueprintTools.GetBlueprint<BlueprintUnitFact>("e5ab4db013524e95963b09b504d98fe6");
+                        if (crueltyFact != null) {
+                            addFact.m_Facts = factReferences
+                                .Where(factReference => factReference?.Get() != null)
+                                .Append(crueltyFact.ToReference<BlueprintUnitFactReference>())
+                                .ToArray();
+                            PatchClassIntoFeatureOfReferenceClass(crueltyFact, myClass, referenceClass, mylevel, loopPrevention);
+                            IsekaiContext.Logger.Log($"Repaired missing CrueltyFact reference on feature={featureGuid}");
+                        } else {
+                            IsekaiContext.Logger.LogError($"Could not repair missing CrueltyFact reference on feature={featureGuid}");
+                        }
+                    } else if (hasMissingFact) {
+                        IsekaiContext.Logger.LogError($"{featureGuid} component AddFacts contains an unresolved reference");
                     }
                 }
             } catch (NullReferenceException) {
