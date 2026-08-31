@@ -410,21 +410,13 @@ namespace IsekaiMod.Utilities {
                         }
                     }
 
-                    // Expanded Content 0.13.68 constructs TouchOfProfaneCorruptionFeature
-                    // before CrueltyFact is available and leaves a null AddFacts entry behind.
-                    // Restore the known reference so both Expanded Content and this legacy work.
+                    // Expanded Content 0.13.68 references CrueltyFact even though that
+                    // version never creates the blueprint. Remove its unusable null entry.
                     if (hasMissingFact && featureGuid.ToString().Equals("3910a52a11134219ad17ed7a9f0e353e")) {
-                        BlueprintUnitFact crueltyFact = BlueprintTools.GetBlueprint<BlueprintUnitFact>("e5ab4db013524e95963b09b504d98fe6");
-                        if (crueltyFact != null) {
-                            addFact.m_Facts = factReferences
-                                .Where(factReference => factReference?.Get() != null)
-                                .Append(crueltyFact.ToReference<BlueprintUnitFactReference>())
-                                .ToArray();
-                            PatchClassIntoFeatureOfReferenceClass(crueltyFact, myClass, referenceClass, mylevel, loopPrevention);
-                            IsekaiContext.Logger.Log($"Repaired missing CrueltyFact reference on feature={featureGuid}");
-                        } else {
-                            IsekaiContext.Logger.LogError($"Could not repair missing CrueltyFact reference on feature={featureGuid}");
-                        }
+                        addFact.m_Facts = factReferences
+                            .Where(factReference => factReference?.Get() != null)
+                            .ToArray();
+                        IsekaiContext.Logger.Log($"Removed unresolved CrueltyFact reference from feature={featureGuid}");
                     } else if (hasMissingFact) {
                         IsekaiContext.Logger.LogError($"{featureGuid} component AddFacts contains an unresolved reference");
                     }
