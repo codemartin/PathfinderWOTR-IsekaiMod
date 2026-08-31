@@ -201,34 +201,25 @@ namespace IsekaiMod.Utilities {
             }
         }
 
+        private const int MaxPatchTraversalDepth = 256;
+
         public static void PatchClassIntoFeatureOfReferenceClass(BlueprintFact feature, BlueprintCharacterClassReference myClass, BlueprintCharacterClassReference referenceClass, int level = 0, HashSet<BlueprintFact> loopPrevention = null) {
             loopPrevention ??= new();
-            int mylevel = level + 1;
-            if (mylevel > 10) {
-                IsekaiContext.Logger.LogError("Attempt to patch Progression Tree stopped at Level 10 to prevent endless loop, if you see this message please report so we can figure out if someone created a loop here or if this limit needs to be higher");
-                if (feature.name != null) {
-                    IsekaiContext.Logger.LogError($"reference class={referenceClass.Guid} Stop Feature={feature.AssetGuid} name={feature.name}");
-                    foreach (BlueprintFeatureBase calltrace in loopPrevention) {
-                        IsekaiContext.Logger.LogError($"guid={calltrace.AssetGuid}");
-                    }
-                } else {
-                    IsekaiContext.Logger.LogError($"reference class={referenceClass.Guid} Stop Feature={feature.AssetGuid}");
-                }
-                return;
-            }
             if (feature == null || myClass == null || referenceClass == null) {
                 IsekaiContext.Logger.LogError("Call to add feature but one of the three parameters is null");
+                return;
+            }
+            int mylevel = level + 1;
+            if (mylevel > MaxPatchTraversalDepth) {
+                IsekaiContext.Logger.LogError($"reference class={referenceClass.Guid} stopped patching feature={feature.AssetGuid} name={feature.name} after exceeding traversal depth {MaxPatchTraversalDepth}");
                 return;
             }
             if (FeaturesIgnoredWhenPatching.Contains(feature)) {
                 //these lists are to be ignored because they are known to be massive but are mostly subsets of the basic feat list or other things that should never contain something class specific that needs patching
                 return;
             }
-            if (loopPrevention.Contains(feature)) {
-                IsekaiContext.Logger.Log($"reference class={referenceClass.Guid} feature re-encountered at level={mylevel} guid={feature.AssetGuid} name={feature.name}");
+            if (!loopPrevention.Add(feature)) {
                 return;
-            } else {
-                loopPrevention.Add(feature);
             }
             try {
                 if (feature is BlueprintProgression progression) {
@@ -250,11 +241,9 @@ namespace IsekaiMod.Utilities {
                         if (component is ContextRankConfig rankConfig && (
                             rankConfig.m_BaseValueType == ContextRankBaseValueType.ClassLevel ||
                             rankConfig.m_BaseValueType == ContextRankBaseValueType.SummClassLevelWithArchetype)) {
-                            if (rankConfig.m_Class.Contains(myClass)) {
-                                //already patched return
-                                return;
-                            }
-                            if (rankConfig.m_Class.Contains(referenceClass)) {
+                            if (rankConfig.m_Class != null &&
+                                !rankConfig.m_Class.Contains(myClass) &&
+                                rankConfig.m_Class.Contains(referenceClass)) {
                                 rankConfig.m_Class = rankConfig.m_Class.AddToArray(myClass);
                                 //test at level 20 if needed
                                 //rankConfig.m_BaseValueType = ContextRankBaseValueType.SummClassLevelWithArchetype;
@@ -301,14 +290,20 @@ namespace IsekaiMod.Utilities {
         private static void PatchClassProgression(BlueprintProgression progression, BlueprintCharacterClassReference myClass, BlueprintCharacterClassReference referenceClass, int mylevel, HashSet<BlueprintFact> loopPrevention) {
             progression.GiveFeaturesForPreviousLevels = true;
             if (progression.m_Classes != null && progression.m_Classes.Length > 0) {
+                bool alreadyPatched = false;
                 foreach (var refClass in progression.m_Classes) {
-                    if (refClass != null && myClass.Equals(refClass.m_Class)) return;
+                    if (refClass != null && myClass.Equals(refClass.m_Class)) {
+                        alreadyPatched = true;
+                        break;
+                    }
                 }
-                progression.AddClass(myClass);
+                if (!alreadyPatched) {
+                    progression.AddClass(myClass);
+                }
             }
             HashSet<BlueprintFeatureBase> features = new();
-            foreach (LevelEntry levelEntry in progression.LevelEntries) {
-                foreach (BlueprintFeatureBase levelitem in levelEntry.Features) {
+            foreach (LevelEntry levelEntry in progression.LevelEntries ?? Array.Empty<LevelEntry>()) {
+                foreach (BlueprintFeatureBase levelitem in levelEntry.Features ?? Array.Empty<BlueprintFeatureBase>()) {
                     if (levelitem != null && !features.Contains(levelitem)) {
                         features.Add(levelitem);
                     }
@@ -322,6 +317,9 @@ namespace IsekaiMod.Utilities {
         private static void PatchClassSelection(BlueprintFeatureSelection selection, BlueprintCharacterClassReference myClass, BlueprintCharacterClassReference referenceClass, int mylevel, HashSet<BlueprintFact> loopPrevention) {
             //don't trust selections past a certain size to actually contain class features rather than just a selection of basic feats unless they are selections that are known to be that size for a valid reason(revelations, hexes, rage powers)
             string selectionGuid = selection.AssetGuid.ToString();
+            if (selection.m_AllFeatures == null) {
+                return;
+            }
             if (selection.m_AllFeatures.Length > 30 && !(
                 selectionGuid.Equals("60008a10ad7ad6543b1f63016741a5d2") // OracleRevelationSelection
                 || selectionGuid.Equals("c074a5d615200494b8f2a9c845799d93") // RogueTalentSelection
@@ -343,8 +341,8 @@ namespace IsekaiMod.Utilities {
 
         private static void HandleComponent(BlueprintGuid featureGuid, BlueprintCharacterClassReference myClass, BlueprintCharacterClassReference referenceClass, int level, HashSet<SpellReference> mySpellSet, BlueprintComponent component, HashSet<BlueprintFact> loopPrevention) {
             var mylevel = level + 1;
-            if (mylevel > 20) {
-                IsekaiContext.Logger.LogError("Attempt to patch Progression Tree stopped at Level 20 to prevent endless loop, if you see this message please report so we can figure out if someone created a loop here or if this limit needs to be higher");
+            if (mylevel > MaxPatchTraversalDepth) {
+                IsekaiContext.Logger.LogError($"stopped patching components for feature={featureGuid} after exceeding traversal depth {MaxPatchTraversalDepth}");
                 return;
             }
             if (component == null) { return; }
@@ -386,18 +384,8 @@ namespace IsekaiMod.Utilities {
             }
             if (component is MonkNoArmorFeatureUnlock addUnarmedFact) {
                 var fact = addUnarmedFact.m_NewFact.Get();
-                if (fact != null) {
-                    if (fact is BlueprintFeature feature2) {
-                        PatchClassIntoFeatureOfReferenceClass(feature2, myClass, referenceClass, mylevel, loopPrevention);
-                    }
-                    if (fact is BlueprintProgression progression2) {
-                        PatchClassIntoFeatureOfReferenceClass(progression2, myClass, referenceClass, mylevel, loopPrevention);
-                    }
-                    if (fact is BlueprintUnitFact unitFact2) {
-                        foreach (var component2 in unitFact2.Components) {
-                            HandleComponent(unitFact2.AssetGuid, myClass, referenceClass, mylevel, mySpellSet, component2, loopPrevention);
-                        }
-                    }
+                if (fact is BlueprintFact nestedFact) {
+                    PatchClassIntoFeatureOfReferenceClass(nestedFact, myClass, referenceClass, mylevel, loopPrevention);
                 }
             }
             if (component is AddFeatureIfHasFact addIfFact) {
@@ -409,32 +397,8 @@ namespace IsekaiMod.Utilities {
                 if (component is AddFacts addFact) {
                     foreach (BlueprintUnitFact factRef in addFact.Facts) {
                         if (factRef != null) {
-                            if (factRef is BlueprintFeature feature2) {
-                                PatchClassIntoFeatureOfReferenceClass(feature2, myClass, referenceClass, mylevel, loopPrevention);
-                            }
-                            if (factRef is BlueprintProgression progression2) {
-                                PatchClassIntoFeatureOfReferenceClass(progression2, myClass, referenceClass, mylevel, loopPrevention);
-                            }
-                            if (factRef is BlueprintUnitFact unitFact2 && unitFact2.Components != null && unitFact2.Components.Length > 0) {
-                                foreach (var component2 in unitFact2.Components) {
-                                    HandleComponent(unitFact2.AssetGuid, myClass, referenceClass, mylevel, mySpellSet, component2, loopPrevention);
-                                }
-                            }
-                            if (factRef is BlueprintAbility ability && ability.Components != null && ability.Components.Length > 0) {
-                                foreach (var component2 in ability.Components) {
-                                    if (component2 is ContextRankConfig rankConfig && (
-                                        rankConfig.m_BaseValueType == ContextRankBaseValueType.ClassLevel ||
-                                        rankConfig.m_BaseValueType == ContextRankBaseValueType.SummClassLevelWithArchetype)) {
-                                        if (rankConfig.m_Class.Contains(myClass)) {
-                                            //already patched return
-                                            return;
-                                        }
-                                        if (rankConfig.m_Class.Contains(referenceClass)) {
-                                            //rankConfig.m_BaseValueType = ContextRankBaseValueType.SummClassLevelWithArchetype;
-                                            rankConfig.m_Class = rankConfig.m_Class.AddToArray(myClass);
-                                        }
-                                    }
-                                }
+                            if (factRef is BlueprintFact nestedFact) {
+                                PatchClassIntoFeatureOfReferenceClass(nestedFact, myClass, referenceClass, mylevel, loopPrevention);
                             }
                         } else {
                             IsekaiContext.Logger.LogError($"{featureGuid} component cast AddFacts factRef was null");
@@ -458,7 +422,7 @@ namespace IsekaiMod.Utilities {
                             alreadyPatched = true;
                         }
                         if (classlocked && !alreadyPatched) {
-                            res.m_MaxAmount.m_ClassDiv.AddItem(myClass);
+                            res.m_MaxAmount.m_ClassDiv = res.m_MaxAmount.m_ClassDiv.AddToArray(myClass);
                             //Main.Log("class resource patched= " + resRef.Guid);
                         }
                     }
@@ -470,7 +434,7 @@ namespace IsekaiMod.Utilities {
                             alreadyPatched = true;
                         }
                         if (classlocked && !alreadyPatched) {
-                            res.m_MaxAmount.m_Class.AddItem(myClass);
+                            res.m_MaxAmount.m_Class = res.m_MaxAmount.m_Class.AddToArray(myClass);
                             //Main.Log("class resource patched= " + resRef.Guid);
                         }
                     }
@@ -486,18 +450,9 @@ namespace IsekaiMod.Utilities {
                 value = inValue;
             }
             public override bool Equals(object p) {
-                if (p is null) return false;
-
-                // Optimization for a common success case.
                 if (ReferenceEquals(this, p)) return true;
-
-                // If run-time types are not exactly the same, return false.
-                if (GetType() != GetType()) return false;
-
-                // Return true if the fields match.
-                // Note that the base class is not invoked because it is
-                // System.Object, which defines Equals as reference equality.
-                return value.Guid.ToString() == ((SpellReference)p).value.Guid.ToString();
+                if (p is not SpellReference other) return false;
+                return level == other.level && Equals(value?.Guid, other.value?.Guid);
             }
             public static bool operator ==(SpellReference left, SpellReference right) {
                 if (left is null && right is null) return true;
@@ -507,7 +462,11 @@ namespace IsekaiMod.Utilities {
                 return false;
             }
             public static bool operator !=(SpellReference left, SpellReference right) { return !(left == right); }
-            public override int GetHashCode() => value.GetHashCode();
+            public override int GetHashCode() {
+                unchecked {
+                    return (level * 397) ^ (value?.Guid.GetHashCode() ?? 0);
+                }
+            }
         }
 
         internal static void PatchResource(BlueprintAbilityResource resource, BlueprintCharacterClassReference classRef) {
