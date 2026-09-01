@@ -18,6 +18,9 @@ using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Mechanics.Actions;
 using Kingmaker.UnitLogic.Mechanics.Components;
 using Kingmaker.Visual.Animation.Kingmaker.Actions;
+using Kingmaker.Designers.EventConditionActionSystem.Actions;
+using Kingmaker.UnitLogic.Mechanics.Conditions;
+using Kingmaker.UnitLogic.Mechanics.Properties;
 using TabletopTweaks.Core.Utilities;
 using UnityEngine;
 using static IsekaiMod.Main;
@@ -38,6 +41,18 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility {
         + "\nFailure: Creatures that succeed on the saving throw are stunned for 1 round, giving you the opportunity to turn the tide in your favor."
     );
 
+            var InstakillUnitProperty = Helpers.CreateBlueprint<BlueprintUnitProperty>(IsekaiContext, "InstakillUnitProperty", bp => {
+                bp.name = "InstakillUnitProperty";
+                bp.AddComponent<SimplePropertyGetter>(c => {
+                    c.Property = UnitProperty.Level;
+                });
+                bp.AddComponent<SimplePropertyGetter>(c => {
+                    c.Property = UnitProperty.StatBonusCharisma;
+                });
+                bp.BaseValue = 25;
+                bp.OperationOnComponents = BlueprintUnitProperty.MathOperation.Sum;
+            });
+
             var InstakillAbility = Helpers.CreateBlueprint<BlueprintAbility>(IsekaiContext, "InstakillAbility", bp => {
                 bp.SetName(IsekaiContext, "Overpowered Ability — Instakill");
                 bp.SetDescription(InstaKillDesc);
@@ -52,22 +67,27 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility {
                                 c.m_Buff = Stunned.ToReference<BlueprintBuffReference>();
                                 c.DurationValue = Values.Duration.OneRound;
                             });
-                            c.Failed = ActionFlow.DoSingle<ContextActionDealDamage>(c => {
-                                c.DamageType = new DamageTypeDescription() {
-                                    Type = DamageType.Energy, // Specifies energy damage
-                                    Energy = Kingmaker.Enums.Damage.DamageEnergyType.Unholy // Unholy damage
-                                };
-                                c.Value = new ContextDiceValue() {
-                                    DiceType = DiceType.Zero,
-                                    DiceCountValue = 0,
-                                    BonusValue = new ContextValue() {
-                                        ValueType = ContextValueType.Simple,
-                                        Value = 1 // Reduces HP to 1
-                                    }
-                                };
-                                c.HalfIfSaved = false;
-                                c.IsAoE = false;
-                                c.IgnoreCritical = true;
+                            c.Failed = ActionFlow.DoSingle<Conditional>(c => {
+                                c.ConditionsChecker = ActionFlow.IfSingle<ContextConditionHasBuffImmunityWithDescriptor>(c => {
+                                    c.CheckBuffDescriptorComponent = true;
+                                    c.CheckSpellDescriptorComponent = true;
+                                    c.SpellDescriptor = SpellDescriptor.Death;
+                                });
+                                c.IfTrue = ActionFlow.DoSingle<ContextActionDealDamage>(c => {
+                                    c.DamageType = new DamageTypeDescription() {
+                                        Type = DamageType.Energy,
+                                        Energy = Kingmaker.Enums.Damage.DamageEnergyType.Unholy
+                                    };
+                                    c.Value = new ContextDiceValue() {
+                                        DiceType = DiceType.Zero,
+                                        DiceCountValue = 0,
+                                        BonusValue = Values.CreateContextRankValue(AbilityRankType.DamageBonus)
+                                    };
+                                    c.HalfIfSaved = false;
+                                    c.IsAoE = false;
+                                    c.IgnoreCritical = true;
+                                });
+                                c.IfFalse = ActionFlow.DoSingle<ContextActionKill>();
                             });
                         });
                     });
@@ -81,11 +101,16 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility {
                     c.Anchor = AbilitySpawnFxAnchor.SelectedTarget;
                 });
                 bp.AddComponent<ContextSetAbilityParams>(c => {
-                    c.Add10ToDC = true; // Automatically add 10 to DC from the ability rank system
-                    c.DC = 0; // Use dynamic scaling, no fixed DC
-                    c.CasterLevel = -1; // Automatically derived from the caster
+                    c.DC = Values.CreateContextCasterCustomPropertyValue(InstakillUnitProperty);
+                    c.CasterLevel = -1;
                     c.Concentration = -1;
                     c.SpellLevel = 10;
+                });
+                bp.AddComponent<ContextRankConfig>(c => {
+                    c.m_Type = AbilityRankType.DamageBonus;
+                    c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
+                    c.m_Progression = ContextRankProgression.MultiplyByModifier;
+                    c.m_StepLevel = 10;
                 });
                 bp.m_Icon = Icon_TwoHandedFighterDevastatingBlow;
                 bp.Type = AbilityType.SpellLike;
@@ -100,7 +125,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility {
                 bp.ActionType = UnitCommand.CommandType.Standard;
                 bp.AvailableMetamagic = Metamagic.Reach | Metamagic.Quicken;
                 bp.LocalizedDuration = StaticReferences.Strings.Null;
-                bp.LocalizedSavingThrow = StaticReferences.Strings.Null;
+                bp.LocalizedSavingThrow = StaticReferences.Strings.SavingThrow.FortitudeNegates;
             });
 
             var InstakillFeature = Helpers.CreateBlueprint<BlueprintFeature>(IsekaiContext, "InstakillFeature", bp => {
