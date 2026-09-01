@@ -1,6 +1,7 @@
 ﻿using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes.Spells;
 using System.Collections.Generic;
+using System.Linq;
 using TabletopTweaks.Core.Utilities;
 using static IsekaiMod.Main;
 
@@ -21,7 +22,10 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist.Archetypes {
         }
         public static void PatchMastermindSpellList() {
             var MastermindSpellList = Get();
-            MastermindSpellList.SpellsByLevel = IsekaiProtagonistSpellList.Get().SpellsByLevel;
+            // Copy each level list so the Mastermind-only 10th-level entries below do not leak into the shared Isekai list.
+            MastermindSpellList.SpellsByLevel = IsekaiProtagonistSpellList.Get().SpellsByLevel
+                .Select(level => new SpellLevelList(level.SpellLevel) { m_Spells = new List<BlueprintAbilityReference>(level.m_Spells) })
+                .ToArray();
             MastermindSpellList.SpellsByLevel[10] = new SpellLevelList(10) {
                 m_Spells = new List<BlueprintAbilityReference> {
                     BlueprintTools.GetBlueprintReference<BlueprintAbilityReference>("483157d358afd1a498c2a4762f4057ba"), // AngelArmyOfHeaven
