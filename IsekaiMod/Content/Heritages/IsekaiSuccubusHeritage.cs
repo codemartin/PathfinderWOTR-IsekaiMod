@@ -13,6 +13,7 @@ using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.ActivatableAbilities;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
+using Kingmaker.UnitLogic.Buffs.Components;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Mechanics;
@@ -28,7 +29,6 @@ namespace IsekaiMod.Content.Heritages {
 
     internal class IsekaiSuccubusHeritage {
         private static readonly BlueprintFeature DestinyBeyondBirthMythicFeat = BlueprintTools.GetBlueprint<BlueprintFeature>("325f078c584318849bfe3da9ea245b9d");
-        private static readonly BlueprintBuff DominatePersonBuff = BlueprintTools.GetBlueprint<BlueprintBuff>("c0f4e1c24c9cd334ca988ed1bd9d201f");
         private static readonly BlueprintAbilityResource TieflingSpellLikeResource = BlueprintTools.GetBlueprint<BlueprintAbilityResource>("803d7e39e05fa2a47a7e2424d0e4b623");
 
         public static void Add() {
@@ -45,6 +45,25 @@ namespace IsekaiMod.Content.Heritages {
                 bp.BaseValue = 10;
                 bp.OperationOnComponents = BlueprintUnitProperty.MathOperation.Sum;
             });
+            var SuccubusCharmBuff = TTCoreExtensions.CreateBuff("SuccubusCharmBuff", bp => {
+                bp.SetName(IsekaiContext, "Succubus Charm");
+                bp.SetDescription(IsekaiContext, "This creature is dominated, but may attempt a Will saving throw each round to end the effect.");
+                bp.m_Icon = Icon_Charm;
+                bp.AddComponent<ChangeFaction>(c => {
+                    c.m_Type = ChangeFaction.ChangeType.ToCaster;
+                });
+                bp.AddComponent<AddFactContextActions>(c => {
+                    c.NewRound = ActionFlow.DoSingle<ContextActionSavingThrow>(c => {
+                        c.Type = SavingThrowType.Will;
+                        c.m_ConditionalDCIncrease = new ContextActionSavingThrow.ConditionalDCIncrease[0];
+                        c.Actions = ActionFlow.DoSingle<ContextActionConditionalSaved>(c => {
+                            c.Succeed = ActionFlow.DoSingle<ContextActionRemoveSelf>();
+                            c.Failed = ActionFlow.DoNothing();
+                        });
+                    });
+                });
+                bp.Stacking = StackingType.Replace;
+            });
             var SuccubusCharmAbility = Helpers.CreateBlueprint<BlueprintAbility>(IsekaiContext, "SuccubusCharmAbility", bp => {
                 bp.SetName(IsekaiContext, "Succubus Charm");
                 bp.SetDescription(IsekaiContext, "You can make any creature fight on your side as if it was your ally. "
@@ -56,7 +75,7 @@ namespace IsekaiMod.Content.Heritages {
                     c.Actions = ActionFlow.DoSingle<ContextActionConditionalSaved>(c => {
                         c.Succeed = ActionFlow.DoNothing();
                         c.Failed = ActionFlow.DoSingle<ContextActionApplyBuff>(c => {
-                            c.m_Buff = DominatePersonBuff.ToReference<BlueprintBuffReference>();
+                            c.m_Buff = SuccubusCharmBuff.ToReference<BlueprintBuffReference>();
                             c.DurationValue = new ContextDurationValue() {
                                 Rate = DurationRate.Minutes,
                                 m_IsExtendable = true,
