@@ -7,6 +7,8 @@ using TabletopTweaks.Core.Utilities;
 using UnityEngine;
 using static IsekaiMod.Main;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
+using Kingmaker.Blueprints.JsonSystem;
+using Kingmaker.PubSubSystem;
 
 namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower {
 
@@ -19,18 +21,6 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower {
                 bp.SetName(IsekaiContext, "Training Montage");
                 bp.SetDescription(IsekaiContext, "Through relentless training and an unwavering desire to better yourself, you gain a +2 bonus to all attributes at level 1, increasing by +1 every 4 levels (to a maximum of +8 at level 20).");
                 bp.m_Icon = Icon_LegendaryProportions;
-
-                // Initial +2 bonus to all stats
-                foreach (StatType stat in new[] {
-                    StatType.Strength, StatType.Dexterity, StatType.Constitution,
-                    StatType.Intelligence, StatType.Wisdom, StatType.Charisma
-                }) {
-                    bp.AddComponent<AddStatBonus>(c => {
-                        c.Descriptor = ModifierDescriptor.UntypedStackable;
-                        c.Stat = stat;
-                        c.Value = 2; // Starting bonus
-                    });
-                }
 
                 // Scaling bonuses based on character level
                 foreach (StatType stat in new[] {
@@ -52,7 +42,8 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower {
     }
 
     // Custom component for scaling bonuses
-    public class ScalingStatBonus : UnitFactComponentDelegate {
+    [TypeId("561d9bc6f2fb4eaeaa6200129eb25318")]
+    public class ScalingStatBonus : UnitFactComponentDelegate, IOwnerGainLevelHandler, IUnitSubscriber, ISubscriber {
         public StatType Stat;
         public int LevelDivisor = 4; // Divisor for character level scaling
         public int InitialValue = 2; // Initial bonus value
@@ -66,9 +57,16 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower {
             RemoveScalingBonus();
         }
 
+        public void HandleUnitGainLevel() {
+            RemoveScalingBonus();
+            ApplyScalingBonus();
+        }
+
         private void ApplyScalingBonus() {
             int levelBonus = Owner.Progression.CharacterLevel / LevelDivisor;
-            int totalBonus = Mathf.Min(InitialValue + levelBonus, MaxBonus);
+            int totalBonus = Owner.Progression.CharacterLevel >= 20
+                ? MaxBonus
+                : Mathf.Min(InitialValue + levelBonus, MaxBonus);
 
             Owner.Stats.GetStat(Stat).AddModifier(totalBonus, Runtime, ModifierDescriptor.UntypedStackable);
         }
