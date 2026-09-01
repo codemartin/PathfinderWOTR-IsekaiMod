@@ -240,7 +240,10 @@ namespace IsekaiMod.Utilities {
                         HandleComponent(feature.AssetGuid, myClass, referenceClass, mylevel, mySpellSet, component, loopPrevention);
                         if (component is ContextRankConfig rankConfig && (
                             rankConfig.m_BaseValueType == ContextRankBaseValueType.ClassLevel ||
-                            rankConfig.m_BaseValueType == ContextRankBaseValueType.SummClassLevelWithArchetype)) {
+                            rankConfig.m_BaseValueType == ContextRankBaseValueType.MaxClassLevelWithArchetype ||
+                            rankConfig.m_BaseValueType == ContextRankBaseValueType.SummClassLevelWithArchetype ||
+                            rankConfig.m_BaseValueType == ContextRankBaseValueType.OwnerSummClassLevelWithArchetype ||
+                            rankConfig.m_BaseValueType == ContextRankBaseValueType.Bombs)) {
                             if (rankConfig.m_Class != null &&
                                 !rankConfig.m_Class.Contains(myClass) &&
                                 rankConfig.m_Class.Contains(referenceClass)) {
