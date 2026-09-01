@@ -473,34 +473,41 @@ namespace IsekaiMod.Utilities {
         }
 
         internal static void PatchResource(BlueprintAbilityResource resource, BlueprintCharacterClassReference classRef) {
-            if (resource.m_MaxAmount.m_Class != null && resource.m_MaxAmount.m_Class.Length != 0) {
+            if (resource.m_MaxAmount.m_Class != null && resource.m_MaxAmount.m_Class.Length != 0 &&
+                !resource.m_MaxAmount.m_Class.Contains(classRef)) {
                 resource.m_MaxAmount.m_Class = resource.m_MaxAmount.m_Class.AppendToArray(classRef);
             }
-            if (resource.m_MaxAmount.m_ClassDiv != null && resource.m_MaxAmount.m_ClassDiv.Length != 0) {
+            if (resource.m_MaxAmount.m_ClassDiv != null && resource.m_MaxAmount.m_ClassDiv.Length != 0 &&
+                !resource.m_MaxAmount.m_ClassDiv.Contains(classRef)) {
                 resource.m_MaxAmount.m_ClassDiv = resource.m_MaxAmount.m_ClassDiv.AppendToArray(classRef);
             }
         }
         internal static void PatchAbility(BlueprintAbility ability, BlueprintCharacterClassReference classRef) {
             foreach (BlueprintComponent comp in ability.Components) {
-                if (comp is ContextRankConfig rankConfig && rankConfig.m_Class != null && rankConfig.m_Class.Length > 0) {
+                if (comp is ContextRankConfig rankConfig && rankConfig.m_Class != null && rankConfig.m_Class.Length > 0 &&
+                    !rankConfig.m_Class.Contains(classRef)) {
                     rankConfig.m_Class = rankConfig.m_Class.AppendToArray(classRef);
                 }
             }
         }
         private static void PatchBuff(BlueprintBuff buff, BlueprintSpellbookReference spellbookRef) {
             foreach (BlueprintComponent comp in buff.Components) {
-                if (comp is AddAbilityUseTrigger triggerComp) {
+                if (comp is AddAbilityUseTrigger triggerComp &&
+                    (triggerComp.m_Spellbooks == null || !triggerComp.m_Spellbooks.Contains(spellbookRef))) {
                     triggerComp.m_Spellbooks = triggerComp.m_Spellbooks.AppendToArray(spellbookRef);
-                } else if (comp is AddCasterLevelForSpellbook casterLevelComp) {
+                } else if (comp is AddCasterLevelForSpellbook casterLevelComp &&
+                    (casterLevelComp.m_Spellbooks == null || !casterLevelComp.m_Spellbooks.Contains(spellbookRef))) {
                     casterLevelComp.m_Spellbooks = casterLevelComp.m_Spellbooks.AppendToArray(spellbookRef);
-                } else if (comp is IncreaseSpellSpellbookDC increaseSpellComp) {
+                } else if (comp is IncreaseSpellSpellbookDC increaseSpellComp &&
+                    (increaseSpellComp.m_Spellbooks == null || !increaseSpellComp.m_Spellbooks.Contains(spellbookRef))) {
                     increaseSpellComp.m_Spellbooks = increaseSpellComp.m_Spellbooks.AppendToArray(spellbookRef);
                 }
             }
         }
         private static void PatchBuff(BlueprintBuff buff, BlueprintCharacterClassReference classRef) {
             foreach (BlueprintComponent comp in buff.Components) {
-                if (comp is ContextRankConfig rankConfig && rankConfig.m_Class != null && rankConfig.m_Class.Length > 0) {
+                if (comp is ContextRankConfig rankConfig && rankConfig.m_Class != null && rankConfig.m_Class.Length > 0 &&
+                    !rankConfig.m_Class.Contains(classRef)) {
                     rankConfig.m_Class = rankConfig.m_Class.AppendToArray(classRef);
                 }
             }
