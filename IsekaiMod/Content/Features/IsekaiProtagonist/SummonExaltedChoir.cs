@@ -35,7 +35,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist {
         private static readonly Sprite Icon_SummonMonsterIX = BlueprintTools.GetBlueprint<BlueprintAbility>("52b5df2a97df18242aec67610616ded0").m_Icon;
 
         public static void Add() {
-            var SummonExaltedChoirAbility = Helpers.CreateBlueprint<BlueprintAbility>(IsekaiContext, "SummonExaltedChoirAbility", bp => {
+            var SummonExaltedChoirAbility = Helpers.CreateBlueprint<BlueprintAbility>(IsekaiContext, "SummonHaremAbility", bp => {
                 bp.SetName(IsekaiContext, "Summon Exalted Choir");
                 bp.SetSummonDescription(IsekaiContext, "This {g|Encyclopedia:Spell}spell{/g} summons a Succubus, Nymph, Astral Deva, and an Erinyes.");
                 bp.AddComponent<AbilityEffectRunAction>(c => {
