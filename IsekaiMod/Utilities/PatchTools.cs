@@ -598,7 +598,8 @@ namespace IsekaiMod.Utilities {
                             if (component is ContextCalculateAbilityParamsBasedOnClass paramsComponent) {
                                 ability.ComponentsArray[i] = new ContextCalculateAbilityParamsBasedOnClasses() {
                                     m_CharacterClasses = new BlueprintCharacterClassReference[] { paramsComponent.m_CharacterClass, classRef },
-                                    StatType = paramsComponent.StatType
+                                    StatType = paramsComponent.StatType,
+                                    UseKineticistMainStat = paramsComponent.UseKineticistMainStat
                                 };
                             }
                         }
