@@ -1,4 +1,5 @@
 ﻿using IsekaiMod.Utilities;
+using IsekaiMod.Components;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.ElementsSystem;
@@ -26,12 +27,12 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility {
             var PowerLevelingName = Helpers.CreateString(IsekaiContext, "PowerLeveling.Name", "Overpowered Ability — Power Leveling");
             var PowerLevelingDesc = Helpers.CreateString(IsekaiContext, "PowerLeveling.Description",
                 "You are Overpowered but overly cautious. You use overwhelming force to ensure all enemies you kill are thoroughly defeated."
-                + "\nBenefit: When enemies are defeated within a 120-foot radius of you, your party gains temporary bonuses to their attack and saving throws.");
+                + "\nBenefit: When enemies are defeated by you or an ally within 120 feet, your party gains a +2 bonus to attack rolls and all saving throws for 1 minute.");
 
             // Temporary Buff
             var PowerLevelingTempBuff = Helpers.CreateBlueprint<BlueprintBuff>(IsekaiContext, "PowerLevelingTempBuff", bp => {
                 bp.SetName(IsekaiContext, "Overpowered Surge");
-                bp.SetDescription(IsekaiContext, "Defeating enemies grants temporary bonuses to the party.");
+                bp.SetDescription(IsekaiContext, "The party gains a +2 bonus to attack rolls and all saving throws for 1 minute.");
                 bp.m_Icon = Icon_DimensionalAnchor;
                 bp.IsClassFeature = true;
                 bp.AddComponent<AddStatBonus>(c => {
@@ -44,11 +45,32 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility {
                     c.Value = 2; // +2 Fortitude save bonus
                     c.Descriptor = Kingmaker.Enums.ModifierDescriptor.UntypedStackable;
                 });
-                bp.m_Flags = BlueprintBuff.Flags.HiddenInUi; // Hidden in UI
+                bp.AddComponent<AddStatBonus>(c => {
+                    c.Stat = Kingmaker.EntitySystem.Stats.StatType.SaveReflex;
+                    c.Value = 2;
+                    c.Descriptor = Kingmaker.Enums.ModifierDescriptor.UntypedStackable;
+                });
+                bp.AddComponent<AddStatBonus>(c => {
+                    c.Stat = Kingmaker.EntitySystem.Stats.StatType.SaveWill;
+                    c.Value = 2;
+                    c.Descriptor = Kingmaker.Enums.ModifierDescriptor.UntypedStackable;
+                });
+                bp.Stacking = StackingType.Replace;
+            });
+
+            var PowerLevelingBuff = TTCoreExtensions.CreateBuff("PowerLevelingBuff", bp => {
+                bp.SetName(PowerLevelingName);
+                bp.SetDescription(PowerLevelingDesc);
+                bp.m_Icon = Icon_DimensionalAnchor;
+                bp.IsClassFeature = true;
+                bp.m_Flags = BlueprintBuff.Flags.HiddenInUi;
+                bp.AddComponent<ApplyPartyBuffOnKill>(c => {
+                    c.m_Buff = PowerLevelingTempBuff.ToReference<BlueprintBuffReference>();
+                });
             });
 
             // Area Effect
-            var PowerLevelingAura = Helpers.CreateBlueprint<BlueprintAbilityAreaEffect>(IsekaiContext, "PowerLevelingAura", bp => {
+            var PowerLevelingAura = Helpers.CreateBlueprint<BlueprintAbilityAreaEffect>(IsekaiContext, "PowerLevelingArea", bp => {
                 bp.m_TargetType = BlueprintAbilityAreaEffect.TargetType.Ally;
                 bp.SpellResistance = false;
                 bp.AggroEnemies = false;
@@ -57,7 +79,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility {
                 bp.Size = new Feet(120);
                 bp.Fx = new PrefabLink();
                 bp.AddComponent<AbilityAreaEffectBuff>(c => {
-                    c.m_Buff = PowerLevelingTempBuff.ToReference<BlueprintBuffReference>();
+                    c.m_Buff = PowerLevelingBuff.ToReference<BlueprintBuffReference>();
                     c.Condition = new ConditionsChecker { Conditions = new Condition[0] }; // Apply unconditionally
                 });
             });
