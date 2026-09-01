@@ -1,4 +1,5 @@
-﻿using Kingmaker.Blueprints;
+﻿using IsekaiMod.Components;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Spells;
 using Kingmaker.Designers.Mechanics.Facts;
@@ -27,9 +28,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.GodEmperor {
                 bp.AddComponent<AddPhysicalImmunity>();
                 bp.AddComponent<IgnoreConcealment>();
                 bp.AddComponent<IgnoreDamageReductionOnAttack>();
-                bp.AddComponent<IgnoreSpellImmunity>(c => {
-                    c.SpellDescriptor = SpellDescriptor.None;
-                });
+                bp.AddComponent<IgnoreAllSpellImmunity>();
                 bp.AddComponent<IgnoreSpellResistanceForSpells>(c => {
                     c.m_AbilityList = new BlueprintAbilityReference[0];
                     c.AllSpells = true;

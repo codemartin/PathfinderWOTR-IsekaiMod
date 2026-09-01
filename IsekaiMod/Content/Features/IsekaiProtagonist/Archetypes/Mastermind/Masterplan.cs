@@ -1,4 +1,5 @@
 ﻿using IsekaiMod.Utilities;
+using IsekaiMod.Components;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Spells;
@@ -55,9 +56,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Mastermind {
                     + "Enemies within 120 feet cannot cast spells or use magic items.");
                 bp.m_Icon = Icon_Masterplan;
                 bp.Ranks = 1;
-                bp.AddComponent<IgnoreSpellImmunity>(c => {
-                    c.SpellDescriptor = SpellDescriptor.None;
-                });
+                bp.AddComponent<IgnoreAllSpellImmunity>();
                 bp.AddComponent<IgnoreSpellResistanceForSpells>(c => {
                     c.m_AbilityList = new BlueprintAbilityReference[0];
                     c.AllSpells = true;

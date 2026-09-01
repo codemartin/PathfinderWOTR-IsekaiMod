@@ -1,4 +1,5 @@
 ﻿using IsekaiMod.Utilities;
+using IsekaiMod.Components;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Spells;
@@ -44,11 +45,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist {
                 bp.SetDescription(SecondReincarnationDesc);
                 bp.m_Icon = Icon_SecondReincarnation;
                 bp.AddComponent<IgnoreDamageReductionOnAttack>();
-                bp.AddComponent<IgnoreSpellImmunity>(c => {
-                    c.SpellDescriptor = SpellDescriptor.None;
-                    // TODO: IgnoreSpellImmunity doesn't actually affect the target? (search all IgnoreSpellImmunity)
-                    // See IgnoreSpellResistanceForSpells and RuleSpellResistanceCheck.TargetIsImmune
-                });
+                bp.AddComponent<IgnoreAllSpellImmunity>();
                 bp.AddComponent<IgnoreSpellResistanceForSpells>(c => {
                     c.m_AbilityList = new BlueprintAbilityReference[0];
                     c.AllSpells = true;
