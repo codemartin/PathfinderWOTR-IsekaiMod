@@ -250,6 +250,20 @@ namespace IsekaiMod.Utilities {
                             !spellLevelByClasses.m_Classes.Contains(myClass)) {
                             spellLevelByClasses.m_Classes = spellLevelByClasses.m_Classes.AddToArray(myClass);
                         }
+                        if (component is AddClassLevelToSummonDuration summonDuration &&
+                            summonDuration.m_CharacterClass != null &&
+                            summonDuration.m_CharacterClass.Equals(referenceClass)) {
+                            component = new AddClassLevelsToSummonDuration() {
+                                Half = summonDuration.Half,
+                                m_CharacterClasses = new[] { summonDuration.m_CharacterClass, myClass }
+                            };
+                            feature.ComponentsArray[componentIndex] = component;
+                        } else if (component is AddClassLevelsToSummonDuration summonDurationByClasses &&
+                            summonDurationByClasses.m_CharacterClasses != null &&
+                            summonDurationByClasses.m_CharacterClasses.Contains(referenceClass) &&
+                            !summonDurationByClasses.m_CharacterClasses.Contains(myClass)) {
+                            summonDurationByClasses.m_CharacterClasses = summonDurationByClasses.m_CharacterClasses.AddToArray(myClass);
+                        }
                         //check if component is addSpell or addFeat
                         HandleComponent(feature.AssetGuid, myClass, referenceClass, mylevel, mySpellSet, component, loopPrevention);
                         if (component is ContextRankConfig rankConfig && (
