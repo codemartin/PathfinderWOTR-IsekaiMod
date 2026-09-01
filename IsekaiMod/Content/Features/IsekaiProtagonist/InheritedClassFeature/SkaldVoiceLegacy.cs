@@ -47,7 +47,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
                 prog = PatchTools.PatchClassProgressionBasedonRefArchetype(prog, ClassTools.Classes.SkaldClass, BaseArchetype, null);
                 BlueprintCharacterClassReference refClass = ClassTools.ClassReferences.KineticistClass;
                 BlueprintCharacterClassReference myClass = IsekaiProtagonistClass.GetReference();
-                PatchTools.PatchProgressionFeaturesBasedOnReferenceArchetype(myClass, refClass, BaseArchetype);
+                PatchTools.PatchProgressionFeaturesBasedOnReferenceClass(prog, myClass, refClass);
 
                 prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = BardLegacy.Get().ToReference<BlueprintFeatureReference>(); });
                 prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = BarbarianLegacy.Get().ToReference<BlueprintFeatureReference>(); });

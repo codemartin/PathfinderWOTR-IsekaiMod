@@ -169,22 +169,6 @@ namespace IsekaiMod.Utilities {
             return prog;
         }
 
-        public static void PatchProgressionFeaturesBasedOnReferenceArchetype(BlueprintCharacterClassReference myClass, BlueprintCharacterClassReference referenceClass, BlueprintArchetype refArchetype) {
-            var features = new HashSet<BlueprintFeatureBase>();
-            foreach (LevelEntry levelEntry in refArchetype.AddFeatures) {
-                foreach (BlueprintFeatureBase levelitem in levelEntry.Features) {
-                    if (!features.Contains(levelitem)) { features.Add(levelitem); }
-                }
-            }
-            foreach (BlueprintFeatureBase levelitem in features) {
-                if (levelitem is BlueprintProgression progression) {
-                    PatchClassIntoFeatureOfReferenceClass(progression, myClass, referenceClass);
-                } else if (levelitem is BlueprintFeature feature) {
-                    PatchClassIntoFeatureOfReferenceClass(feature, myClass, referenceClass);
-                }
-            }
-        }
-
         public static void PatchProgressionFeaturesBasedOnReferenceClass(BlueprintProgression prog, BlueprintCharacterClassReference myClass, BlueprintCharacterClassReference referenceClass) {
             var features = new HashSet<BlueprintFeatureBase>();
             foreach (LevelEntry levelEntry in prog.LevelEntries) {

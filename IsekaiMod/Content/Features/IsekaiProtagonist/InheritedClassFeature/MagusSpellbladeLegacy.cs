@@ -50,18 +50,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
 
                 prog = PatchTools.PatchClassProgressionBasedOnSeparateLists(prog, ClassTools.Classes.MagusClass, addentries, removeentries);
 
-                BlueprintCharacterClassReference myClass = IsekaiProtagonistClass.GetReference();
-                foreach (var level in BaseArchetype.AddFeatures) {
-                    foreach (var candidate in level.Features) {
-                        if (candidate != null && candidate is BlueprintFeatureSelection selection) {
-                            PatchTools.PatchClassIntoFeatureOfReferenceClass(selection, myClass, ClassTools.ClassReferences.MagusClass);
-                        } else {
-                            if (candidate != null && candidate is BlueprintFeature feature) {
-                                PatchTools.PatchClassIntoFeatureOfReferenceClass(feature, myClass, ClassTools.ClassReferences.MagusClass);
-                            }
-                        }
-                    }
-                }
+                PatchTools.PatchProgressionFeaturesBasedOnReferenceClass(prog, IsekaiProtagonistClass.GetReference(), ClassTools.ClassReferences.MagusClass);
 
                 prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = MagusBasicLegacy.Get().ToReference<BlueprintFeatureReference>(); });
                 prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = MagusArcherLegacy.Get().ToReference<BlueprintFeatureReference>(); });

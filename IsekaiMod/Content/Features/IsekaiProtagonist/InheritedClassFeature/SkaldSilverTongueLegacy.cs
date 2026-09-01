@@ -48,7 +48,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
                 prog = PatchTools.PatchClassProgressionBasedonRefArchetype(prog, ClassTools.Classes.SkaldClass, BaseArchetype, null);
                 BlueprintCharacterClassReference refClass = ClassTools.ClassReferences.SkaldClass;
                 BlueprintCharacterClassReference myClass = IsekaiProtagonistClass.GetReference();
-                PatchTools.PatchProgressionFeaturesBasedOnReferenceArchetype(myClass, refClass, BaseArchetype);
+                PatchTools.PatchProgressionFeaturesBasedOnReferenceClass(prog, myClass, refClass);
 
                 var InsightfulContemplationSongEffectBuff = BlueprintTools.GetBlueprint<BlueprintBuff>("70b5a320c87e5f34191caea053a3a1b8");
                 PatchTools.PatchClassIntoFeatureOfReferenceClass(InsightfulContemplationSongEffectBuff, myClass, refClass);

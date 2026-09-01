@@ -52,18 +52,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
 
                 prog = PatchTools.PatchClassProgressionBasedOnSeparateLists(prog, ClassTools.Classes.CavalierClass, addentries, removeentries);
 
-                BlueprintCharacterClassReference myClass = IsekaiProtagonistClass.GetReference();
-                foreach (var level in BaseArchetype.AddFeatures) {
-                    foreach (var candidate in level.Features) {
-                        if (candidate != null && candidate is BlueprintFeatureSelection selection) {
-                            PatchTools.PatchClassIntoFeatureOfReferenceClass(selection, myClass, ClassTools.ClassReferences.CavalierClass);
-                        } else {
-                            if (candidate != null && candidate is BlueprintFeature feature) {
-                                PatchTools.PatchClassIntoFeatureOfReferenceClass(feature, myClass, ClassTools.ClassReferences.CavalierClass);
-                            }
-                        }
-                    }
-                }
+                PatchTools.PatchProgressionFeaturesBasedOnReferenceClass(prog, IsekaiProtagonistClass.GetReference(), ClassTools.ClassReferences.CavalierClass);
 
                 prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = CavalierBasicLegacy.Get().ToReference<BlueprintFeatureReference>(); });
                 prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = CavalierStandardBearerLegacy.Get().ToReference<BlueprintFeatureReference>(); });

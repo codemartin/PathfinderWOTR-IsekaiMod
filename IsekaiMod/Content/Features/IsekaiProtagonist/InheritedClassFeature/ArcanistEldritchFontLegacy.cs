@@ -46,18 +46,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
 
                 prog = PatchTools.PatchClassProgressionBasedOnSeparateLists(prog, ClassTools.Classes.ArcanistClass, addentries, removeentries);
 
-                BlueprintCharacterClassReference myClass = IsekaiProtagonistClass.GetReference();
-                foreach (var level in BaseArchetype.AddFeatures) {
-                    foreach (var candidate in level.Features) {
-                        if (candidate != null && candidate is BlueprintFeatureSelection selection) {
-                            PatchTools.PatchClassIntoFeatureOfReferenceClass(selection, myClass, ClassTools.ClassReferences.ArcanistClass);
-                        } else {
-                            if (candidate != null && candidate is BlueprintFeature feature) {
-                                PatchTools.PatchClassIntoFeatureOfReferenceClass(feature, myClass, ClassTools.ClassReferences.ArcanistClass);
-                            }
-                        }
-                    }
-                }
+                PatchTools.PatchProgressionFeaturesBasedOnReferenceClass(prog, IsekaiProtagonistClass.GetReference(), ClassTools.ClassReferences.ArcanistClass);
 
                 prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = ArcanistBasicLegacy.Get().ToReference<BlueprintFeatureReference>(); });
                 prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = ArcanistBrownFurLegacy.Get().ToReference<BlueprintFeatureReference>(); });

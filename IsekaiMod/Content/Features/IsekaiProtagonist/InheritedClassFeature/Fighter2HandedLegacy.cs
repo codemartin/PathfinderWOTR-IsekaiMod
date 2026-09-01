@@ -45,7 +45,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
                 BlueprintCharacterClassReference refClass = ClassTools.ClassReferences.FighterClass;
                 BlueprintCharacterClassReference myClass = IsekaiProtagonistClass.GetReference();
                 prog = PatchTools.PatchClassProgressionBasedonRefArchetype(prog, ClassTools.Classes.FighterClass, BaseArchetype, null);
-                PatchTools.PatchProgressionFeaturesBasedOnReferenceArchetype(myClass, refClass, BaseArchetype);
+                PatchTools.PatchProgressionFeaturesBasedOnReferenceClass(prog, myClass, refClass);
 
                 prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = FighterBasicLegacy.Get().ToReference<BlueprintFeatureReference>(); });
                 prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = FighterShieldLegacy.Get().ToReference<BlueprintFeatureReference>(); });

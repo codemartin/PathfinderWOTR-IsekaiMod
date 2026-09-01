@@ -52,18 +52,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
 
                 prog = PatchTools.PatchClassProgressionBasedOnSeparateLists(prog, ClassTools.Classes.InquisitorClass, addentries, removeentries);
 
-                BlueprintCharacterClassReference myClass = IsekaiProtagonistClass.GetReference();
-                foreach (var level in archetype.AddFeatures) {
-                    foreach (var candidate in level.Features) {
-                        if (candidate != null && candidate is BlueprintFeatureSelection selection) {
-                            PatchTools.PatchClassIntoFeatureOfReferenceClass(selection, myClass, ClassTools.ClassReferences.InquisitorClass);
-                        } else {
-                            if (candidate != null && candidate is BlueprintFeature feature) {
-                                PatchTools.PatchClassIntoFeatureOfReferenceClass(feature, myClass, ClassTools.ClassReferences.InquisitorClass);
-                            }
-                        }
-                    }
-                }
+                PatchTools.PatchProgressionFeaturesBasedOnReferenceClass(prog, IsekaiProtagonistClass.GetReference(), ClassTools.ClassReferences.InquisitorClass);
 
                 prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = InquisitorTacticianLegacy.Get().ToReference<BlueprintFeatureReference>(); });
                 prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = InquisitorDomainLordLegacy.Get().ToReference<BlueprintFeatureReference>(); });
