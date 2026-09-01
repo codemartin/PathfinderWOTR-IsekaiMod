@@ -7,6 +7,7 @@ using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Overlord;
 using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
+using Kingmaker.Blueprints.Classes.Prerequisites;
 using Kingmaker.Blueprints.Classes.Selection;
 using Kingmaker.Designers.Mechanics.Facts;
 using TabletopTweaks.Core.Utilities;
@@ -95,6 +96,12 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
                 bp.IsClassFeature = true;
                 bp.m_AllFeatures = FeatTools.Selections.OracleMysterySelection.m_AllFeatures;
             });
+
+            BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("277b0164740b97945a3f8022bd572f48")
+                .AddPrerequisite<PrerequisiteFeature>(c => {
+                    c.Group = Prerequisite.GroupType.Any;
+                    c.m_Feature = MysterySelection.ToReference<BlueprintFeatureReference>();
+                });
 
             var PrimarySelection = Helpers.CreateBlueprint<BlueprintFeatureSelection>(IsekaiContext, "IsekaiOracleSelection", bp => {
                 bp.SetName(IsekaiContext, "Divine Inheritance");
