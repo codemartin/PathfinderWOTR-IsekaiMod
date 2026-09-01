@@ -35,10 +35,11 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility {
                     BaseValue = 1, // Start with 1 use
                     IncreasedByLevelStartPlusDivStep = true,
                     StartingLevel = 1, // Start scaling from level 1
-                    StartingIncrease = 1, // Initial bonus
+                    StartingIncrease = 0, // BaseValue already supplies the initial use
                     LevelStep = 4, // Gain 1 use every 4 levels
                     PerStepIncrease = 1, // Each step grants 1 use
                     MinClassLevelIncrease = 0, // Minimum is 0 if level is below StartingLevel
+                    OtherClassesModifier = 1.0f, // Scale from total character level
                 };
                 bp.m_UseMax = true; // Enforce a maximum cap
                 bp.m_Max = 5; // Limit to 5 max uses
