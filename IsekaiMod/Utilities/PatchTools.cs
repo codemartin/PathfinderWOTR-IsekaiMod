@@ -683,7 +683,8 @@ namespace IsekaiMod.Utilities {
             public static bool Prefix(UnitPartMagus __instance, ref Spellbook __result) {
                 ClassData classData = __instance.Owner.Progression.GetClassData(IsekaiProtagonistClass.Get());
                 if (classData == null) {
-                    return false;
+                    // Not an Isekai Protagonist: run the unmodified game getter.
+                    return true;
                 }
                 BlueprintSpellbook blueprintSpellbook;
                 if ((blueprintSpellbook = (classData?.Spellbook.Or(null))) == null) {
