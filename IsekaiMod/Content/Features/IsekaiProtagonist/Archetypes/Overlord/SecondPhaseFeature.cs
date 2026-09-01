@@ -94,10 +94,10 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Overlord {
                         new ContextActionSpawnFx() {
                             PrefabLink = new PrefabLink() { AssetId = "14ba08b903ee28b41a779a616d905397" }
                         },
-                        new ContextActionRemoveBuff() {
+                        new ContextActionApplyBuff() {
                             m_Buff = SecondPhaseBuffEffect.ToReference<BlueprintBuffReference>(),
-                            ToCaster = false,
-                            RemoveRank = false
+                            DurationValue = Values.Duration.OneDay,
+                            IsFromSpell = false
                         },
                         new ContextActionRemoveSelf()
                         );
