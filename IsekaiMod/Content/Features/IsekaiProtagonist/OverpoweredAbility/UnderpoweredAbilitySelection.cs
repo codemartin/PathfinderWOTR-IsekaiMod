@@ -37,7 +37,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility {
                 });
             });
 
-            var BulkMaster = Helpers.CreateBlueprint<BlueprintFeature>(IsekaiContext, "SuperStrength", bp => {
+            var BulkMaster = Helpers.CreateBlueprint<BlueprintFeature>(IsekaiContext, "BulkMaster", bp => {
                 bp.SetName(IsekaiContext, "Underpowered Ability — Super Strength");
                 bp.SetDescription(IsekaiContext, "Infused with the strength of a titan, your physical might is a testament to your rebirth in this new world."
                     + "\nBenefit: You gain +50 hit points and +4 Strength.");
