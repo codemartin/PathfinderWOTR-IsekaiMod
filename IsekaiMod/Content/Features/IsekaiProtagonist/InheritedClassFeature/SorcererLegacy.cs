@@ -85,6 +85,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
                 //bp.Group = FeatureGroup.BloodLine;
                 bp.m_AllFeatures = StaticReferences.SorcererBloodlineSelection.m_AllFeatures;
             });
+            MirroredSelections.Register(IsekaiBloodlineSelection, StaticReferences.SorcererBloodlineSelection);
 
             foreach (string mythicSelectionId in new[] {
                 "ce85aee1726900641ab53ede61ac5c19", // Bloodline Ascendance

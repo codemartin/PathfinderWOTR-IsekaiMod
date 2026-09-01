@@ -61,13 +61,10 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
         }
 
         public static void PatchProgression() {
-            ShamanSelection.GetHex().m_AllFeatures = shamanHex.m_AllFeatures;
-
             BlueprintCharacterClassReference myClass = IsekaiProtagonistClass.GetReference();
             BlueprintCharacterClassReference refClass = ClassTools.Classes.ShamanClass.ToReference<BlueprintCharacterClassReference>();
             PatchTools.PatchClassIntoFeatureOfReferenceClass(shamanSpirit, myClass, refClass);
             PatchTools.PatchClassIntoFeatureOfReferenceClass(shamanHex, myClass, refClass);
-            ShamanSelection.GetSpirit().m_AllFeatures = shamanSpirit.m_AllFeatures;
             prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = WitchBaseLegacy.Get().ToReference<BlueprintFeatureReference>(); });
         }
 
@@ -91,6 +88,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
                 bp.IsClassFeature = true;
                 bp.m_AllFeatures = ShamanLegacy.shamanHex.m_AllFeatures;
             });
+            MirroredSelections.Register(isekaiHex, ShamanLegacy.shamanHex);
             isekaiSpirit = Helpers.CreateBlueprint<BlueprintFeatureSelection>(IsekaiContext, "IsekaiSpiritSelection", bp => {
                 bp.m_DisplayName = ShamanLegacy.shamanSpirit.m_DisplayName;
                 bp.m_Description = ShamanLegacy.shamanSpirit.m_Description;
@@ -99,6 +97,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
                 bp.IsClassFeature = true;
                 bp.m_AllFeatures = ShamanLegacy.shamanSpirit.m_AllFeatures;
             });
+            MirroredSelections.Register(isekaiSpirit, ShamanLegacy.shamanSpirit);
 
             var secondSpirit = BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("2faa80662a56ab644aec2f875a68597f");
             foreach (PrerequisiteCondition prerequisite in secondSpirit.GetComponents<PrerequisiteCondition>()) {

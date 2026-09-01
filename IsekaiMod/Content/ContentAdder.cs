@@ -317,8 +317,14 @@ namespace IsekaiMod.Content {
 
             if (IsekaiContext.AddedContent.Isekai.IsEnabled("Isekai Heritages")) PatchHeritages();
 
-            if (IsekaiContext.AddedContent.Isekai.IsDisabled("Isekai Protagonist")) return;
+            if (IsekaiContext.AddedContent.Isekai.IsEnabled("Isekai Protagonist")) PatchIsekaiProtagonist();
 
+            // Runs after every other mod's BlueprintsCache.Init postfix, so mirrored selections
+            // pick up features those mods added to the base-game selections.
+            MirroredSelections.Sync();
+        }
+
+        private static void PatchIsekaiProtagonist() {
             LegacySelection.ConfigureStep3();
             PrebuildIsekaiProtagonistFeatureList.PatchLegacySelection();
 

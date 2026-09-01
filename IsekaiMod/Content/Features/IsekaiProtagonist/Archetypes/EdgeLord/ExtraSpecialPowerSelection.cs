@@ -1,4 +1,5 @@
 ﻿using IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower;
+using IsekaiMod.Utilities;
 using Kingmaker.Blueprints.Classes.Selection;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
 using TabletopTweaks.Core.Utilities;
@@ -16,6 +17,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.EdgeLord {
                 bp.m_Icon = Icon_ForetellAidBuff;
                 bp.m_AllFeatures = SpecialPowerSelection.Get().m_AllFeatures;
             });
+            MirroredSelections.Register(ExtraSpecialPowerSelection, SpecialPowerSelection.Get());
 
             SecretPowerSelection.AddToSelection(ExtraSpecialPowerSelection);
         }

@@ -48,6 +48,13 @@ namespace IsekaiMod.Content.Features.ExceptionalFeats {
                 bp.m_AllFeatures = ExceptionalFeatures;
             });
 
+            var excludedMythicFeats = new[] {
+                ExtraFeatMythicFeat.ToReference<BlueprintFeatureReference>(),
+                ExtraMythicAbilityMythicFeat.ToReference<BlueprintFeatureReference>()
+            };
+            MirroredSelections.Register(ExceptionalFeatSelection, excludedMythicFeats, MythicFeatSelection);
+            MirroredSelections.Register(ExceptionalFeatBonusSelection, excludedMythicFeats, MythicFeatSelection);
+
             if (IsekaiContext.AddedContent.Other.IsEnabled("Exceptional Feats")) {
                 FeatTools.Selections.BasicFeatSelection.AddToFirst(ExceptionalFeatSelection);
             }

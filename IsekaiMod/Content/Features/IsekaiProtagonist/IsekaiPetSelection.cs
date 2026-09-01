@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using IsekaiMod.Content.Classes.IsekaiProtagonist;
+using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Selection;
@@ -30,6 +31,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist {
                 bp.Ranks = 1;
                 bp.m_AllFeatures = WitchFamiliarSelection.m_AllFeatures;
             });
+            MirroredSelections.Register(IsekaiFamiliarSelection, WitchFamiliarSelection);
             var IsekaiPetSelection = Helpers.CreateBlueprint<BlueprintFeatureSelection>(IsekaiContext, "IsekaiPetSelection", bp => {
                 bp.SetName(IsekaiContext, "Pet Selection");
                 bp.SetDescription(IsekaiContext, "At 1st level, you gain the service of either an animal companion or familiar, using your class level as your effective druid level.");

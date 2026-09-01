@@ -125,6 +125,10 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility {
                 bp.m_AllFeatures = bp.m_AllFeatures.AddRangeToArray(BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("5cd96c3460844fc458dc3e1656dafa42").m_AllFeatures);
                 bp.m_AllFeatures = bp.m_AllFeatures.AddRangeToArray(BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("446f4a8b32019f5478a8dfeddac74710").m_AllFeatures);
             });
+            MirroredSelections.Register(TricksterSelection,
+                BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("4fbc563529717de4d92052048143e0f1"),
+                BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("5cd96c3460844fc458dc3e1656dafa42"),
+                BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("446f4a8b32019f5478a8dfeddac74710"));
             var AzataSelection = Helpers.CreateBlueprint<BlueprintFeatureSelection>(IsekaiContext, "BlessingOfTheAzata", bp => {
                 bp.SetName(IsekaiContext, "Azata Mythic Class Feature");
                 bp.SetDescription(IsekaiContext, "Let me show you something fun!");
@@ -133,6 +137,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility {
                 bp.IgnorePrerequisites = false;
                 bp.m_AllFeatures = BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("8a30e92cd04ff5b459ba7cb03584fda0").m_AllFeatures;
             });
+            MirroredSelections.Register(AzataSelection, BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("8a30e92cd04ff5b459ba7cb03584fda0"));
             var LichSelection = Helpers.CreateBlueprint<BlueprintFeatureSelection>(IsekaiContext, "BlessingOfTheLich", bp => {
                 bp.SetName(IsekaiContext, "Lich Mythic Class Feature");
                 bp.SetDescription(IsekaiContext, "What?\nA bit of undeath never hurt anyone...");
@@ -144,6 +149,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility {
                 .AddToArray(BlueprintTools.GetBlueprint<BlueprintFeature>("eea98a8c70c68ff489967c6f9cf1876c").ToReference<BlueprintFeatureReference>())
                 ;
             });
+            MirroredSelections.Register(LichSelection, BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("1f646b820a37d3d4a8ab116a24ee0022"));
             var AngelSelection = Helpers.CreateBlueprint<BlueprintFeatureSelection>(IsekaiContext, "BlessingOfTheAngel", bp => {
                 bp.SetName(IsekaiContext, "Angel Mythic Class Feature");
                 bp.SetDescription(IsekaiContext, "Behold the blessing of the Angel.");
@@ -158,6 +164,9 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility {
                 .AddRangeToArray(BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("e0ce40968bf0007408b11089a10f36cf").m_AllFeatures)
                 ;
             });
+            MirroredSelections.Register(AngelSelection,
+                BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("bdbc41e2bad92a640bd58acf74e2af8b"),
+                BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("e0ce40968bf0007408b11089a10f36cf"));
 
             var MythicSelection = Helpers.CreateBlueprint<BlueprintFeatureSelection>(IsekaiContext, "BlessingOfTheMythic", bp => {
                 bp.SetName(IsekaiContext, "Mythic Class Feature");

@@ -89,6 +89,8 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
                 bp.IsClassFeature = true;
                 bp.m_AllFeatures = FeatTools.Selections.OracleCurseSelection.m_AllFeatures;
             });
+            MirroredSelections.Register(CurseSelection, FeatTools.Selections.OracleCurseSelection);
+            MirroredSelections.Register(CurseSelection, FeatTools.Selections.OracleCurseSelection);
             var MysterySelection = Helpers.CreateBlueprint<BlueprintFeatureSelection>(IsekaiContext, "IsekaiOracleMysterySelection", bp => {
                 bp.SetName(IsekaiContext, "Divine Mystery");
                 bp.SetDescription(IsekaiContext, "Master another part of reality...");
@@ -96,6 +98,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
                 bp.IsClassFeature = true;
                 bp.m_AllFeatures = FeatTools.Selections.OracleMysterySelection.m_AllFeatures;
             });
+            MirroredSelections.Register(MysterySelection, FeatTools.Selections.OracleMysterySelection);
 
             BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("277b0164740b97945a3f8022bd572f48")
                 .AddPrerequisite<PrerequisiteFeature>(c => {
