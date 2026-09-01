@@ -218,8 +218,24 @@ namespace IsekaiMod.Utilities {
                     HashSet<SpellReference> mySpellSet = new HashSet<SpellReference>();
                     List<SpontaneousSpellConversion> conversions = new List<SpontaneousSpellConversion>();
                     List<CannyDefensePermanent> cannyDefenses = new List<CannyDefensePermanent>();
-                    foreach (var component in feature.Components) {
+                    for (int componentIndex = 0; componentIndex < feature.ComponentsArray.Length; componentIndex++) {
+                        BlueprintComponent component = feature.ComponentsArray[componentIndex];
                         if (component == null) continue;
+                        if (component is ContextCalculateAbilityParamsBasedOnClass abilityParams &&
+                            abilityParams.m_CharacterClass != null &&
+                            abilityParams.m_CharacterClass.Equals(referenceClass)) {
+                            component = new ContextCalculateAbilityParamsBasedOnClasses() {
+                                m_CharacterClasses = new[] { abilityParams.m_CharacterClass, myClass },
+                                StatType = abilityParams.StatType,
+                                UseKineticistMainStat = abilityParams.UseKineticistMainStat
+                            };
+                            feature.ComponentsArray[componentIndex] = component;
+                        } else if (component is ContextCalculateAbilityParamsBasedOnClasses abilityParamsByClasses &&
+                            abilityParamsByClasses.m_CharacterClasses != null &&
+                            abilityParamsByClasses.m_CharacterClasses.Contains(referenceClass) &&
+                            !abilityParamsByClasses.m_CharacterClasses.Contains(myClass)) {
+                            abilityParamsByClasses.m_CharacterClasses = abilityParamsByClasses.m_CharacterClasses.AddToArray(myClass);
+                        }
                         //check if component is addSpell or addFeat
                         HandleComponent(feature.AssetGuid, myClass, referenceClass, mylevel, mySpellSet, component, loopPrevention);
                         if (component is ContextRankConfig rankConfig && (
