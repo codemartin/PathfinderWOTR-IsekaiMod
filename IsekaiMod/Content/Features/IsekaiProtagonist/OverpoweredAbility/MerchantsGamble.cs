@@ -41,6 +41,8 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility {
 
             var Icon_Merchants_Gamble = AssetLoader.LoadInternal(IsekaiContext, "Features", "ICON_DUPE_GOLD.png");
 
+            var MerchantsGambleResource = CreateResource();
+
             var MerchantsGambleAbility = Helpers.CreateBlueprint<BlueprintAbility>(IsekaiContext, "MerchantsGambleAbility", bp => {
                 bp.SetName(IsekaiContext, Name);
                 bp.SetDescription(MerchantsGambleDesc);
@@ -50,7 +52,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility {
                     );
                 });
                 bp.AddComponent<AbilityResourceLogic>(c => {
-                    c.m_RequiredResource = CreateResource().ToReference<BlueprintAbilityResourceReference>();
+                    c.m_RequiredResource = MerchantsGambleResource.ToReference<BlueprintAbilityResourceReference>();
                     c.m_IsSpendResource = true;
                 });
                 bp.m_Icon = Icon_Merchants_Gamble;
@@ -71,7 +73,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility {
                     c.m_Facts = new BlueprintUnitFactReference[] { MerchantsGambleAbility.ToReference<BlueprintUnitFactReference>() };
                 });
                 bp.AddComponent<AddAbilityResources>(c => {
-                    c.m_Resource = CreateResource().ToReference<BlueprintAbilityResourceReference>();
+                    c.m_Resource = MerchantsGambleResource.ToReference<BlueprintAbilityResourceReference>();
                     c.RestoreAmount = true;
                 });
             });
