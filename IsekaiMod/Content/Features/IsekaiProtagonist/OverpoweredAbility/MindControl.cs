@@ -21,6 +21,7 @@ using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Mechanics.Actions;
 using Kingmaker.UnitLogic.Mechanics.Components;
 using Kingmaker.UnitLogic.Mechanics.Conditions;
+using Kingmaker.UnitLogic.Mechanics.Properties;
 using Kingmaker.Visual.Animation.Kingmaker.Actions;
 using TabletopTweaks.Core.Utilities;
 using static IsekaiMod.Main;
@@ -37,7 +38,23 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility {
                 "Behold the power of a king! All will listen and obey!"
                 + "\nBenefit: You can make any creature fight on your side as if it was your ally. "
                 + "It will {g|Encyclopedia:Attack}attack{/g} your opponents to the best of its ability. "
-                + "A successful Will save negates this effect. This power bypasses immunity to mind-affecting and compulsion effects.");
+                + "A successful Will save negates this effect. The DC is 10 + half your character level + your Charisma modifier. "
+                + "This power bypasses immunity to mind-affecting and compulsion effects.");
+
+            var MindControlUnitProperty = Helpers.CreateBlueprint<BlueprintUnitProperty>(IsekaiContext, "MindControlUnitProperty", bp => {
+                bp.name = "MindControlUnitProperty";
+                bp.AddComponent<SimplePropertyGetter>(c => {
+                    c.Property = UnitProperty.Level;
+                    c.Settings = new PropertySettings() {
+                        m_Progression = PropertySettings.Progression.Div2
+                    };
+                });
+                bp.AddComponent<SimplePropertyGetter>(c => {
+                    c.Property = UnitProperty.StatBonusCharisma;
+                });
+                bp.BaseValue = 10;
+                bp.OperationOnComponents = BlueprintUnitProperty.MathOperation.Sum;
+            });
 
             var MindControlResource = Helpers.CreateBlueprint<BlueprintAbilityResource>(IsekaiContext, "MindControlResource", resource => {
                 resource.m_MaxAmount = new BlueprintAbilityResource.Amount() {
@@ -119,6 +136,9 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility {
                 bp.AddComponent<ContextRankConfig>(c => {
                     c.m_Type = AbilityRankType.Default;
                     c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
+                });
+                bp.AddComponent<ContextSetAbilityParams>(c => {
+                    c.DC = Values.CreateContextCasterCustomPropertyValue(MindControlUnitProperty);
                 });
                 bp.AddComponent<AbilityResourceLogic>(c => {
                     c.m_RequiredResource = MindControlResource.ToReference<BlueprintAbilityResourceReference>();
