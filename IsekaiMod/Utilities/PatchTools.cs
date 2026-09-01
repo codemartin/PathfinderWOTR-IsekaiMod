@@ -14,6 +14,7 @@ using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Mechanics.Components;
+using Kingmaker.UnitLogic.Mechanics.Properties;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility;
 using System;
@@ -279,6 +280,7 @@ namespace IsekaiMod.Utilities {
                                 //test at level 20 if needed
                                 //rankConfig.m_BaseValueType = ContextRankBaseValueType.SummClassLevelWithArchetype;
                             }
+                            PatchReferencedUnitProperties(rankConfig, myClass, referenceClass);
                         }
                         else if (component is SpontaneousSpellConversion conversion && conversion.m_CharacterClass != null && conversion.m_CharacterClass.Equals(referenceClass)) {
                             conversions.Add(conversion);
@@ -532,6 +534,51 @@ namespace IsekaiMod.Utilities {
             if (resource.m_MaxAmount.m_ClassDiv != null && resource.m_MaxAmount.m_ClassDiv.Length != 0 &&
                 !resource.m_MaxAmount.m_ClassDiv.Contains(classRef)) {
                 resource.m_MaxAmount.m_ClassDiv = resource.m_MaxAmount.m_ClassDiv.AppendToArray(classRef);
+            }
+        }
+
+        private static void PatchReferencedUnitProperties(ContextRankConfig rankConfig, BlueprintCharacterClassReference myClass, BlueprintCharacterClassReference referenceClass) {
+            if (rankConfig.m_CustomProperty != null) {
+                PatchUnitProperty(rankConfig.m_CustomProperty.Get(), myClass, referenceClass);
+            }
+            foreach (BlueprintUnitPropertyReference propertyReference in rankConfig.m_CustomPropertyList ?? Array.Empty<BlueprintUnitPropertyReference>()) {
+                PatchUnitProperty(propertyReference?.Get(), myClass, referenceClass);
+            }
+        }
+
+        private static void PatchUnitProperty(BlueprintUnitProperty property, BlueprintCharacterClassReference myClass, BlueprintCharacterClassReference referenceClass) {
+            if (property?.ComponentsArray == null) return;
+
+            for (int componentIndex = 0; componentIndex < property.ComponentsArray.Length; componentIndex++) {
+                BlueprintComponent component = property.ComponentsArray[componentIndex];
+                if (component is ClassLevelGetter classLevel &&
+                    classLevel.m_Class != null &&
+                    classLevel.m_Class.Equals(referenceClass)) {
+                    property.ComponentsArray[componentIndex] = new ClassLevelGetterWithAlternatives {
+                        m_Class = classLevel.m_Class,
+                        m_Archetype = classLevel.m_Archetype,
+                        m_AlternativeClasses = new[] { myClass }
+                    };
+                } else if (component is ClassLevelGetterWithAlternatives classLevelWithAlternatives &&
+                    classLevelWithAlternatives.m_Class != null &&
+                    classLevelWithAlternatives.m_Class.Equals(referenceClass) &&
+                    !(classLevelWithAlternatives.m_AlternativeClasses?.Contains(myClass) ?? false)) {
+                    classLevelWithAlternatives.m_AlternativeClasses = (classLevelWithAlternatives.m_AlternativeClasses ?? Array.Empty<BlueprintCharacterClassReference>()).AddToArray(myClass);
+                } else if (component is SummClassLevelGetter summClassLevel &&
+                    summClassLevel.m_Class != null &&
+                    summClassLevel.m_Class.Contains(referenceClass)) {
+                    property.ComponentsArray[componentIndex] = new SummClassLevelGetterWithAlternatives {
+                        m_Classes = summClassLevel.m_Class,
+                        Archetype = summClassLevel.Archetype,
+                        m_Archetypes = summClassLevel.m_Archetypes,
+                        m_AlternativeClasses = new[] { myClass }
+                    };
+                } else if (component is SummClassLevelGetterWithAlternatives summClassLevelWithAlternatives &&
+                    summClassLevelWithAlternatives.m_Classes != null &&
+                    summClassLevelWithAlternatives.m_Classes.Contains(referenceClass) &&
+                    !(summClassLevelWithAlternatives.m_AlternativeClasses?.Contains(myClass) ?? false)) {
+                    summClassLevelWithAlternatives.m_AlternativeClasses = (summClassLevelWithAlternatives.m_AlternativeClasses ?? Array.Empty<BlueprintCharacterClassReference>()).AddToArray(myClass);
+                }
             }
         }
         internal static void PatchAbility(BlueprintAbility ability, BlueprintCharacterClassReference classRef) {
