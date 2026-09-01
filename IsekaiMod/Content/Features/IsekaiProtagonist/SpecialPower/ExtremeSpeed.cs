@@ -18,7 +18,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower {
 
             var ExtremeSpeedFeature = TTCoreExtensions.CreateToggleAuraBuffFeature(
                 name: "ExtremeSpeed",
-                description: "Allies within 40 feet of you gain a {g|Encyclopedia:Bonus}bonus{/g} to your {g|Encyclopedia:Speed}speed{/g} equal to 5 times your character level.",
+                description: "Allies within 120 feet of you gain a {g|Encyclopedia:Bonus}bonus{/g} to their {g|Encyclopedia:Speed}speed{/g} equal to 5 times your character level.",
                 descriptionBuff: "This creature gains a {g|Encyclopedia:Bonus}bonus{/g} to their {g|Encyclopedia:Speed}speed{/g}.",
                 icon: Icon_SupersonicSpeed,
                 targetType: BlueprintAbilityAreaEffect.TargetType.Ally,
