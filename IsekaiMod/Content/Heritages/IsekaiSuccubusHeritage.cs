@@ -99,6 +99,11 @@ namespace IsekaiMod.Content.Heritages {
                 bp.AddComponent<ContextSetAbilityParams>(c => {
                     c.DC = Values.CreateContextCasterCustomPropertyValue(SuccubusCharmUnitProperty);
                 });
+                bp.AddComponent<ContextRankConfig>(c => {
+                    c.m_Type = AbilityRankType.Default;
+                    c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
+                    c.m_Progression = ContextRankProgression.AsIs;
+                });
                 bp.AddComponent<AbilityResourceLogic>(c => {
                     c.m_RequiredResource = TieflingSpellLikeResource.ToReference<BlueprintAbilityResourceReference>();
                     c.m_IsSpendResource = true;

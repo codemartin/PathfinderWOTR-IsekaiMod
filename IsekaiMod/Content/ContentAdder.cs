@@ -210,6 +210,7 @@ namespace IsekaiMod.Content {
 
                 // Deathsnatcher animal Companion (Depends on IsekaiProtagonistClass)
                 DeathsnatcherClass.Add();
+                DeathsnatcherSpellLikeDC.Add();
                 DeathsnatcherSizeBaby.Add();
                 DeathsnatcherResistances.Add();
                 DeathsnatcherCommandUndead.Add();

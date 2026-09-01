@@ -19,6 +19,7 @@ using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Mechanics.Actions;
 using Kingmaker.UnitLogic.Mechanics.Components;
+using Kingmaker.UnitLogic.Mechanics.Components;
 using Kingmaker.UnitLogic.Mechanics.Conditions;
 using Kingmaker.Visual.Animation.Kingmaker.Actions;
 using TabletopTweaks.Core.Utilities;
@@ -111,11 +112,13 @@ namespace IsekaiMod.Content.Features.Deathsnatcher {
                     c.Inverted = false;
                 });
                 bp.AddComponent<ContextRankConfig>(c => {
-                    c.m_Type = AbilityRankType.Default;
+                    c.m_Type = AbilityRankType.DamageBonus;
                     c.m_BaseValueType = ContextRankBaseValueType.ClassLevel;
-                    c.m_Progression = ContextRankProgression.BonusValue;
-                    c.m_StepLevel = 1;
+                    c.m_Progression = ContextRankProgression.AsIs;
                     c.m_Class = new BlueprintCharacterClassReference[] { DeathsnatcherClass.GetReference() };
+                });
+                bp.AddComponent<ContextSetAbilityParams>(c => {
+                    c.DC = Values.CreateContextCasterCustomPropertyValue(DeathsnatcherSpellLikeDC.Get());
                 });
                 bp.AddComponent<AbilityResourceLogic>(c => {
                     c.m_RequiredResource = DeathsnatcherCommandUndeadResource.ToReference<BlueprintAbilityResourceReference>();
