@@ -1,6 +1,9 @@
-﻿using Kingmaker.Blueprints;
+using HarmonyLib;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Prerequisites;
+using Kingmaker.UnitLogic;
+using Kingmaker.UnitLogic.Class.LevelUp;
 using System.Linq;
 using TabletopTweaks.Core.Utilities;
 using static IsekaiMod.Main;
@@ -26,47 +29,51 @@ namespace IsekaiMod.Content.Heritages {
             HumanHeritageSelection.Register(ourHeritage);
         }
 
-        public static void Patch() {
-            var races = new BlueprintFeatureReference[] {
-                BlueprintTools.GetBlueprintReference<BlueprintFeatureReference>("b7f02ba92b363064fb873963bec275ee"),
-                        BlueprintTools.GetBlueprintReference<BlueprintFeatureReference>("64e8b7d5f1ae91d45bbf1e56a3fdff01"),
-                        BlueprintTools.GetBlueprintReference<BlueprintFeatureReference>("c4faf439f0e70bd40b5e36ee80d06be7"),
-                        BlueprintTools.GetBlueprintReference<BlueprintFeatureReference>("25a5878d125338244896ebd3238226c8"),
-                        BlueprintTools.GetBlueprintReference<BlueprintFeatureReference>("ef35a22c9a27da345a4528f0d5889157"),
-                        BlueprintTools.GetBlueprintReference<BlueprintFeatureReference>("1dc20e195581a804890ddc74218bfd8e"),
-                        BlueprintTools.GetBlueprintReference<BlueprintFeatureReference>("fd188bb7bb0002e49863aec93bfb9d99"),
-                        BlueprintTools.GetBlueprintReference<BlueprintFeatureReference>("4d4555326b9b7144f93be1ea61337cd7"),
-                        BlueprintTools.GetBlueprintReference<BlueprintFeatureReference>("5c4e42124dc2b4647af6e36cf2590500")
-            }.ToList();
-            if (ourHeritage != null) {
-                foreach (var print in FeatTools.Selections.BasicFeatSelection.m_AllFeatures) {
-                    if (print != null && print.Get() != null && print.Get() is BlueprintFeature feature) {
-                        bool toPatch = false;
-                        if (feature.Components != null && feature.Components.Length > 0) {
-                            foreach (var component in feature.Components) {
-                                if (component != null && component is PrerequisiteFeature prereq) {
-                                    if (prereq.m_Feature != null && races.Contains(prereq.m_Feature)) {
-                                        toPatch = true;
-                                        if (prereq.Group.Equals(Prerequisite.GroupType.All)) {
-                                            prereq.Group = Prerequisite.GroupType.Any;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        if (toPatch) {
-                            feature.AddComponent<PrerequisiteFeature>(c => {
-                                c.Group = Prerequisite.GroupType.Any;
-                                c.CheckInProgression = false;
-                                c.HideInUI = false;
-                                c.m_Feature = ourHeritage.ToReference<BlueprintFeatureReference>();
-                            });
-                        }
+        /// <summary>
+        /// True when the unit has the Crossbreed heritage and so counts as every race for prerequisite purposes.
+        /// Null heritage means Isekai Heritages are disabled, in which case nothing changes.
+        /// </summary>
+        private static bool CountsAsAnyRace(UnitDescriptor unit) {
+            return ourHeritage != null && unit != null && unit.HasFact(ourHeritage);
+        }
 
-                    }
+        private static bool IsRace(BlueprintFeature feature) {
+            return feature is BlueprintRace;
+        }
+
+        /// <summary>
+        /// Race gates are expressed as a PrerequisiteFeature on the race blueprint. Treat them as met for Crossbreed.
+        /// Only the prerequisite result changes; the feat's other prerequisites still apply.
+        /// </summary>
+        [HarmonyPatch(typeof(PrerequisiteFeature), nameof(PrerequisiteFeature.CheckInternal))]
+        private static class PrerequisiteFeaturePatcher {
+            [HarmonyPostfix]
+            private static void Postfix(PrerequisiteFeature __instance, UnitDescriptor unit, ref bool __result) {
+                if (__result) return;
+                if (IsRace(__instance.Feature) && CountsAsAnyRace(unit)) {
+                    __result = true;
                 }
             }
+        }
 
+        /// <summary>
+        /// "One of these races" gates use PrerequisiteFeaturesFromList. Count every race entry as owned for Crossbreed
+        /// and re-evaluate against the required amount, so mixed lists keep their non-race requirements.
+        /// </summary>
+        [HarmonyPatch(typeof(PrerequisiteFeaturesFromList), nameof(PrerequisiteFeaturesFromList.CheckInternal))]
+        private static class PrerequisiteFeaturesFromListPatcher {
+            [HarmonyPostfix]
+            private static void Postfix(PrerequisiteFeaturesFromList __instance, UnitDescriptor unit, ref bool __result) {
+                if (__result) return;
+                if (!CountsAsAnyRace(unit)) return;
+                if (__instance.m_Features == null) return;
+                var features = __instance.m_Features.Select(reference => reference?.Get()).ToArray();
+                if (!features.Any(IsRace)) return;
+                int owned = features.Count(f => f != null && (IsRace(f) || unit.HasFact(f)));
+                if (owned >= __instance.Amount) {
+                    __result = true;
+                }
+            }
         }
     }
 }
