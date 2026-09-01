@@ -106,7 +106,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
         }
 
         public static BlueprintProgression GetEvilAlternate() {
-            if (prog != null) return prog;
+            if (progAlternate != null) return progAlternate;
             return BlueprintTools.GetModBlueprint<BlueprintProgression>(IsekaiContext, "ShifterEvilLegacy");
         }
     }
