@@ -85,6 +85,18 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
                 //bp.Group = FeatureGroup.BloodLine;
                 bp.m_AllFeatures = StaticReferences.SorcererBloodlineSelection.m_AllFeatures;
             });
+
+            foreach (string mythicSelectionId in new[] {
+                "ce85aee1726900641ab53ede61ac5c19", // Bloodline Ascendance
+                "3cf2ab2c320b73347a7c21cf0d0995bd"  // Second Bloodline
+            }) {
+                BlueprintTools.GetBlueprint<BlueprintFeatureSelection>(mythicSelectionId)
+                    .AddPrerequisite<PrerequisiteFeature>(c => {
+                        c.Group = Prerequisite.GroupType.Any;
+                        c.m_Feature = IsekaiBloodlineSelection.ToReference<BlueprintFeatureReference>();
+                    });
+            }
+
             IsekaiSorcererSelection = Helpers.CreateBlueprint<BlueprintFeatureSelection>(IsekaiContext, "IsekaiSorcererSelection", bp => {
                 bp.SetName(IsekaiContext, "Bloodline Evolution");
                 bp.SetDescription(IsekaiContext, "As your chimera blood evolves you can pick a new bloodline feat or a new bloodline.");
