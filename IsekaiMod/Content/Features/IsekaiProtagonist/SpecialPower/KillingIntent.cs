@@ -55,11 +55,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower {
                         OnlyFromCaster = true,
                     });
                     c.UnitMove = ActionFlow.DoNothing();
-                    c.Round = ActionFlow.DoSingle<ContextActionOnOwner>(c => {
-                        c.Actions = ActionFlow.DoSingle<ContextActionSpawnFx>(c => {
-                            c.PrefabLink = new PrefabLink() { AssetId = "d80d51c0a08f35140b10dd1526e540c4" };
-                        });
-                    });
+                    c.Round = ActionFlow.DoNothing();
                 });
             });
             var KillingIntentAreaBuff = TTCoreExtensions.CreateBuff($"KillingIntentAreaBuff", bp => {
