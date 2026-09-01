@@ -383,6 +383,14 @@ namespace IsekaiMod.Utilities {
             if (component is IncreaseSpellSpellbookDC cdc && cdc.m_Spellbooks != null && cdc.m_Spellbooks.Length > 0) {
                 cdc.m_Spellbooks = cdc.m_Spellbooks.AddRangeToArray(patchableSpellBooks);
             }
+            if (component is IncreaseSpellDamageByClassLevel spellDamage &&
+                spellDamage.m_CharacterClass != null &&
+                (spellDamage.m_CharacterClass.Equals(referenceClass) ||
+                 (spellDamage.m_AdditionalClasses?.Contains(referenceClass) ?? false)) &&
+                !(spellDamage.m_AdditionalClasses?.Contains(myClass) ?? false)) {
+                spellDamage.m_AdditionalClasses = (spellDamage.m_AdditionalClasses ?? Array.Empty<BlueprintCharacterClassReference>())
+                    .AddToArray(myClass);
+            }
             if (component is AddFeatureOnClassLevel addFeatureOnLevel) {
                 PatchClassIntoFeatureOfReferenceClass(addFeatureOnLevel.m_Feature.Get(), myClass, referenceClass, mylevel, loopPrevention);
                 if (addFeatureOnLevel.m_Class != null && addFeatureOnLevel.m_Class.Equals(referenceClass)) {
