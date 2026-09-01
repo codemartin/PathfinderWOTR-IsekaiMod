@@ -61,6 +61,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
                 PatchTools.PatchProgressionFeaturesBasedOnReferenceClass(prog, myClass, ClassTools.ClassReferences.ShifterClass);
 
                 progAlternate = PatchTools.PatchClassProgressionBasedOnRefClass(progAlternate, ClassTools.Classes.ShifterClass);
+                PatchTools.PatchProgressionFeaturesBasedOnReferenceClass(progAlternate, myClass, ClassTools.ClassReferences.ShifterClass);
 
 
                 LegacySelection.RegisterForFeat(prog);
