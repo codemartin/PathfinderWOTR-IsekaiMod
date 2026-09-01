@@ -1,11 +1,8 @@
 ﻿using IsekaiMod.Utilities;
+using IsekaiMod.Components;
 using Kingmaker.Blueprints.Classes;
-using Kingmaker.Blueprints.Classes.Spells;
-using Kingmaker.Designers.Mechanics.Facts;
 using Kingmaker.Enums;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
-using Kingmaker.UnitLogic.FactLogic;
-using Kingmaker.Utility;
 using TabletopTweaks.Core.Utilities;
 
 namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility {
@@ -28,15 +25,9 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility {
                     bp.SetDescription(IsekaiMod.Main.IsekaiContext, PerfectRollDesc);
                     bp.m_Icon = Icon_TrickFate;
 
-                    // Add ModifyD20 component for a +5 bonus
-                    bp.AddComponent<ModifyD20>(c => {
-                        c.Rule = RuleType.All; // Applies to all d20 rolls
-                        c.AddBonus = true; // Enable adding a bonus
-                        c.Bonus = new Kingmaker.UnitLogic.Mechanics.ContextValue() {
-                            ValueType = Kingmaker.UnitLogic.Mechanics.ContextValueType.Simple,
-                            Value = 5 // Flat +5 bonus
-                        };
-                        c.BonusDescriptor = ModifierDescriptor.UntypedStackable; // Untyped bonus, stacks with other bonuses
+                    bp.AddComponent<PerfectRollRuleBonus>(c => {
+                        c.Bonus = 5;
+                        c.Descriptor = ModifierDescriptor.UntypedStackable;
                     });
                 });
 
