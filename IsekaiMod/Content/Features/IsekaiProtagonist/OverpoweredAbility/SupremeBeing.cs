@@ -7,6 +7,8 @@ using TabletopTweaks.Core.Utilities;
 using UnityEngine;
 using static IsekaiMod.Main;
 using static UnityEngine.UI.GridLayoutGroup;
+using Kingmaker.Blueprints.JsonSystem;
+using Kingmaker.PubSubSystem;
 
 namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility {
 
@@ -90,9 +92,8 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility {
     }
 
     // Custom component for scaling bonuses
-    // Custom component for scaling bonuses
-    // Custom component for scaling bonuses
-    public class ScalingStatBonus : UnitFactComponentDelegate {
+    [TypeId("266621fe98b84fe28981d8c7aa0ebc6a")]
+    public class ScalingStatBonus : UnitFactComponentDelegate, IOwnerGainLevelHandler, IUnitSubscriber, ISubscriber {
         public StatType Stat;
         public int LevelDivisor = 1; // Divisor for character level scaling
         public int MythicMultiplier = 0; // Multiplier for mythic rank scaling
@@ -104,6 +105,11 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility {
 
         public override void OnDeactivate() {
             RemoveScalingBonus();
+        }
+
+        public void HandleUnitGainLevel() {
+            RemoveScalingBonus();
+            ApplyScalingBonus();
         }
 
         private void ApplyScalingBonus() {
