@@ -9,6 +9,7 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Prerequisites;
 using Kingmaker.Blueprints.Classes.Selection;
+using Kingmaker.Designers.Mechanics.Facts;
 using TabletopTweaks.Core.Utilities;
 using static IsekaiMod.Main;
 
@@ -47,6 +48,12 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
                 bp.UIGroups = new UIGroup[] {
                     Helpers.CreateUIGroup( ExtraSelection),
                 };
+            });
+            // Count Isekai levels as Sorcerer levels for prerequisites, as the builder-made legacies do.
+            prog.AddComponent<ClassLevelsForPrerequisites>(c => {
+                c.m_FakeClass = ClassTools.ClassReferences.SorcererClass;
+                c.m_ActualClass = IsekaiProtagonistClass.GetReference();
+                c.Modifier = 1.0;
             });
             LegacySelection.RegisterForFeat(prog);
             LegacySelection.Register(prog);
