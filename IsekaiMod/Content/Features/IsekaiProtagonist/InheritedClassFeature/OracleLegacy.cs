@@ -66,6 +66,8 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
             PatchTools.PatchClassIntoFeatureOfReferenceClass(FeatTools.Selections.OracleMysterySelection, myClass, refClass);
             PatchTools.PatchClassIntoFeatureOfReferenceClass(FeatTools.Selections.OracleRevelationSelection, myClass, refClass);
             PatchTools.PatchClassIntoFeatureOfReferenceClass(FeatTools.Selections.OracleCureOrInflictSelection, myClass, refClass);
+            // Beneficial Curse's no-penalty curse progressions advance on Oracle levels; let them advance on Isekai levels too.
+            PatchTools.PatchClassIntoFeatureOfReferenceClass(BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("2dda67424ee8e0b4d83ef01a73ca6bff"), myClass, refClass);
             prog.AddComponent<ClassLevelsForPrerequisites>(c => {
                 c.m_FakeClass = ClassTools.Classes.OracleClass.ToReference<BlueprintCharacterClassReference>();
                 c.m_ActualClass = IsekaiProtagonistClass.GetReference();
@@ -90,7 +92,12 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
                 bp.m_AllFeatures = FeatTools.Selections.OracleCurseSelection.m_AllFeatures;
             });
             MirroredSelections.Register(CurseSelection, FeatTools.Selections.OracleCurseSelection);
-            MirroredSelections.Register(CurseSelection, FeatTools.Selections.OracleCurseSelection);
+            // Beneficial Curse (mythic ability) requires the vanilla curse selection; accept the Isekai wrapper too.
+            BlueprintTools.GetBlueprint<BlueprintFeature>("2dda67424ee8e0b4d83ef01a73ca6bff")
+                .AddPrerequisite<PrerequisiteFeature>(c => {
+                    c.Group = Prerequisite.GroupType.Any;
+                    c.m_Feature = CurseSelection.ToReference<BlueprintFeatureReference>();
+                });
             var MysterySelection = Helpers.CreateBlueprint<BlueprintFeatureSelection>(IsekaiContext, "IsekaiOracleMysterySelection", bp => {
                 bp.SetName(IsekaiContext, "Divine Mystery");
                 bp.SetDescription(IsekaiContext, "Master another part of reality...");
