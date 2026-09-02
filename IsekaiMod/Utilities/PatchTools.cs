@@ -436,6 +436,11 @@ namespace IsekaiMod.Utilities {
             if (component is AddFeatureIfHasFact addIfFact) {
                 PatchClassIntoFeatureOfReferenceClass(addIfFact.m_Feature, myClass, referenceClass, mylevel, loopPrevention);
             }
+            if (component is AbilityVariants variants) {
+                foreach (BlueprintAbilityReference abilityReference in variants.m_Variants ?? Array.Empty<BlueprintAbilityReference>()) {
+                    PatchClassIntoFeatureOfReferenceClass(abilityReference?.Get(), myClass, referenceClass, mylevel, loopPrevention);
+                }
+            }
 
             try {
                 // check if component is add facts because features could also be added as facts rather than on level...
