@@ -172,6 +172,7 @@
     <Compile Include="Utilities\ActionFlow.cs" />
     <Compile Include="Utilities\DescriptionTools.cs" />
     <Compile Include="Utilities\ExtensionMethods.cs" />
+    <Compile Include="Utilities\LevelUpPerformanceDiagnostics.cs" />
     <Compile Include="Utilities\MirroredSelections.cs" />
     <Compile Include="Utilities\PatchTools.cs" />
     <Compile Include="Utilities\PortraitInjector.cs" />
