@@ -429,6 +429,22 @@ namespace IsekaiMod.Utilities {
                 spellDamage.m_AdditionalClasses = (spellDamage.m_AdditionalClasses ?? Array.Empty<BlueprintCharacterClassReference>())
                     .AddToArray(myClass);
             }
+            if (component is BindAbilitiesToClass bindAbilities) {
+                PatchPrimaryAndAdditionalClassFields(bindAbilities, "m_CharacterClass", "m_AdditionalClasses", myClass, referenceClass);
+            }
+            if (component is ReplaceCasterLevelOfAbility replaceCasterLevel) {
+                PatchPrimaryAndAdditionalClassFields(replaceCasterLevel, "m_Class", "m_AdditionalClasses", myClass, referenceClass);
+            }
+            if (component is AutoMetamagic autoMetamagic) {
+                PatchClassArrayField(autoMetamagic, "m_IncludeClasses", myClass, referenceClass);
+                PatchClassArrayField(autoMetamagic, "m_ExcludeClasses", myClass, referenceClass);
+            }
+            if (component is EnhancePotion enhancePotion) {
+                PatchClassArrayField(enhancePotion, "m_Classes", myClass, referenceClass);
+            }
+            if (component is AddStartingEquipment startingEquipment) {
+                PatchClassArrayField(startingEquipment, "m_RestrictedByClass", myClass, referenceClass);
+            }
             if (component is AddFeatureOnClassLevel addFeatureOnLevel) {
                 PatchClassIntoFeatureOfReferenceClass(addFeatureOnLevel.m_Feature.Get(), myClass, referenceClass, mylevel, loopPrevention);
                 if (addFeatureOnLevel.m_Class != null && addFeatureOnLevel.m_Class.Equals(referenceClass)) {
@@ -634,6 +650,36 @@ namespace IsekaiMod.Utilities {
                 && resource.m_MaxAmount.m_Class.Contains(referenceClass)
                 && !resource.m_MaxAmount.m_Class.Contains(myClass)) {
                 resource.m_MaxAmount.m_Class = resource.m_MaxAmount.m_Class.AddToArray(myClass);
+            }
+        }
+
+        private static void PatchPrimaryAndAdditionalClassFields(
+            object component,
+            string primaryFieldName,
+            string additionalFieldName,
+            BlueprintCharacterClassReference myClass,
+            BlueprintCharacterClassReference referenceClass) {
+            Traverse componentFields = Traverse.Create(component);
+            BlueprintCharacterClassReference primaryClass = componentFields.Field<BlueprintCharacterClassReference>(primaryFieldName).Value;
+            BlueprintCharacterClassReference[] additionalClasses = componentFields.Field<BlueprintCharacterClassReference[]>(additionalFieldName).Value
+                ?? Array.Empty<BlueprintCharacterClassReference>();
+
+            if ((primaryClass?.Equals(referenceClass) ?? false) || additionalClasses.Contains(referenceClass)) {
+                if (!additionalClasses.Contains(myClass)) {
+                    componentFields.Field<BlueprintCharacterClassReference[]>(additionalFieldName).Value = additionalClasses.AddToArray(myClass);
+                }
+            }
+        }
+
+        private static void PatchClassArrayField(
+            object component,
+            string fieldName,
+            BlueprintCharacterClassReference myClass,
+            BlueprintCharacterClassReference referenceClass) {
+            Traverse<BlueprintCharacterClassReference[]> field = Traverse.Create(component).Field<BlueprintCharacterClassReference[]>(fieldName);
+            BlueprintCharacterClassReference[] classes = field.Value ?? Array.Empty<BlueprintCharacterClassReference>();
+            if (classes.Contains(referenceClass) && !classes.Contains(myClass)) {
+                field.Value = classes.AddToArray(myClass);
             }
         }
 
