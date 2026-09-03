@@ -25,7 +25,9 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower {
                     c.m_Type = AbilityRankType.StatBonus;
                     c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
                 });
-                bp.ReapplyOnLevelUp = true;
+                // Context recalculation updates the character-level rank without
+                // removing and recreating the physical damage resistance fact.
+                bp.ReapplyOnLevelUp = false;
             });
 
             SpecialPowerSelection.AddToSelection(BodyStrengthening);
