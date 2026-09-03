@@ -23,7 +23,9 @@ namespace IsekaiMod.Content.Heritages {
 
 
                 bp.Groups = new FeatureGroup[0];
-                bp.ReapplyOnLevelUp = true;
+                // This marker has no fact components to rebuild. Reapplying it
+                // during every level-up refresh only churns an empty feature.
+                bp.ReapplyOnLevelUp = false;
             });
 
             HumanHeritageSelection.Register(ourHeritage);
