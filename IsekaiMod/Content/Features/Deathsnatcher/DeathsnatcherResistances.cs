@@ -49,7 +49,9 @@ namespace IsekaiMod.Content.Features.Deathsnatcher {
                     c.m_StepLevel = 10;
                     c.m_Class = new BlueprintCharacterClassReference[] { DeathsnatcherClass.GetReference() };
                 });
-                bp.ReapplyOnLevelUp = true;
+                // The resistance reads a class-level context rank. Recalculate
+                // that context without rebuilding the resistance component.
+                bp.ReapplyOnLevelUp = false;
             });
         }
     }
