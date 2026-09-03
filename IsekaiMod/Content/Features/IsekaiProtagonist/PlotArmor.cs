@@ -43,7 +43,9 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist {
                     c.m_Type = AbilityRankType.StatBonus;
                     c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
                 });
-                bp.ReapplyOnLevelUp = true;
+                // Owlcat recalculates the feature context on level-up when this
+                // is false, which updates the rank without rebuilding four modifiers.
+                bp.ReapplyOnLevelUp = false;
             });
         }
     }
