@@ -15,6 +15,21 @@ Compared archive: `Alpha-March-2026-734-Alpha-Testing-1774207281-1.zip`
 
 The March binary contains bloodline, oracle, shaman, and witch legacy helpers that are already represented in the maintained implementation. Its versions do not contain additional active features that should replace the maintained versions.
 
+### Isekai-only story interactions
+
+All custom answers created through `TTCoreExtensions.CreateAnswer()` receive a `PlayerSignificantClassIs` condition for the Isekai Protagonist class. The maintained source and March binary contain the same eight registered interaction modules:
+
+- Hulrun at the Kenabres festival: provides the reincarnation/amnesia response, starts the vanilla `DontRemember` etude, and continues through the corresponding vanilla cue.
+- Radiance in the Shield Maze: provides the sword-threat response and jumps to the vanilla Radiance upgrade cue early.
+- Kaylessa's drow ambush: provides an Isekai-specific attack response to the ambush and continues to the vanilla attack cue.
+- Horgus in the Shield Maze: negotiates the reward to 2,000 gold, grants CR 2 skill-check experience, and makes the answer mutually exclusive with the vanilla 2,000-gold response.
+- Minagho in the Gray Garrison: adds the insult followed by reaction cues from Irabeth, Camellia, and Seelah before returning to the vanilla dialogue.
+- Anevia and Irabeth at Defender's Heart: adds the three-stage sequence containing the Bluff DC 36 check and the `IrabethConfidence` flag change described below.
+- Finnean: adds a one-time response asking him to transform into something cooler, without a gameplay-state change.
+- The Nameless Ruins statue in Nenio's quest: adds six Isekai identity answers that converge on the vanilla `BeholdTheTruth` cue.
+
+No other custom dialogue skill check exists in these modules. The Kaylessa ambush response is the likely source of references to an Isekai reaction to a trap or ambush.
+
 ## Dormant prototypes
 
 ### Demon Lord heritage
