@@ -18,11 +18,8 @@ using Kingmaker.UnitLogic.Mechanics.Properties;
 using Kingmaker.UnitLogic.Parts;
 using Kingmaker.Utility;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.CompilerServices;
 using TabletopTweaks.Core.Utilities;
 using static IsekaiMod.Main;
 
@@ -190,9 +187,6 @@ namespace IsekaiMod.Utilities {
         }
 
         private const int MaxPatchTraversalDepth = 256;
-        private const int MaxComponentObjectDepth = 16;
-        private static readonly Dictionary<Type, FieldInfo[]> TraversableFieldCache = new();
-        private static readonly Dictionary<Type, bool> PatchableReferenceTypeCache = new();
 
         public static void PatchClassIntoFeatureOfReferenceClass(BlueprintFact feature, BlueprintCharacterClassReference myClass, BlueprintCharacterClassReference referenceClass, int level = 0, HashSet<BlueprintFact> loopPrevention = null) {
             loopPrevention ??= new();
@@ -225,7 +219,6 @@ namespace IsekaiMod.Utilities {
                     HashSet<SpellReference> mySpellSet = new HashSet<SpellReference>();
                     List<SpontaneousSpellConversion> conversions = new List<SpontaneousSpellConversion>();
                     List<CannyDefensePermanent> cannyDefenses = new List<CannyDefensePermanent>();
-                    HashSet<object> visitedComponentObjects = new HashSet<object>(ReferenceObjectComparer.Instance);
                     for (int componentIndex = 0; componentIndex < feature.ComponentsArray.Length; componentIndex++) {
                         BlueprintComponent component = feature.ComponentsArray[componentIndex];
                         if (component == null) continue;
@@ -273,7 +266,7 @@ namespace IsekaiMod.Utilities {
                             summonDurationByClasses.m_CharacterClasses = summonDurationByClasses.m_CharacterClasses.AddToArray(myClass);
                         }
                         //check if component is addSpell or addFeat
-                        HandleComponent(feature.AssetGuid, myClass, referenceClass, mylevel, mySpellSet, component, loopPrevention, visitedComponentObjects);
+                        HandleComponent(feature.AssetGuid, myClass, referenceClass, mylevel, mySpellSet, component, loopPrevention);
                         if (component is ContextRankConfig rankConfig && (
                             rankConfig.m_BaseValueType == ContextRankBaseValueType.ClassLevel ||
                             rankConfig.m_BaseValueType == ContextRankBaseValueType.MaxClassLevelWithArchetype ||
@@ -383,7 +376,7 @@ namespace IsekaiMod.Utilities {
             }
         }
 
-        private static void HandleComponent(BlueprintGuid featureGuid, BlueprintCharacterClassReference myClass, BlueprintCharacterClassReference referenceClass, int level, HashSet<SpellReference> mySpellSet, BlueprintComponent component, HashSet<BlueprintFact> loopPrevention, HashSet<object> visitedComponentObjects) {
+        private static void HandleComponent(BlueprintGuid featureGuid, BlueprintCharacterClassReference myClass, BlueprintCharacterClassReference referenceClass, int level, HashSet<SpellReference> mySpellSet, BlueprintComponent component, HashSet<BlueprintFact> loopPrevention) {
             var mylevel = level + 1;
             if (mylevel > MaxPatchTraversalDepth) {
                 IsekaiContext.Logger.LogError($"stopped patching components for feature={featureGuid} after exceeding traversal depth {MaxPatchTraversalDepth}");
@@ -480,130 +473,34 @@ namespace IsekaiMod.Utilities {
             if (component is AddAbilityResources addResource) {
                 BlueprintAbilityResourceReference resRef = addResource.m_Resource;
                 if (resRef != null) {
-                    PatchResourceBasedOnReferenceClass(resRef.Get(), myClass, referenceClass);
+                    BlueprintAbilityResource res = resRef.Get();
+                    bool classlocked = false;
+                    bool alreadyPatched = false;
+                    if (res.m_MaxAmount.m_ClassDiv != null && res.m_MaxAmount.m_ClassDiv.Length > 0) {
+                        if (res.m_MaxAmount.m_ClassDiv.Contains(referenceClass)) {
+                            classlocked = true;
+                        }
+                        if (res.m_MaxAmount.m_ClassDiv.Contains(myClass)) {
+                            alreadyPatched = true;
+                        }
+                        if (classlocked && !alreadyPatched) {
+                            res.m_MaxAmount.m_ClassDiv = res.m_MaxAmount.m_ClassDiv.AddToArray(myClass);
+                            //Main.Log("class resource patched= " + resRef.Guid);
+                        }
+                    }
+                    if (!classlocked && res.m_MaxAmount.m_Class != null && res.m_MaxAmount.m_Class.Length > 0) {
+                        if (res.m_MaxAmount.m_Class.Contains(referenceClass)) {
+                            classlocked = true;
+                        }
+                        if (res.m_MaxAmount.m_Class.Contains(myClass)) {
+                            alreadyPatched = true;
+                        }
+                        if (classlocked && !alreadyPatched) {
+                            res.m_MaxAmount.m_Class = res.m_MaxAmount.m_Class.AddToArray(myClass);
+                            //Main.Log("class resource patched= " + resRef.Guid);
+                        }
+                    }
                 }
-            }
-
-            PatchNestedBlueprintReferences(
-                component,
-                myClass,
-                referenceClass,
-                mylevel,
-                loopPrevention,
-                0,
-                visitedComponentObjects);
-        }
-
-        private static void PatchNestedBlueprintReferences(
-            object value,
-            BlueprintCharacterClassReference myClass,
-            BlueprintCharacterClassReference referenceClass,
-            int level,
-            HashSet<BlueprintFact> loopPrevention,
-            int objectDepth,
-            HashSet<object> visitedObjects) {
-            if (value == null || objectDepth > MaxComponentObjectDepth) return;
-
-            if (value is BlueprintReferenceBase blueprintReference) {
-                if (!IsPatchableBlueprintReference(blueprintReference.GetType())) return;
-
-                SimpleBlueprint referencedBlueprint = blueprintReference.GetBlueprint();
-                if (referencedBlueprint is BlueprintFact nestedFact) {
-                    PatchClassIntoFeatureOfReferenceClass(nestedFact, myClass, referenceClass, level, loopPrevention);
-                } else if (referencedBlueprint is BlueprintAbilityResource resource) {
-                    PatchResourceBasedOnReferenceClass(resource, myClass, referenceClass);
-                } else if (referencedBlueprint is BlueprintUnitProperty property) {
-                    PatchUnitProperty(property, myClass, referenceClass);
-                }
-                return;
-            }
-
-            if (value is SimpleBlueprint || value is string || value is Delegate || value is Type) return;
-
-            Type valueType = value.GetType();
-            if (valueType.IsPrimitive || valueType.IsEnum || valueType == typeof(decimal)) return;
-
-            if (!valueType.IsValueType && !visitedObjects.Add(value)) return;
-
-            if (value is IEnumerable enumerable) {
-                foreach (object item in enumerable) {
-                    PatchNestedBlueprintReferences(item, myClass, referenceClass, level, loopPrevention, objectDepth + 1, visitedObjects);
-                }
-                return;
-            }
-
-            foreach (FieldInfo field in GetTraversableFields(valueType)) {
-                object fieldValue;
-                try {
-                    fieldValue = field.GetValue(value);
-                } catch (Exception) {
-                    continue;
-                }
-                PatchNestedBlueprintReferences(fieldValue, myClass, referenceClass, level, loopPrevention, objectDepth + 1, visitedObjects);
-            }
-        }
-
-        private static bool IsPatchableBlueprintReference(Type referenceType) {
-            if (PatchableReferenceTypeCache.TryGetValue(referenceType, out bool isPatchable)) return isPatchable;
-
-            Type currentType = referenceType;
-            while (currentType != null && currentType != typeof(object)) {
-                if (currentType.IsGenericType && currentType.GetGenericTypeDefinition() == typeof(BlueprintReference<>)) {
-                    Type blueprintType = currentType.GetGenericArguments()[0];
-                    isPatchable = typeof(BlueprintFact).IsAssignableFrom(blueprintType)
-                        || typeof(BlueprintAbilityResource).IsAssignableFrom(blueprintType)
-                        || typeof(BlueprintUnitProperty).IsAssignableFrom(blueprintType);
-                    break;
-                }
-                currentType = currentType.BaseType;
-            }
-
-            PatchableReferenceTypeCache[referenceType] = isPatchable;
-            return isPatchable;
-        }
-
-        private static FieldInfo[] GetTraversableFields(Type valueType) {
-            if (TraversableFieldCache.TryGetValue(valueType, out FieldInfo[] cachedFields)) return cachedFields;
-
-            List<FieldInfo> fields = new();
-            for (Type currentType = valueType; currentType != null && currentType != typeof(object); currentType = currentType.BaseType) {
-                fields.AddRange(currentType.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly)
-                    .Where(field => !field.IsStatic && !field.IsNotSerialized));
-            }
-
-            cachedFields = fields.ToArray();
-            TraversableFieldCache[valueType] = cachedFields;
-            return cachedFields;
-        }
-
-        private static void PatchResourceBasedOnReferenceClass(
-            BlueprintAbilityResource resource,
-            BlueprintCharacterClassReference myClass,
-            BlueprintCharacterClassReference referenceClass) {
-            if (resource == null) return;
-
-            if (resource.m_MaxAmount.m_ClassDiv != null
-                && resource.m_MaxAmount.m_ClassDiv.Contains(referenceClass)
-                && !resource.m_MaxAmount.m_ClassDiv.Contains(myClass)) {
-                resource.m_MaxAmount.m_ClassDiv = resource.m_MaxAmount.m_ClassDiv.AddToArray(myClass);
-            }
-
-            if (resource.m_MaxAmount.m_Class != null
-                && resource.m_MaxAmount.m_Class.Contains(referenceClass)
-                && !resource.m_MaxAmount.m_Class.Contains(myClass)) {
-                resource.m_MaxAmount.m_Class = resource.m_MaxAmount.m_Class.AddToArray(myClass);
-            }
-        }
-
-        private sealed class ReferenceObjectComparer : IEqualityComparer<object> {
-            public static readonly ReferenceObjectComparer Instance = new();
-
-            public new bool Equals(object left, object right) {
-                return ReferenceEquals(left, right);
-            }
-
-            public int GetHashCode(object value) {
-                return RuntimeHelpers.GetHashCode(value);
             }
         }
 
