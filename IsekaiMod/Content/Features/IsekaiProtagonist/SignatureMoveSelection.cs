@@ -43,7 +43,9 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist {
                     c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
                     c.m_Progression = ContextRankProgression.OnePlusDiv2;
                 });
-                bp.ReapplyOnLevelUp = true;
+                // Recalculate the shared rank context without rebuilding the
+                // attack and damage modifiers on every preview refresh.
+                bp.ReapplyOnLevelUp = false;
             });
             var SignatureAbility = Helpers.CreateBlueprint<BlueprintFeature>(IsekaiContext, "SignatureAbility", bp => {
                 bp.SetName(IsekaiContext, "Signature Ability");
@@ -62,7 +64,9 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist {
                     c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
                     c.m_Progression = ContextRankProgression.OnePlusDiv2;
                 });
-                bp.ReapplyOnLevelUp = true;
+                // Both spell bonuses read the recalculated rank context. They do
+                // not grant nested facts that require a full feature reapply.
+                bp.ReapplyOnLevelUp = false;
             });
             var SignatureStrike = Helpers.CreateBlueprint<BlueprintFeature>(IsekaiContext, "SignatureStrike", bp => {
                 bp.SetName(IsekaiContext, "Signature Strike");
