@@ -49,7 +49,9 @@ namespace IsekaiMod.Content.Heritages {
                 });
 
                 bp.Groups = new FeatureGroup[0];
-                bp.ReapplyOnLevelUp = true;
+                // Every modifier is a fixed +2. Context recalculation is enough;
+                // removing and rebuilding all six modifiers adds level-up churn.
+                bp.ReapplyOnLevelUp = false;
             });
 
             HumanHeritageSelection.Register(ourHeritage);
