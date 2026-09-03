@@ -23,11 +23,11 @@ The March binary contains bloodline, oracle, shaman, and witch legacy helpers th
 
 Status: acknowledged but not enabled. Enabling it without finishing its identity, charm ability, and blueprint configuration would expose incomplete content.
 
-### Hidden Power dialogue
+### Hidden Power dialogue duplicate
 
-`HiddenPower.Add()` is empty. Three private dialogue-building methods are present but never called. They alter Anevia and Irabeth dialogue and can change the `IrabethConfidence` story flag. The recovered code also contains reply-key reuse that needs review before registration.
+`HiddenPower.Add()` is empty, and its three private dialogue-building methods are never called. However, the same implementation is active under `IsekaiAneviaIrabethHarem.Add()` and is registered by `ContentAdder.AddIsekaiDialogue()`. The active sequence adds an Anevia answer, unlocks an Irabeth answer after selecting it, performs a Bluff DC 36 check with large experience, and adds a final Anevia answer after the successful Irabeth cue. The final cue increments the vanilla `IrabethConfidence` story flag by one.
 
-Status: acknowledged but not enabled. It needs a dialogue-path and story-state audit before it can be offered safely.
+Status: feature accounted for and enabled by the `Isekai Dialogue` setting. The unused `HiddenPower` class is a duplicate prototype, not missing content. The story-flag mutation remains a compatibility risk and should be tested through the Defender's Heart dialogue sequence before release.
 
 ## Package defects not imported
 
