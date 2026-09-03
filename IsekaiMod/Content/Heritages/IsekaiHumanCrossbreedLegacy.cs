@@ -4,7 +4,6 @@ using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Prerequisites;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Class.LevelUp;
-using System.Linq;
 using TabletopTweaks.Core.Utilities;
 using static IsekaiMod.Main;
 
@@ -67,11 +66,27 @@ namespace IsekaiMod.Content.Heritages {
             [HarmonyPostfix]
             private static void Postfix(PrerequisiteFeaturesFromList __instance, UnitDescriptor unit, ref bool __result) {
                 if (__result) return;
-                if (!CountsAsAnyRace(unit)) return;
                 if (__instance.m_Features == null) return;
-                var features = __instance.m_Features.Select(reference => reference?.Get()).ToArray();
-                if (!features.Any(IsRace)) return;
-                int owned = features.Count(f => f != null && (IsRace(f) || unit.HasFact(f)));
+
+                bool hasRace = false;
+                foreach (var reference in __instance.m_Features) {
+                    if (IsRace(reference?.Get())) {
+                        hasRace = true;
+                        break;
+                    }
+                }
+
+                // Most failed feature-list checks are unrelated to race. Do not
+                // query the Crossbreed marker or allocate a resolved array for them.
+                if (!hasRace || !CountsAsAnyRace(unit)) return;
+
+                int owned = 0;
+                foreach (var reference in __instance.m_Features) {
+                    var feature = reference?.Get();
+                    if (feature != null && (IsRace(feature) || unit.HasFact(feature))) {
+                        owned++;
+                    }
+                }
                 if (owned >= __instance.Amount) {
                     __result = true;
                 }
