@@ -9,6 +9,7 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Prerequisites;
 using Kingmaker.Blueprints.Classes.Selection;
+using Kingmaker.UnitLogic.Buffs.Blueprints;
 using TabletopTweaks.Core.Utilities;
 using static IsekaiMod.Main;
 
@@ -77,12 +78,43 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
 
                 BlueprintCharacterClassReference myClass = IsekaiProtagonistClass.GetReference();
                 PatchTools.PatchProgressionFeaturesBasedOnReferenceClass(prog, myClass, ClassTools.ClassReferences.BloodragerClass);
+                PatchBloodragerResistanceBuffs(myClass);
 
                 prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = SorcererLegacy.Get().ToReference<BlueprintFeatureReference>(); });
                 prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = BarbarianLegacy.Get().ToReference<BlueprintFeatureReference>(); });
                 prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = SkaldBaseLegacy.Get().ToReference<BlueprintFeatureReference>(); });
                 prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = SkaldVoiceLegacy.Get().ToReference<BlueprintFeatureReference>(); });
                 prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = SkaldSilverTongueLegacy.Get().ToReference<BlueprintFeatureReference>(); });
+            }
+        }
+
+        private static void PatchBloodragerResistanceBuffs(BlueprintCharacterClassReference myClass) {
+            // Bloodline resistance features apply separate buffs during Bloodrage. Those buffs are
+            // not children of the bloodline progressions, so the normal inherited-feature traversal
+            // cannot find their Bloodrager-only ContextRankConfig components.
+            string[] resistanceBuffGuids = {
+                "982a14da9e8a4714a739e45111a1ae5a", // BloodragerAberrantResistanceBuff
+                "f2ad59f72a9544738a20dfb4e3d34ddd", // BloodragerAbyssalResistanceBuff
+                "f1ceaeea9311e0f4884f069ebfa00b3b", // BloodragerCelestialResistancesBuff
+                "89ac2964ef12ddb468d5c3ade461eb68", // BloodragerDraconicResistanceACBuff
+                "2ac2345547bf3674e931d2b87ebc555d", // BloodragerDraconicResistanceBuffAcid
+                "87282f7914eea69498fa8513108cd573", // BloodragerDraconicResistanceBuffCold
+                "d70a60fa4ae9b3245b86da2ef2b618d1", // BloodragerDraconicResistanceBuffElectricity
+                "54d7b792a931f20459bb983a063aa534", // BloodragerDraconicResistanceBuffFire
+                "641d5bdb776d58548ae889102a2d330c", // BloodragerElementalAcidResistanceBuff
+                "f8a35d21218171f43ab36deaf4c5c441", // BloodragerElementalColdResistanceBuff
+                "2892fe41538768141b5838e4a9fecfa0", // BloodragerElementalElectricityResistanceBuff
+                "bd823e94454ab7f4599f846ca4a3bec1", // BloodragerElementalFireResistanceBuff
+                "66c973ccad1293345ae6c5bfeced4a7b", // BloodragerInfernalResistanceBuff
+                "ef2d9784fcd404d4f9bd97840541b2e5" // BloodragerSerpentineResistanesBuff
+            };
+
+            foreach (string buffGuid in resistanceBuffGuids) {
+                BlueprintBuff resistanceBuff = BlueprintTools.GetBlueprint<BlueprintBuff>(buffGuid);
+                PatchTools.PatchClassIntoFeatureOfReferenceClass(
+                    resistanceBuff,
+                    myClass,
+                    ClassTools.ClassReferences.BloodragerClass);
             }
         }
 
