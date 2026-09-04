@@ -442,9 +442,6 @@ namespace IsekaiMod.Utilities {
             if (component is EnhancePotion enhancePotion) {
                 PatchClassArrayField(enhancePotion, "m_Classes", myClass, referenceClass);
             }
-            if (component is AddStartingEquipment startingEquipment) {
-                PatchClassArrayField(startingEquipment, "m_RestrictedByClass", myClass, referenceClass);
-            }
             if (component is AddFeatureOnClassLevel addFeatureOnLevel) {
                 PatchClassIntoFeatureOfReferenceClass(addFeatureOnLevel.m_Feature.Get(), myClass, referenceClass, mylevel, loopPrevention);
                 if (addFeatureOnLevel.m_Class != null && addFeatureOnLevel.m_Class.Equals(referenceClass)) {
