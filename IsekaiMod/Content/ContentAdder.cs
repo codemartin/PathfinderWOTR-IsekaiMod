@@ -326,6 +326,7 @@ namespace IsekaiMod.Content {
         }
 
         private static void PatchIsekaiProtagonist() {
+            var patchTimer = System.Diagnostics.Stopwatch.StartNew();
             LegacySelection.ConfigureStep3();
             PrebuildIsekaiProtagonistFeatureList.PatchLegacySelection();
 
@@ -340,6 +341,8 @@ namespace IsekaiMod.Content {
             MastermindSpellList.PatchMastermindSpellList();
 
             if (ModSupport.IsTableTopTweakBaseEnabled) PatchTableTopTweakCore();
+            patchTimer.Stop();
+            IsekaiContext.Logger.Log($"Isekai protagonist post-load patches completed in {patchTimer.ElapsedMilliseconds} ms");
         }
 
         private static void PatchTableTopTweakCore() {
