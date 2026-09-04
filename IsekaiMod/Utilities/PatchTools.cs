@@ -548,8 +548,15 @@ namespace IsekaiMod.Utilities {
                 if (!IsPatchableBlueprintReference(blueprintReference.GetType())) return;
 
                 SimpleBlueprint referencedBlueprint = blueprintReference.GetBlueprint();
-                if (referencedBlueprint is BlueprintFact nestedFact) {
-                    PatchClassIntoFeatureOfReferenceClass(nestedFact, myClass, referenceClass, level, loopPrevention);
+                // Only follow runtime ability and buff facts discovered through reflected
+                // mechanics containers. Following feature, selection, or progression
+                // references here can expand into entire class and bloodline graphs.
+                // Known feature-bearing components are handled explicitly in
+                // HandleComponent above.
+                if (referencedBlueprint is BlueprintAbility nestedAbility) {
+                    PatchClassIntoFeatureOfReferenceClass(nestedAbility, myClass, referenceClass, level, loopPrevention);
+                } else if (referencedBlueprint is BlueprintBuff nestedBuff) {
+                    PatchClassIntoFeatureOfReferenceClass(nestedBuff, myClass, referenceClass, level, loopPrevention);
                 } else if (referencedBlueprint is BlueprintAbilityResource resource) {
                     PatchResourceBasedOnReferenceClass(resource, myClass, referenceClass);
                 } else if (referencedBlueprint is BlueprintUnitProperty property) {
