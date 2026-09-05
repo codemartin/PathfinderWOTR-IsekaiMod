@@ -74,6 +74,29 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist {
         }
 
         /// <summary>
+        /// Mirrors LearnSpellList.LearnList for an inherited class. The original method exits before
+        /// granting anything when the unit has no levels in its configured source class.
+        /// </summary>
+        [HarmonyPatch(typeof(LearnSpellList), "LearnList")]
+        private static class LearnSpellListPatcher {
+            [HarmonyPrefix]
+            private static bool Prefix(LearnSpellList __instance) {
+                if (!TryGetSpellbook(__instance.Owner?.Descriptor, __instance.CharacterClass, out Spellbook spellbook)) return true;
+                if (__instance.SpellList == null) return false;
+
+                foreach (var spellLevel in __instance.SpellList.SpellsByLevel) {
+                    if (spellLevel == null || spellLevel.SpellLevel > spellbook.MaxSpellLevel) continue;
+                    foreach (BlueprintAbility spell in spellLevel.SpellsFiltered) {
+                        if (spell == null) continue;
+                        if (spellbook.GetKnownSpells(spellLevel.SpellLevel).Any(known => known.Blueprint == spell)) continue;
+                        spellbook.AddKnown(spellLevel.SpellLevel, spell, true);
+                    }
+                }
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Mirrors LearnSpellParametrized.OnActivate, with the spellbook resolved through the redirect.
         /// </summary>
         [HarmonyPatch(typeof(LearnSpellParametrized), "OnActivate")]
