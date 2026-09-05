@@ -49,6 +49,31 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist {
         }
 
         /// <summary>
+        /// PatchTools adds an equivalent spontaneous-conversion component for the Isekai class.
+        /// Suppress the original source-class component when the unit has no levels in that class so
+        /// its unconditional DemandSpellbook calls cannot leave an empty spellbook in the UI.
+        /// </summary>
+        private static bool ShouldRunSourceConversion(SpontaneousSpellConversion instance) {
+            return !TryGetSpellbook(instance.Owner?.Descriptor, instance.CharacterClass, out _);
+        }
+
+        [HarmonyPatch(typeof(SpontaneousSpellConversion), "OnTurnOn")]
+        private static class SpontaneousSpellConversionTurnOnPatcher {
+            [HarmonyPrefix]
+            private static bool Prefix(SpontaneousSpellConversion __instance) {
+                return ShouldRunSourceConversion(__instance);
+            }
+        }
+
+        [HarmonyPatch(typeof(SpontaneousSpellConversion), "OnTurnOff")]
+        private static class SpontaneousSpellConversionTurnOffPatcher {
+            [HarmonyPrefix]
+            private static bool Prefix(SpontaneousSpellConversion __instance) {
+                return ShouldRunSourceConversion(__instance);
+            }
+        }
+
+        /// <summary>
         /// Mirrors LearnSpellParametrized.OnActivate, with the spellbook resolved through the redirect.
         /// </summary>
         [HarmonyPatch(typeof(LearnSpellParametrized), "OnActivate")]
