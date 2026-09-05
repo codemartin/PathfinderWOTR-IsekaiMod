@@ -36,6 +36,19 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist {
         }
 
         /// <summary>
+        /// PatchTools copies inherited special-list spells into the Isekai spellbook as known spells.
+        /// Suppress the original component for a class the unit does not own so its unconditional
+        /// DemandSpellbook call cannot leave an empty source-class spellbook in the character UI.
+        /// </summary>
+        [HarmonyPatch(typeof(AddSpecialSpellList), "OnActivate")]
+        private static class AddSpecialSpellListPatcher {
+            [HarmonyPrefix]
+            private static bool Prefix(AddSpecialSpellList __instance) {
+                return !TryGetSpellbook(__instance.Owner?.Descriptor, __instance.CharacterClass, out _);
+            }
+        }
+
+        /// <summary>
         /// Mirrors LearnSpellParametrized.OnActivate, with the spellbook resolved through the redirect.
         /// </summary>
         [HarmonyPatch(typeof(LearnSpellParametrized), "OnActivate")]
