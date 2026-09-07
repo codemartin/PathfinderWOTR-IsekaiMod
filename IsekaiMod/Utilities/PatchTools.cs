@@ -400,18 +400,6 @@ namespace IsekaiMod.Utilities {
                 IsekaiContext.Logger.LogError($"{featureGuid} component cast asSpell failed due to Nullpointer");
             }
 
-            try {
-                // we do not have a special spell list, so just add all such spells to spells known
-                if (component is AddSpecialSpellList asSpellList && asSpellList.m_CharacterClass.Equals(referenceClass)) {
-                    foreach (var level2 in asSpellList.SpellList.SpellsByLevel) {
-                        foreach (var spell in level2.m_Spells) {
-                            mySpellSet.Add(new SpellReference(level2.SpellLevel, spell));
-                        }
-                    }
-                }
-            } catch (NullReferenceException) {
-                IsekaiContext.Logger.LogError($"{featureGuid} component cast AddSpecialSpellList failed due to Nullpointer");
-            }
             if (component is AddAbilityUseTrigger trigger && trigger.m_Spellbooks != null && trigger.m_Spellbooks.Length > 0) {
                 trigger.m_Spellbooks = trigger.m_Spellbooks.AddRangeToArray(patchableSpellBooks);
             }
