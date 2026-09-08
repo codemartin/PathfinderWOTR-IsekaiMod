@@ -19,25 +19,31 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist {
         public static void Add() {
             var SeriousStrike = Helpers.CreateBlueprint<BlueprintFeature>(IsekaiContext, "SeriousStrike", bp => {
                 bp.SetName(IsekaiContext, "Serious Strike");
-                bp.SetDescription(IsekaiContext, "Enemies die in one hit.");
+                bp.SetDescription(IsekaiContext, "Your strikes always critically hit and deal double damage!");
                 bp.m_Icon = Icon_Hax;
-                bp.AddComponent<AddOutgoingDamageTrigger>(c => {
-                    c.Actions = ActionFlow.DoSingle<ContextActionKill>(c => {
-                        c.Dismember = UnitState.DismemberType.LimbsApart;
-                    });
-                });
+                // Beta 2025-12-19 description; the beta binary still used ContextActionKill.
+                // This implements what the description says instead of the one-hit kill.
+                bp.AddComponent<SeriousStrikeLogic>();
             });
             var Invincibility = Helpers.CreateBlueprint<BlueprintFeature>(IsekaiContext, "Invincibility", bp => {
                 bp.SetName(IsekaiContext, "Invincibility");
-                bp.SetDescription(IsekaiContext, "You cannot take damage.");
+                bp.SetDescription(IsekaiContext, "You have damage reduction 100/—.");
                 bp.m_Icon = Icon_Hax;
-                bp.AddComponent<CompleteDamageImmunity>();
+                // Beta 2025-12-19: DR 100/— instead of full damage immunity
+                bp.AddComponent<AddDamageResistancePhysical>(c => {
+                    c.Value = 100;
+                });
             });
             var FasterThanLight = Helpers.CreateBlueprint<BlueprintFeature>(IsekaiContext, "FasterThanLight", bp => {
-                bp.SetName(IsekaiContext, "Faster than Light");
-                bp.SetDescription(IsekaiContext, "Attacks always miss you.");
+                bp.SetName(IsekaiContext, "Super Speed");
+                bp.SetDescription(IsekaiContext, "Attacks have a 75% chance to automatically miss you.");
                 bp.m_Icon = Icon_Hax;
-                bp.AddComponent<SetAttackerAutoMiss>();
+                // Beta 2025-12-19: 75% miss chance instead of guaranteed auto-miss
+                bp.AddComponent<SetAttackerMissChance>(c => {
+                    c.m_Type = SetAttackerMissChance.Type.All;
+                    c.Value = 75;
+                    c.Conditions = ActionFlow.EmptyCondition();
+                });
             });
             var NoHax = Helpers.CreateBlueprint<BlueprintFeature>(IsekaiContext, "NoHax", bp => {
                 bp.SetName(IsekaiContext, "None");
@@ -46,37 +52,37 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist {
             });
             var Ascension = Helpers.CreateBlueprint<BlueprintFeature>(IsekaiContext, "Ascension", bp => {
                 bp.SetName(IsekaiContext, "Ascension");
-                bp.SetDescription(IsekaiContext, "You begin ascension to godhood, you are upgraded to Deity Status increasing all stats by 20.");
+                bp.SetDescription(IsekaiContext, "You begin ascension to godhood, you are upgraded to Deity Status increasing all stats by 15.");
                 bp.m_Icon = Icon_Hax;
                 bp.AddComponent<AddStatBonus>(c => {
                     c.Descriptor = ModifierDescriptor.Other;
                     c.Stat = StatType.Strength;
-                    c.Value = 20;
+                    c.Value = 15;
                 });
                 bp.AddComponent<AddStatBonus>(c => {
                     c.Descriptor = ModifierDescriptor.Other;
                     c.Stat = StatType.Dexterity;
-                    c.Value = 20;
+                    c.Value = 15;
                 });
                 bp.AddComponent<AddStatBonus>(c => {
                     c.Descriptor = ModifierDescriptor.Other;
                     c.Stat = StatType.Constitution;
-                    c.Value = 20;
+                    c.Value = 15;
                 });
                 bp.AddComponent<AddStatBonus>(c => {
                     c.Descriptor = ModifierDescriptor.Other;
                     c.Stat = StatType.Intelligence;
-                    c.Value = 20;
+                    c.Value = 15;
                 });
                 bp.AddComponent<AddStatBonus>(c => {
                     c.Descriptor = ModifierDescriptor.Other;
                     c.Stat = StatType.Wisdom;
-                    c.Value = 20;
+                    c.Value = 15;
                 });
                 bp.AddComponent<AddStatBonus>(c => {
                     c.Descriptor = ModifierDescriptor.Other;
                     c.Stat = StatType.Charisma;
-                    c.Value = 20;
+                    c.Value = 15;
                 });
             });
             var HaxSelection = Helpers.CreateBlueprint<BlueprintFeatureSelection>(IsekaiContext, "HaxSelection", bp => {

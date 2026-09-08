@@ -1,4 +1,4 @@
-{
+﻿{
   "OverrideIds": false,
   "NewBlueprints": {
     // Extra Wings
@@ -16,6 +16,9 @@
     "SuccubusCharmBuff": "ec986be4-7883-4d3e-9bdd-c9fde704bcae",
     "SuccubusCharmAbility": "0e19dd2f-5e66-4d6b-8a48-9f00c221698d",
     "IsekaiSuccubusHeritage": "cd4ffe35-6174-429c-9379-97a3eb1eee70",
+
+    // Isekai Demon Lord Heritage (beta 2025-12-19 port)
+    "IsekaiDemonLordHeritage": "5c33e4e3-c2e5-4ca8-940e-a8c583c372ef",
 
     // Isekai Angel Heritage
     "AngelicBoltUnitProperty": "d1fdf2bf-dc7f-44f4-a957-3b0ea98211f4",
@@ -44,8 +47,8 @@
     // Isekai Wood Elf Heritage
     "IsekaiWoodElfHeritage": "07b30d8c-2ae5-4580-8e59-998e5959abd3",
 
-    // Isekai Furry Heritage
-    "IsekaiFurryHeritage": "f7131b02-7a40-4eac-914f-05bbeaac9582",
+    // Isekai Kitsune Heritage (was IsekaiFurryHeritage, same GUID)
+    "IsekaiKitsuneHeritage": "f7131b02-7a40-4eac-914f-05bbeaac9582",
 
     // Deities
     "IsekaiDeitySelection": "d7a574be-5e91-4420-b859-9f0ff708fdcf",

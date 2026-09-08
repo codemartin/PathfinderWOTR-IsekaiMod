@@ -242,13 +242,14 @@ namespace IsekaiMod.Content {
                 // Add Heritages
                 Heritages.HumanHeritageSelection.CreateDummy();
                 Heritages.IsekaiSuccubusHeritage.Add();
+                Heritages.IsekaiDemonLordHeritage.Add();
                 Heritages.IsekaiAngelHeritage.Add();
                 Heritages.IsekaiVampireHeritage.Add();
                 Heritages.IsekaiSprigganHeritage.Add();
                 Heritages.IsekaiDarkElfHeritage.Add();
                 Heritages.IsekaiHighElfHeritage.Add();
                 Heritages.IsekaiWoodElfHeritage.Add();
-                Heritages.IsekaiFurryHeritage.Add();
+                Heritages.IsekaiKitsuneHeritage.Add();
 
                 Heritages.IsekaiHighHumanHeritage.Add();
                 Heritages.IsekaiHumanCrossbreedLegacy.Add();

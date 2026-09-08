@@ -12,17 +12,17 @@ using static IsekaiMod.Main;
 
 namespace IsekaiMod.Content.Heritages {
 
-    internal class IsekaiFurryHeritage {
+    internal class IsekaiKitsuneHeritage {
         private static readonly BlueprintFeature DestinyBeyondBirthMythicFeat = BlueprintTools.GetBlueprint<BlueprintFeature>("325f078c584318849bfe3da9ea245b9d");
 
         public static void Add() {
-            // Furry Heritage
+            // Kitsune Heritage (renamed from Furry in beta 2025-12-19; GUID unchanged)
             var Icon_Furry = AssetLoader.LoadInternal(IsekaiContext, "Heritages", "ICON_FURRY.png");
-            var IsekaiFurryHeritage = Helpers.CreateBlueprint<BlueprintFeature>(IsekaiContext, "IsekaiFurryHeritage", bp => {
-                bp.SetName(IsekaiContext, "Isekai Furry");
-                bp.SetDescription(IsekaiContext, "Otherworldly entities who are reincarnated into the world of Golarion as a Furry have both extreme beauty and power. "
-                    + "They are very furry.\n"
-                    + "The Isekai furry has a +4 racial {g|Encyclopedia:Bonus}bonus{/g} to {g|Encyclopedia:Dexterity}Dexterity{/g}, a +2 racial bonus to "
+            var IsekaiKitsuneHeritage = Helpers.CreateBlueprint<BlueprintFeature>(IsekaiContext, "IsekaiKitsuneHeritage", bp => {
+                bp.SetName(IsekaiContext, "Isekai Kitsune");
+                bp.SetDescription(IsekaiContext, "Otherworldly entities who are reincarnated into the world of Golarion as a Kitsune have both extreme beauty and power. "
+                    + "They are very clever and powerful as you are born partially divine.\n"
+                    + "The Isekai Kitsune has a +4 racial {g|Encyclopedia:Bonus}bonus{/g} to {g|Encyclopedia:Dexterity}Dexterity{/g}, a +2 racial bonus to "
                     + "{g|Encyclopedia:Intelligence}Intelligence{/g} and {g|Encyclopedia:Charisma}Charisma{/g}, and a -2 penalty to Strength. "
                     + "They have a +10 bonus to speed and have fast healing equal to their character level.");
                 bp.m_Icon = Icon_Furry;
@@ -72,7 +72,7 @@ namespace IsekaiMod.Content.Heritages {
                 bp.ReapplyOnLevelUp = true;
             });
 
-            FeatTools.Selections.KitsuneHeritageSelection.AddToSelection(IsekaiFurryHeritage);
+            FeatTools.Selections.KitsuneHeritageSelection.AddToSelection(IsekaiKitsuneHeritage);
         }
     }
 }

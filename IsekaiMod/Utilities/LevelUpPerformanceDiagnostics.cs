@@ -1,4 +1,4 @@
-using HarmonyLib;
+﻿using HarmonyLib;
 using Kingmaker.EntitySystem;
 using Kingmaker.UnitLogic;
 using System;
@@ -23,9 +23,10 @@ namespace IsekaiMod.Utilities {
             "IsekaiWoodElfHeritage",
             "IsekaiVampireHeritage",
             "IsekaiSuccubusHeritage",
+            "IsekaiDemonLordHeritage",
             "IsekaiHighElfHeritage",
             "IsekaiDarkElfHeritage",
-            "IsekaiFurryHeritage",
+            "IsekaiKitsuneHeritage",
             "DeathsnatcherFeature",
             "MightySummoningFeature",
             "MagicalSummoningFeature",

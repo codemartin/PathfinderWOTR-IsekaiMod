@@ -46,7 +46,7 @@ namespace IsekaiMod.Content.Heritages {
                 bp.OperationOnComponents = BlueprintUnitProperty.MathOperation.Sum;
             });
             var SuccubusCharmBuff = TTCoreExtensions.CreateBuff("SuccubusCharmBuff", bp => {
-                bp.SetName(IsekaiContext, "Succubus Charm");
+                bp.SetName(IsekaiContext, "Demonic Charm");
                 bp.SetDescription(IsekaiContext, "This creature is dominated, but may attempt a Will saving throw each round to end the effect.");
                 bp.m_Icon = Icon_Charm;
                 bp.AddComponent<ChangeFaction>(c => {
@@ -65,7 +65,7 @@ namespace IsekaiMod.Content.Heritages {
                 bp.Stacking = StackingType.Replace;
             });
             var SuccubusCharmAbility = Helpers.CreateBlueprint<BlueprintAbility>(IsekaiContext, "SuccubusCharmAbility", bp => {
-                bp.SetName(IsekaiContext, "Succubus Charm");
+                bp.SetName(IsekaiContext, "Demonic Charm");
                 bp.SetDescription(IsekaiContext, "You can make any creature fight on your side as if it was your ally. "
                     + "It will {g|Encyclopedia:Attack}attack{/g} your opponents to the best of its ability. "
                     + "However this creature will try to throw off the domination effect, making a {g|Encyclopedia:Saving_Throw}Will save{/g} each {g|Encyclopedia:Combat_Round}round{/g}.");
@@ -129,10 +129,10 @@ namespace IsekaiMod.Content.Heritages {
             // Succubus Heritage
             var Icon_Succubus = AssetLoader.LoadInternal(IsekaiContext, "Heritages", "ICON_SUCCUBUS.png");
             var IsekaiSuccubusHeritage = Helpers.CreateBlueprint<BlueprintFeature>(IsekaiContext, "IsekaiSuccubusHeritage", bp => {
-                bp.SetName(IsekaiContext, "Isekai Succubus");
-                bp.SetDescription(IsekaiContext, "Otherworldly entities who are reincarnated into the world of Golarion as a Succubus have both extreme beauty and power, and often "
+                bp.SetName(IsekaiContext, "Isekai Lust Demon");
+                bp.SetDescription(IsekaiContext, "Otherworldly entities who are reincarnated into the world of Golarion as a Lust Demon have both extreme beauty and power, and often "
                     + "have a voracious appetite for sensory pleasures and carnal delights.\n"
-                    + "The Isekai Succubus has a +2 racial {g|Encyclopedia:Bonus}bonus{/g} to {g|Encyclopedia:Dexterity}Dexterity{/g} and {g|Encyclopedia:Intelligence}Intelligence{/g}, "
+                    + "The Isekai Lust Demon has a +2 racial {g|Encyclopedia:Bonus}bonus{/g} to {g|Encyclopedia:Dexterity}Dexterity{/g} and {g|Encyclopedia:Intelligence}Intelligence{/g}, "
                     + "a +4 racial bonus to {g|Encyclopedia:Charisma}Charisma{/g}, "
                     + "a -2 {g|Encyclopedia:Penalty}penalty{/g} to {g|Encyclopedia:Strength}Strength{/g}, and a +2 racial bonus on {g|Encyclopedia:Persuasion}Persuasion{/g} and "
                     + "{g|Encyclopedia:Perception}Perception checks{/g}. "

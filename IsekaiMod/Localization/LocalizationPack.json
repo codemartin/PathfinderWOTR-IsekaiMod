@@ -1,4 +1,4 @@
-{
+﻿{
   "LocalizedStrings": [
     {
       "Key": "714b99be4cc74d8ea02500d4c7cffa4e",
@@ -4513,9 +4513,9 @@
     },
     {
       "Key": "62933e4e30574f1cb91d850678a64b6b",
-      "SimpleName": "IsekaiFurryHeritage.Description",
+      "SimpleName": "IsekaiKitsuneHeritage.Description",
       "ProcessTemplates": true,
-      "enGB": "Otherworldly entities who are reincarnated into the world of Golarion as a Furry have both extreme beauty and power. They are very furry.\nThe Isekai furry has a +4 racial {g|Encyclopedia:Bonus}bonus{/g} to {g|Encyclopedia:Dexterity}Dexterity{/g}, a +2 racial bonus to {g|Encyclopedia:Intelligence}Intelligence{/g} and {g|Encyclopedia:Charisma}Charisma{/g}, and a -2 penalty to Strength. They have a +10 bonus to speed and have fast healing equal to their character level.",
+      "enGB": "Otherworldly entities who are reincarnated into the world of Golarion as a Kitsune have both extreme beauty and power. They are very clever and powerful as you are born partially divine.\nThe Isekai Kitsune has a +4 racial {g|Encyclopedia:Bonus}bonus{/g} to {g|Encyclopedia:Dexterity}Dexterity{/g}, a +2 racial bonus to {g|Encyclopedia:Intelligence}Intelligence{/g} and {g|Encyclopedia:Charisma}Charisma{/g}, and a -2 penalty to Strength. They have a +10 bonus to speed and have fast healing equal to their character level.",
       "ruRU": "Иномирные существа, реинкарнировавшие в мире Голариона в виде фурри, обладают исключительной красотой и мощью. Они очень пушистые. \nИсекайские фурри получают расовый бонус +4 к ловкости, бонус +2 к интеллекту и харизме, и штраф -2 к силе. У них есть бонус +10 к скорости и быстрое исцеление, равное уровню персонажа.",
       "deDE": "Überirdische Wesen, die als Furry in die Welt von Golarion reinkarniert wurden, besitzen extreme Schönheit und Kraft. Sie sind sehr pelzig. Die Isekai-Furry hat einen +4 Rassenbonus auf Geschicklichkeit, einen +2 Rassenbonus auf Intelligenz und Charisma und einen -2 Malus auf Stärke. Sie hat einen +10 Bonus auf Geschwindigkeit und hat schnelle Heilung, die ihrem Charakterlevel entspricht.",
       "frFR": "Les entités d'un autre monde qui se réincarnent dans le monde de Golarion en tant que Furry ont à la fois une beauté et un pouvoir extrême. Ils sont très fourreux. Les Furries Isekai ont un bonus racial de +4 à la dextérité, un bonus racial de +2 à l'intelligence et au charisme, et une pénalité de -2 à la force. Ils ont un bonus de vitesse de +10 et une guérison accélérée égale à leur niveau de personnage.",
@@ -4524,9 +4524,9 @@
     },
     {
       "Key": "30efa58f5239448bba86fd03bf18927c",
-      "SimpleName": "IsekaiFurryHeritage.Name",
+      "SimpleName": "IsekaiKitsuneHeritage.Name",
       "ProcessTemplates": false,
-      "enGB": "Isekai Furry",
+      "enGB": "Isekai Kitsune",
       "ruRU": "Исекай Фурри",
       "deDE": "Isekai Furry",
       "frFR": "Furry Isekai",
@@ -5043,7 +5043,7 @@
       "Key": "8acb3f0b39cd4cd588c1d07a601de94a",
       "SimpleName": "IsekaiSuccubusHeritage.Description",
       "ProcessTemplates": true,
-      "enGB": "Otherworldly entities who are reincarnated into the world of Golarion as a Succubus have both extreme beauty and power, and often have a voracious appetite for sensory pleasures and carnal delights.\nThe Isekai Succubus has a +2 racial {g|Encyclopedia:Bonus}bonus{/g} to {g|Encyclopedia:Dexterity}Dexterity{/g} and {g|Encyclopedia:Intelligence}Intelligence{/g}, a +4 racial bonus to {g|Encyclopedia:Charisma}Charisma{/g}, a -2 {g|Encyclopedia:Penalty}penalty{/g} to {g|Encyclopedia:Strength}Strength{/g}, and a +2 racial bonus on {g|Encyclopedia:Persuasion}Persuasion{/g} and {g|Encyclopedia:Perception}Perception checks{/g}. They have DR 10/Cold Iron or Good, and have spell resistance equal to 10 + their character level. They have immunity to fire, electricity, and poisons as well as acid and cold resistance 20. They can also use the Charm spell once per day.",
+      "enGB": "Otherworldly entities who are reincarnated into the world of Golarion as a Lust Demon have both extreme beauty and power, and often have a voracious appetite for sensory pleasures and carnal delights.\nThe Isekai Lust Demon has a +2 racial {g|Encyclopedia:Bonus}bonus{/g} to {g|Encyclopedia:Dexterity}Dexterity{/g} and {g|Encyclopedia:Intelligence}Intelligence{/g}, a +4 racial bonus to {g|Encyclopedia:Charisma}Charisma{/g}, a -2 {g|Encyclopedia:Penalty}penalty{/g} to {g|Encyclopedia:Strength}Strength{/g}, and a +2 racial bonus on {g|Encyclopedia:Persuasion}Persuasion{/g} and {g|Encyclopedia:Perception}Perception checks{/g}. They have DR 10/Cold Iron or Good, and have spell resistance equal to 10 + their character level. They have immunity to fire, electricity, and poisons as well as acid and cold resistance 20. They can also use the Charm spell once per day.",
       "ruRU": "Иномирцы, перерожденные в мире Голариона в виде суккуба, обладают исключительной красотой и мощью, а также часто имеют ненасытный аппетит к осязательным удовольствиям и плотским наслаждениям. Исэкай Суккуб имеет бонус +2 к ловкости и интеллекту, бонус +4 к харизме, штраф -2 к силе, и бонус +2 на проверки убеждения и восприятия. У нее есть защита 10/холодное железо или добро, а также сопротивление магии, равное 10 + ее уровню персонажа. У нее есть иммунитет к огню, электричеству и ядам, а также сопротивление к кислоте и холоду на 20. Она также может использовать заклинание очарования один раз в день.",
       "deDE": "Übernatürliche Wesen, die als Succubus in die Welt von Golarion reinkarniert werden, besitzen sowohl extreme Schönheit und Macht als auch oft einen unersättlichen Appetit nach sinnlichen Vergnügen und fleischlichen Freuden. Der Isekai Succubus hat einen +2 Rassenbonus auf Geschicklichkeit und Intelligenz, einen +4 Rassenbonus auf Charisma, einen -2 Malus auf Stärke und einen +2 Rassenbonus auf Überreden und Wahrnehmungswürfe. Sie hat DR 10/Kaltes Eisen oder Gut und hat Zauberei-Resistenz gleich 10 + ihrem Charakterlevel. Sie ist immun gegen Feuer, Elektrizität und Gifte und hat eine Kälte- und Säureresistenz von 20. Sie kann auch einmal pro Tag den Zauber Charme benutzen.",
       "frFR": "Les entités surnaturelles qui sont réincarnées dans le monde de Golarion en tant que succubes ont à la fois une beauté et un pouvoir extrêmes, et ont souvent un appétit vorace pour les plaisirs sensoriels et les délices charnels. La Succube Isekai a un bonus racial de +2 à la Dextérité et à l'Intelligence, un bonus racial de +4 au Charisme, une pénalité de -2 à la Force, et un bonus racial de +2 aux tests de Persuasion et de Perception. Elles ont une RD de 10/Fer froid ou Bon, et ont une résistance à la magie égale à 10 + leur niveau de personnage. Elles sont immunisées contre le feu, l'électricité et les poisons, et disposent d'une résistance au froid et à l'acide de 20. Elles peuvent également utiliser le sort Charme une fois par jour.",
@@ -5054,7 +5054,7 @@
       "Key": "cde9675406c740909fc59f8ccf63aea2",
       "SimpleName": "IsekaiSuccubusHeritage.Name",
       "ProcessTemplates": false,
-      "enGB": "Isekai Succubus",
+      "enGB": "Isekai Lust Demon",
       "ruRU": "Исекай Суккуб",
       "deDE": "Isekai Succubus",
       "frFR": "Succube Isekai",
@@ -8244,7 +8244,7 @@
       "Key": "bb4fabe87e594d3fae8e8958ceb2828e",
       "SimpleName": "SuccubusCharmAbility.Name",
       "ProcessTemplates": false,
-      "enGB": "Succubus Charm",
+      "enGB": "Demonic Charm",
       "ruRU": "Очарование Суккуба",
       "deDE": "Succubus-Charme",
       "frFR": "Charme de Succube",
