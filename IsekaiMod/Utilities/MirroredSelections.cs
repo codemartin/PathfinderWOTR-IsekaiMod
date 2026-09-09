@@ -137,5 +137,30 @@ namespace IsekaiMod.Utilities {
             IsekaiContext.Logger.Log($"PrerequisiteAlternatives: {equivalent.name} now satisfies {target.name}");
             return true;
         }
+
+        /// <summary>
+        /// Prevents an option selected through one wrapper selection from being selected again
+        /// through a different selection. SelectionMode.OnlyNew only remembers the history of
+        /// its own selection blueprint, so it cannot provide this cross-selection protection.
+        /// </summary>
+        public static int RequireUnownedChoices(BlueprintFeatureSelection selection) {
+            if (selection == null) return 0;
+
+            int patched = 0;
+            foreach (BlueprintFeatureReference reference in selection.m_AllFeatures ?? new BlueprintFeatureReference[0]) {
+                BlueprintFeature choice = reference?.Get();
+                if (choice == null) continue;
+                if (choice.GetComponents<PrerequisiteNoFeature>()
+                    .Any(prerequisite => prerequisite.m_Feature?.Get() == choice)) continue;
+
+                choice.AddPrerequisite<PrerequisiteNoFeature>(component => {
+                    component.m_Feature = choice.ToReference<BlueprintFeatureReference>();
+                });
+                patched++;
+            }
+
+            IsekaiContext.Logger.Log($"PrerequisiteAlternatives: added ownership checks to {patched} choice(s) in {selection.name}");
+            return patched;
+        }
     }
 }
