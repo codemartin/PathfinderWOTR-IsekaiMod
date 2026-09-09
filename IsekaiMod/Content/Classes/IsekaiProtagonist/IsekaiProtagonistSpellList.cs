@@ -1011,6 +1011,14 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist {
             return false;
         }
 
+        public static int CountSpells() {
+            int total = 0;
+            foreach (var level in Get().SpellsByLevel) {
+                total += level.m_Spells.Count;
+            }
+            return total;
+        }
+
         public static void MergeSpellLists() {
             var IsekaiSpellList = Get();
             /* merge the three major first then everything else after*/
@@ -1066,6 +1074,8 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist {
             }
             var cantrips = IsekaiSpellList.GetSpells(0);
             var IsekaiCantrips = BlueprintTools.GetModBlueprint<BlueprintFeature>(IsekaiContext, "IsekaiCantrips");
+            // Rebuild rather than append: MergeSpellLists can run again from the late merge patch
+            IsekaiCantrips.RemoveComponents<AddFacts>();
             IsekaiCantrips.AddComponent<AddFacts>(c => {
                 c.m_Facts = new BlueprintUnitFactReference[0];
                 foreach (var spell in cantrips) {
