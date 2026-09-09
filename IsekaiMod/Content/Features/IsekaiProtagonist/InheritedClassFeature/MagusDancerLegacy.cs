@@ -51,6 +51,36 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
 
                 prog = PatchTools.PatchClassProgressionBasedOnSeparateLists(prog, ClassTools.Classes.MagusClass, addentries, removeentries);
 
+                // Spell Dancer retains the normal Magus arcane pool. Owlcat keeps that feature
+                // outside the archetype additions copied above in some game versions, which left
+                // inherited Spell Dancers without the pool and unable to qualify for related feats.
+                var arcanePool = BlueprintTools.GetBlueprint<BlueprintFeature>("a2fe27d00ece46a5a109d2d1f0bfafa7");
+                if (arcanePool == null) return;
+                bool hasArcanePool = false;
+                foreach (LevelEntry levelEntry in prog.LevelEntries) {
+                    foreach (BlueprintFeatureBaseReference feature in levelEntry.m_Features) {
+                        if (feature.Guid == arcanePool.AssetGuid) {
+                            hasArcanePool = true;
+                            break;
+                        }
+                    }
+                    if (hasArcanePool) break;
+                }
+                if (!hasArcanePool) {
+                    LevelEntry levelOne = null;
+                    foreach (LevelEntry levelEntry in prog.LevelEntries) {
+                        if (levelEntry.Level == 1) {
+                            levelOne = levelEntry;
+                            break;
+                        }
+                    }
+                    if (levelOne == null) {
+                        prog.LevelEntries = prog.LevelEntries.AppendToArray(Helpers.CreateLevelEntry(1, arcanePool));
+                    } else {
+                        levelOne.m_Features.Add(arcanePool.ToReference<BlueprintFeatureBaseReference>());
+                    }
+                }
+
                 PatchTools.PatchProgressionFeaturesBasedOnReferenceClass(prog, IsekaiProtagonistClass.GetReference(), ClassTools.ClassReferences.MagusClass);
 
                 prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = MagusBasicLegacy.Get().ToReference<BlueprintFeatureReference>(); });
