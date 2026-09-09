@@ -78,5 +78,12 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
             if (myfeat != null) return myfeat;
             return BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(IsekaiContext, "IsekaiWitchSelection");
         }
+
+        public static void PatchPrerequisiteCompatibility() {
+            PrerequisiteAlternatives.Add(
+                BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("24afc8be7a964e5a939b2a199ba60682"),
+                FeatTools.Selections.WitchPatronSelection,
+                Get());
+        }
     }
 }

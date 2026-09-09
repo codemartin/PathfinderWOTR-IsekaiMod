@@ -1,7 +1,10 @@
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.Classes;
+using Kingmaker.Blueprints.Classes.Prerequisites;
 using Kingmaker.Blueprints.Classes.Selection;
 using System.Collections.Generic;
 using System.Linq;
+using TabletopTweaks.Core.Utilities;
 using static IsekaiMod.Main;
 
 namespace IsekaiMod.Utilities {
@@ -80,6 +83,59 @@ namespace IsekaiMod.Utilities {
                 }
             }
             return added;
+        }
+    }
+
+    /// <summary>
+    /// Makes an Isekai wrapper selection count as its base-game selection for feat prerequisites.
+    /// This supports both ordinary feature prerequisites and list prerequisites installed by
+    /// other mods during their late blueprint patches.
+    /// </summary>
+    internal static class PrerequisiteAlternatives {
+        public static bool Add(BlueprintFeature target, BlueprintFeature source, BlueprintFeature equivalent) {
+            if (target == null || source == null || equivalent == null) return false;
+
+            bool sourceFound = false;
+            bool equivalentFound = false;
+
+            foreach (PrerequisiteFeature prerequisite in target.GetComponents<PrerequisiteFeature>()) {
+                if (prerequisite.Feature == source) {
+                    prerequisite.Group = Prerequisite.GroupType.Any;
+                    sourceFound = true;
+                }
+                if (prerequisite.Feature == equivalent) {
+                    prerequisite.Group = Prerequisite.GroupType.Any;
+                    equivalentFound = true;
+                }
+            }
+
+            foreach (PrerequisiteFeaturesFromList prerequisite in target.GetComponents<PrerequisiteFeaturesFromList>()) {
+                BlueprintFeatureReference[] features = prerequisite.m_Features ?? new BlueprintFeatureReference[0];
+                if (!features.Any(reference => reference?.Get() == source)) continue;
+
+                sourceFound = true;
+                if (features.Any(reference => reference?.Get() == equivalent)) {
+                    equivalentFound = true;
+                } else {
+                    prerequisite.m_Features = features.Append(equivalent.ToReference<BlueprintFeatureReference>()).ToArray();
+                    equivalentFound = true;
+                }
+            }
+
+            if (!sourceFound) {
+                IsekaiContext.Logger.LogWarning($"PrerequisiteAlternatives: {target.name} no longer requires {source.name}; skipped {equivalent.name}");
+                return false;
+            }
+
+            if (!equivalentFound) {
+                target.AddPrerequisite<PrerequisiteFeature>(component => {
+                    component.Group = Prerequisite.GroupType.Any;
+                    component.m_Feature = equivalent.ToReference<BlueprintFeatureReference>();
+                });
+            }
+
+            IsekaiContext.Logger.Log($"PrerequisiteAlternatives: {equivalent.name} now satisfies {target.name}");
+            return true;
         }
     }
 }

@@ -35,17 +35,6 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
                 bp.IsClassFeature = true;
             });
 
-            foreach (string mythicFeatureId in new[] {
-                "2de64f6a1f2baee4f9b7e52e3f046ec5", // Domain Mastery
-                "213a8480d22206b45acbfa0619ca5aaf"  // Extra Domain
-            }) {
-                BlueprintTools.GetBlueprint<BlueprintFeature>(mythicFeatureId)
-                    .AddPrerequisite<PrerequisiteFeature>(c => {
-                        c.Group = Prerequisite.GroupType.Any;
-                        c.m_Feature = domains.ToReference<BlueprintFeatureReference>();
-                    });
-            }
-
             LegacySelection.RegisterForFeat(prog);
             LegacySelection.Register(prog);
             EdgeLordLegacySelection.Prohibit(prog);
@@ -90,6 +79,18 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
 
                 prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = CavalierBasicLegacy.Get().ToReference<BlueprintFeatureReference>(); });
                 prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = CavalierStandardBearerLegacy.Get().ToReference<BlueprintFeatureReference>(); });
+            }
+        }
+
+        public static void PatchPrerequisiteCompatibility() {
+            foreach (string mythicFeatureId in new[] {
+                "2de64f6a1f2baee4f9b7e52e3f046ec5", // Domain Mastery
+                "213a8480d22206b45acbfa0619ca5aaf"  // Extra Domain
+            }) {
+                PrerequisiteAlternatives.Add(
+                    BlueprintTools.GetBlueprint<BlueprintFeature>(mythicFeatureId),
+                    FeatTools.Selections.DomainsSelection,
+                    domains);
             }
         }
 

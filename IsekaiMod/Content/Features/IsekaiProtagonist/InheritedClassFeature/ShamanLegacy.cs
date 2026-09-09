@@ -106,15 +106,6 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
             });
             MirroredSelections.Register(isekaiSpirit, ShamanLegacy.shamanSpirit);
 
-            var secondSpirit = BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("2faa80662a56ab644aec2f875a68597f");
-            foreach (PrerequisiteCondition prerequisite in secondSpirit.GetComponents<PrerequisiteCondition>()) {
-                prerequisite.Group = Prerequisite.GroupType.Any;
-            }
-            secondSpirit.AddPrerequisite<PrerequisiteFeature>(c => {
-                c.Group = Prerequisite.GroupType.Any;
-                c.m_Feature = isekaiSpirit.ToReference<BlueprintFeatureReference>();
-            });
-
             myfeat = Helpers.CreateBlueprint<BlueprintFeatureSelection>(IsekaiContext, "IsekaiShamanSelection", bp => {
                 bp.SetName(IsekaiContext, "Spirit Blessing");
                 bp.SetDescription(IsekaiContext, "As you grow so does your connection to the spirits and the power you derive from them. \nAllowing you to connect with more spirits or gain more powers from them.");
@@ -142,27 +133,15 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
             return BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(IsekaiContext, "IsekaiSpiritSelection");
         }
 
-        public static void PatchExtraHexPrerequisite() {
-            // Tabletop Tweaks creates this feat after Isekai's early blueprint pass and requires
-            // its vanilla Shaman hex selection. Accept the equivalent Isekai selection as an OR.
-            var extraHex = BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("08d9f686b2944ba6b3f7763882c0ded4");
-            if (extraHex == null) return;
-
-            bool hasIsekaiPrerequisite = false;
-            foreach (PrerequisiteFeature prerequisite in extraHex.GetComponents<PrerequisiteFeature>()) {
-                if (prerequisite.Feature == ShamanLegacy.shamanHex) {
-                    prerequisite.Group = Prerequisite.GroupType.Any;
-                }
-                if (prerequisite.Feature == GetHex()) {
-                    hasIsekaiPrerequisite = true;
-                }
-            }
-            if (!hasIsekaiPrerequisite) {
-                extraHex.AddPrerequisite<PrerequisiteFeature>(c => {
-                    c.Group = Prerequisite.GroupType.Any;
-                    c.m_Feature = GetHex().ToReference<BlueprintFeatureReference>();
-                });
-            }
+        public static void PatchPrerequisiteCompatibility() {
+            PrerequisiteAlternatives.Add(
+                BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("08d9f686b2944ba6b3f7763882c0ded4"),
+                ShamanLegacy.shamanHex,
+                GetHex());
+            PrerequisiteAlternatives.Add(
+                BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("2faa80662a56ab644aec2f875a68597f"),
+                ShamanLegacy.shamanSpirit,
+                GetSpirit());
         }
     }
 }

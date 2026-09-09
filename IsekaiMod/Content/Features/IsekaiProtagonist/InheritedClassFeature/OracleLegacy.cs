@@ -82,36 +82,27 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
         }
     }
     internal class ExtraOracleSelection {
+        private static BlueprintFeatureSelection curseSelection;
+        private static BlueprintFeatureSelection mysterySelection;
+
         public static void Configure() {
 
-            var CurseSelection = Helpers.CreateBlueprint<BlueprintFeatureSelection>(IsekaiContext, "IsekaiOracleCurseSelection", bp => {
+            curseSelection = Helpers.CreateBlueprint<BlueprintFeatureSelection>(IsekaiContext, "IsekaiOracleCurseSelection", bp => {
                 bp.SetName(IsekaiContext, "Divine Curse");
                 bp.SetDescription(IsekaiContext, "Gain a curse, but some curses are blessings in disguise.");
                 bp.Ranks = 1;
                 bp.IsClassFeature = true;
                 bp.m_AllFeatures = FeatTools.Selections.OracleCurseSelection.m_AllFeatures;
             });
-            MirroredSelections.Register(CurseSelection, FeatTools.Selections.OracleCurseSelection);
-            // Beneficial Curse (mythic ability) requires the vanilla curse selection; accept the Isekai wrapper too.
-            BlueprintTools.GetBlueprint<BlueprintFeature>("2dda67424ee8e0b4d83ef01a73ca6bff")
-                .AddPrerequisite<PrerequisiteFeature>(c => {
-                    c.Group = Prerequisite.GroupType.Any;
-                    c.m_Feature = CurseSelection.ToReference<BlueprintFeatureReference>();
-                });
-            var MysterySelection = Helpers.CreateBlueprint<BlueprintFeatureSelection>(IsekaiContext, "IsekaiOracleMysterySelection", bp => {
+            MirroredSelections.Register(curseSelection, FeatTools.Selections.OracleCurseSelection);
+            mysterySelection = Helpers.CreateBlueprint<BlueprintFeatureSelection>(IsekaiContext, "IsekaiOracleMysterySelection", bp => {
                 bp.SetName(IsekaiContext, "Divine Mystery");
                 bp.SetDescription(IsekaiContext, "Master another part of reality...");
                 bp.Ranks = 1;
                 bp.IsClassFeature = true;
                 bp.m_AllFeatures = FeatTools.Selections.OracleMysterySelection.m_AllFeatures;
             });
-            MirroredSelections.Register(MysterySelection, FeatTools.Selections.OracleMysterySelection);
-
-            BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("277b0164740b97945a3f8022bd572f48")
-                .AddPrerequisite<PrerequisiteFeature>(c => {
-                    c.Group = Prerequisite.GroupType.Any;
-                    c.m_Feature = MysterySelection.ToReference<BlueprintFeatureReference>();
-                });
+            MirroredSelections.Register(mysterySelection, FeatTools.Selections.OracleMysterySelection);
 
             var PrimarySelection = Helpers.CreateBlueprint<BlueprintFeatureSelection>(IsekaiContext, "IsekaiOracleSelection", bp => {
                 bp.SetName(IsekaiContext, "Divine Inheritance");
@@ -119,13 +110,24 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
                 bp.Ranks = 1;
                 bp.IsClassFeature = true;
                 bp.m_AllFeatures = new BlueprintFeatureReference[] {
-                    CurseSelection.ToReference<BlueprintFeatureReference>(),
-                    MysterySelection.ToReference<BlueprintFeatureReference>(),
+                    curseSelection.ToReference<BlueprintFeatureReference>(),
+                    mysterySelection.ToReference<BlueprintFeatureReference>(),
                     FeatTools.Selections.OracleRevelationSelection.ToReference<BlueprintFeatureReference>(),
                     FeatTools.Selections.OracleCureOrInflictSelection.ToReference<BlueprintFeatureReference>()
                 };
             });
 
+        }
+
+        public static void PatchPrerequisiteCompatibility() {
+            PrerequisiteAlternatives.Add(
+                BlueprintTools.GetBlueprint<BlueprintFeature>("2dda67424ee8e0b4d83ef01a73ca6bff"),
+                FeatTools.Selections.OracleCurseSelection,
+                curseSelection);
+            PrerequisiteAlternatives.Add(
+                BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("277b0164740b97945a3f8022bd572f48"),
+                FeatTools.Selections.OracleMysterySelection,
+                mysterySelection);
         }
         public static BlueprintFeatureSelection Get() {
             return BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(IsekaiContext, "IsekaiOracleSelection");

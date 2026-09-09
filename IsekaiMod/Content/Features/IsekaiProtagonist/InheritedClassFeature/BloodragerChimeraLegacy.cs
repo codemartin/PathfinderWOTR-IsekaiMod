@@ -36,23 +36,6 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
                 bp.IsClassFeature = true;
             });
 
-            BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("ce85aee1726900641ab53ede61ac5c19")
-                .AddPrerequisite<PrerequisiteFeature>(c => {
-                    c.Group = Prerequisite.GroupType.Any;
-                    c.m_Feature = bloodlines.ToReference<BlueprintFeatureReference>();
-                });
-
-            var secondBloodline = BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("b7f62628915bdb14d8888c25da3fac56");
-            foreach (PrerequisiteFeature prerequisite in secondBloodline.GetComponents<PrerequisiteFeature>()) {
-                if (prerequisite.Feature == FeatTools.Selections.BloodragerBloodlineSelection) {
-                    prerequisite.Group = Prerequisite.GroupType.Any;
-                }
-            }
-            secondBloodline.AddPrerequisite<PrerequisiteFeature>(c => {
-                c.Group = Prerequisite.GroupType.Any;
-                c.m_Feature = bloodlines.ToReference<BlueprintFeatureReference>();
-            });
-
             LegacySelection.RegisterForFeat(prog);
             LegacySelection.Register(prog);
             EdgeLordLegacySelection.Register(prog);
@@ -86,6 +69,17 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
                 prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = SkaldVoiceLegacy.Get().ToReference<BlueprintFeatureReference>(); });
                 prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = SkaldSilverTongueLegacy.Get().ToReference<BlueprintFeatureReference>(); });
             }
+        }
+
+        public static void PatchPrerequisiteCompatibility() {
+            PrerequisiteAlternatives.Add(
+                BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("ce85aee1726900641ab53ede61ac5c19"),
+                FeatTools.Selections.BloodragerBloodlineSelection,
+                bloodlines);
+            PrerequisiteAlternatives.Add(
+                BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("b7f62628915bdb14d8888c25da3fac56"),
+                FeatTools.Selections.BloodragerBloodlineSelection,
+                bloodlines);
         }
 
         private static void PatchBloodragerResistanceBuffs(BlueprintCharacterClassReference myClass) {

@@ -324,7 +324,13 @@ namespace IsekaiMod.Content {
             // Runs after every other mod's BlueprintsCache.Init postfix, so mirrored selections
             // pick up features those mods added to the base-game selections.
             MirroredSelections.Sync();
-            ShamanSelection.PatchExtraHexPrerequisite();
+            ShamanSelection.PatchPrerequisiteCompatibility();
+            ExtraOracleSelection.PatchPrerequisiteCompatibility();
+            BloodragerChimeraLegacy.PatchPrerequisiteCompatibility();
+            ExtraBloodlineSelection.PatchPrerequisiteCompatibility();
+            WitchPatronSelection.PatchPrerequisiteCompatibility();
+            InquisitorTacticianLegacy.PatchPrerequisiteCompatibility();
+            InquisitorDomainLordLegacy.PatchPrerequisiteCompatibility();
         }
 
         private static void PatchIsekaiProtagonist() {

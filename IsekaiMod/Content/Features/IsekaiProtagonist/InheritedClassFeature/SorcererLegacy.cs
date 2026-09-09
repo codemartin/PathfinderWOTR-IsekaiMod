@@ -81,9 +81,10 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
 
     internal class ExtraBloodlineSelection {
         private static BlueprintFeatureSelection IsekaiSorcererSelection;
+        private static BlueprintFeatureSelection IsekaiBloodlineSelection;
 
         public static void Configure() {
-            var IsekaiBloodlineSelection = Helpers.CreateBlueprint<BlueprintFeatureSelection>(IsekaiContext, "IsekaiBloodlineSelection", bp => {
+            IsekaiBloodlineSelection = Helpers.CreateBlueprint<BlueprintFeatureSelection>(IsekaiContext, "IsekaiBloodlineSelection", bp => {
                 bp.SetName(IsekaiContext, "Bloodline");
                 bp.SetDescription(IsekaiContext, "You can pick additional bloodlines as your chimera blood becomes stronger.");
                 bp.Ranks = 1;
@@ -93,17 +94,6 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
                 bp.m_AllFeatures = StaticReferences.SorcererBloodlineSelection.m_AllFeatures;
             });
             MirroredSelections.Register(IsekaiBloodlineSelection, StaticReferences.SorcererBloodlineSelection);
-
-            foreach (string mythicSelectionId in new[] {
-                "ce85aee1726900641ab53ede61ac5c19", // Bloodline Ascendance
-                "3cf2ab2c320b73347a7c21cf0d0995bd"  // Second Bloodline
-            }) {
-                BlueprintTools.GetBlueprint<BlueprintFeatureSelection>(mythicSelectionId)
-                    .AddPrerequisite<PrerequisiteFeature>(c => {
-                        c.Group = Prerequisite.GroupType.Any;
-                        c.m_Feature = IsekaiBloodlineSelection.ToReference<BlueprintFeatureReference>();
-                    });
-            }
 
             IsekaiSorcererSelection = Helpers.CreateBlueprint<BlueprintFeatureSelection>(IsekaiContext, "IsekaiSorcererSelection", bp => {
                 bp.SetName(IsekaiContext, "Bloodline Evolution");
@@ -118,6 +108,17 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
                 };
             });
 
+        }
+
+        public static void PatchPrerequisiteCompatibility() {
+            PrerequisiteAlternatives.Add(
+                BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("ce85aee1726900641ab53ede61ac5c19"),
+                StaticReferences.SorcererBloodlineSelection,
+                IsekaiBloodlineSelection);
+            PrerequisiteAlternatives.Add(
+                BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("3cf2ab2c320b73347a7c21cf0d0995bd"),
+                StaticReferences.SorcererBloodlineSelection,
+                IsekaiBloodlineSelection);
         }
 
         public static BlueprintFeatureSelection Get() {
