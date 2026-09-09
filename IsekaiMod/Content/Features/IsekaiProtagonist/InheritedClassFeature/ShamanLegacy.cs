@@ -141,5 +141,28 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
             if (isekaiSpirit != null) return isekaiSpirit;
             return BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(IsekaiContext, "IsekaiSpiritSelection");
         }
+
+        public static void PatchExtraHexPrerequisite() {
+            // Tabletop Tweaks creates this feat after Isekai's early blueprint pass and requires
+            // its vanilla Shaman hex selection. Accept the equivalent Isekai selection as an OR.
+            var extraHex = BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("08d9f686b2944ba6b3f7763882c0ded4");
+            if (extraHex == null) return;
+
+            bool hasIsekaiPrerequisite = false;
+            foreach (PrerequisiteFeature prerequisite in extraHex.GetComponents<PrerequisiteFeature>()) {
+                if (prerequisite.Feature == ShamanLegacy.shamanHex) {
+                    prerequisite.Group = Prerequisite.GroupType.Any;
+                }
+                if (prerequisite.Feature == GetHex()) {
+                    hasIsekaiPrerequisite = true;
+                }
+            }
+            if (!hasIsekaiPrerequisite) {
+                extraHex.AddPrerequisite<PrerequisiteFeature>(c => {
+                    c.Group = Prerequisite.GroupType.Any;
+                    c.m_Feature = GetHex().ToReference<BlueprintFeatureReference>();
+                });
+            }
+        }
     }
 }
