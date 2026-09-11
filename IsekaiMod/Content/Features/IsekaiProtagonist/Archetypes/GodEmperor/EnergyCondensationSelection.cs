@@ -62,7 +62,9 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.GodEmperor
 					c.AddAlignment = true;
 					c.Alignment = DamageAlignment.Good;
 				});
-				bp.ReapplyOnLevelUp = true;
+				// Recalculate the rank context without rebuilding five energy
+				// resistances and the fixed weapon-alignment property.
+				bp.ReapplyOnLevelUp = false;
 			});
 			BlueprintFeature DarkEnergyCondensation = Helpers.CreateBlueprint(Main.IsekaiContext, "DarkEnergyCondensation", delegate(BlueprintFeature bp)
 			{
@@ -106,7 +108,9 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.GodEmperor
 					c.AddAlignment = true;
 					c.Alignment = DamageAlignment.Evil;
 				});
-				bp.ReapplyOnLevelUp = true;
+				// Recalculate the rank context without rebuilding five energy
+				// resistances and the fixed weapon-alignment property.
+				bp.ReapplyOnLevelUp = false;
 			});
 			Helpers.CreateBlueprint(Main.IsekaiContext, "EnergyCondensationSelection", delegate(BlueprintFeatureSelection bp)
 			{

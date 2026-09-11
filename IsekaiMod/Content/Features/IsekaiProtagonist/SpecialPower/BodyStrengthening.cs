@@ -35,7 +35,9 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 				{
 					c.Level = 5;
 				});
-				bp.ReapplyOnLevelUp = true;
+				// Context recalculation updates the character-level rank without
+				// removing and recreating the physical damage resistance fact.
+				bp.ReapplyOnLevelUp = false;
 			}));
 		}
 	}
