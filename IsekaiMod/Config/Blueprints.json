@@ -3218,7 +3218,8 @@
     "SovereignAllAccordingToPlanArea": "d81320dd-803c-526e-ab25-dd118e789830",
     "SovereignAllAccordingToPlanAreaBuff": "c3466da9-5afe-52dc-94e9-5e493eab0022",
     "SovereignAllAccordingToPlanAbility": "d3fd61f7-9f8d-5abb-bd59-ce4a38f2d0fc",
-    "SovereignAllAccordingToPlanFeature": "274f4d44-0458-5d3a-8a52-b627609a94dd"
+    "SovereignAllAccordingToPlanFeature": "274f4d44-0458-5d3a-8a52-b627609a94dd",
+    "IsekaiWizardSchoolSelection": "d12a2666-653c-5deb-b537-3b4e968c81e0"
   },
   "OverrideIds": false,
   "UnusedGUIDs": {}
