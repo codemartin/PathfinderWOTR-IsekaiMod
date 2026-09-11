@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using IsekaiMod.Content.Classes.IsekaiProtagonist;
 using IsekaiMod.Utilities;
+using Kingmaker.Designers.Mechanics.Facts;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Spells;
@@ -15,6 +17,7 @@ using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.ActivatableAbilities;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
+using Kingmaker.UnitLogic.Buffs.Components;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Mechanics;
@@ -31,12 +34,22 @@ namespace IsekaiMod.Content.Heritages
 	{
 		private static readonly BlueprintFeature DestinyBeyondBirthMythicFeat = BlueprintTools.GetBlueprint<BlueprintFeature>("325f078c584318849bfe3da9ea245b9d");
 
-		private static readonly BlueprintBuff DominatePersonBuff = BlueprintTools.GetBlueprint<BlueprintBuff>("c0f4e1c24c9cd334ca988ed1bd9d201f");
-
-		private static readonly BlueprintAbilityResource TieflingSpellLikeResource = BlueprintTools.GetBlueprint<BlueprintAbilityResource>("803d7e39e05fa2a47a7e2424d0e4b623");
-
 		public static void Add()
 		{
+			// USES-PER-DAY FIX: the ability used to borrow a base-game racial spell-like resource
+			// that is only granted by (and only counts levels of) the original race's features, so an
+			// Isekai character never registered a pool and the ability was unusable. Dedicated
+			// resource counting Isekai Protagonist levels, granted below by AddAbilityResources.
+			BlueprintAbilityResource SuccubusCharmResource = Helpers.CreateBlueprint(Main.IsekaiContext, "SuccubusCharmResource", delegate(BlueprintAbilityResource resource)
+			{
+				resource.m_MaxAmount = new BlueprintAbilityResource.Amount
+				{
+					BaseValue = 1,
+					IncreasedByLevel = true,
+					LevelIncrease = 1,
+					m_Class = new BlueprintCharacterClassReference[1] { IsekaiProtagonistClass.GetReference() }
+				};
+			});
 			Sprite Icon_Charm = AssetLoader.LoadInternal(Main.IsekaiContext, "Features", "ICON_CHARM.png");
 			BlueprintUnitProperty SuccubusCharmUnitProperty = Helpers.CreateBlueprint(Main.IsekaiContext, "SuccubusCharmUnitProperty", delegate(BlueprintUnitProperty bp)
 			{
@@ -52,6 +65,30 @@ namespace IsekaiMod.Content.Heritages
 				bp.BaseValue = 10;
 				bp.OperationOnComponents = BlueprintUnitProperty.MathOperation.Sum;
 			});
+			BlueprintBuff SuccubusCharmBuff = TTCoreExtensions.CreateBuff("SuccubusCharmBuff", delegate(BlueprintBuff bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Demonic Charm");
+				bp.SetDescription(Main.IsekaiContext, "This creature is dominated, but may attempt a Will saving throw each round to end the effect.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_Charm;
+				bp.AddComponent(delegate(ChangeFaction c)
+				{
+					c.m_Type = ChangeFaction.ChangeType.ToCaster;
+				});
+				bp.AddComponent(delegate(AddFactContextActions c)
+				{
+					c.NewRound = ActionFlow.DoSingle(delegate(ContextActionSavingThrow s)
+					{
+						s.Type = SavingThrowType.Will;
+						s.m_ConditionalDCIncrease = new ContextActionSavingThrow.ConditionalDCIncrease[0];
+						s.Actions = ActionFlow.DoSingle(delegate(ContextActionConditionalSaved cond)
+						{
+							cond.Succeed = ActionFlow.DoSingle<ContextActionRemoveSelf>();
+							cond.Failed = ActionFlow.DoNothing();
+						});
+					});
+				});
+				bp.Stacking = StackingType.Replace;
+			});
 			BlueprintAbility SuccubusCharmAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "SuccubusCharmAbility", delegate(BlueprintAbility bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Demonic Charm");
@@ -65,7 +102,7 @@ namespace IsekaiMod.Content.Heritages
 						contextActionConditionalSaved.Succeed = ActionFlow.DoNothing();
 						contextActionConditionalSaved.Failed = ActionFlow.DoSingle(delegate(ContextActionApplyBuff contextActionApplyBuff)
 						{
-							contextActionApplyBuff.m_Buff = DominatePersonBuff.ToReference<BlueprintBuffReference>();
+							contextActionApplyBuff.m_Buff = SuccubusCharmBuff.ToReference<BlueprintBuffReference>();
 							contextActionApplyBuff.DurationValue = new ContextDurationValue
 							{
 								Rate = DurationRate.Minutes,
@@ -97,9 +134,15 @@ namespace IsekaiMod.Content.Heritages
 				{
 					c.DC = Values.CreateContextCasterCustomPropertyValue(SuccubusCharmUnitProperty);
 				});
+				bp.AddComponent(delegate(ContextRankConfig c)
+				{
+					c.m_Type = AbilityRankType.Default;
+					c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
+					c.m_Progression = ContextRankProgression.AsIs;
+				});
 				bp.AddComponent(delegate(AbilityResourceLogic c)
 				{
-					c.m_RequiredResource = TieflingSpellLikeResource.ToReference<BlueprintAbilityResourceReference>();
+					c.m_RequiredResource = SuccubusCharmResource.ToReference<BlueprintAbilityResourceReference>();
 					c.m_IsSpendResource = true;
 					c.CostIsCustom = false;
 					c.Amount = 1;
@@ -123,7 +166,7 @@ namespace IsekaiMod.Content.Heritages
 			BlueprintFeature feature = Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiSuccubusHeritage", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Isekai Lust Demon");
-				bp.SetDescription(Main.IsekaiContext, "Otherworldly entities who are reincarnated into the world of Golarion as a Lust Demon have both extreme beauty and power, and often have a voracious appetite for sensory pleasures and carnal delights.\nThe Isekai Lust Demon has a +2 racial {g|Encyclopedia:Bonus}bonus{/g} to {g|Encyclopedia:Dexterity}Dexterity{/g} and {g|Encyclopedia:Intelligence}Intelligence{/g}, a +4 racial bonus to {g|Encyclopedia:Charisma}Charisma{/g}, a -2 {g|Encyclopedia:Penalty}penalty{/g} to {g|Encyclopedia:Strength}Strength{/g}, and a +2 racial bonus on {g|Encyclopedia:Persuasion}Persuasion{/g} and {g|Encyclopedia:Perception}Perception checks{/g}. They have DR 10/Cold Iron or Good, and have spell resistance equal to 10 + their character level. They have immunity to fire, electricity, and poisons as well as acid and cold resistance 20. They can also use the Charm spell once per day.");
+				bp.SetDescription(Main.IsekaiContext, "Otherworldly entities who are reincarnated into the world of Golarion as a Lust Demon have both extreme beauty and power, and often have a voracious appetite for sensory pleasures and carnal delights.\nThe Isekai Lust Demon has a +2 racial {g|Encyclopedia:Bonus}bonus{/g} to {g|Encyclopedia:Dexterity}Dexterity{/g} and {g|Encyclopedia:Intelligence}Intelligence{/g}, a +4 racial bonus to {g|Encyclopedia:Charisma}Charisma{/g}, a -2 {g|Encyclopedia:Penalty}penalty{/g} to {g|Encyclopedia:Strength}Strength{/g}, and a +2 racial bonus on {g|Encyclopedia:Persuasion}Persuasion{/g} and {g|Encyclopedia:Perception}Perception checks{/g}. They have DR 10/Cold Iron or Good, and have spell resistance equal to 10 + their character level. They have immunity to fire, electricity, and poisons as well as acid and cold resistance 20. They can also use the Demonic Charm ability a number of times per day equal to 1 + their Isekai Protagonist level.");
 				((BlueprintUnitFact)bp).m_Icon = Icon_Succubus;
 				bp.AddComponent(delegate(AddStatBonusIfHasFact c)
 				{
@@ -218,6 +261,12 @@ namespace IsekaiMod.Content.Heritages
 				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
 				{
 					c.Descriptor = SpellDescriptor.Fire | SpellDescriptor.Electricity | SpellDescriptor.Poison;
+				});
+				bp.AddComponent(delegate(AddAbilityResources c)
+				{
+					c.m_Resource = SuccubusCharmResource.ToReference<BlueprintAbilityResourceReference>();
+					c.RestoreAmount = true;
+					c.RestoreOnLevelUp = true;
 				});
 				bp.AddComponent(delegate(AddFacts c)
 				{

@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using IsekaiMod.Content.Classes.IsekaiProtagonist;
 using IsekaiMod.Utilities;
+using Kingmaker.Designers.Mechanics.Facts;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Spells;
@@ -13,6 +15,7 @@ using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.ActivatableAbilities;
 using Kingmaker.UnitLogic.Commands.Base;
+using Kingmaker.UnitLogic.Buffs.Components;
 using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Mechanics.Components;
 using Kingmaker.UnitLogic.Mechanics.Properties;
@@ -26,7 +29,20 @@ namespace IsekaiMod.Content.Heritages
 	{
 		public static void Add()
 		{
-			BlueprintAbilityResource AasimarSpellLikeResource = BlueprintTools.GetBlueprint<BlueprintAbilityResource>("a4ea5b9becd98dd47b51c8742aeb70ec");
+			// USES-PER-DAY FIX: the ability used to borrow a base-game racial spell-like resource
+			// that is only granted by (and only counts levels of) the original race's features, so an
+			// Isekai character never registered a pool and the ability was unusable. Dedicated
+			// resource counting Isekai Protagonist levels, granted below by AddAbilityResources.
+			BlueprintAbilityResource AngelicBoltResource = Helpers.CreateBlueprint(Main.IsekaiContext, "AngelicBoltResource", delegate(BlueprintAbilityResource resource)
+			{
+				resource.m_MaxAmount = new BlueprintAbilityResource.Amount
+				{
+					BaseValue = 1,
+					IncreasedByLevel = true,
+					LevelIncrease = 1,
+					m_Class = new BlueprintCharacterClassReference[1] { IsekaiProtagonistClass.GetReference() }
+				};
+			});
 			BlueprintAbility AngelBoltOfJusticeAbility = BlueprintTools.GetBlueprint<BlueprintAbility>("c82168800b665324f8b4807b531fea46");
 			BlueprintFeature AngelWingsFeature = BlueprintTools.GetBlueprint<BlueprintFeature>("d9bd0fde6deb2e44a93268f2dfb3e169");
 			BlueprintActivatableAbility BlackWingsAbility = BlueprintTools.GetModBlueprint<BlueprintActivatableAbility>(Main.IsekaiContext, "BlackWingsAbility");
@@ -80,7 +96,7 @@ namespace IsekaiMod.Content.Heritages
 				});
 				bp.AddComponent(delegate(AbilityResourceLogic c)
 				{
-					c.m_RequiredResource = AasimarSpellLikeResource.ToReference<BlueprintAbilityResourceReference>();
+					c.m_RequiredResource = AngelicBoltResource.ToReference<BlueprintAbilityResourceReference>();
 					c.m_IsSpendResource = true;
 					c.Amount = 1;
 					c.ResourceCostIncreasingFacts = new List<BlueprintUnitFactReference>();
@@ -102,7 +118,7 @@ namespace IsekaiMod.Content.Heritages
 			BlueprintFeature feature = Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiAngelHeritage", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Isekai Angel");
-				bp.SetDescription(Main.IsekaiContext, "Otherworldly entities who are reincarnated into the world of Golarion as an Angel have both extreme beauty and power. They serve as exemplars of good and light regardless of the myriad forms they may take.\nThe Isekai Angel has a +4 racial {g|Encyclopedia:Bonus}bonus{/g} to {g|Encyclopedia:Strength}Strength{/g} and {g|Encyclopedia:Charisma}Charisma{/g}, and a +2 racial bonus on {g|Encyclopedia:Persuasion}Persuasion{/g} and {g|Encyclopedia:Lore_Religion}Lore (religion){/g} checks. They have DR 10/Evil, and have spell resistance equal to 10 + their character level. They have immunity to acid, cold, and petrification as well as fire and electricity resistance 20. They can also use the Angelic Bolt spell once per day.");
+				bp.SetDescription(Main.IsekaiContext, "Otherworldly entities who are reincarnated into the world of Golarion as an Angel have both extreme beauty and power. They serve as exemplars of good and light regardless of the myriad forms they may take.\nThe Isekai Angel has a +4 racial {g|Encyclopedia:Bonus}bonus{/g} to {g|Encyclopedia:Strength}Strength{/g} and {g|Encyclopedia:Charisma}Charisma{/g}, and a +2 racial bonus on {g|Encyclopedia:Persuasion}Persuasion{/g} and {g|Encyclopedia:Lore_Religion}Lore (religion){/g} checks. They have DR 10/Evil, and have spell resistance equal to 10 + their character level. They have immunity to acid, cold, and petrification as well as fire and electricity resistance 20. They can also use the Angelic Bolt ability a number of times per day equal to 1 + their Isekai Protagonist level.");
 				((BlueprintUnitFact)bp).m_Icon = Icon_Angel;
 				bp.AddComponent(delegate(AddStatBonus c)
 				{
@@ -181,6 +197,12 @@ namespace IsekaiMod.Content.Heritages
 				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
 				{
 					c.Descriptor = SpellDescriptor.Acid | SpellDescriptor.Cold | SpellDescriptor.Petrified;
+				});
+				bp.AddComponent(delegate(AddAbilityResources c)
+				{
+					c.m_Resource = AngelicBoltResource.ToReference<BlueprintAbilityResourceReference>();
+					c.RestoreAmount = true;
+					c.RestoreOnLevelUp = true;
 				});
 				bp.AddComponent(delegate(AddFacts c)
 				{
