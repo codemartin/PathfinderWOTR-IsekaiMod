@@ -21,6 +21,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature
 				bp.m_AllFeatures = StaticReferences.SorcererBloodlineSelection.m_AllFeatures;
 				bp.m_Features = bp.m_AllFeatures;
 			});
+			MirroredSelections.Register(IsekaiBloodlineSelection, StaticReferences.SorcererBloodlineSelection);
 			IsekaiSorcererSelection = Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiSorcererSelection", delegate(BlueprintFeatureSelection bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Bloodline Evolution");

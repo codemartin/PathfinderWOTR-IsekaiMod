@@ -1,4 +1,5 @@
-﻿using Kingmaker.Blueprints;
+﻿using IsekaiMod.Utilities;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes.Selection;
 using TabletopTweaks.Core.Utilities;
 
@@ -17,6 +18,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature
 				bp.m_AllFeatures = FeatTools.Selections.OracleCurseSelection.m_AllFeatures;
 				bp.m_Features = bp.m_AllFeatures;
 			});
+			MirroredSelections.Register(CurseSelection, FeatTools.Selections.OracleCurseSelection);
 			BlueprintFeatureSelection MysterySelection = Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiOracleMysterySelection", delegate(BlueprintFeatureSelection bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Divine Mystery");
@@ -26,6 +28,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature
 				bp.m_AllFeatures = FeatTools.Selections.OracleMysterySelection.m_AllFeatures;
 				bp.m_Features = bp.m_AllFeatures;
 			});
+			MirroredSelections.Register(MysterySelection, FeatTools.Selections.OracleMysterySelection);
 			Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiOracleSelection", delegate(BlueprintFeatureSelection bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Divine Inheritance");

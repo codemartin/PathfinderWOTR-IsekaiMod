@@ -232,6 +232,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 				bp.m_AllFeatures = list.Where((BlueprintFeatureReference f) => f != null).Distinct().ToArray();
 				bp.m_Features = bp.m_AllFeatures;
 			});
+			MirroredSelections.Register(TricksterSelection, BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("4fbc563529717de4d92052048143e0f1"), BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("5cd96c3460844fc458dc3e1656dafa42"), BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("446f4a8b32019f5478a8dfeddac74710"));
 			BlueprintFeatureSelection AzataSelection = Helpers.CreateBlueprint(Main.IsekaiContext, "BlessingOfTheAzata", delegate(BlueprintFeatureSelection bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Azata Mythic Class Feature");
@@ -248,6 +249,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 					select f).Distinct().ToArray();
 				bp.m_Features = bp.m_AllFeatures;
 			});
+			MirroredSelections.Register(AzataSelection, BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("8a30e92cd04ff5b459ba7cb03584fda0"));
 			BlueprintFeatureSelection LichSelection = Helpers.CreateBlueprint(Main.IsekaiContext, "BlessingOfTheLich", delegate(BlueprintFeatureSelection bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Lich Mythic Class Feature");
@@ -274,6 +276,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 				bp.m_AllFeatures = list.Where((BlueprintFeatureReference f) => f != null).Distinct().ToArray();
 				bp.m_Features = bp.m_AllFeatures;
 			});
+			MirroredSelections.Register(LichSelection, BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("1f646b820a37d3d4a8ab116a24ee0022"));
 			BlueprintFeatureSelection AngelSelection = Helpers.CreateBlueprint(Main.IsekaiContext, "BlessingOfTheAngel", delegate(BlueprintFeatureSelection bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Angel Mythic Class Feature");
@@ -305,6 +308,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 				bp.m_AllFeatures = list.Where((BlueprintFeatureReference f) => f != null).Distinct().ToArray();
 				bp.m_Features = bp.m_AllFeatures;
 			});
+			MirroredSelections.Register(AngelSelection, BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("bdbc41e2bad92a640bd58acf74e2af8b"), BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("e0ce40968bf0007408b11089a10f36cf"));
 			BlueprintFeatureSelection blueprintFeatureSelection = Helpers.CreateBlueprint(Main.IsekaiContext, "BlessingOfTheMythic", delegate(BlueprintFeatureSelection bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Mythic Class Feature");

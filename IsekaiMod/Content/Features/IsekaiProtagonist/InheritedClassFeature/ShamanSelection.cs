@@ -1,4 +1,5 @@
-﻿using Kingmaker.Blueprints;
+﻿using IsekaiMod.Utilities;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes.Selection;
 using Kingmaker.Blueprints.Facts;
 using TabletopTweaks.Core.Utilities;
@@ -25,6 +26,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature
 				bp.m_AllFeatures = ShamanLegacy.shamanHex.m_AllFeatures;
 				bp.m_Features = bp.m_AllFeatures;
 			});
+			MirroredSelections.Register(isekaiHex, ShamanLegacy.shamanHex);
 			isekaiSpirit = Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiSpiritSelection", delegate(BlueprintFeatureSelection bp)
 			{
 				((BlueprintUnitFact)bp).m_DisplayName = ((BlueprintUnitFact)ShamanLegacy.shamanSpirit).m_DisplayName;
@@ -35,6 +37,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature
 				bp.m_AllFeatures = ShamanLegacy.shamanSpirit.m_AllFeatures;
 				bp.m_Features = bp.m_AllFeatures;
 			});
+			MirroredSelections.Register(isekaiSpirit, ShamanLegacy.shamanSpirit);
 			myfeat = Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiShamanSelection", delegate(BlueprintFeatureSelection bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Spirit Blessing");

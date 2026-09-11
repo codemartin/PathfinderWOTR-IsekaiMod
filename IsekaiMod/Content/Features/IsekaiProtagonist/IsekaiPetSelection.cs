@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using IsekaiMod.Utilities;
+using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using IsekaiMod.Content.Classes.IsekaiProtagonist;
@@ -109,7 +110,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist
 					});
 				}
 			});
-			Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiFamiliarSelection", delegate(BlueprintFeatureSelection blueprintFeatureSelection)
+			BlueprintFeatureSelection IsekaiFamiliarSelection = Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiFamiliarSelection", delegate(BlueprintFeatureSelection blueprintFeatureSelection)
 			{
 				blueprintFeatureSelection.SetName(Main.IsekaiContext, "Familiar Selection");
 				blueprintFeatureSelection.SetDescription(Main.IsekaiContext, "You gain the service of a familiar, which offers you some skill bonuses.");
@@ -119,6 +120,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist
 				blueprintFeatureSelection.m_AllFeatures = WitchFamiliarSelection?.m_AllFeatures ?? new BlueprintFeatureReference[0];
 				blueprintFeatureSelection.m_Features = blueprintFeatureSelection.m_AllFeatures;
 			});
+			MirroredSelections.Register(IsekaiFamiliarSelection, WitchFamiliarSelection);
 			List<BlueprintFeatureReference> featureList = new List<BlueprintFeatureReference>();
 			featureList.Add(bp.ToReference<BlueprintFeatureReference>());
 			if (AnimalCompanionSelectionDomain != null && AnimalCompanionSelectionDomain.m_AllFeatures != null)
