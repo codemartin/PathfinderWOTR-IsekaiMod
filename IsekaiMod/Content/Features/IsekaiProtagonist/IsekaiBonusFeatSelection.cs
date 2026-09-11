@@ -1,4 +1,5 @@
 ﻿using IsekaiMod.Utilities;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Selection;
 using TabletopTweaks.Core.Utilities;
@@ -33,6 +34,10 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist
 				blueprintFeatureSelection.RemoveFromSelection(modBlueprint);
 				blueprintFeatureSelection.AddToFirst(modBlueprint2);
 			}
+			// Mirror the basic feat list so feats other mods add later show up here too.
+			MirroredSelections.Register(blueprintFeatureSelection,
+				modBlueprint == null ? null : new BlueprintFeatureReference[] { modBlueprint.ToReference<BlueprintFeatureReference>() },
+				BasicFeatSelection);
 		}
 	}
 }

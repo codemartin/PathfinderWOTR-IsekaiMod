@@ -1,4 +1,5 @@
-﻿using Kingmaker.Blueprints;
+﻿using IsekaiMod.Utilities;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes.Selection;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
@@ -23,6 +24,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 				bp.m_AllFeatures = SpecialPowerSelection.Get()?.m_AllFeatures ?? new BlueprintFeatureReference[0];
 				bp.m_Features = bp.m_AllFeatures;
 			});
+			MirroredSelections.Register(blueprintFeatureSelection, SpecialPowerSelection.Get());
 			if (blueprintFeatureSelection != null)
 			{
 				SecretPowerSelection.AddToSelection(blueprintFeatureSelection);

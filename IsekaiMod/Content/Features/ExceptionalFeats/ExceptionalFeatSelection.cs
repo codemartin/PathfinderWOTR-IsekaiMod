@@ -46,7 +46,7 @@ namespace IsekaiMod.Content.Features.ExceptionalFeats
 				bp.m_AllFeatures = ExceptionalFeatures;
 				bp.m_Features = ExceptionalFeatures;
 			});
-			Helpers.CreateBlueprint(Main.IsekaiContext, "ExceptionalFeatBonusSelection", delegate(BlueprintFeatureSelection bp)
+			BlueprintFeatureSelection bonusFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "ExceptionalFeatBonusSelection", delegate(BlueprintFeatureSelection bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Exceptional Feats");
 				bp.SetDescription(exceptionalFeatDescription);
@@ -60,6 +60,15 @@ namespace IsekaiMod.Content.Features.ExceptionalFeats
 				bp.m_AllFeatures = ExceptionalFeatures;
 				bp.m_Features = ExceptionalFeatures;
 			});
+			// Keep both Exceptional Feat lists in sync with the mythic feat list after other mods
+			// have added their own mythic feats (MirroredSelections.Sync runs in FinalPatcher).
+			BlueprintFeatureReference[] excludedMythicFeats = new BlueprintFeatureReference[]
+			{
+				ExtraFeatMythicFeat?.ToReference<BlueprintFeatureReference>(),
+				ExtraMythicAbilityMythicFeat?.ToReference<BlueprintFeatureReference>()
+			};
+			MirroredSelections.Register(feature, excludedMythicFeats, MythicFeatSelection);
+			MirroredSelections.Register(bonusFeature, excludedMythicFeats, MythicFeatSelection);
 			if (Main.IsekaiContext.AddedContent.Other.IsEnabled("Exceptional Feats"))
 			{
 				FeatTools.Selections.BasicFeatSelection.AddToFirst(feature);

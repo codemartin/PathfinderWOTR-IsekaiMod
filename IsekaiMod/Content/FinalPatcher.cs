@@ -60,6 +60,9 @@ namespace IsekaiMod.Content
 					SafeStep("PatchTableTopTweakCore", PatchTableTopTweakCore);
 				}
 			}
+			// Runs after every other mod's BlueprintsCache.Init postfix, so mirrored selections
+			// (Exceptional Feats, Isekai Bonus Feat, Extra Special Power) pick up features those mods added.
+			SafeStep("MirroredSelections.Sync", MirroredSelections.Sync);
 		}
 
 		private static void SafeStep(string name, Action action)
