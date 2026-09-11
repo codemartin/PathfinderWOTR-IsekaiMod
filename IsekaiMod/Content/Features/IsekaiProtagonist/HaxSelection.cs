@@ -1,4 +1,5 @@
-﻿using IsekaiMod.Utilities;
+﻿using IsekaiMod.Components;
+using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Selection;
@@ -23,15 +24,10 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist
 			BlueprintFeature SeriousStrike = Helpers.CreateBlueprint(Main.IsekaiContext, "SeriousStrike", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Serious Strike");
-				bp.SetDescription(Main.IsekaiContext, "Consecutive serious punches with limitless force. Any target struck by your attacks is obliterated instantly, dismembering them regardless of their hit points or defenses.");
+				bp.SetDescription(Main.IsekaiContext, "Consecutive serious punches with limitless force. Your strikes always critically hit and deal double damage!");
 				((BlueprintUnitFact)bp).m_Icon = Icon_Hax;
-				bp.AddComponent(delegate(AddOutgoingDamageTrigger c)
-				{
-					c.Actions = ActionFlow.DoSingle(delegate(ContextActionKill contextActionKill)
-					{
-						contextActionKill.Dismember = UnitState.DismemberType.LimbsApart;
-					});
-				});
+				// Implements what the description says instead of the one-hit kill (ContextActionKill).
+				bp.AddComponent<SeriousStrikeLogic>();
 			});
 			BlueprintFeature Invincibility = Helpers.CreateBlueprint(Main.IsekaiContext, "Invincibility", delegate(BlueprintFeature bp)
 			{
