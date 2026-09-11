@@ -1459,6 +1459,21 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist
 			return ExcludedSpellGuids.Contains(spell.AssetGuid);
 		}
 
+		public static int CountSpells()
+		{
+			BlueprintSpellList list = Get();
+			if (list?.SpellsByLevel == null)
+			{
+				return 0;
+			}
+			int total = 0;
+			foreach (SpellLevelList level in list.SpellsByLevel)
+			{
+				total += level?.m_Spells?.Count ?? 0;
+			}
+			return total;
+		}
+
 		public static void MergeSpellLists()
 		{
 			BlueprintSpellList blueprintSpellList = Get();
@@ -1621,6 +1636,8 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist
 			{
 				return;
 			}
+			// Rebuild rather than append: MergeSpellLists can run again from LateSpellListMergePatch.
+			modBlueprint.RemoveComponents<AddFacts>();
 			modBlueprint.AddComponent(delegate(AddFacts c)
 			{
 				c.m_Facts = new BlueprintUnitFactReference[0];
