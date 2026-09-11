@@ -245,9 +245,14 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist
 				foreach (string name in lateNames)
 				{
 					BlueprintFeature feature = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, name);
-					if (feature != null && !entry.m_Features.Any((BlueprintFeatureBaseReference r) => r.Guid == feature.AssetGuid))
+					if (feature == null)
+					{
+						Main.IsekaiContext.Logger.LogError("LinkLateFeatures: " + name + " still missing after AddConstellations");
+					}
+					else if (!entry.m_Features.Any((BlueprintFeatureBaseReference r) => r.Guid == feature.AssetGuid))
 					{
 						entry.m_Features.Add(feature.ToReference<BlueprintFeatureBaseReference>());
+						Main.IsekaiContext.Logger.Log("LinkLateFeatures: linked " + name + " at level 1");
 					}
 				}
 			}

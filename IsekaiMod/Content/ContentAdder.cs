@@ -240,13 +240,12 @@ namespace IsekaiMod.Content
 				{
 					BlessingOfTheMythic.Configure();
 				}
-				OtherworldScavenger.Add();
 				IsekaiProficiencies.Add();
 				SubclassCantrips.Add();
 				IsekaiCantrips.Add();
 				IsekaiBonusFeatSelection.Add();
-			// Moved after IsekaiBonusFeatSelection: it registers itself into that selection.
-			OtherworldScavenger.Add();
+				// Moved after IsekaiBonusFeatSelection: it registers itself into that selection.
+				OtherworldScavenger.Add();
 				IsekaiTalentSelection.Add();
 				GuardianCompanionClass.Add();
 				GuardianProgressions.Add();
