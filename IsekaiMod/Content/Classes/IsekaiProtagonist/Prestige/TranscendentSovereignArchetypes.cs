@@ -64,7 +64,7 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist.Prestige
 					});
 				}
 			}));
-			BlueprintFeature AllAccordingToPlanFeature = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "AllAccordingToPlanFeature");
+			BlueprintFeature AllAccordingToPlanFeature = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "SovereignAllAccordingToPlanFeature");
 			BlueprintFeature MastermindProficiencies = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "MastermindProficiencies");
 			TranscendentSovereignClass.RegisterArchetype(Helpers.CreateBlueprint(Main.IsekaiContext, "GrandStrategistArchetype", delegate(BlueprintArchetype bp)
 			{

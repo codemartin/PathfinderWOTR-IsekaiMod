@@ -7,6 +7,7 @@ using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.ShadowMonarch;
 using IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature;
 using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
+using System.Linq;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Selection;
 using Kingmaker.Blueprints.Facts;
@@ -217,6 +218,39 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist
 				blueprint2.ToReference<BlueprintFeatureBaseReference>()
 			};
 			IsekaiProtagonistClass.SetProgression(blueprintProgression);
+		}
+
+		// CosmicTokensFeature, CosmicSponsorshipExchangeFeature, DimensionalArenaFeature and
+		// DimensionalRiftsFeature are created by AddConstellations, which runs after this
+		// progression is built, so Add() put empty references at level 1. Replace them here.
+		public static void LinkLateFeatures()
+		{
+			BlueprintProgression progression = BlueprintTools.GetModBlueprint<BlueprintProgression>(Main.IsekaiContext, "IsekaiProtagonistProgression");
+			if (progression == null || progression.LevelEntries == null)
+			{
+				return;
+			}
+			string[] lateNames = new string[4] { "CosmicTokensFeature", "CosmicSponsorshipExchangeFeature", "DimensionalArenaFeature", "DimensionalRiftsFeature" };
+			foreach (LevelEntry entry in progression.LevelEntries)
+			{
+				if (entry?.m_Features == null)
+				{
+					continue;
+				}
+				entry.m_Features.RemoveAll((BlueprintFeatureBaseReference r) => r == null || r.Guid == BlueprintGuid.Empty || r.Get() == null);
+				if (entry.Level != 1)
+				{
+					continue;
+				}
+				foreach (string name in lateNames)
+				{
+					BlueprintFeature feature = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, name);
+					if (feature != null && !entry.m_Features.Any((BlueprintFeatureBaseReference r) => r.Guid == feature.AssetGuid))
+					{
+						entry.m_Features.Add(feature.ToReference<BlueprintFeatureBaseReference>());
+					}
+				}
+			}
 		}
 	}
 }

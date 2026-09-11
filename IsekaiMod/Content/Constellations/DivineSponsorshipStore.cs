@@ -840,7 +840,7 @@ namespace IsekaiMod.Content.Constellations
 					c.Value = 2;
 				});
 			});
-			AddSubclassBlessing("MartialGodTranscendence", "Martial God Transcendence", "Grants a +10 ft bonus to speed, +2 Dodge AC, and an extra attack on a full attack.", "MartialGodProficiencies", delegate(BlueprintFeature obj)
+			AddSubclassBlessing("MartialGodBlessingTranscendence", "Martial God Transcendence", "Grants a +10 ft bonus to speed, +2 Dodge AC, and an extra attack on a full attack.", "MartialGodProficiencies", delegate(BlueprintFeature obj)
 			{
 				obj.AddComponent(delegate(AddStatBonus c)
 				{

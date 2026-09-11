@@ -756,7 +756,7 @@ namespace IsekaiMod.Content.Constellations
 				bp.RestoreChargesOnRest = false;
 				((BlueprintItemEquipment)bp).m_Ability = apexAbility.ToReference<BlueprintAbilityReference>();
 			});
-			BlueprintBuff soulAnchorBuff = BlueprintTools.GetModBlueprint<BlueprintBuff>(Main.IsekaiContext, "SoulAnchorBuff");
+			BlueprintBuff soulAnchorBuff = BlueprintTools.GetModBlueprint<BlueprintBuff>(Main.IsekaiContext, "DraughtOfAbsoluteSoulAnchorBuff");
 			BlueprintAbility soulAnchorAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "ItemDraughtAbsoluteSoulAnchorAbility", delegate(BlueprintAbility bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Drink Draught of Absolute Soul Anchor");

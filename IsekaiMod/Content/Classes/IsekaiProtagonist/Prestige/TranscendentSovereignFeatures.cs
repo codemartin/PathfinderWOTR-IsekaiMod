@@ -399,7 +399,7 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist.Prestige
 					c.Number = 1;
 				});
 			});
-			TTCoreExtensions.CreateToggleAuraBuffFeature("AllAccordingToPlan", "At 5th level, replace Transcendent Domain with an aura granting allies a +4 insight bonus to attack rolls and saving throws, plus a +20 bonus to critical confirmation rolls.", "Allies receive a +4 insight bonus to attack rolls and saving throws, and a +20 bonus to critical confirmation rolls.", Icon_Domain, BlueprintAbilityAreaEffect.TargetType.Ally, new Feet(40f), affectEnemies: false, delegate(BlueprintBuff bp)
+			TTCoreExtensions.CreateToggleAuraBuffFeature("SovereignAllAccordingToPlan", "At 5th level, replace Transcendent Domain with an aura granting allies a +4 insight bonus to attack rolls and saving throws, plus a +20 bonus to critical confirmation rolls.", "Allies receive a +4 insight bonus to attack rolls and saving throws, and a +20 bonus to critical confirmation rolls.", Icon_Domain, BlueprintAbilityAreaEffect.TargetType.Ally, new Feet(40f), affectEnemies: false, delegate(BlueprintBuff bp)
 			{
 				bp.AddComponent(delegate(AddStatBonus c)
 				{

@@ -85,6 +85,8 @@ namespace IsekaiMod.Content
 					SafeStep("AddIsekaiProtagonistClass", AddIsekaiProtagonistClass);
 				}
 				SafeStep("AddConstellations", AddConstellations);
+			// The class progression is built before the Constellation features exist; link them now.
+			SafeStep("LinkLateProgressionFeatures", IsekaiProtagonistProgression.LinkLateFeatures);
 				if (Isekai.IsEnabled("Isekai Dialogue"))
 				{
 					SafeStep("AddIsekaiDialogue", AddIsekaiDialogue);
@@ -243,6 +245,8 @@ namespace IsekaiMod.Content
 				SubclassCantrips.Add();
 				IsekaiCantrips.Add();
 				IsekaiBonusFeatSelection.Add();
+			// Moved after IsekaiBonusFeatSelection: it registers itself into that selection.
+			OtherworldScavenger.Add();
 				IsekaiTalentSelection.Add();
 				GuardianCompanionClass.Add();
 				GuardianProgressions.Add();

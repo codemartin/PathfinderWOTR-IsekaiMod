@@ -105,36 +105,7 @@ namespace IsekaiMod.Content.Guardians
 					c.Element = DamageEnergyType.Holy;
 				});
 			});
-			TTCoreExtensions.CreateBuff("GuardianAngelAuraOfMenaceBuff", delegate(BlueprintBuff bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Aura of Menace");
-				bp.SetDescription(Main.IsekaiContext, "Enemies within 20 feet suffer a -2 penalty on attack rolls and saving throws.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Angel;
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Penalty;
-					c.Stat = StatType.AdditionalAttackBonus;
-					c.Value = -2;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Penalty;
-					c.Stat = StatType.SaveFortitude;
-					c.Value = -2;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Penalty;
-					c.Stat = StatType.SaveReflex;
-					c.Value = -2;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Penalty;
-					c.Stat = StatType.SaveWill;
-					c.Value = -2;
-				});
-			});
+			// (a stray duplicate GuardianAngelAuraOfMenaceBuff was created here; CreateToggleAuraBuffFeature below builds the real one)
 			BlueprintFeature AngelAuraOfMenace = TTCoreExtensions.CreateToggleAuraBuffFeature("GuardianAngelAuraOfMenace", "Enemies within 20 feet of the Guardian Angel suffer a -2 penalty on attack rolls and saving throws.", "This creature suffers a -2 penalty on attack rolls and saving throws from celestial majesty.", Icon_Angel, BlueprintAbilityAreaEffect.TargetType.Enemy, new Feet(20f), affectEnemies: true, delegate(BlueprintBuff bp)
 			{
 				bp.AddComponent(delegate(AddStatBonus c)
