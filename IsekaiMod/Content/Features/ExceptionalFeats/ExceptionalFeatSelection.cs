@@ -1,74 +1,88 @@
-﻿using IsekaiMod.Utilities;
+﻿using System.Linq;
+using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes.Selection;
+using Kingmaker.Blueprints.Facts;
 using Kingmaker.Designers.Mechanics.Recommendations;
 using Kingmaker.Localization;
 using TabletopTweaks.Core.Utilities;
 using UnityEngine;
-using static IsekaiMod.Main;
 
-namespace IsekaiMod.Content.Features.ExceptionalFeats {
+namespace IsekaiMod.Content.Features.ExceptionalFeats
+{
+	internal class ExceptionalFeatSelection
+	{
+		private static readonly BlueprintFeatureSelection MythicFeatSelection = BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("9ee0f6745f555484299b0a1563b99d81");
 
-    internal class ExceptionalFeatSelection {
-        private static readonly BlueprintFeatureSelection MythicFeatSelection = BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("9ee0f6745f555484299b0a1563b99d81");
-        private static readonly BlueprintFeatureSelection ExtraFeatMythicFeat = BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("e10c4f18a6c8b4342afe6954bde0587b");
-        private static readonly BlueprintFeatureSelection ExtraMythicAbilityMythicFeat = BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("8a6a511c55e67d04db328cc49aaad2b8");
+		private static readonly BlueprintFeatureSelection ExtraFeatMythicFeat = BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("e10c4f18a6c8b4342afe6954bde0587b");
 
-        private static readonly Sprite Icon_ExceptionalFeat = AssetLoader.LoadInternal(IsekaiContext, "Features", "ICON_EXCEPTIONAL_FEAT.png");
+		private static readonly BlueprintFeatureSelection ExtraMythicAbilityMythicFeat = BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("8a6a511c55e67d04db328cc49aaad2b8");
 
-        public static void Add() {
-            // Add more Exceptional feats later
-            BlueprintFeatureReference[] ExceptionalFeatures = MythicFeatSelection.m_AllFeatures
-                .RemoveFromArray(ExtraFeatMythicFeat.ToReference<BlueprintFeatureReference>())
-                .RemoveFromArray(ExtraMythicAbilityMythicFeat.ToReference<BlueprintFeatureReference>());
+		private static readonly Sprite Icon_ExceptionalFeat = AssetLoader.LoadInternal(Main.IsekaiContext, "Features", "ICON_EXCEPTIONAL_FEAT.png");
 
-            // The reason for two copies is to avoid a UI bug when exceptional feats are selected both in feat and bonus feat.
-            LocalizedString exceptionalFeatDescription = Helpers.CreateString(IsekaiContext, "ExceptionalFeatSelection.Description",
-                "Exceptional feats are feats that no ordinary NPC possess.\nSource: Isekai Mod");
-            var ExceptionalFeatSelection = Helpers.CreateBlueprint<BlueprintFeatureSelection>(IsekaiContext, "ExceptionalFeatSelection", bp => {
-                bp.SetName(IsekaiContext, "Exceptional Feats");
-                bp.SetDescription(exceptionalFeatDescription);
-                bp.Ranks = 1;
-                bp.IsClassFeature = true;
-                bp.m_Icon = Icon_ExceptionalFeat;
-                bp.AddComponent<PureRecommendation>(c => {
-                    c.Priority = RecommendationPriority.Good;
-                });
-                bp.m_AllFeatures = ExceptionalFeatures;
-            });
-            var ExceptionalFeatBonusSelection = Helpers.CreateBlueprint<BlueprintFeatureSelection>(IsekaiContext, "ExceptionalFeatBonusSelection", bp => {
-                bp.SetName(IsekaiContext, "Exceptional Feats");
-                bp.SetDescription(exceptionalFeatDescription);
-                bp.Ranks = 1;
-                bp.IsClassFeature = true;
-                bp.m_Icon = Icon_ExceptionalFeat;
-                bp.AddComponent<PureRecommendation>(c => {
-                    c.Priority = RecommendationPriority.Good;
-                });
-                bp.m_AllFeatures = ExceptionalFeatures;
-            });
+		public static void Add()
+		{
+			BlueprintFeatureReference[] ExceptionalFeatures = (MythicFeatSelection?.m_AllFeatures ?? new BlueprintFeatureReference[0]).Where((BlueprintFeatureReference f) => f != null).ToArray();
+			if (ExtraFeatMythicFeat != null)
+			{
+				ExceptionalFeatures = ExceptionalFeatures.RemoveFromArray(ExtraFeatMythicFeat.ToReference<BlueprintFeatureReference>());
+			}
+			if (ExtraMythicAbilityMythicFeat != null)
+			{
+				ExceptionalFeatures = ExceptionalFeatures.RemoveFromArray(ExtraMythicAbilityMythicFeat.ToReference<BlueprintFeatureReference>());
+			}
+			LocalizedString exceptionalFeatDescription = Helpers.CreateString(Main.IsekaiContext, "ExceptionalFeatSelection.Description", "Exceptional feats are feats that no ordinary NPC possess.\nSource: Isekai Mod");
+			BlueprintFeatureSelection feature = Helpers.CreateBlueprint(Main.IsekaiContext, "ExceptionalFeatSelection", delegate(BlueprintFeatureSelection bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Exceptional Feats");
+				bp.SetDescription(exceptionalFeatDescription);
+				bp.Ranks = 1;
+				bp.IsClassFeature = true;
+				((BlueprintUnitFact)bp).m_Icon = Icon_ExceptionalFeat;
+				bp.AddComponent(delegate(PureRecommendation c)
+				{
+					c.Priority = RecommendationPriority.Good;
+				});
+				bp.m_AllFeatures = ExceptionalFeatures;
+				bp.m_Features = ExceptionalFeatures;
+			});
+			Helpers.CreateBlueprint(Main.IsekaiContext, "ExceptionalFeatBonusSelection", delegate(BlueprintFeatureSelection bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Exceptional Feats");
+				bp.SetDescription(exceptionalFeatDescription);
+				bp.Ranks = 1;
+				bp.IsClassFeature = true;
+				((BlueprintUnitFact)bp).m_Icon = Icon_ExceptionalFeat;
+				bp.AddComponent(delegate(PureRecommendation c)
+				{
+					c.Priority = RecommendationPriority.Good;
+				});
+				bp.m_AllFeatures = ExceptionalFeatures;
+				bp.m_Features = ExceptionalFeatures;
+			});
+			if (Main.IsekaiContext.AddedContent.Other.IsEnabled("Exceptional Feats"))
+			{
+				FeatTools.Selections.BasicFeatSelection.AddToFirst(feature);
+			}
+		}
 
-            var excludedMythicFeats = new[] {
-                ExtraFeatMythicFeat.ToReference<BlueprintFeatureReference>(),
-                ExtraMythicAbilityMythicFeat.ToReference<BlueprintFeatureReference>()
-            };
-            MirroredSelections.Register(ExceptionalFeatSelection, excludedMythicFeats, MythicFeatSelection);
-            MirroredSelections.Register(ExceptionalFeatBonusSelection, excludedMythicFeats, MythicFeatSelection);
+		public static void AddToSelection(BlueprintFeatureSelection selection, BlueprintFeatureSelection bonusSelection)
+		{
+			BlueprintFeatureSelection modBlueprint = BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "ExceptionalFeatSelection");
+			BlueprintFeatureSelection modBlueprint2 = BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "ExceptionalFeatBonusSelection");
+			if (modBlueprint != null && selection != null)
+			{
+				modBlueprint.AddToSelection(selection);
+			}
+			if (modBlueprint2 != null && bonusSelection != null)
+			{
+				modBlueprint2.AddToSelection(bonusSelection);
+			}
+		}
 
-            if (IsekaiContext.AddedContent.Other.IsEnabled("Exceptional Feats")) {
-                FeatTools.Selections.BasicFeatSelection.AddToFirst(ExceptionalFeatSelection);
-            }
-        }
-
-        public static void AddToSelection(BlueprintFeatureSelection selection, BlueprintFeatureSelection bonusSelection) {
-            var ExceptionalFeatSelection = BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(IsekaiContext, "ExceptionalFeatSelection");
-            var ExceptionalFeatBonusSelection = BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(IsekaiContext, "ExceptionalFeatBonusSelection");
-            ExceptionalFeatSelection.AddToSelection(selection);
-            ExceptionalFeatBonusSelection.AddToSelection(bonusSelection);
-        }
-
-        public static BlueprintFeatureSelection Get() {
-            return BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(IsekaiContext, "ExceptionalFeatSelection");
-        }
-    }
+		public static BlueprintFeatureSelection Get()
+		{
+			return BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "ExceptionalFeatSelection");
+		}
+	}
 }

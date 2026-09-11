@@ -1,38 +1,38 @@
 ﻿using IsekaiMod.Utilities;
-using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Selection;
 using TabletopTweaks.Core.Utilities;
-using static IsekaiMod.Main;
 
-namespace IsekaiMod.Content.Features.IsekaiProtagonist {
+namespace IsekaiMod.Content.Features.IsekaiProtagonist
+{
+	internal class IsekaiBonusFeatSelection
+	{
+		private static readonly BlueprintFeatureSelection BasicFeatSelection = BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("247a4068296e8be42890143f451b4b45");
 
-    internal class IsekaiBonusFeatSelection {
-        private static readonly BlueprintFeatureSelection BasicFeatSelection = BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("247a4068296e8be42890143f451b4b45");
+		public static void Add()
+		{
+			PatchExceptionalFeatSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiBonusFeatSelection", delegate(BlueprintFeatureSelection bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Bonus Feat");
+				bp.SetDescription(Main.IsekaiContext, "At 1st level, and at every even level thereafter, you gain a bonus {g|Encyclopedia:Feat}feat{/g} in addition to those gained from normal advancement.");
+				bp.Ranks = 1;
+				bp.IsClassFeature = true;
+				bp.Group = FeatureGroup.Feat;
+				bp.Group2 = FeatureGroup.TricksterFeat;
+				bp.m_AllFeatures = BasicFeatSelection.m_AllFeatures;
+				bp.m_Features = BasicFeatSelection.m_AllFeatures;
+			}));
+		}
 
-        public static void Add() {
-            var IsekaiBonusFeatSelection = Helpers.CreateBlueprint<BlueprintFeatureSelection>(IsekaiContext, "IsekaiBonusFeatSelection", bp => {
-                bp.SetName(IsekaiContext, "Bonus Feat");
-                bp.SetDescription(IsekaiContext, "At 1st level, and at every even level thereafter, you gain a bonus {g|Encyclopedia:Feat}feat{/g} in addition to those gained from normal advancement.");
-                bp.Ranks = 1;
-                bp.IsClassFeature = true;
-                bp.Group = FeatureGroup.Feat;
-                bp.Group2 = FeatureGroup.TricksterFeat;
-                bp.m_AllFeatures = BasicFeatSelection.m_AllFeatures;
-            });
-            PatchExceptionalFeatSelection(IsekaiBonusFeatSelection);
-        }
-
-        private static void PatchExceptionalFeatSelection(BlueprintFeatureSelection blueprintFeatureSelection) {
-            var ExceptionalFeatSelection = BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(IsekaiContext, "ExceptionalFeatSelection");
-            var ExceptionalFeatBonusSelection = BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(IsekaiContext, "ExceptionalFeatBonusSelection");
-            if (ExceptionalFeatSelection != null && ExceptionalFeatBonusSelection != null) {
-                blueprintFeatureSelection.RemoveFromSelection(ExceptionalFeatSelection);
-                blueprintFeatureSelection.AddToFirst(ExceptionalFeatBonusSelection);
-            }
-            MirroredSelections.Register(blueprintFeatureSelection,
-                ExceptionalFeatSelection == null ? null : new[] { ExceptionalFeatSelection.ToReference<BlueprintFeatureReference>() },
-                BasicFeatSelection);
-        }
-    }
+		private static void PatchExceptionalFeatSelection(BlueprintFeatureSelection blueprintFeatureSelection)
+		{
+			BlueprintFeatureSelection modBlueprint = BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "ExceptionalFeatSelection");
+			BlueprintFeatureSelection modBlueprint2 = BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "ExceptionalFeatBonusSelection");
+			if (modBlueprint != null && modBlueprint2 != null)
+			{
+				blueprintFeatureSelection.RemoveFromSelection(modBlueprint);
+				blueprintFeatureSelection.AddToFirst(modBlueprint2);
+			}
+		}
+	}
 }

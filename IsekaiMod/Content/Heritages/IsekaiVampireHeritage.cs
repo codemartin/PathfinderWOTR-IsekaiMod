@@ -2,115 +2,212 @@
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Spells;
-using Kingmaker.Designers.Mechanics.Buffs;
+using Kingmaker.Blueprints.Facts;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.Enums;
 using Kingmaker.Enums.Damage;
+using Kingmaker.RuleSystem;
+using Kingmaker.RuleSystem.Rules.Damage;
+using Kingmaker.UnitLogic.Abilities.Blueprints;
+using Kingmaker.UnitLogic.Abilities.Components;
+using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.UnitLogic.Buffs.Components;
+using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.FactLogic;
+using Kingmaker.UnitLogic.Mechanics;
+using Kingmaker.UnitLogic.Mechanics.Actions;
 using Kingmaker.UnitLogic.Mechanics.Components;
+using Kingmaker.Visual.Animation.Kingmaker.Actions;
 using TabletopTweaks.Core.Utilities;
-using static IsekaiMod.Main;
+using UnityEngine;
 
-namespace IsekaiMod.Content.Heritages {
-
-    internal class IsekaiVampireHeritage {
-        private static readonly BlueprintFeature DestinyBeyondBirthMythicFeat = BlueprintTools.GetBlueprint<BlueprintFeature>("325f078c584318849bfe3da9ea245b9d");
-
-        public static void Add() {
-            // Vampire Heritage
-            var Icon_Vampire = AssetLoader.LoadInternal(IsekaiContext, "Heritages", "ICON_VAMPIRE.png");
-            var IsekaiVampireHeritage = Helpers.CreateBlueprint<BlueprintFeature>(IsekaiContext, "IsekaiVampireHeritage", bp => {
-                bp.SetName(IsekaiContext, "Isekai Vampire");
-                bp.SetDescription(IsekaiContext, "Otherworldly entities who are reincarnated into the world of Golarion as a Vampire have both extreme beauty and power. Incredibly beautiful but "
-                    + "strikingly grim shades that straddle the line between humanity and vampirekind, they are often single-minded loners intent on a specific goal.\n"
-                    + "The Isekai Vampire has a +4 racial {g|Encyclopedia:Bonus}bonus{/g} to {g|Encyclopedia:Dexterity}Dexterity{/g} and {g|Encyclopedia:Charisma}Charisma{/g}, "
-                    + "a -2 {g|Encyclopedia:Penalty}penalty{/g} to {g|Encyclopedia:Constitution}Constitution{/g}, and a +2 racial bonus on {g|Encyclopedia:Persuasion}Persuasion{/g} and "
-                    + "{g|Encyclopedia:Perception}Perception checks{/g}. "
-                    + "They have DR 10/Magic and Silver, and have fast healing equal to their character level. "
-                    + "They have immunity to poison, disease, mind-affecting and death effects as well as cold and electricity resistance 20.");
-                bp.m_Icon = Icon_Vampire;
-
-                // Attributes
-                bp.AddComponent<AddStatBonusIfHasFact>(c => {
-                    c.Descriptor = ModifierDescriptor.Racial;
-                    c.Stat = StatType.Constitution;
-                    c.Value = -2;
-                    c.InvertCondition = true;
-                    c.m_CheckedFacts = new BlueprintUnitFactReference[] { DestinyBeyondBirthMythicFeat.ToReference<BlueprintUnitFactReference>() };
-                });
-                bp.AddComponent<AddStatBonus>(c => {
-                    c.Descriptor = ModifierDescriptor.Racial;
-                    c.Stat = StatType.Dexterity;
-                    c.Value = 4;
-                });
-                bp.AddComponent<AddStatBonus>(c => {
-                    c.Descriptor = ModifierDescriptor.Racial;
-                    c.Stat = StatType.Charisma;
-                    c.Value = 4;
-                });
-                bp.AddComponent<AddStatBonus>(c => {
-                    c.Descriptor = ModifierDescriptor.Racial;
-                    c.Stat = StatType.SkillPerception;
-                    c.Value = 2;
-                });
-                bp.AddComponent<AddStatBonus>(c => {
-                    c.Descriptor = ModifierDescriptor.Racial;
-                    c.Stat = StatType.SkillPersuasion;
-                    c.Value = 2;
-                });
-
-                // Add DR/magic and silver
-                bp.AddComponent<AddDamageResistancePhysical>(c => {
-                    c.Or = false;
-                    c.Value = 10;
-                    c.BypassedByMaterial = true;
-                    c.Material = PhysicalDamageMaterial.Silver;
-                    c.BypassedByMagic = true;
-                    c.MinEnhancementBonus = 1;
-                });
-
-                // Add Fast Healing
-                bp.AddComponent<AddEffectFastHealing>(c => {
-                    c.Heal = 0;
-                    c.Bonus = Values.CreateContextRankValue(AbilityRankType.StatBonus);
-                });
-                bp.AddComponent<ContextRankConfig>(c => {
-                    c.m_Type = AbilityRankType.StatBonus;
-                    c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
-                });
-
-                // Add Resistance and Immunities
-                bp.AddComponent<AddDamageResistanceEnergy>(c => {
-                    c.Type = DamageEnergyType.Cold;
-                    c.Value = 20;
-                });
-                bp.AddComponent<AddDamageResistanceEnergy>(c => {
-                    c.Type = DamageEnergyType.Electricity;
-                    c.Value = 20;
-                });
-                bp.AddComponent<BuffDescriptorImmunity>(c => {
-                    c.Descriptor = SpellDescriptor.Poison
-                    | SpellDescriptor.Disease
-                    | SpellDescriptor.MindAffecting
-                    | SpellDescriptor.Compulsion
-                    | SpellDescriptor.Charm
-                    | SpellDescriptor.Death;
-                });
-                bp.AddComponent<SpellImmunityToSpellDescriptor>(c => {
-                    c.Descriptor = SpellDescriptor.Poison
-                    | SpellDescriptor.Disease
-                    | SpellDescriptor.MindAffecting
-                    | SpellDescriptor.Compulsion
-                    | SpellDescriptor.Charm
-                    | SpellDescriptor.Death;
-                });
-
-                bp.Groups = new FeatureGroup[] { FeatureGroup.Racial, FeatureGroup.DhampirHeritage };
-                bp.ReapplyOnLevelUp = true;
-            });
-
-            FeatTools.Selections.DhampirHeritageSelection.AddToSelection(IsekaiVampireHeritage);
-        }
-    }
+namespace IsekaiMod.Content.Heritages
+{
+	internal class IsekaiVampireHeritage
+	{
+		public static void Add()
+		{
+			Sprite Icon_Vampire = AssetLoader.LoadInternal(Main.IsekaiContext, "Heritages", "ICON_VAMPIRE.png");
+			Sprite Icon_Mist = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintAbility>("486eaff58293f6441a5c2759c4872f98")).m_Icon;
+			BlueprintBuff VampiricMistBuff = TTCoreExtensions.CreateBuff("VampiricMistBuff", delegate(BlueprintBuff bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Vampiric Mist Form");
+				bp.SetDescription(Main.IsekaiContext, "You disperse your physical form into a swirling cloud of ethereal mist. You gain DR 50/-, a +30 ft bonus to movement speed, and immunity to ground hazards, but cannot make physical attacks or cast spells for 2 rounds.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_Mist;
+				bp.AddComponent(delegate(AddDamageResistancePhysical c)
+				{
+					c.Value = 50;
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Racial;
+					c.Stat = StatType.Speed;
+					c.Value = 30;
+				});
+				bp.AddComponent<ForbidSpellCasting>();
+			});
+			BlueprintAbility VampiricMistAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "VampiricMistAbility", delegate(BlueprintAbility bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Vampiric Mist Form");
+				bp.SetDescription(Main.IsekaiContext, "As a swift action, dissolve into mist for 2 rounds. Grants DR 50/- and +30 ft movement speed.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_Mist;
+				bp.Type = AbilityType.Special;
+				bp.Range = AbilityRange.Personal;
+				bp.CanTargetSelf = true;
+				bp.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Self;
+				bp.ActionType = UnitCommand.CommandType.Swift;
+				bp.AddComponent(delegate(AbilityEffectRunAction c)
+				{
+					c.Actions = ActionFlow.DoSingle(delegate(ContextActionApplyBuff a)
+					{
+						a.m_Buff = VampiricMistBuff.ToReference<BlueprintBuffReference>();
+						a.DurationValue = new ContextDurationValue
+						{
+							Rate = DurationRate.Rounds,
+							DiceType = DiceType.Zero,
+							BonusValue = new ContextValue
+							{
+								ValueType = ContextValueType.Simple,
+								Value = 2
+							}
+						};
+					});
+				});
+			});
+			BlueprintAbility BloodDrainBiteAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "BloodDrainBiteAbility", delegate(BlueprintAbility bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Blood Drain");
+				bp.SetDescription(Main.IsekaiContext, "Sink your fangs into an adjacent living creature. Deals 2d6 unholy damage, drains 2 Constitution, and heals you for 15 hit points.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_Vampire;
+				bp.Type = AbilityType.Special;
+				bp.Range = AbilityRange.Touch;
+				bp.CanTargetEnemies = true;
+				bp.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Directional;
+				bp.ActionType = UnitCommand.CommandType.Standard;
+				bp.AddComponent(delegate(AbilityEffectRunAction c)
+				{
+					c.Actions = Helpers.CreateActionList(new ContextActionDealDamage
+					{
+						DamageType = new DamageTypeDescription
+						{
+							Type = DamageType.Energy,
+							Energy = DamageEnergyType.Unholy
+						},
+						Value = new ContextDiceValue
+						{
+							DiceType = DiceType.D6,
+							DiceCountValue = 2,
+							BonusValue = 0
+						}
+					}, new ContextActionOnContextCaster
+					{
+						Actions = Helpers.CreateActionList(new ContextActionHealTarget
+						{
+							Value = new ContextDiceValue
+							{
+								DiceType = DiceType.Zero,
+								DiceCountValue = 0,
+								BonusValue = 15
+							}
+						})
+					});
+				});
+			});
+			BlueprintFeature feature = Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiVampireHeritage", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Isekai Vampire Lord");
+				bp.SetDescription(Main.IsekaiContext, "Reincarnated into Golarion as a true Vampire Lord, you possess otherworldly beauty, immortal regeneration, and dominion over blood and mist. Unlike ordinary vampires, you suffer no penalties to Constitution and are a Daywalker uninhibited by the light.\nThe Isekai Vampire Lord has a +4 racial bonus to Dexterity and Charisma, a +2 racial bonus to Constitution and Intelligence, and a +2 racial bonus on Persuasion and Perception checks.\nThey possess DR 10/Magic and Silver, Fast Healing equal to their character level, immunity to poison, disease, mind-affecting, and death effects, cold and electricity resistance 20, the Blood Drain bite, and the Vampiric Mist Form ability.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_Vampire;
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Racial;
+					c.Stat = StatType.Dexterity;
+					c.Value = 4;
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Racial;
+					c.Stat = StatType.Charisma;
+					c.Value = 4;
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Racial;
+					c.Stat = StatType.Constitution;
+					c.Value = 2;
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Racial;
+					c.Stat = StatType.Intelligence;
+					c.Value = 2;
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Racial;
+					c.Stat = StatType.SkillPerception;
+					c.Value = 2;
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Racial;
+					c.Stat = StatType.SkillPersuasion;
+					c.Value = 2;
+				});
+				bp.AddComponent(delegate(AddDamageResistancePhysical c)
+				{
+					c.Or = false;
+					c.Value = 10;
+					c.BypassedByMaterial = true;
+					c.Material = PhysicalDamageMaterial.Silver;
+					c.BypassedByMagic = true;
+					c.MinEnhancementBonus = 1;
+				});
+				bp.AddComponent(delegate(AddEffectFastHealing c)
+				{
+					c.Heal = 0;
+					c.Bonus = Values.CreateContextRankValue(AbilityRankType.StatBonus);
+				});
+				bp.AddComponent(delegate(ContextRankConfig c)
+				{
+					c.m_Type = AbilityRankType.StatBonus;
+					c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
+				});
+				bp.AddComponent(delegate(AddDamageResistanceEnergy c)
+				{
+					c.Type = DamageEnergyType.Cold;
+					c.Value = 20;
+				});
+				bp.AddComponent(delegate(AddDamageResistanceEnergy c)
+				{
+					c.Type = DamageEnergyType.Electricity;
+					c.Value = 20;
+				});
+				bp.AddComponent(delegate(BuffDescriptorImmunity c)
+				{
+					c.Descriptor = SpellDescriptor.MindAffecting | SpellDescriptor.Compulsion | SpellDescriptor.Poison | SpellDescriptor.Disease | SpellDescriptor.Charm | SpellDescriptor.Death;
+				});
+				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+				{
+					c.Descriptor = SpellDescriptor.MindAffecting | SpellDescriptor.Compulsion | SpellDescriptor.Poison | SpellDescriptor.Disease | SpellDescriptor.Charm | SpellDescriptor.Death;
+				});
+				bp.AddComponent(delegate(AddFacts c)
+				{
+					c.m_Facts = new BlueprintUnitFactReference[2]
+					{
+						VampiricMistAbility.ToReference<BlueprintUnitFactReference>(),
+						BloodDrainBiteAbility.ToReference<BlueprintUnitFactReference>()
+					};
+				});
+				bp.Groups = new FeatureGroup[2]
+				{
+					FeatureGroup.Racial,
+					FeatureGroup.DhampirHeritage
+				};
+				bp.ReapplyOnLevelUp = true;
+			});
+			FeatTools.Selections.DhampirHeritageSelection.AddToSelection(feature);
+			HumanHeritageSelection.Register(feature);
+		}
+	}
 }

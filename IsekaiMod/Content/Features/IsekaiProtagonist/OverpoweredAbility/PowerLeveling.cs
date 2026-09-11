@@ -1,8 +1,10 @@
-﻿using IsekaiMod.Utilities;
-using IsekaiMod.Components;
+﻿using IsekaiMod.Components;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
+using Kingmaker.Blueprints.Facts;
 using Kingmaker.ElementsSystem;
+using Kingmaker.EntitySystem.Stats;
+using Kingmaker.Enums;
 using Kingmaker.Localization;
 using Kingmaker.ResourceLinks;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
@@ -13,99 +15,77 @@ using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.Utility;
 using TabletopTweaks.Core.Utilities;
 using UnityEngine;
-using static IsekaiMod.Main;
 
-namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility {
-
-    internal class PowerLeveling {
-
-        public static void Add() {
-            // Icon
-            Sprite Icon_DimensionalAnchor = BlueprintTools.GetBlueprint<BlueprintAbility>("c0aa77246b26433fa79c8ac09b1e70d9").m_Icon;
-
-            // Name and Description
-            var PowerLevelingName = Helpers.CreateString(IsekaiContext, "PowerLeveling.Name", "Overpowered Ability — Power Leveling");
-            var PowerLevelingDesc = Helpers.CreateString(IsekaiContext, "PowerLeveling.Description",
-                "You are Overpowered but overly cautious. You use overwhelming force to ensure all enemies you kill are thoroughly defeated."
-                + "\nBenefit: When enemies are defeated by you or an ally within 120 feet, your party gains a +2 bonus to attack rolls and all saving throws for 1 minute.");
-
-            // Temporary Buff
-            var PowerLevelingTempBuff = Helpers.CreateBlueprint<BlueprintBuff>(IsekaiContext, "PowerLevelingTempBuff", bp => {
-                bp.SetName(IsekaiContext, "Overpowered Surge");
-                bp.SetDescription(IsekaiContext, "The party gains a +2 bonus to attack rolls and all saving throws for 1 minute.");
-                bp.m_Icon = Icon_DimensionalAnchor;
-                bp.IsClassFeature = true;
-                bp.AddComponent<AddStatBonus>(c => {
-                    c.Stat = Kingmaker.EntitySystem.Stats.StatType.AdditionalAttackBonus;
-                    c.Value = 2; // +2 attack bonus
-                    c.Descriptor = Kingmaker.Enums.ModifierDescriptor.UntypedStackable;
-                });
-                bp.AddComponent<AddStatBonus>(c => {
-                    c.Stat = Kingmaker.EntitySystem.Stats.StatType.SaveFortitude;
-                    c.Value = 2; // +2 Fortitude save bonus
-                    c.Descriptor = Kingmaker.Enums.ModifierDescriptor.UntypedStackable;
-                });
-                bp.AddComponent<AddStatBonus>(c => {
-                    c.Stat = Kingmaker.EntitySystem.Stats.StatType.SaveReflex;
-                    c.Value = 2;
-                    c.Descriptor = Kingmaker.Enums.ModifierDescriptor.UntypedStackable;
-                });
-                bp.AddComponent<AddStatBonus>(c => {
-                    c.Stat = Kingmaker.EntitySystem.Stats.StatType.SaveWill;
-                    c.Value = 2;
-                    c.Descriptor = Kingmaker.Enums.ModifierDescriptor.UntypedStackable;
-                });
-                bp.Stacking = StackingType.Replace;
-            });
-
-            var PowerLevelingBuff = TTCoreExtensions.CreateBuff("PowerLevelingBuff", bp => {
-                bp.SetName(PowerLevelingName);
-                bp.SetDescription(PowerLevelingDesc);
-                bp.m_Icon = Icon_DimensionalAnchor;
-                bp.IsClassFeature = true;
-                bp.m_Flags = BlueprintBuff.Flags.HiddenInUi;
-                bp.AddComponent<ApplyPartyBuffOnKill>(c => {
-                    c.m_Buff = PowerLevelingTempBuff.ToReference<BlueprintBuffReference>();
-                });
-            });
-
-            // Area Effect
-            var PowerLevelingAura = Helpers.CreateBlueprint<BlueprintAbilityAreaEffect>(IsekaiContext, "PowerLevelingArea", bp => {
-                bp.m_TargetType = BlueprintAbilityAreaEffect.TargetType.Ally;
-                bp.SpellResistance = false;
-                bp.AggroEnemies = false;
-                bp.AffectEnemies = false;
-                bp.Shape = AreaEffectShape.Cylinder;
-                bp.Size = new Feet(120);
-                bp.Fx = new PrefabLink();
-                bp.AddComponent<AbilityAreaEffectBuff>(c => {
-                    c.m_Buff = PowerLevelingBuff.ToReference<BlueprintBuffReference>();
-                    c.Condition = new ConditionsChecker { Conditions = new Condition[0] }; // Apply unconditionally
-                });
-            });
-
-            // Aura Buff
-            var PowerLevelingAreaBuff = Helpers.CreateBlueprint<BlueprintBuff>(IsekaiContext, "PowerLevelingAreaBuff", bp => {
-                bp.SetName(PowerLevelingName);
-                bp.SetDescription(PowerLevelingDesc);
-                bp.m_Icon = Icon_DimensionalAnchor;
-                bp.IsClassFeature = true;
-                bp.AddComponent<AddAreaEffect>(c => {
-                    c.m_AreaEffect = PowerLevelingAura.ToReference<BlueprintAbilityAreaEffectReference>();
-                });
-            });
-
-            // Final Feature
-            var PowerLevelingFeature = Helpers.CreateBlueprint<BlueprintFeature>(IsekaiContext, "PowerLevelingFeature", bp => {
-                bp.SetName(PowerLevelingName);
-                bp.SetDescription(PowerLevelingDesc);
-                bp.m_Icon = Icon_DimensionalAnchor;
-                bp.AddComponent<AddFacts>(c => {
-                    c.m_Facts = new BlueprintUnitFactReference[] { PowerLevelingAreaBuff.ToReference<BlueprintUnitFactReference>() };
-                });
-            });
-
-            OverpoweredAbilitySelection.AddToSelection(PowerLevelingFeature);
-        }
-    }
+namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
+{
+	internal class PowerLeveling
+	{
+		public static void Add()
+		{
+			Sprite Icon_DimensionalAnchor = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintAbility>("c0aa77246b26433fa79c8ac09b1e70d9")).m_Icon;
+			LocalizedString PowerLevelingName = Helpers.CreateString(Main.IsekaiContext, "PowerLeveling.Name", "Overpowered Ability - Power Leveling");
+			LocalizedString PowerLevelingDesc = Helpers.CreateString(Main.IsekaiContext, "PowerLeveling.Description", "You are Overpowered but overly cautious. You use overwhelming force to ensure all enemies you kill are thoroughly defeated.\nBenefit: Your party gains double experience from all sources. Furthermore, whenever you or your allies defeat enemies within a 120-foot radius, your party gains bonus experience and an Overpowered Surge granting a +2 bonus to attack rolls and Fortitude saving throws.");
+			BlueprintBuff PowerLevelingTempBuff = Helpers.CreateBlueprint(Main.IsekaiContext, "PowerLevelingTempBuff", delegate(BlueprintBuff bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Overpowered Surge");
+				bp.SetDescription(Main.IsekaiContext, "Defeating enemies grants temporary bonuses and experience to the party.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_DimensionalAnchor;
+				bp.IsClassFeature = true;
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Stat = StatType.AdditionalAttackBonus;
+					c.Value = 2;
+					c.Descriptor = ModifierDescriptor.UntypedStackable;
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Stat = StatType.SaveFortitude;
+					c.Value = 2;
+					c.Descriptor = ModifierDescriptor.UntypedStackable;
+				});
+				bp.AddComponent<GainExperienceOnKill>();
+				bp.m_Flags = (BlueprintBuff.Flags)0;
+			});
+			BlueprintAbilityAreaEffect PowerLevelingAura = Helpers.CreateBlueprint(Main.IsekaiContext, "PowerLevelingAura", delegate(BlueprintAbilityAreaEffect bp)
+			{
+				bp.m_TargetType = BlueprintAbilityAreaEffect.TargetType.Ally;
+				bp.SpellResistance = false;
+				bp.AggroEnemies = false;
+				bp.AffectEnemies = false;
+				bp.Shape = AreaEffectShape.Cylinder;
+				bp.Size = new Feet(120f);
+				bp.Fx = new PrefabLink();
+				bp.AddComponent(delegate(AbilityAreaEffectBuff c)
+				{
+					c.m_Buff = PowerLevelingTempBuff.ToReference<BlueprintBuffReference>();
+					c.Condition = new ConditionsChecker
+					{
+						Conditions = new Condition[0]
+					};
+				});
+			});
+			BlueprintBuff PowerLevelingAreaBuff = Helpers.CreateBlueprint(Main.IsekaiContext, "PowerLevelingAreaBuff", delegate(BlueprintBuff bp)
+			{
+				bp.SetName(PowerLevelingName);
+				bp.SetDescription(PowerLevelingDesc);
+				((BlueprintUnitFact)bp).m_Icon = Icon_DimensionalAnchor;
+				bp.IsClassFeature = true;
+				bp.AddComponent(delegate(AddAreaEffect c)
+				{
+					c.m_AreaEffect = PowerLevelingAura.ToReference<BlueprintAbilityAreaEffectReference>();
+				});
+			});
+			OverpoweredAbilitySelection.AddToSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "PowerLevelingFeature", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(PowerLevelingName);
+				bp.SetDescription(PowerLevelingDesc);
+				((BlueprintUnitFact)bp).m_Icon = Icon_DimensionalAnchor;
+				bp.AddComponent(delegate(AddFacts c)
+				{
+					c.m_Facts = new BlueprintUnitFactReference[1] { PowerLevelingAreaBuff.ToReference<BlueprintUnitFactReference>() };
+				});
+				bp.AddComponent<GainExperienceOnKill>();
+			}));
+		}
+	}
 }

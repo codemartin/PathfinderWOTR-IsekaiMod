@@ -4,35 +4,43 @@ using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.RuleSystem.Rules;
-using Kingmaker.UnitLogic.Mechanics;
 
-namespace IsekaiMod.Components {
-    [AllowMultipleComponents]
-    [TypeId("f9cdd93e34a149349a64dfec5b0b6deb")]
-    public class SetAttackerAutoMiss : BlueprintComponent, IRuntimeEntityFactComponentProvider {
+namespace IsekaiMod.Components
+{
+	[AllowMultipleComponents]
+	[TypeId("f9cdd93e34a149349a64dfec5b0b6deb")]
+	public class SetAttackerAutoMiss : BlueprintComponent, IRuntimeEntityFactComponentProvider
+	{
+		public class Runtime : EntityFactComponent<UnitEntityData, SetAttackerAutoMiss>, ITargetRulebookHandler<RuleAttackRoll>, IRulebookHandler<RuleAttackRoll>, ISubscriber, ITargetRulebookSubscriber
+		{
+			public override void OnTurnOn()
+			{
+			}
 
-        public EntityFactComponent CreateRuntimeFactComponent() {
-            return new Runtime();
-        }
+			public override void OnTurnOff()
+			{
+			}
 
-        public class Runtime : EntityFactComponent<UnitEntityData, SetAttackerAutoMiss>, IRulebookHandler<RuleAttackRoll>, ITargetRulebookHandler<RuleAttackRoll>, ISubscriber, ITargetRulebookSubscriber {
+			public void OnEventAboutToTrigger(RuleAttackRoll evt)
+			{
+				if (evt.Target != base.Owner)
+				{
+					return;
+				}
+				using (base.Fact.MaybeContext?.GetDataScope(evt.Initiator))
+				{
+					evt.AutoMiss = true;
+				}
+			}
 
-            public override void OnTurnOn() {
-            }
+			public void OnEventDidTrigger(RuleAttackRoll evt)
+			{
+			}
+		}
 
-            public override void OnTurnOff() {
-            }
-
-            public void OnEventAboutToTrigger(RuleAttackRoll evt) {
-                MechanicsContext maybeContext = Fact.MaybeContext;
-                using (maybeContext?.GetDataScope(evt.Initiator)) {
-                    evt.AutoMiss = true;
-                }
-            }
-
-            public void OnEventDidTrigger(RuleAttackRoll evt) {
-            }
-
-        }
-    }
+		public EntityFactComponent CreateRuntimeFactComponent()
+		{
+			return new Runtime();
+		}
+	}
 }

@@ -1,79 +1,73 @@
-﻿using HarmonyLib;
+﻿using System;
+using System.Diagnostics;
+using System.Linq;
+using HarmonyLib;
 using IsekaiMod.ModLogic;
+using Kingmaker.UI.MVVM._VM.Tooltip.Templates;
 using Kingmaker.UI.Models.Log.CombatLog_ThreadSystem;
 using Kingmaker.UI.Models.Log.CombatLog_ThreadSystem.LogThreads.Common;
-using Kingmaker.UI.MVVM._VM.Tooltip.Templates;
-using System;
-using System.Linq;
 using TabletopTweaks.Core.Utilities;
 using UnityEngine;
 using UnityModManagerNet;
-using static Kingmaker.NintendoEventManager;
-using Owlcat.Runtime.UI.Tooltips;
 
-namespace IsekaiMod {
+namespace IsekaiMod
+{
+	internal static class Main
+	{
+		public class Message
+		{
+			public string Text { get; set; }
 
-    internal static class Main {
+			public DateTime Timestamp { get; set; }
 
-        public static ModContextTTTBase IsekaiContext;
+			public Color Color { get; set; }
+		}
 
-        public static bool Load(UnityModManager.ModEntry modEntry) {
-            IsekaiContext = new ModContextTTTBase(modEntry);
-            try {
-                var harmony = new Harmony(modEntry.Info.Id);
-                IsekaiContext.ModEntry.OnSaveGUI = OnSaveGUI;
-                IsekaiContext.ModEntry.OnGUI = UMMSettingsUI.OnGUI;
-                harmony.PatchAll();
-                PostPatchInitializer.Initialize(IsekaiContext);
-                return true;
-            }
-            catch (Exception e) {
-                Log(e.ToString());
-                throw e;
-            }
-        }
+		public static ModContextTTTBase IsekaiContext;
 
-        public static void Log(string msg) {
-            
-            IsekaiContext.Logger.Log(msg);
-        }
+		public static bool Load(UnityModManager.ModEntry modEntry)
+		{
+			IsekaiContext = new ModContextTTTBase(modEntry);
+			try
+			{
+				Harmony harmony = new Harmony(modEntry.Info.Id);
+				IsekaiContext.ModEntry.OnSaveGUI = OnSaveGUI;
+				IsekaiContext.ModEntry.OnGUI = UMMSettingsUI.OnGUI;
+				harmony.PatchAll();
+				PostPatchInitializer.Initialize(IsekaiContext);
+				return true;
+			}
+			catch (Exception ex)
+			{
+				Log(ex.ToString());
+				throw ex;
+			}
+		}
 
-        public static void LogToGeneral(string message) {
-            var thread = LogThreadService.Instance.GetThreadsByChannelType(LogChannelType.Common)
-                .OfType<MessageLogThread>()
-                .FirstOrDefault();
+		public static void Log(string msg)
+		{
+			IsekaiContext.Logger.Log(msg);
+		}
 
-            if (thread != null) {
-                // Create a CombatLogMessage
-                var combatLogMessage = new CombatLogMessage(
-                    message,                          // The log message text
-                    Color.white,                      // Message color (white in this case)
-                    PrefixIcon.None,                             // No prefix icon
-                    new TooltipTemplateSimple(null, message), // Tooltip with the message text
-                    true                              // Enable tooltip
-                );
+		public static void LogToGeneral(string message)
+		{
+			MessageLogThread messageLogThread = LogThreadService.Instance.GetThreadsByChannelType(default(LogChannelType)).OfType<MessageLogThread>().FirstOrDefault();
+			if (messageLogThread != null)
+			{
+				CombatLogMessage newMessage = new CombatLogMessage(message, Color.white, PrefixIcon.None, new TooltipTemplateSimple(null, message));
+				((LogThreadBase)messageLogThread).AddMessage(newMessage);
+			}
+		}
 
-                // Add the message to the thread
-                thread.AddMessage(combatLogMessage);
-            } else {
-                Main.LogDebug("Failed to find a suitable MessageLogThread.");
-            }
-        }
+		[Conditional("DEBUG")]
+		public static void LogDebug(string msg)
+		{
+			IsekaiContext.Logger.Log(msg);
+		}
 
-        [System.Diagnostics.Conditional("DEBUG")]
-        public static void LogDebug(string msg) {
-            IsekaiContext.Logger.Log(msg);
-        }
-
-        private static void OnSaveGUI(UnityModManager.ModEntry modEntry) {
-            IsekaiContext.SaveAllSettings();
-        }
-        // Define a custom Message class if necessary
-        public class Message {
-            public string Text { get; set; }
-            public DateTime Timestamp { get; set; }
-            public UnityEngine.Color Color { get; set; }
-        }
-
-    }
+		private static void OnSaveGUI(UnityModManager.ModEntry modEntry)
+		{
+			IsekaiContext.SaveAllSettings();
+		}
+	}
 }

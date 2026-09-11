@@ -1,6 +1,6 @@
 ﻿using IsekaiMod.Content.Classes.IsekaiProtagonist;
-using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.EdgeLord;
 using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.GodEmperor;
+using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.MartialGod;
 using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Mastermind;
 using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Overlord;
 using IsekaiMod.Utilities;
@@ -8,41 +8,49 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Prerequisites;
 using TabletopTweaks.Core.Utilities;
-using static IsekaiMod.Main;
 
-namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
+namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature
+{
+	internal class BarbarianLegacy
+	{
+		private static BlueprintProgression prog;
 
-    internal class BarbarianLegacy {
-        private static BlueprintProgression prog;
+		public static void Configure()
+		{
+			prog = Helpers.CreateBlueprint(Main.IsekaiContext, "BarbarianLegacy", delegate(BlueprintProgression bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Barbarian Legacy - Ball of Rage");
+				bp.SetDescription(Main.IsekaiContext, "You really are just a walking bundle of issues waiting to explode at anyone getting too close, aren't you?");
+				bp.GiveFeaturesForPreviousLevels = true;
+			});
+			LegacySelection.Register(prog);
+			MartialGodLegacySelection.Register(prog);
+			GodEmperorLegacySelection.Prohibit(prog);
+			MastermindLegacySelection.Prohibit(prog);
+			OverlordLegacySelection.Register(prog);
+		}
 
-        public static void Configure() {
-            prog = Helpers.CreateBlueprint<BlueprintProgression>(IsekaiContext, "BarbarianLegacy", bp => {
-                bp.SetName(IsekaiContext, "Barbarian Legacy - Ball of Rage");
-                bp.SetDescription(IsekaiContext, "You really are just a walking bundle of issues waiting to explode at anyone getting too close, aren't you?");
-                bp.GiveFeaturesForPreviousLevels = true;
-            });
+		public static void PatchProgression()
+		{
+			if (prog != null)
+			{
+				prog = PatchTools.PatchClassProgressionBasedOnRefClass(prog, ClassTools.Classes.BarbarianClass);
+				BlueprintCharacterClassReference reference = IsekaiProtagonistClass.GetReference();
+				PatchTools.PatchProgressionFeaturesBasedOnReferenceClass(prog, reference, ClassTools.ClassReferences.BarbarianClass);
+				prog.AddPrerequisite(delegate(PrerequisiteNoClassLevel c)
+				{
+					c.m_CharacterClass = ClassTools.Classes.BarbarianClass.ToReference<BlueprintCharacterClassReference>();
+				});
+			}
+		}
 
-            LegacySelection.Register(prog);
-            EdgeLordLegacySelection.Register(prog);
-            GodEmperorLegacySelection.Prohibit(prog);
-            //HeroLegacySelection.Prohibit(prog);
-            MastermindLegacySelection.Prohibit(prog);
-            OverlordLegacySelection.Register(prog);
-        }
-        public static void PatchProgression() {
-            if (prog != null) {
-                prog = PatchTools.PatchClassProgressionBasedOnRefClass(prog, ClassTools.Classes.BarbarianClass);
-                BlueprintCharacterClassReference myClass = IsekaiProtagonistClass.GetReference();
-                PatchTools.PatchProgressionFeaturesBasedOnReferenceClass(prog, myClass, ClassTools.ClassReferences.BarbarianClass);
-                prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = SkaldBaseLegacy.Get().ToReference<BlueprintFeatureReference>(); });
-                prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = SkaldVoiceLegacy.Get().ToReference<BlueprintFeatureReference>(); });
-                prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = SkaldSilverTongueLegacy.Get().ToReference<BlueprintFeatureReference>(); });
-                prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = BloodragerChimeraLegacy.Get().ToReference<BlueprintFeatureReference>(); });
-            }
-        }
-        public static BlueprintProgression Get() {
-            if (prog != null) return prog;
-            return BlueprintTools.GetModBlueprint<BlueprintProgression>(IsekaiContext, "BarbarianLegacy");
-        }
-    }
+		public static BlueprintProgression Get()
+		{
+			if (prog != null)
+			{
+				return prog;
+			}
+			return BlueprintTools.GetModBlueprint<BlueprintProgression>(Main.IsekaiContext, "BarbarianLegacy");
+		}
+	}
 }

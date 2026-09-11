@@ -1,7 +1,7 @@
 ﻿using IsekaiMod.Content.Classes.IsekaiProtagonist;
-using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.EdgeLord;
 using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.GodEmperor;
 using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Hero;
+using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.MartialGod;
 using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Mastermind;
 using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Overlord;
 using IsekaiMod.Utilities;
@@ -9,58 +9,71 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Prerequisites;
 using TabletopTweaks.Core.Utilities;
-using static IsekaiMod.Main;
 
-namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
-    internal class ShifterStingerLegacy {
-        private static BlueprintArchetype BaseArchetype = BlueprintTools.GetBlueprint<BlueprintArchetype>("1a51b5856d3b48d78b3e967dc5f20bd6");
+namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature
+{
+	internal class ShifterStingerLegacy
+	{
+		private static BlueprintArchetype BaseArchetype = BlueprintTools.GetBlueprint<BlueprintArchetype>("1a51b5856d3b48d78b3e967dc5f20bd6");
 
-        private static BlueprintProgression prog;
+		private static BlueprintProgression prog;
 
-        public static void Configure() {
-            if (ClassTools.Classes.ShifterClass == null) { return; }
-            prog = Helpers.CreateBlueprint<BlueprintProgression>(IsekaiContext, "ShifterStingerLegacy", bp => {
-                bp.SetName(IsekaiContext, "Shifter Legacy - Stinger");
-                bp.SetDescription(IsekaiContext,
-                    "Some things cannot be easily forgotten, and in your dreaded former life you were called a hedgehog... \n" +
-                    "But this new world shall be respectful to your newfound stingers, as they are even more dangerous than your sharp tongue.");
-                bp.GiveFeaturesForPreviousLevels = true;
-            });
+		public static void Configure()
+		{
+			if (ClassTools.Classes.ShifterClass != null)
+			{
+				prog = Helpers.CreateBlueprint(Main.IsekaiContext, "ShifterStingerLegacy", delegate(BlueprintProgression bp)
+				{
+					bp.SetName(Main.IsekaiContext, "Shifter Legacy - Stinger");
+					bp.SetDescription(Main.IsekaiContext, "Some things cannot be easily forgotten, and in your dreaded former life you were called a hedgehog... \nBut this new world shall be respectful to your newfound stingers, as they are even more dangerous than your sharp tongue.");
+					bp.GiveFeaturesForPreviousLevels = true;
+				});
+			}
+		}
 
+		public static void PatchProgression()
+		{
+			if (ClassTools.Classes.ShifterClass == null)
+			{
+				return;
+			}
+			if (BaseArchetype == null)
+			{
+				BaseArchetype = BlueprintTools.GetBlueprint<BlueprintArchetype>("1a51b5856d3b48d78b3e967dc5f20bd6");
+				if (BaseArchetype == null)
+				{
+					return;
+				}
+			}
+			LegacySelection.RegisterForFeat(prog);
+			LegacySelection.Register(prog);
+			MartialGodLegacySelection.Prohibit(prog);
+			GodEmperorLegacySelection.Prohibit(prog);
+			HeroLegacySelection.Prohibit(prog);
+			MastermindLegacySelection.Register(prog);
+			OverlordLegacySelection.Register(prog);
+			prog = PatchTools.PatchClassProgressionBasedonRefArchetype(prog, ClassTools.Classes.ShifterClass, BaseArchetype, null);
+			BlueprintCharacterClassReference shifterClass = ClassTools.ClassReferences.ShifterClass;
+			PatchTools.PatchProgressionFeaturesBasedOnReferenceArchetype(IsekaiProtagonistClass.GetReference(), shifterClass, BaseArchetype);
+			prog.AddPrerequisite(delegate(PrerequisiteNoClassLevel c)
+			{
+				c.m_CharacterClass = ClassTools.Classes.ShifterClass.ToReference<BlueprintCharacterClassReference>();
+			});
+			prog.AddPrerequisiteNoFeature(ShifterLegacy.Get());
+			prog.AddPrerequisiteNoFeature(ShifterBaseLegacy.Get());
+			prog.AddPrerequisiteNoFeature(ShifterBaseLegacy.GetEvilAlternate());
+			prog.AddPrerequisiteNoFeature(ShifterGriffonLegacy.Get());
+			prog.AddPrerequisiteNoFeature(ShifterHolyLegacy.Get());
+			prog.AddPrerequisiteNoFeature(ShifterDragonLegacy.Get());
+		}
 
-
-        }
-        public static void PatchProgression() {
-            if (ClassTools.Classes.ShifterClass == null) { return; }
-
-            if (BaseArchetype == null) {
-                BaseArchetype = BlueprintTools.GetBlueprint<BlueprintArchetype>("1a51b5856d3b48d78b3e967dc5f20bd6");
-                if (BaseArchetype == null) return;
-            }
-
-            LegacySelection.RegisterForFeat(prog);
-            LegacySelection.Register(prog);
-            EdgeLordLegacySelection.Prohibit(prog);
-            GodEmperorLegacySelection.Prohibit(prog);
-            HeroLegacySelection.Prohibit(prog);
-            MastermindLegacySelection.Register(prog);
-            OverlordLegacySelection.Register(prog);
-
-            prog = PatchTools.PatchClassProgressionBasedonRefArchetype(prog, ClassTools.Classes.ShifterClass, BaseArchetype, null);
-            BlueprintCharacterClassReference refClass = ClassTools.ClassReferences.ShifterClass;
-            BlueprintCharacterClassReference myClass = IsekaiProtagonistClass.GetReference();
-            PatchTools.PatchProgressionFeaturesBasedOnReferenceClass(prog, myClass, refClass);
-
-            prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = ShifterBaseLegacy.Get().ToReference<BlueprintFeatureReference>(); });
-            prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = ShifterBaseLegacy.GetEvilAlternate().ToReference<BlueprintFeatureReference>(); });
-            prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = ShifterGriffonLegacy.Get().ToReference<BlueprintFeatureReference>(); });
-            prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = ShifterHolyLegacy.Get().ToReference<BlueprintFeatureReference>(); });
-            prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = ShifterDragonLegacy.Get().ToReference<BlueprintFeatureReference>(); });
-            prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = DruidBaseLegacy.Get().ToReference<BlueprintFeatureReference>(); });
-        }
-        public static BlueprintProgression Get() {
-            if (prog != null) return prog;
-            return BlueprintTools.GetModBlueprint<BlueprintProgression>(IsekaiContext, "ShifterStingerLegacy");
-        }
-    }
+		public static BlueprintProgression Get()
+		{
+			if (prog != null)
+			{
+				return prog;
+			}
+			return BlueprintTools.GetModBlueprint<BlueprintProgression>(Main.IsekaiContext, "ShifterStingerLegacy");
+		}
+	}
 }

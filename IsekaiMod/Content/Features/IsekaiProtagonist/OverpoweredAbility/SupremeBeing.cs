@@ -1,131 +1,145 @@
-﻿using Kingmaker.Blueprints.Classes;
+﻿using IsekaiMod.Utilities;
+using Kingmaker.Blueprints.Classes;
+using Kingmaker.Blueprints.Classes.Prerequisites;
 using Kingmaker.Blueprints.Classes.Selection;
+using Kingmaker.Blueprints.Facts;
 using Kingmaker.EntitySystem.Stats;
+using Kingmaker.Enums;
 using Kingmaker.UnitLogic.FactLogic;
-using Kingmaker.UnitLogic;
+using Kingmaker.UnitLogic.Mechanics.Components;
 using TabletopTweaks.Core.Utilities;
 using UnityEngine;
-using static IsekaiMod.Main;
-using static UnityEngine.UI.GridLayoutGroup;
-using Kingmaker.Blueprints.JsonSystem;
-using Kingmaker.PubSubSystem;
 
-namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility {
+namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
+{
+	internal class SupremeBeing
+	{
+		private static readonly Sprite Icon_KiPowerSelection = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("3049386713ff04245a38b32483362551")).m_Icon;
 
-    internal class SupremeBeing {
-        private static readonly Sprite Icon_KiPowerSelection = BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("3049386713ff04245a38b32483362551").m_Icon;
+		public static BlueprintFeature CosmicSupremeBeingFeature;
 
-        public static void Add() {
-            var SupremeBeing = Helpers.CreateBlueprint<BlueprintFeature>(IsekaiContext, "SupremeBeing", bp => {
-                bp.SetName(IsekaiContext, "Overpowered Ability — Supreme Being");
-                bp.SetDescription(IsekaiContext, "You have transcended mortal limitations, achieving perfection in body and mind. "
-                    + "\nBenefit: Gain an initial +5 bonus to all attributes. Additionally, gain +1 to all attributes for every 2 character levels and +1 for every mythic rank.");
-                bp.m_Icon = Icon_KiPowerSelection;
-
-                // Initial +5 bonus to all stats
-                bp.AddComponent<AddStatBonus>(c => {
-                    c.Stat = StatType.Strength;
-                    c.Value = 5;
-                    c.Descriptor = Kingmaker.Enums.ModifierDescriptor.UntypedStackable;
-                });
-                bp.AddComponent<AddStatBonus>(c => {
-                    c.Stat = StatType.Dexterity;
-                    c.Value = 5;
-                    c.Descriptor = Kingmaker.Enums.ModifierDescriptor.UntypedStackable;
-                });
-                bp.AddComponent<AddStatBonus>(c => {
-                    c.Stat = StatType.Constitution;
-                    c.Value = 5;
-                    c.Descriptor = Kingmaker.Enums.ModifierDescriptor.UntypedStackable;
-                });
-                bp.AddComponent<AddStatBonus>(c => {
-                    c.Stat = StatType.Intelligence;
-                    c.Value = 5;
-                    c.Descriptor = Kingmaker.Enums.ModifierDescriptor.UntypedStackable;
-                });
-                bp.AddComponent<AddStatBonus>(c => {
-                    c.Stat = StatType.Wisdom;
-                    c.Value = 5;
-                    c.Descriptor = Kingmaker.Enums.ModifierDescriptor.UntypedStackable;
-                });
-                bp.AddComponent<AddStatBonus>(c => {
-                    c.Stat = StatType.Charisma;
-                    c.Value = 5;
-                    c.Descriptor = Kingmaker.Enums.ModifierDescriptor.UntypedStackable;
-                });
-
-                // Scaling bonuses based on level and mythic rank
-                bp.AddComponent<ScalingStatBonus>(c => {
-                    c.Stat = StatType.Strength;
-                    c.LevelDivisor = 2; // Gain +1 per 2 levels
-                    c.MythicMultiplier = 1; // Gain +1 per mythic rank
-                });
-                bp.AddComponent<ScalingStatBonus>(c => {
-                    c.Stat = StatType.Dexterity;
-                    c.LevelDivisor = 2;
-                    c.MythicMultiplier = 1;
-                });
-                bp.AddComponent<ScalingStatBonus>(c => {
-                    c.Stat = StatType.Constitution;
-                    c.LevelDivisor = 2;
-                    c.MythicMultiplier = 1;
-                });
-                bp.AddComponent<ScalingStatBonus>(c => {
-                    c.Stat = StatType.Intelligence;
-                    c.LevelDivisor = 2;
-                    c.MythicMultiplier = 1;
-                });
-                bp.AddComponent<ScalingStatBonus>(c => {
-                    c.Stat = StatType.Wisdom;
-                    c.LevelDivisor = 2;
-                    c.MythicMultiplier = 1;
-                });
-                bp.AddComponent<ScalingStatBonus>(c => {
-                    c.Stat = StatType.Charisma;
-                    c.LevelDivisor = 2;
-                    c.MythicMultiplier = 1;
-                });
-            });
-
-            OverpoweredAbilitySelection.AddToSelection(SupremeBeing);
-        }
-    }
-
-    // Custom component for scaling bonuses
-    [TypeId("266621fe98b84fe28981d8c7aa0ebc6a")]
-    public class ScalingStatBonus : UnitFactComponentDelegate, IOwnerGainLevelHandler, IUnitSubscriber, ISubscriber {
-        public StatType Stat;
-        public int LevelDivisor = 1; // Divisor for character level scaling
-        public int MythicMultiplier = 0; // Multiplier for mythic rank scaling
-
-        // Ensure method visibility matches the base class
-        public override void OnActivate() {
-            ApplyScalingBonus();
-        }
-
-        public override void OnDeactivate() {
-            RemoveScalingBonus();
-        }
-
-        public void HandleUnitGainLevel() {
-            RemoveScalingBonus();
-            ApplyScalingBonus();
-        }
-
-        private void ApplyScalingBonus() {
-            // Calculate scaling bonuses
-            int characterLevelBonus = Owner.Progression.CharacterLevel / LevelDivisor;
-            int mythicRankBonus = Owner.Progression.MythicLevel * MythicMultiplier;
-            int totalBonus = characterLevelBonus + mythicRankBonus;
-
-            // Apply the bonus
-            Owner.Stats.GetStat(Stat).AddModifier(totalBonus, Runtime, Kingmaker.Enums.ModifierDescriptor.UntypedStackable);
-        }
-
-        private void RemoveScalingBonus() {
-            // Remove all bonuses applied by this component
-            Owner.Stats.GetStat(Stat).RemoveModifiersFrom(Runtime);
-        }
-    }
-
+		public static void Add()
+		{
+			BlueprintFeature blueprintFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "SupremeBeing", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Overpowered Ability - Supreme Being");
+				bp.SetDescription(Main.IsekaiContext, "You have tapped into supreme divine essence, achieving perfection in body and mind infused with divine powers. \nBenefit: Gain an initial +2 inherent bonus to all attributes. Additionally, gain a +1 inherent bonus to all attributes for every 4 character levels (up to +7 at level 20).");
+				((BlueprintUnitFact)bp).m_Icon = Icon_KiPowerSelection;
+				bp.ReapplyOnLevelUp = true;
+				StatType[] obj = new StatType[6]
+				{
+					StatType.Strength,
+					StatType.Dexterity,
+					StatType.Constitution,
+					StatType.Intelligence,
+					StatType.Wisdom,
+					StatType.Charisma
+				};
+				bp.AddComponent(delegate(ContextRankConfig c)
+				{
+					c.m_Type = AbilityRankType.Default;
+					c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
+					c.m_Progression = ContextRankProgression.Custom;
+					c.m_CustomProgression = new ContextRankConfig.CustomProgressionItem[6]
+					{
+						new ContextRankConfig.CustomProgressionItem
+						{
+							BaseValue = 3,
+							ProgressionValue = 2
+						},
+						new ContextRankConfig.CustomProgressionItem
+						{
+							BaseValue = 7,
+							ProgressionValue = 3
+						},
+						new ContextRankConfig.CustomProgressionItem
+						{
+							BaseValue = 11,
+							ProgressionValue = 4
+						},
+						new ContextRankConfig.CustomProgressionItem
+						{
+							BaseValue = 15,
+							ProgressionValue = 5
+						},
+						new ContextRankConfig.CustomProgressionItem
+						{
+							BaseValue = 19,
+							ProgressionValue = 6
+						},
+						new ContextRankConfig.CustomProgressionItem
+						{
+							BaseValue = 100,
+							ProgressionValue = 7
+						}
+					};
+				});
+				StatType[] array = obj;
+				foreach (StatType stat in array)
+				{
+					bp.AddComponent(delegate(AddContextStatBonus c)
+					{
+						c.Stat = stat;
+						c.Descriptor = ModifierDescriptor.Inherent;
+						c.Value = Values.CreateContextRankValue(AbilityRankType.Default);
+					});
+				}
+			});
+			blueprintFeature.AddComponent(delegate(PrerequisiteCharacterLevel c)
+			{
+				c.Level = 5;
+			});
+			OverpoweredAbilitySelection.AddToSelection(blueprintFeature);
+			CosmicSupremeBeingFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "CosmicSupremeBeingFeature", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Crown of the Supreme Entity");
+				bp.SetDescription(Main.IsekaiContext, "You have completely shattered mortal limitations, achieving transcendent perfection in body and mind infused with powers from a deity. \nBenefit: Gain an initial +5 untyped bonus to all attributes. Additionally, gain +1 untyped bonus to all attributes for every 2 character levels and +1 for every mythic rank.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_KiPowerSelection;
+				bp.ReapplyOnLevelUp = true;
+				StatType[] obj = new StatType[6]
+				{
+					StatType.Strength,
+					StatType.Dexterity,
+					StatType.Constitution,
+					StatType.Intelligence,
+					StatType.Wisdom,
+					StatType.Charisma
+				};
+				bp.AddComponent(delegate(ContextRankConfig c)
+				{
+					c.m_Type = AbilityRankType.Default;
+					c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
+					c.m_Progression = ContextRankProgression.Div2;
+				});
+				bp.AddComponent(delegate(ContextRankConfig c)
+				{
+					c.m_Type = AbilityRankType.StatBonus;
+					c.m_BaseValueType = ContextRankBaseValueType.MythicLevel;
+					c.m_Progression = ContextRankProgression.AsIs;
+				});
+				StatType[] array = obj;
+				foreach (StatType stat in array)
+				{
+					bp.AddComponent(delegate(AddStatBonus c)
+					{
+						c.Stat = stat;
+						c.Value = 5;
+						c.Descriptor = ModifierDescriptor.UntypedStackable;
+					});
+					bp.AddComponent(delegate(AddContextStatBonus c)
+					{
+						c.Stat = stat;
+						c.Descriptor = ModifierDescriptor.UntypedStackable;
+						c.Value = Values.CreateContextRankValue(AbilityRankType.Default);
+					});
+					bp.AddComponent(delegate(AddContextStatBonus c)
+					{
+						c.Stat = stat;
+						c.Descriptor = ModifierDescriptor.UntypedStackable;
+						c.Value = Values.CreateContextRankValue(AbilityRankType.StatBonus);
+					});
+				}
+			});
+		}
+	}
 }

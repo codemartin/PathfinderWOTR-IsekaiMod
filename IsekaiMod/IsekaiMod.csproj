@@ -159,6 +159,7 @@
     <!-- any TTW Based Mod -->
     <Compile Include="Main.cs" />
     <Compile Include="UMMSettingsUI.cs" />
+    <Compile Include="SettingsTabs.cs" />
     <Compile Include="Config\*.cs" />
     <Compile Include="ModLogic\*.cs" />
     <!-- mod specific -->
@@ -170,15 +171,18 @@
     <Compile Include="Content\*\*\*\*\*\*.cs" />
     <Compile Include="Components\*.cs" />
     <Compile Include="Utilities\ActionFlow.cs" />
+    <Compile Include="Utilities\AssetLoaderExtension.cs" />
+    <Compile Include="Utilities\BlueprintSafetyExtensions.cs" />
+    <Compile Include="Utilities\CharGenSafetyPatch.cs" />
     <Compile Include="Utilities\DescriptionTools.cs" />
     <Compile Include="Utilities\ExtensionMethods.cs" />
-    <Compile Include="Utilities\LateSpellListMergePatch.cs" />
-    <Compile Include="Utilities\LevelUpPerformanceDiagnostics.cs" />
-    <Compile Include="Utilities\MirroredSelections.cs" />
+    <Compile Include="Utilities\EyePortraitInjector.cs" />
+    <Compile Include="Utilities\IsekaiDlcManager.cs" />
+    <Compile Include="Utilities\ModSupport.cs" />
     <Compile Include="Utilities\PatchTools.cs" />
-    <Compile Include="Utilities\PortraitInjector.cs" />
     <Compile Include="Utilities\StaticReferences.cs" />
     <Compile Include="Utilities\TTCoreExtensions.cs" />
+    <Compile Include="Utilities\TextTemplateSafetyPatch.cs" />
     <Compile Include="Utilities\Values.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -194,16 +198,25 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="Assets\Deities\ICON_ADMIN_D.png">
+    <None Update="Assets\Deities\ICON_BESMARA.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\Deities\ICON_AQUA.png">
+    <None Update="Assets\Deities\ICON_BLACK_BUTTERFLY.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\Deities\ICON_RISTARTE.png">
+    <None Update="Assets\Deities\ICON_CHALDIRA.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\Deities\ICON_TRUCK.png">
+    <None Update="Assets\Deities\ICON_LANTERN_KING.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\Deities\ICON_MILANI.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\Deities\ICON_YOG_SOTHOTH.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\Features\ICON_COSMIC_COIN.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Assets\Features\ICON_AURA_RIGHTEOUS_WRATH.png">
@@ -322,16 +335,25 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Assets\Deities\ICON_ADMIN_D.png">
+    <None Include="Assets\Deities\ICON_BESMARA.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="Assets\Deities\ICON_AQUA.png">
+    <None Include="Assets\Deities\ICON_BLACK_BUTTERFLY.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="Assets\Deities\ICON_RISTARTE.png">
+    <None Include="Assets\Deities\ICON_CHALDIRA.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="Assets\Deities\ICON_TRUCK.png">
+    <None Include="Assets\Deities\ICON_LANTERN_KING.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="Assets\Deities\ICON_MILANI.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="Assets\Deities\ICON_YOG_SOTHOTH.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="Assets\Features\ICON_COSMIC_COIN.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="Assets\Features\ICON_AURA_BARRIER_GOLD.png">

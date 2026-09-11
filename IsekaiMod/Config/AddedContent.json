@@ -1,6 +1,7 @@
 {
   "NewSettingsOffByDefault": false,
-  "ExcludeCompanionsFromIsekaiClass": false,
+  "ExcludeCompanionsFromIsekaiClass": true,
+  "AllowMainCharacterRetinue": false,
   "RestrictExceptionalFeats": false,
   "RestrictMythicOPAbility": false,
   "RestrictMythicSpecialPower": false,
@@ -9,11 +10,12 @@
   "MergeIsekaiSpellList": false,
   "IsekaiDefaultClothes": 20,
   "IsekaiSpellsKnownIncrement": 6,
-  "DisableSpellbookEdgeLord" : false,
+  "DisableSpellbookMartialGod" : false,
   "DisableSpellbookGodEmperor" : false,
   "DisableSpellbookHero" : false,
   "DisableSpellbookMastermind" : false,
   "DisableSpellbookOverlord" : false,
+  "DisableSpellbookShadowMonarch" : false,
   "Isekai": {
     "DisableAll": false,
     "Settings": {

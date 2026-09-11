@@ -1,42 +1,59 @@
-﻿using Kingmaker.Blueprints;
+﻿using System;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.JsonSystem;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.UnitLogic;
 using Newtonsoft.Json;
-using System;
 
-namespace IsekaiMod.Components {
+namespace IsekaiMod.Components
+{
+	[AllowMultipleComponents]
+	[TypeId("855a9cc5d06042398707b9085fc92484")]
+	[ComponentName("Set base stat")]
+	[AllowedOn(typeof(BlueprintUnitFact), false)]
+	[AllowedOn(typeof(BlueprintUnit), false)]
+	public class SetBaseStat : UnitFactComponentDelegate<SetBaseStat.ComponentData>
+	{
+		public class ComponentData
+		{
+			[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
+			public int BaseStatValue;
+		}
 
-    [AllowMultipleComponents]
-    [TypeId("855a9cc5d06042398707b9085fc92484")]
-    [ComponentName("Set base stat")]
-    [AllowedOn(typeof(BlueprintUnitFact), false)]
-    [AllowedOn(typeof(BlueprintUnit), false)]
-    public class SetBaseStat : UnitFactComponentDelegate<SetBaseStat.ComponentData> {
-        public StatType Stat;
-        public int Value;
+		public StatType Stat;
 
-        public class ComponentData {
-            [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
-            public int BaseStatValue;
-        }
+		public int Value;
 
-        public override void OnActivate() {
-            Data.BaseStatValue = Owner.Stats.GetAttribute(Stat).BaseValue;
-        }
+		public override void OnActivate()
+		{
+			ModifiableValueAttributeStat modifiableValueAttributeStat = base.Owner?.Stats?.GetAttribute(Stat);
+			if (modifiableValueAttributeStat != null)
+			{
+				base.Data.BaseStatValue = modifiableValueAttributeStat.BaseValue;
+			}
+		}
 
-        public override void OnDeactivate() {
-            Owner.Stats.GetAttribute(Stat).BaseValue = Data.BaseStatValue;
-        }
+		public override void OnDeactivate()
+		{
+			ModifiableValueAttributeStat modifiableValueAttributeStat = base.Owner?.Stats?.GetAttribute(Stat);
+			if (modifiableValueAttributeStat != null)
+			{
+				modifiableValueAttributeStat.BaseValue = base.Data.BaseStatValue;
+			}
+		}
 
-        public override void OnTurnOn() {
-            ModifiableValueAttributeStat baseStat = Owner.Stats.GetAttribute(Stat);
-            if (baseStat == null) return;
-            baseStat.BaseValue = Math.Max(baseStat.BaseValue, Value);
-        }
+		public override void OnTurnOn()
+		{
+			ModifiableValueAttributeStat modifiableValueAttributeStat = base.Owner?.Stats?.GetAttribute(Stat);
+			if (modifiableValueAttributeStat != null)
+			{
+				modifiableValueAttributeStat.BaseValue = Math.Max(modifiableValueAttributeStat.BaseValue, Value);
+			}
+		}
 
-        public override void OnTurnOff() {
-        }
-    }
+		public override void OnTurnOff()
+		{
+		}
+	}
 }

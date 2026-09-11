@@ -1,113 +1,109 @@
-﻿using IsekaiMod.Utilities;
+﻿using IsekaiMod.Content.Classes.IsekaiProtagonist;
+using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
+using Kingmaker.Blueprints.Classes.Prerequisites;
+using Kingmaker.Blueprints.Facts;
 using Kingmaker.Designers.EventConditionActionSystem.Evaluators;
 using Kingmaker.Designers.Mechanics.Facts;
 using Kingmaker.Localization;
 using Kingmaker.ResourceLinks;
-using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.Abilities.Components.Base;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.FactLogic;
-using Kingmaker.UnitLogic.Mechanics.Actions;
 using Kingmaker.Visual.Animation.Kingmaker.Actions;
 using TabletopTweaks.Core.Utilities;
 using UnityEngine;
-using static IsekaiMod.Main;
 
-namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility {
+namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
+{
+	internal class UnlimitedPower
+	{
+		private const string Name = "Overpowered Ability - Unlimited Power";
 
-    internal class UnlimitedPower {
-        private const string Name = "Overpowered Ability — Unlimited Power";
-        private static readonly LocalizedString Description = Helpers.CreateString(IsekaiContext, "UnlimitedPower.Description",
-            "On the brink of defeat, the enemies have surrounded and exhausted you. Just as they are about to deliver the finishing blow, "
-            + "you get up and say the following words: Not today.\n"
-            + "Benefit: As a standard action, you restore all of your spell slots. You gain an initial 1 use at level 1, scaling to a maximum of 5 uses by level 20 (gaining an additional use every 4 levels).");
+		private static readonly LocalizedString Description = Helpers.CreateString(Main.IsekaiContext, "UnlimitedPower.Description", "On the brink of defeat, the enemies have surrounded and exhausted you. Just as they are about to deliver the finishing blow, you get up and say the following words: Not today.\nBenefit: As a standard action, you restore all of your spell slots. You gain an initial 1 use at level 1, scaling to a maximum of 5 uses by level 20 (gaining an additional use every 4 levels).");
 
-        private static readonly Sprite Icon_UnlimitedPower = AssetLoader.LoadInternal(IsekaiContext, "Features", "ICON_UNLIMITED_POWER.png");
+		private static readonly Sprite Icon_UnlimitedPower = AssetLoader.LoadInternal(Main.IsekaiContext, "Features", "ICON_UNLIMITED_POWER.png");
 
-        public static void Add() {
-            // Create the ability resource with level-based scaling
-            var UnlimitedPowerResource = Helpers.CreateBlueprint<BlueprintAbilityResource>(IsekaiContext, "UnlimitedPowerResource", bp => {
-                bp.m_MaxAmount = new BlueprintAbilityResource.Amount {
-                    BaseValue = 1, // Start with 1 use
-                    IncreasedByLevelStartPlusDivStep = true,
-                    StartingLevel = 1, // Start scaling from level 1
-                    StartingIncrease = 0, // BaseValue already supplies the initial use
-                    LevelStep = 4, // Gain 1 use every 4 levels
-                    PerStepIncrease = 1, // Each step grants 1 use
-                    MinClassLevelIncrease = 0, // Minimum is 0 if level is below StartingLevel
-                    OtherClassesModifier = 1.0f, // Scale from total character level
-                };
-                bp.m_UseMax = true; // Enforce a maximum cap
-                bp.m_Max = 5; // Limit to 5 max uses
-            });
-
-            // Create the ability
-            var UnlimitedPowerAbility = Helpers.CreateBlueprint<BlueprintAbility>(IsekaiContext, "UnlimitedPowerAbility", bp => {
-                bp.SetName(IsekaiContext, Name);
-                bp.SetDescription(Description);
-                bp.AddComponent<AbilityEffectRunAction>(c => {
-                    c.Actions = Helpers.CreateActionList(
-                        new ContextActionRestoreAllSpellSlots() {
-                            m_Target = new ContextTargetUnit(),
-                            m_UpToSpellLevel = 10 // Restores all spell levels
-                        });
-                });
-                bp.AddComponent<AbilityResourceLogic>(c => {
-                    c.m_RequiredResource = UnlimitedPowerResource.ToReference<BlueprintAbilityResourceReference>();
-                    c.m_IsSpendResource = true;
-                    c.Amount = 1; // Consume 1 resource per use
-                });
-                bp.AddComponent<AbilitySpawnFx>(c => {
-                    c.PrefabLink = new PrefabLink() { AssetId = "0c07afb9ee854184cb5110891324e3ad" };
-                    c.Time = AbilitySpawnFxTime.OnApplyEffect;
-                    c.Anchor = AbilitySpawnFxAnchor.Caster;
-                });
-                bp.m_Icon = Icon_UnlimitedPower;
-                bp.Type = AbilityType.Special;
-                bp.Range = AbilityRange.Personal;
-                bp.CanTargetSelf = true;
-                bp.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Self;
-                bp.ActionType = UnitCommand.CommandType.Standard; // Standard action for balance
-                bp.LocalizedDuration = StaticReferences.Strings.Null;
-                bp.LocalizedSavingThrow = StaticReferences.Strings.Null;
-            });
-
-            // Create the feature that adds the ability and resource
-            var UnlimitedPowerFeature = Helpers.CreateBlueprint<BlueprintFeature>(IsekaiContext, "UnlimitedPowerFeature", bp => {
-                bp.SetName(IsekaiContext, Name);
-                bp.SetDescription(Description);
-                bp.m_Icon = Icon_UnlimitedPower;
-                bp.AddComponent<AddFacts>(c => {
-                    c.m_Facts = new BlueprintUnitFactReference[] { UnlimitedPowerAbility.ToReference<BlueprintUnitFactReference>() };
-                });
-                bp.AddComponent<AddAbilityResources>(c => {
-                    c.m_Resource = UnlimitedPowerResource.ToReference<BlueprintAbilityResourceReference>();
-                    c.RestoreAmount = true; // Restores the resource on rest
-                });
-            });
-
-            OverpoweredAbilitySelection.AddToSelection(UnlimitedPowerFeature);
-        }
-    }
+		public static void Add()
+		{
+			BlueprintAbilityResource UnlimitedPowerResource = Helpers.CreateBlueprint(Main.IsekaiContext, "UnlimitedPowerResource", delegate(BlueprintAbilityResource bp)
+			{
+				bp.m_MaxAmount = new BlueprintAbilityResource.Amount
+				{
+					BaseValue = 1,
+					IncreasedByLevelStartPlusDivStep = true,
+					StartingLevel = 5,
+					StartingIncrease = 1,
+					LevelStep = 4,
+					PerStepIncrease = 1,
+					MinClassLevelIncrease = 0,
+					m_ClassDiv = new BlueprintCharacterClassReference[1] { IsekaiProtagonistClass.GetReference() },
+					m_ArchetypesDiv = new BlueprintArchetypeReference[0],
+					OtherClassesModifier = 0f
+				};
+				bp.m_UseMax = true;
+				bp.m_Max = 5;
+			});
+			BlueprintAbility UnlimitedPowerAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "UnlimitedPowerAbility", delegate(BlueprintAbility bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Overpowered Ability - Unlimited Power");
+				bp.SetDescription(Description);
+				bp.AddComponent(delegate(AbilityEffectRunAction c)
+				{
+					c.Actions = Helpers.CreateActionList(new ContextActionRestoreAllSpellSlots
+					{
+						m_Target = new ContextTargetUnit(),
+						m_UpToSpellLevel = 10
+					});
+				});
+				bp.AddComponent(delegate(AbilityResourceLogic c)
+				{
+					c.m_RequiredResource = UnlimitedPowerResource.ToReference<BlueprintAbilityResourceReference>();
+					c.m_IsSpendResource = true;
+					c.Amount = 1;
+				});
+				bp.AddComponent(delegate(AbilitySpawnFx c)
+				{
+					c.PrefabLink = new PrefabLink
+					{
+						AssetId = "0c07afb9ee854184cb5110891324e3ad"
+					};
+					c.Time = AbilitySpawnFxTime.OnApplyEffect;
+					c.Anchor = AbilitySpawnFxAnchor.Caster;
+				});
+				((BlueprintUnitFact)bp).m_Icon = Icon_UnlimitedPower;
+				bp.Type = AbilityType.Special;
+				bp.Range = AbilityRange.Personal;
+				bp.CanTargetSelf = true;
+				bp.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Self;
+				bp.ActionType = UnitCommand.CommandType.Standard;
+				bp.LocalizedDuration = StaticReferences.Strings.Null;
+				bp.LocalizedSavingThrow = StaticReferences.Strings.Null;
+			});
+			BlueprintFeature blueprintFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "UnlimitedPowerFeature", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Overpowered Ability - Unlimited Power");
+				bp.SetDescription(Description);
+				((BlueprintUnitFact)bp).m_Icon = Icon_UnlimitedPower;
+				bp.AddComponent(delegate(AddFacts c)
+				{
+					c.m_Facts = new BlueprintUnitFactReference[1] { UnlimitedPowerAbility.ToReference<BlueprintUnitFactReference>() };
+				});
+				bp.AddComponent(delegate(AddAbilityResources c)
+				{
+					c.m_Resource = UnlimitedPowerResource.ToReference<BlueprintAbilityResourceReference>();
+					c.RestoreAmount = true;
+					c.RestoreOnLevelUp = true;
+				});
+			});
+			blueprintFeature.AddComponent(delegate(PrerequisiteCharacterLevel c)
+			{
+				c.Level = 10;
+			});
+			OverpoweredAbilitySelection.AddToSelection(blueprintFeature);
+		}
+	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

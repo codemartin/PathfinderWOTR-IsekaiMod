@@ -1,90 +1,87 @@
-﻿using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.EdgeLord;
-using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.GodEmperor;
+﻿using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.GodEmperor;
 using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Hero;
+using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.MartialGod;
 using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Mastermind;
 using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Overlord;
 using IsekaiMod.Utilities;
-using IsekaiMod.Content.Classes.IsekaiProtagonist;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Prerequisites;
 using Kingmaker.Blueprints.Classes.Selection;
+using Kingmaker.Blueprints.Facts;
 using TabletopTweaks.Core.Utilities;
-using static IsekaiMod.Main;
 
-namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature {
-    internal class InquisitorDomainLordLegacy {
-        private static BlueprintProgression prog;
-        private static BlueprintFeatureSelection domains;
+namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature
+{
+	internal class InquisitorDomainLordLegacy
+	{
+		private static BlueprintProgression prog;
 
-        public static void Configure() {
-            prog = Helpers.CreateBlueprint<BlueprintProgression>(IsekaiContext, "InquisitorDomainLordLegacy", bp => {
-                bp.SetName(IsekaiContext, "Inquisitor Legacy - Domain Lord");
-                bp.SetDescription(IsekaiContext,
-                    "Your reincarnation by divine means has strengthened your divine connection above that of normal people. \n" +
-                    "The difference might not be easily visible at the beginning. \n" +
-                    "But as time passes it will slowly grow, granting you access to more and more domains.");
-                bp.GiveFeaturesForPreviousLevels = true;
-            });
-            domains = Helpers.CreateBlueprint<BlueprintFeatureSelection>(IsekaiContext, "InquisitorAdditionalDomains", bp => {
-                bp.SetName(FeatTools.Selections.DomainsSelection.m_DisplayName);
-                bp.SetDescription(FeatTools.Selections.DomainsSelection.m_Description);
-                bp.IgnorePrerequisites = true;
-                bp.Ranks = 1;
-                bp.IsClassFeature = true;
-            });
+		private static BlueprintFeatureSelection domains;
 
-            LegacySelection.RegisterForFeat(prog);
-            LegacySelection.Register(prog);
-            EdgeLordLegacySelection.Prohibit(prog);
-            GodEmperorLegacySelection.Register(prog);
-            HeroLegacySelection.Register(prog);
-            MastermindLegacySelection.Register(prog);
-            OverlordLegacySelection.Register(prog);
-        }
+		public static void Configure()
+		{
+			prog = Helpers.CreateBlueprint(Main.IsekaiContext, "InquisitorDomainLordLegacy", delegate(BlueprintProgression bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Inquisitor Legacy - Domain Lord");
+				bp.SetDescription(Main.IsekaiContext, "Your reincarnation by divine means has strengthened your divine connection above that of normal people. \nThe difference might not be easily visible at the beginning. \nBut as time passes it will slowly grow, granting you access to more and more domains.");
+				bp.GiveFeaturesForPreviousLevels = true;
+			});
+			domains = Helpers.CreateBlueprint(Main.IsekaiContext, "InquisitorAdditionalDomains", delegate(BlueprintFeatureSelection bp)
+			{
+				bp.SetName(((BlueprintUnitFact)FeatTools.Selections.DomainsSelection).m_DisplayName);
+				bp.SetDescription(((BlueprintUnitFact)FeatTools.Selections.DomainsSelection).m_Description);
+				bp.IgnorePrerequisites = true;
+				bp.Ranks = 4;
+				bp.IsClassFeature = true;
+			});
+			LegacySelection.RegisterForFeat(prog);
+			LegacySelection.Register(prog);
+			MartialGodLegacySelection.Prohibit(prog);
+			GodEmperorLegacySelection.Register(prog);
+			HeroLegacySelection.Register(prog);
+			MastermindLegacySelection.Register(prog);
+			OverlordLegacySelection.Register(prog);
+		}
 
-        public static void PatchProgression() {
-            if (prog != null) {
-                LevelEntry[] addentries = new LevelEntry[] { };
-                LevelEntry[] removeentries = new LevelEntry[] { };
+		public static void PatchProgression()
+		{
+			if (prog != null)
+			{
+				LevelEntry[] array = new LevelEntry[0];
+				LevelEntry[] array2 = new LevelEntry[0];
+				domains.SetFeatures(FeatTools.Selections.DomainsSelection.m_AllFeatures);
+				array2 = array2.AppendToArray(Helpers.CreateLevelEntry(1, FeatTools.Selections.DomainsSelection));
+				array = array.AppendToArray(Helpers.CreateLevelEntry(2, InquisitorTacticianLegacy.GetDomains()));
+				array = array.AppendToArray(Helpers.CreateLevelEntry(5, domains));
+				array = array.AppendToArray(Helpers.CreateLevelEntry(10, domains));
+				array = array.AppendToArray(Helpers.CreateLevelEntry(15, domains));
+				array = array.AppendToArray(Helpers.CreateLevelEntry(20, domains));
+				BlueprintArchetype blueprint = BlueprintTools.GetBlueprint<BlueprintArchetype>("0e5e91c17f114d358910e0da4ae29b50");
+				array2 = array2.AppendToArray(blueprint.RemoveFeatures);
+				prog = PatchTools.PatchClassProgressionBasedOnSeparateLists(prog, ClassTools.Classes.InquisitorClass, array, array2);
+				prog.AddPrerequisite(delegate(PrerequisiteNoFeature c)
+				{
+					c.m_Feature = InquisitorTacticianLegacy.Get().ToReference<BlueprintFeatureReference>();
+				});
+				prog.AddPrerequisite(delegate(PrerequisiteNoFeature c)
+				{
+					c.m_Feature = InquisitorJudgeLegacy.Get().ToReference<BlueprintFeatureReference>();
+				});
+			}
+			prog.AddPrerequisite(delegate(PrerequisiteNoClassLevel c)
+			{
+				c.m_CharacterClass = ClassTools.Classes.InquisitorClass.ToReference<BlueprintCharacterClassReference>();
+			});
+		}
 
-                domains.SetFeatures(FeatTools.Selections.DomainsSelection.m_AllFeatures);
-
-                removeentries = removeentries.AppendToArray(Helpers.CreateLevelEntry(1, FeatTools.Selections.DomainsSelection));
-                addentries = addentries.AppendToArray<LevelEntry>(Helpers.CreateLevelEntry(2, InquisitorTacticianLegacy.GetDomains()));
-                addentries = addentries.AppendToArray<LevelEntry>(Helpers.CreateLevelEntry(5, domains));
-                addentries = addentries.AppendToArray<LevelEntry>(Helpers.CreateLevelEntry(10, domains));
-                addentries = addentries.AppendToArray<LevelEntry>(Helpers.CreateLevelEntry(15, domains));
-                addentries = addentries.AppendToArray<LevelEntry>(Helpers.CreateLevelEntry(20, domains));
-
-                BlueprintArchetype archetype = BlueprintTools.GetBlueprint<BlueprintArchetype>("0e5e91c17f114d358910e0da4ae29b50");
-
-                removeentries = removeentries.AppendToArray(archetype.RemoveFeatures);
-
-                prog = PatchTools.PatchClassProgressionBasedOnSeparateLists(prog, ClassTools.Classes.InquisitorClass, addentries, removeentries);
-                PatchTools.PatchProgressionFeaturesBasedOnReferenceClass(prog, IsekaiProtagonistClass.GetReference(), ClassTools.ClassReferences.InquisitorClass);
-
-                prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = InquisitorTacticianLegacy.Get().ToReference<BlueprintFeatureReference>(); });
-                prog.AddPrerequisite<PrerequisiteNoFeature>(c => { c.m_Feature = InquisitorJudgeLegacy.Get().ToReference<BlueprintFeatureReference>(); });
-            }
-        }
-
-        public static BlueprintProgression Get() {
-            if (prog != null) return prog;
-            return BlueprintTools.GetModBlueprint<BlueprintProgression>(IsekaiContext, "InquisitorDomainLordLegacy");
-        }
-
-
-        public static void PatchPrerequisiteCompatibility() {
-            foreach (string mythicFeatureId in new[] {
-                "2de64f6a1f2baee4f9b7e52e3f046ec5", // Domain Mastery
-                "213a8480d22206b45acbfa0619ca5aaf"  // Extra Domain
-            }) {
-                PrerequisiteAlternatives.Add(
-                    BlueprintTools.GetBlueprint<BlueprintFeature>(mythicFeatureId),
-                    FeatTools.Selections.DomainsSelection,
-                    domains);
-            }
-        }
-    }
+		public static BlueprintProgression Get()
+		{
+			if (prog != null)
+			{
+				return prog;
+			}
+			return BlueprintTools.GetModBlueprint<BlueprintProgression>(Main.IsekaiContext, "InquisitorDomainLordLegacy");
+		}
+	}
 }

@@ -1,61 +1,97 @@
-using TabletopTweaks.Core.Config;
+﻿using TabletopTweaks.Core.Config;
 
-namespace IsekaiMod.Config {
+namespace IsekaiMod.Config
+{
+	public class AddedContent : IUpdatableSettings
+	{
+		public bool NewSettingsOffByDefault;
 
-    public class AddedContent : IUpdatableSettings {
-        public bool NewSettingsOffByDefault = false;
-        public bool ExcludeCompanionsFromIsekaiClass = false;
-        public bool RestrictExceptionalFeats = false;
-        public bool RestrictMythicOPAbility = false;
-        public bool RestrictMythicSpecialPower = false;
-        public bool MultipleMythicOPAbility = false;
-        public bool MultipleMythicSpecialPower = false;
-        public bool MergeIsekaiSpellList = false;
+		public bool ExcludeCompanionsFromIsekaiClass = true;
 
-        public bool DisableSpellbookEdgeLord = false;
-        public bool DisableSpellbookGodEmperor = false;
-        public bool DisableSpellbookHero = false;
-        public bool DisableSpellbookMastermind = false;
-        public bool DisableSpellbookOverlord = false;
+		public bool AllowMainCharacterRetinue;
 
-        public int IsekaiDefaultClothes = 20;
-        public int IsekaiSpellsKnownIncrement = 6;
-        public SettingGroup Isekai = new();
-        public SettingGroup Other = new();
+		public bool RestrictExceptionalFeats;
 
-        public void Init() {
-        }
+		public bool RestrictMythicOPAbility;
 
-        public void OverrideSettings(IUpdatableSettings userSettings) {
-            var loadedSettings = userSettings as AddedContent;
-            NewSettingsOffByDefault = loadedSettings.NewSettingsOffByDefault;
-            ExcludeCompanionsFromIsekaiClass = loadedSettings.ExcludeCompanionsFromIsekaiClass;
+		public bool RestrictMythicSpecialPower;
 
-            // Restrict Features
-            RestrictExceptionalFeats = loadedSettings.RestrictExceptionalFeats;
-            RestrictMythicOPAbility = loadedSettings.RestrictMythicOPAbility;
-            RestrictMythicSpecialPower = loadedSettings.RestrictMythicSpecialPower;
+		public bool MultipleMythicOPAbility;
 
-            // Allow Multiple Selections
-            MultipleMythicOPAbility = loadedSettings.MultipleMythicOPAbility;
-            MultipleMythicSpecialPower = loadedSettings.MultipleMythicSpecialPower;
+		public bool MultipleMythicSpecialPower;
 
-            // Change Isekai Protagonist Default Clothes
-            IsekaiDefaultClothes = loadedSettings.IsekaiDefaultClothes;
+		public bool MergeIsekaiSpellList;
 
-            // Change Isekai Protagonist Spells Known Increment
-            IsekaiSpellsKnownIncrement = loadedSettings.IsekaiSpellsKnownIncrement;
+		public bool DisableSpellbookMartialGod;
 
-            // Disable Isekai Spellbook
-            DisableSpellbookEdgeLord = loadedSettings.DisableSpellbookEdgeLord;
-            DisableSpellbookGodEmperor = loadedSettings.DisableSpellbookGodEmperor;
-            DisableSpellbookHero = loadedSettings.DisableSpellbookHero;
-            DisableSpellbookMastermind = loadedSettings.DisableSpellbookMastermind;
-            DisableSpellbookOverlord = loadedSettings.DisableSpellbookOverlord;
+		public bool DisableSpellbookGodEmperor;
 
-            MergeIsekaiSpellList = loadedSettings.MergeIsekaiSpellList;
-            Isekai.LoadSettingGroup(loadedSettings.Isekai, NewSettingsOffByDefault);
-            Other.LoadSettingGroup(loadedSettings.Other, NewSettingsOffByDefault);
-        }
-    }
+		public bool DisableSpellbookHero;
+
+		public bool DisableSpellbookMastermind;
+
+		public bool DisableSpellbookOverlord;
+
+		public bool DisableSpellbookShadowMonarch;
+
+		public bool EnableLevelUncapping = true;
+
+		public bool EnableCosmicThreatScaling = true;
+
+		public bool EnableRivalReincarnators = true;
+
+		public bool EnableDimensionalReinforcements = true;
+
+		public bool EnableIsekaiEncounterMultiplier;
+
+		public bool EnablePlanarIncursions = true;
+
+		public bool EnableBossPhaseGate = true;
+
+		public int CosmicThreatDifficultyMultiplier = 1;
+
+		public int IsekaiDefaultClothes = 20;
+
+		public int IsekaiSpellsKnownIncrement = 6;
+
+		public SettingGroup Isekai = new SettingGroup();
+
+		public SettingGroup Other = new SettingGroup();
+
+		public void Init()
+		{
+		}
+
+		public void OverrideSettings(IUpdatableSettings userSettings)
+		{
+			AddedContent addedContent = userSettings as AddedContent;
+			NewSettingsOffByDefault = addedContent.NewSettingsOffByDefault;
+			ExcludeCompanionsFromIsekaiClass = addedContent.ExcludeCompanionsFromIsekaiClass;
+			AllowMainCharacterRetinue = addedContent.AllowMainCharacterRetinue;
+			RestrictExceptionalFeats = addedContent.RestrictExceptionalFeats;
+			RestrictMythicOPAbility = addedContent.RestrictMythicOPAbility;
+			RestrictMythicSpecialPower = addedContent.RestrictMythicSpecialPower;
+			MultipleMythicOPAbility = addedContent.MultipleMythicOPAbility;
+			MultipleMythicSpecialPower = addedContent.MultipleMythicSpecialPower;
+			IsekaiDefaultClothes = addedContent.IsekaiDefaultClothes;
+			IsekaiSpellsKnownIncrement = addedContent.IsekaiSpellsKnownIncrement;
+			DisableSpellbookMartialGod = addedContent.DisableSpellbookMartialGod;
+			DisableSpellbookGodEmperor = addedContent.DisableSpellbookGodEmperor;
+			DisableSpellbookHero = addedContent.DisableSpellbookHero;
+			DisableSpellbookMastermind = addedContent.DisableSpellbookMastermind;
+			DisableSpellbookOverlord = addedContent.DisableSpellbookOverlord;
+			DisableSpellbookShadowMonarch = addedContent.DisableSpellbookShadowMonarch;
+			EnableLevelUncapping = addedContent.EnableLevelUncapping;
+			EnableCosmicThreatScaling = addedContent.EnableCosmicThreatScaling;
+			EnableRivalReincarnators = addedContent.EnableRivalReincarnators;
+			EnableDimensionalReinforcements = addedContent.EnableDimensionalReinforcements;
+			EnableIsekaiEncounterMultiplier = addedContent.EnableIsekaiEncounterMultiplier;
+			EnablePlanarIncursions = addedContent.EnablePlanarIncursions;
+			EnableBossPhaseGate = addedContent.EnableBossPhaseGate;
+			CosmicThreatDifficultyMultiplier = addedContent.CosmicThreatDifficultyMultiplier;
+			MergeIsekaiSpellList = addedContent.MergeIsekaiSpellList;
+			Isekai.LoadSettingGroup(addedContent.Isekai, NewSettingsOffByDefault);
+			Other.LoadSettingGroup(addedContent.Other, NewSettingsOffByDefault);
+		}
+	}
 }

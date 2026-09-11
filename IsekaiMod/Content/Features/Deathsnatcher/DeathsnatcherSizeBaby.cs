@@ -11,81 +11,115 @@ using Kingmaker.Localization;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.UnitLogic.Buffs.Components;
 using Kingmaker.UnitLogic.FactLogic;
+using Kingmaker.UnitLogic.Mechanics.Components;
 using TabletopTweaks.Core.Utilities;
-using static IsekaiMod.Main;
 
-namespace IsekaiMod.Content.Features.Deathsnatcher {
+namespace IsekaiMod.Content.Features.Deathsnatcher
+{
+	internal class DeathsnatcherSizeBaby
+	{
+		private static readonly BlueprintUnitFact NaturalArmor10 = BlueprintTools.GetBlueprint<BlueprintUnitFact>("4179c5c08d606a6439a62bf178b738e1");
 
-    internal class DeathsnatcherSizeBaby {
-        private static readonly BlueprintUnitFact NaturalArmor10 = BlueprintTools.GetBlueprint<BlueprintUnitFact>("4179c5c08d606a6439a62bf178b738e1");
-        private static readonly BlueprintUnitFact NaturalArmor16 = BlueprintTools.GetBlueprint<BlueprintUnitFact>("73a90b2a70d576f429ad401e7a5a8a4f");
+		private static readonly BlueprintUnitFact NaturalArmor16 = BlueprintTools.GetBlueprint<BlueprintUnitFact>("73a90b2a70d576f429ad401e7a5a8a4f");
 
-        public static void Add() {
-
-            LocalizedString DeathsnatcherSizeBabyDesc = Helpers.CreateString(IsekaiContext, "DeathsnatcherSizeBaby.Description",
-                "The Deathsnatcher matures at 4th level. When this occurs, the Deathsnatcher’s natural armor bonus to its AC increases by 6, and gains "
-                + "the following ability scores adjustments: Str +6, Dex –4, Con +4.");
-
-            var DeathsnatcherSizeBabyBuff = TTCoreExtensions.CreateBuff("DeathsnatcherSizeBabyBuff", bp => {
-                bp.SetName(IsekaiContext, "Baby Deathsnatcher");
-                bp.SetDescription(DeathsnatcherSizeBabyDesc);
-                bp.m_Flags = BlueprintBuff.Flags.HiddenInUi | BlueprintBuff.Flags.StayOnDeath;
-                bp.AddComponent<ChangeUnitSize>(c => {
-                    c.m_Type = ChangeUnitSize.ChangeType.Delta;
-                    c.SizeDelta = -2;
-                    c.Size = Size.Fine;
-                });
-                bp.AddComponent<AddGenericStatBonus>(c => {
-                    c.Descriptor = ModifierDescriptor.Size;
-                    c.Stat = StatType.Strength;
-                    c.Value = -6;
-                });
-                bp.AddComponent<AddGenericStatBonus>(c => {
-                    c.Descriptor = ModifierDescriptor.Size;
-                    c.Stat = StatType.Dexterity;
-                    c.Value = +4;
-                });
-                bp.AddComponent<AddGenericStatBonus>(c => {
-                    c.Descriptor = ModifierDescriptor.Size;
-                    c.Stat = StatType.Constitution;
-                    c.Value = -4;
-                });
-            });
-            var DeathsnatcherSizeBaby = Helpers.CreateBlueprint<BlueprintFeature>(IsekaiContext, "DeathsnatcherSizeBaby", bp => {
-                bp.HideInUI = true;
-                bp.AddComponent<AddFacts>(c => {
-                    c.m_Facts = new BlueprintUnitFactReference[] {
-                        DeathsnatcherSizeBabyBuff.ToReference<BlueprintUnitFactReference>(),
-                        NaturalArmor10.ToReference<BlueprintUnitFactReference>(),
-                    };
-                });
-            });
-            var DeathsnatcherNaturalArmor = Helpers.CreateBlueprint<BlueprintFeature>(IsekaiContext, "DeathsnatcherNaturalArmor", bp => {
-                bp.SetName(IsekaiContext, "Deathsnatcher Armor");
-                bp.SetDescription(IsekaiContext, "The Deathsnatcher has +16 natural armor bonus to AC.");
-                bp.HideInUI = true;
-                bp.AddComponent<AddFacts>(c => {
-                    c.m_Facts = new BlueprintUnitFactReference[] {
-                        NaturalArmor16.ToReference<BlueprintUnitFactReference>()
-                    };
-                });
-            });
-            var DeathsnatcherSizeBabyFeature = Helpers.CreateBlueprint<BlueprintFeature>(IsekaiContext, "DeathsnatcherSizeBabyFeature", bp => {
-                bp.SetName(IsekaiContext, "Baby Deathsnatcher");
-                bp.SetDescription(DeathsnatcherSizeBabyDesc);
-                bp.AddComponent<AddFeatureOnClassLevel>(c => {
-                    c.m_Class = DeathsnatcherClass.GetReference();
-                    c.Level = 4;
-                    c.m_Feature = DeathsnatcherSizeBaby.ToReference<BlueprintFeatureReference>();
-                    c.BeforeThisLevel = true;
-                });
-                bp.AddComponent<AddFeatureOnClassLevel>(c => {
-                    c.m_Class = DeathsnatcherClass.GetReference();
-                    c.Level = 4;
-                    c.m_Feature = DeathsnatcherNaturalArmor.ToReference<BlueprintFeatureReference>();
-                    c.BeforeThisLevel = false;
-                });
-            });
-        }
-    }
+		public static void Add()
+		{
+			LocalizedString DeathsnatcherSizeBabyDesc = Helpers.CreateString(Main.IsekaiContext, "DeathsnatcherSizeBaby.Description", "The Deathsnatcher begins as a small apex cub, maturing at 4th level. At 4th level, its size becomes Medium, natural armor increases to +8 (and to +12 at 12th level), gaining Pounce and adult ferocity.");
+			BlueprintBuff DeathsnatcherSizeBabyBuff = TTCoreExtensions.CreateBuff("DeathsnatcherSizeBabyBuff", delegate(BlueprintBuff bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Baby Deathsnatcher");
+				bp.SetDescription(DeathsnatcherSizeBabyDesc);
+				bp.m_Flags = BlueprintBuff.Flags.HiddenInUi | BlueprintBuff.Flags.StayOnDeath;
+				bp.AddComponent(delegate(ChangeUnitSize c)
+				{
+					c.m_Type = ChangeUnitSize.ChangeType.Delta;
+					c.SizeDelta = -2;
+					c.Size = Size.Fine;
+				});
+				bp.AddComponent(delegate(AddGenericStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Size;
+					c.Stat = StatType.Strength;
+					c.Value = -4;
+				});
+				bp.AddComponent(delegate(AddGenericStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Size;
+					c.Stat = StatType.Dexterity;
+					c.Value = 4;
+				});
+				bp.AddComponent(delegate(AddGenericStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Size;
+					c.Stat = StatType.Constitution;
+					c.Value = -2;
+				});
+			});
+			BlueprintFeature DeathsnatcherSizeBaby = Helpers.CreateBlueprint(Main.IsekaiContext, "DeathsnatcherSizeBaby", delegate(BlueprintFeature bp)
+			{
+				bp.HideInUI = true;
+				bp.AddComponent(delegate(AddFacts c)
+				{
+					c.m_Facts = new BlueprintUnitFactReference[1] { DeathsnatcherSizeBabyBuff.ToReference<BlueprintUnitFactReference>() };
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.NaturalArmor;
+					c.Stat = StatType.AC;
+					c.Value = 4;
+				});
+			});
+			BlueprintFeature DeathsnatcherNaturalArmor = Helpers.CreateBlueprint(Main.IsekaiContext, "DeathsnatcherNaturalArmor", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Deathsnatcher Armor");
+				bp.SetDescription(Main.IsekaiContext, "The mature Deathsnatcher has +8 natural armor bonus to AC (+12 at 12th level).");
+				bp.HideInUI = true;
+				bp.AddComponent(delegate(AddContextStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.NaturalArmor;
+					c.Stat = StatType.AC;
+					c.Value = Values.CreateContextRankValue(AbilityRankType.Default);
+				});
+				bp.AddComponent(delegate(ContextRankConfig c)
+				{
+					c.m_Type = AbilityRankType.Default;
+					c.m_BaseValueType = ContextRankBaseValueType.ClassLevel;
+					c.m_Class = new BlueprintCharacterClassReference[1] { DeathsnatcherClass.GetReference() };
+					c.m_Progression = ContextRankProgression.Custom;
+					c.m_CustomProgression = new ContextRankConfig.CustomProgressionItem[2]
+					{
+						new ContextRankConfig.CustomProgressionItem
+						{
+							BaseValue = 11,
+							ProgressionValue = 8
+						},
+						new ContextRankConfig.CustomProgressionItem
+						{
+							BaseValue = 100,
+							ProgressionValue = 12
+						}
+					};
+				});
+			});
+			Helpers.CreateBlueprint(Main.IsekaiContext, "DeathsnatcherSizeBabyFeature", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Baby Deathsnatcher");
+				bp.SetDescription(DeathsnatcherSizeBabyDesc);
+				bp.AddComponent(delegate(AddFeatureOnClassLevel c)
+				{
+					c.m_Class = DeathsnatcherClass.GetReference();
+					c.Level = 4;
+					c.m_Feature = DeathsnatcherSizeBaby.ToReference<BlueprintFeatureReference>();
+					c.BeforeThisLevel = true;
+				});
+				bp.AddComponent(delegate(AddFeatureOnClassLevel c)
+				{
+					c.m_Class = DeathsnatcherClass.GetReference();
+					c.Level = 4;
+					c.m_Feature = DeathsnatcherNaturalArmor.ToReference<BlueprintFeatureReference>();
+					c.BeforeThisLevel = false;
+				});
+			});
+		}
+	}
 }

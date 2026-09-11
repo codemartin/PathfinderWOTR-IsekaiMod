@@ -1,93 +1,169 @@
 ﻿using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
+using Kingmaker.Blueprints.Classes.Prerequisites;
+using Kingmaker.Blueprints.Facts;
+using Kingmaker.EntitySystem.Stats;
+using Kingmaker.Enums;
 using Kingmaker.Localization;
 using Kingmaker.ResourceLinks;
+using Kingmaker.RuleSystem;
+using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components.AreaEffects;
+using Kingmaker.UnitLogic.ActivatableAbilities;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.UnitLogic.Buffs.Components;
 using Kingmaker.UnitLogic.FactLogic;
+using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Mechanics.Actions;
 using Kingmaker.Utility;
 using TabletopTweaks.Core.Utilities;
 using UnityEngine;
-using static IsekaiMod.Main;
 
-namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower {
+namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
+{
+	internal class KillingIntent
+	{
+		private static readonly Sprite Icon_ConsumeFear = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintAbility>("644d2c0d029e54d4188bc34216d9d8c0")).m_Icon;
 
-    internal class KillingIntent {
-        private static readonly Sprite Icon_ConsumeFear = BlueprintTools.GetBlueprint<BlueprintAbility>("644d2c0d029e54d4188bc34216d9d8c0").m_Icon;
-        private static readonly BlueprintBuff Shaken = BlueprintTools.GetBlueprint<BlueprintBuff>("25ec6cb6ab1845c48a95f9c20b034220");
-        private static readonly BlueprintBuff Frightened = BlueprintTools.GetBlueprint<BlueprintBuff>("f08a7239aa961f34c8301518e71d4cdf");
-        //private static readonly BlueprintBuff Cowering = BlueprintTools.GetBlueprint<BlueprintBuff>("6062e3a8206a4284d867cbb7120dc091");
+		private static readonly BlueprintBuff Shaken = BlueprintTools.GetBlueprint<BlueprintBuff>("25ec6cb6ab1845c48a95f9c20b034220");
 
-        public static void Add() {
-            const string KillingIntentName = "Killing Intent";
-            LocalizedString KingmakerIntentDesc = Helpers.CreateString(IsekaiContext, "KillingIntent.Description",
-                "Enemies within 40 feet of you become shaken and frightened.");
-
-            var KillingIntentArea = Helpers.CreateBlueprint<BlueprintAbilityAreaEffect>(IsekaiContext, "KillingIntentArea", bp => {
-                bp.m_TargetType = BlueprintAbilityAreaEffect.TargetType.Enemy;
-                bp.Shape = AreaEffectShape.Cylinder;
-                bp.Size = new Feet(40);
-                bp.AffectEnemies = true;
-                bp.Fx = new PrefabLink();
-                bp.AddComponent<AbilityAreaEffectRunAction>(c => {
-                c.UnitEnter = Helpers.CreateActionList(
-                    new ContextActionApplyBuff() {
-                        m_Buff = Shaken.ToReference<BlueprintBuffReference>(),
-                        Permanent = true,
-                        DurationValue = Values.Duration.Zero,
-                    },
-                    new ContextActionApplyBuff() {
-                        m_Buff = Frightened.ToReference<BlueprintBuffReference>(),
-                        Permanent = true,
-                        DurationValue = Values.Duration.Zero,
-                    });
-                c.UnitExit = Helpers.CreateActionList(
-                    new ContextActionRemoveBuff() {
-                        m_Buff = Shaken.ToReference<BlueprintBuffReference>(),
-                        OnlyFromCaster = true,
-                    },
-                    new ContextActionRemoveBuff() {
-                        m_Buff = Frightened.ToReference<BlueprintBuffReference>(),
-                        OnlyFromCaster = true,
-                    });
-                    c.UnitMove = ActionFlow.DoNothing();
-                    c.Round = ActionFlow.DoNothing();
-                });
-            });
-            var KillingIntentAreaBuff = TTCoreExtensions.CreateBuff($"KillingIntentAreaBuff", bp => {
-                bp.SetName(IsekaiContext, KillingIntentName);
-                bp.SetDescription(KingmakerIntentDesc);
-                bp.m_Icon = Icon_ConsumeFear;
-                bp.IsClassFeature = true;
-                bp.m_Flags = BlueprintBuff.Flags.HiddenInUi;
-                bp.AddComponent<AddAreaEffect>(c => {
-                    c.m_AreaEffect = KillingIntentArea.ToReference<BlueprintAbilityAreaEffectReference>();
-                });
-            });
-            var KillingIntentAbility = TTCoreExtensions.CreateActivatableAbility("KillingIntentAbility", bp => {
-                bp.SetName(IsekaiContext, KillingIntentName);
-                bp.SetDescription(KingmakerIntentDesc);
-                bp.m_Icon = Icon_ConsumeFear;
-                bp.m_Buff = KillingIntentAreaBuff.ToReference<BlueprintBuffReference>();
-                bp.DoNotTurnOffOnRest = true;
-            });
-            var KillingIntentFeature = Helpers.CreateBlueprint<BlueprintFeature>(IsekaiContext, "KillingIntentFeature", bp => {
-                bp.SetName(IsekaiContext, KillingIntentName);
-                bp.SetDescription(KingmakerIntentDesc);
-                bp.m_Icon = Icon_ConsumeFear;
-                bp.AddComponent<AddFacts>(c => {
-                    c.m_Facts = new BlueprintUnitFactReference[] {
-                        KillingIntentAbility.ToReference<BlueprintUnitFactReference>(),
-                    };
-                });
-            });
-
-            // Add to selection
-            SpecialPowerSelection.AddToSelection(KillingIntentFeature);
-        }
-    }
+		public static void Add()
+		{
+			LocalizedString KingmakerIntentDesc = Helpers.CreateString(Main.IsekaiContext, "KillingIntent.Description", "You emit an aura of lethal malice out to 40 feet. Enemies within this aura suffer a -2 penalty to attack rolls, AC, and saving throws, and become Shaken. Furthermore, whenever enemies enter or begin their turn within the aura, they must succeed at a Will saving throw (DC = 10 + 1/2 character level + Charisma modifier) or become Staggered for 1 round from sheer terror.");
+			BlueprintBuff KillingIntentDreadBuff = TTCoreExtensions.CreateBuff("KillingIntentDreadBuff", delegate(BlueprintBuff bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Overwhelming Dread");
+				bp.SetDescription(Main.IsekaiContext, "Crushed by an overwhelming aura of lethal intent, you suffer a -2 penalty to attack rolls, AC, and saving throws, and are Shaken.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_ConsumeFear;
+				bp.IsClassFeature = true;
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Penalty;
+					c.Stat = StatType.AdditionalAttackBonus;
+					c.Value = -2;
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Penalty;
+					c.Stat = StatType.AC;
+					c.Value = -2;
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Penalty;
+					c.Stat = StatType.SaveWill;
+					c.Value = -2;
+				});
+				bp.AddComponent(delegate(AddCondition c)
+				{
+					c.Condition = UnitCondition.Shaken;
+				});
+			});
+			BlueprintBuff KillingIntentStaggerBuff = TTCoreExtensions.CreateBuff("KillingIntentStaggerBuff", delegate(BlueprintBuff bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Paralyzing Dread");
+				bp.SetDescription(Main.IsekaiContext, "Frozen in terror by sheer killing intent, this creature is staggered for 1 round.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_ConsumeFear;
+				bp.IsClassFeature = true;
+				bp.AddComponent(delegate(AddCondition c)
+				{
+					c.Condition = UnitCondition.Staggered;
+				});
+			});
+			BlueprintAbilityAreaEffect KillingIntentArea = Helpers.CreateBlueprint(Main.IsekaiContext, "KillingIntentArea", delegate(BlueprintAbilityAreaEffect bp)
+			{
+				bp.m_TargetType = BlueprintAbilityAreaEffect.TargetType.Enemy;
+				bp.Shape = AreaEffectShape.Cylinder;
+				bp.Size = new Feet(40f);
+				bp.AffectEnemies = true;
+				bp.Fx = new PrefabLink();
+				bp.AddComponent(delegate(AbilityAreaEffectRunAction c)
+				{
+					c.UnitEnter = Helpers.CreateActionList(new ContextActionApplyBuff
+					{
+						m_Buff = KillingIntentDreadBuff.ToReference<BlueprintBuffReference>(),
+						Permanent = true,
+						DurationValue = Values.Duration.Zero
+					}, new ContextActionSavingThrow
+					{
+						Type = SavingThrowType.Will,
+						Actions = ActionFlow.DoSingle(delegate(ContextActionConditionalSaved s)
+						{
+							s.Failed = ActionFlow.DoSingle(delegate(ContextActionApplyBuff b)
+							{
+								b.m_Buff = KillingIntentStaggerBuff.ToReference<BlueprintBuffReference>();
+								b.Permanent = false;
+								b.DurationValue = new ContextDurationValue
+								{
+									Rate = DurationRate.Rounds,
+									DiceType = DiceType.Zero,
+									BonusValue = 1
+								};
+							});
+						})
+					});
+					c.UnitExit = Helpers.CreateActionList(new ContextActionRemoveBuff
+					{
+						m_Buff = KillingIntentDreadBuff.ToReference<BlueprintBuffReference>(),
+						OnlyFromCaster = true
+					});
+					c.UnitMove = ActionFlow.DoNothing();
+					c.Round = Helpers.CreateActionList(new ContextActionSavingThrow
+					{
+						Type = SavingThrowType.Will,
+						Actions = ActionFlow.DoSingle(delegate(ContextActionConditionalSaved s)
+						{
+							s.Failed = ActionFlow.DoSingle(delegate(ContextActionApplyBuff b)
+							{
+								b.m_Buff = KillingIntentStaggerBuff.ToReference<BlueprintBuffReference>();
+								b.Permanent = false;
+								b.DurationValue = new ContextDurationValue
+								{
+									Rate = DurationRate.Rounds,
+									DiceType = DiceType.Zero,
+									BonusValue = 1
+								};
+							});
+						})
+					});
+				});
+			});
+			BlueprintBuff KillingIntentAreaBuff = TTCoreExtensions.CreateBuff("KillingIntentAreaBuff", delegate(BlueprintBuff bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Killing Intent");
+				bp.SetDescription(KingmakerIntentDesc);
+				((BlueprintUnitFact)bp).m_Icon = Icon_ConsumeFear;
+				bp.IsClassFeature = true;
+				bp.m_Flags = BlueprintBuff.Flags.HiddenInUi;
+				bp.AddComponent(delegate(AddAreaEffect c)
+				{
+					c.m_AreaEffect = KillingIntentArea.ToReference<BlueprintAbilityAreaEffectReference>();
+				});
+			});
+			BlueprintActivatableAbility KillingIntentAbility = TTCoreExtensions.CreateActivatableAbility("KillingIntentAbility", delegate(BlueprintActivatableAbility bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Killing Intent");
+				bp.SetDescription(KingmakerIntentDesc);
+				((BlueprintUnitFact)bp).m_Icon = Icon_ConsumeFear;
+				bp.m_Buff = KillingIntentAreaBuff.ToReference<BlueprintBuffReference>();
+				bp.DoNotTurnOffOnRest = true;
+			});
+			SpecialPowerSelection.AddToSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "KillingIntentFeature", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Killing Intent");
+				bp.SetDescription(KingmakerIntentDesc);
+				((BlueprintUnitFact)bp).m_Icon = Icon_ConsumeFear;
+				bp.AddComponent(delegate(AddFacts c)
+				{
+					c.m_Facts = new BlueprintUnitFactReference[1] { KillingIntentAbility.ToReference<BlueprintUnitFactReference>() };
+				});
+				bp.AddComponent(delegate(PrerequisiteCharacterLevel c)
+				{
+					c.Level = 5;
+				});
+			}));
+		}
+	}
 }

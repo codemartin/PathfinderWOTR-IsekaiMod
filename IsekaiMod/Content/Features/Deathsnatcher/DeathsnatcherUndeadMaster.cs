@@ -1,44 +1,43 @@
-﻿using Kingmaker.Blueprints;
+﻿using System.Collections.Generic;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
+using Kingmaker.Blueprints.Facts;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.FactLogic;
-using System.Collections.Generic;
 using TabletopTweaks.Core.Utilities;
 using UnityEngine;
-using static IsekaiMod.Main;
 
-namespace IsekaiMod.Content.Features.Deathsnatcher {
+namespace IsekaiMod.Content.Features.Deathsnatcher
+{
+	internal class DeathsnatcherUndeadMaster
+	{
+		private static readonly Sprite Icon_MasteryOfFlesh = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintAbility>("921ed6a6751d71140b4e75ab7bcb9890")).m_Icon;
 
-    internal class DeathsnatcherUndeadMaster {
-        private static readonly Sprite Icon_MasteryOfFlesh = BlueprintTools.GetBlueprint<BlueprintAbility>("921ed6a6751d71140b4e75ab7bcb9890").m_Icon;
-
-        public static void Add() {
-            var DeathsnatcherCommandUndeadAbility = BlueprintTools.GetModBlueprint<BlueprintAbility>(IsekaiContext, "DeathsnatcherCommandUndeadAbility");
-            var DeathsnatcherAnimateDeadAbility = BlueprintTools.GetModBlueprint<BlueprintAbility>(IsekaiContext, "DeathsnatcherAnimateDeadAbility");
-            var DeathsnatcherCreateUndeadResource = BlueprintTools.GetModBlueprint<BlueprintAbilityResource>(IsekaiContext, "DeathsnatcherCreateUndeadResource");
-            var DeathsnatcherFingerOfDeathResource = BlueprintTools.GetModBlueprint<BlueprintAbilityResource>(IsekaiContext, "DeathsnatcherFingerOfDeathResource");
-
-            // Feature
-            var DeathsnatcherUndeadMaster = Helpers.CreateBlueprint<BlueprintFeature>(IsekaiContext, "DeathsnatcherUndeadMaster", bp => {
-                bp.SetName(IsekaiContext, "Undead Master");
-                bp.SetDescription(IsekaiContext, "At 20th level, the Deathsnatcher becomes a master of the undead.\n"
-                    + "Command Undead has unlimited uses.\n"
-                    + "Animate Dead has unlimited uses.\n"
-                    + "Create Undead has 2 additional uses per day.\n"
-                    + "Finger of Death has 2 additional uses per day.");
-                bp.m_Icon = Icon_MasteryOfFlesh;
-                bp.AddComponent<IncreaseResourceAmount>(c => {
-                    c.m_Resource = DeathsnatcherCreateUndeadResource.ToReference<BlueprintAbilityResourceReference>();
-                    c.Value = 2;
-                });
-                bp.AddComponent<IncreaseResourceAmount>(c => {
-                    c.m_Resource = DeathsnatcherFingerOfDeathResource.ToReference<BlueprintAbilityResourceReference>();
-                    c.Value = 2;
-                });
-            });
-            DeathsnatcherCommandUndeadAbility.GetComponent<AbilityResourceLogic>().ResourceCostDecreasingFacts = new List<BlueprintUnitFactReference>() { DeathsnatcherUndeadMaster.ToReference<BlueprintUnitFactReference>() };
-            DeathsnatcherAnimateDeadAbility.GetComponent<AbilityResourceLogic>().ResourceCostDecreasingFacts = new List<BlueprintUnitFactReference>() { DeathsnatcherUndeadMaster.ToReference<BlueprintUnitFactReference>() };
-        }
-    }
+		public static void Add()
+		{
+			BlueprintAbility modBlueprint = BlueprintTools.GetModBlueprint<BlueprintAbility>(Main.IsekaiContext, "DeathsnatcherCommandUndeadAbility");
+			BlueprintAbility modBlueprint2 = BlueprintTools.GetModBlueprint<BlueprintAbility>(Main.IsekaiContext, "DeathsnatcherAnimateDeadAbility");
+			BlueprintAbilityResource DeathsnatcherCreateUndeadResource = BlueprintTools.GetModBlueprint<BlueprintAbilityResource>(Main.IsekaiContext, "DeathsnatcherCreateUndeadResource");
+			BlueprintAbilityResource DeathsnatcherFingerOfDeathResource = BlueprintTools.GetModBlueprint<BlueprintAbilityResource>(Main.IsekaiContext, "DeathsnatcherFingerOfDeathResource");
+			BlueprintFeature bp = Helpers.CreateBlueprint(Main.IsekaiContext, "DeathsnatcherUndeadMaster", delegate(BlueprintFeature blueprintFeature)
+			{
+				blueprintFeature.SetName(Main.IsekaiContext, "Undead Master");
+				blueprintFeature.SetDescription(Main.IsekaiContext, "At 20th level, the Deathsnatcher becomes a master of the undead.\nCommand Undead has unlimited uses.\nAnimate Dead has unlimited uses.\nCreate Undead has 2 additional uses per day.\nFinger of Death has 2 additional uses per day.");
+				((BlueprintUnitFact)blueprintFeature).m_Icon = Icon_MasteryOfFlesh;
+				blueprintFeature.AddComponent(delegate(IncreaseResourceAmount c)
+				{
+					c.m_Resource = DeathsnatcherCreateUndeadResource.ToReference<BlueprintAbilityResourceReference>();
+					c.Value = 2;
+				});
+				blueprintFeature.AddComponent(delegate(IncreaseResourceAmount c)
+				{
+					c.m_Resource = DeathsnatcherFingerOfDeathResource.ToReference<BlueprintAbilityResourceReference>();
+					c.Value = 2;
+				});
+			});
+			modBlueprint.GetComponent<AbilityResourceLogic>().ResourceCostDecreasingFacts = new List<BlueprintUnitFactReference> { bp.ToReference<BlueprintUnitFactReference>() };
+			modBlueprint2.GetComponent<AbilityResourceLogic>().ResourceCostDecreasingFacts = new List<BlueprintUnitFactReference> { bp.ToReference<BlueprintUnitFactReference>() };
+		}
+	}
 }

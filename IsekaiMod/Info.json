@@ -1,8 +1,8 @@
-﻿{
+{
   "Id": "IsekaiMod",
   "DisplayName": "Isekai Mod",
-  "Author": "JohN100x1",
-  "Version": "5.4.2",
+  "Author": "Gekko Lionheart",
+  "Version": "6.2.0",
   "ManagerVersion": "0.24.0",
   "Requirements": [ "TabletopTweaks-Core-0.6.2" ],
   "AssemblyName": "IsekaiMod.dll",
@@ -23,8 +23,7 @@
     "MartialExcellence",
     "HomebrewArchetypes",
     "MicroscopicContentExpansion",
-    "MysticalMayhem",
     "SparsSorcerousSundries"
   ],
-  "HomePage": "https://www.nexusmods.com/pathfinderwrathoftherighteous/mods/398"
+  "HomePage": "https://www.nexusmods.com/pathfinderwrathoftherighteous/mods/734"
 }

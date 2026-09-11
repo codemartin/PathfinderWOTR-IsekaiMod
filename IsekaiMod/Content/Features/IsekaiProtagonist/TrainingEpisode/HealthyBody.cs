@@ -1,51 +1,45 @@
 ﻿using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Spells;
+using Kingmaker.Blueprints.Facts;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.FactLogic;
 using TabletopTweaks.Core.Utilities;
 using UnityEngine;
-using static IsekaiMod.Main;
 
-namespace IsekaiMod.Content.Features.IsekaiProtagonist.TrainingEpisode {
+namespace IsekaiMod.Content.Features.IsekaiProtagonist.TrainingEpisode
+{
+	internal class HealthyBody
+	{
+		private static readonly Sprite Icon_PurityOfBody = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintFeature>("9b02f77c96d6bba4daf9043eff876c76")).m_Icon;
 
-    internal class HealthyBody {
-        private static readonly Sprite Icon_PurityOfBody = BlueprintTools.GetBlueprint<BlueprintFeature>("9b02f77c96d6bba4daf9043eff876c76").m_Icon;
-
-        public static void Add() {
-            var HealthyBody = Helpers.CreateBlueprint<BlueprintFeature>(IsekaiContext, "HealthyBody", bp => {
-                bp.SetName(IsekaiContext, "Healthy Body");
-                bp.SetDescription(IsekaiContext, "You gain immunity to bleed, blindness, curses, poison, disease, sickened, and nauseated conditions.");
-                bp.m_Icon = Icon_PurityOfBody;
-                bp.AddComponent<AddConditionImmunity>(c => {
-                    c.Condition = UnitCondition.Sickened;
-                });
-                bp.AddComponent<AddConditionImmunity>(c => {
-                    c.Condition = UnitCondition.Nauseated;
-                });
-                bp.AddComponent<AddConditionImmunity>(c => {
-                    c.Condition = UnitCondition.Blindness;
-                });
-                bp.AddComponent<BuffDescriptorImmunity>(c => {
-                    c.Descriptor = SpellDescriptor.Sickened
-                    | SpellDescriptor.Nauseated
-                    | SpellDescriptor.Bleed
-                    | SpellDescriptor.Blindness
-                    | SpellDescriptor.Curse
-                    | SpellDescriptor.Disease
-                    | SpellDescriptor.Poison;
-                });
-                bp.AddComponent<SpellImmunityToSpellDescriptor>(c => {
-                    c.Descriptor = SpellDescriptor.Sickened
-                    | SpellDescriptor.Nauseated
-                    | SpellDescriptor.Bleed
-                    | SpellDescriptor.Blindness
-                    | SpellDescriptor.Curse
-                    | SpellDescriptor.Disease
-                    | SpellDescriptor.Poison;
-                });
-            });
-
-            TrainingEpisodeSelection.AddToSelection(HealthyBody);
-        }
-    }
+		public static void Add()
+		{
+			TrainingEpisodeSelection.AddToSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "HealthyBody", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Healthy Body");
+				bp.SetDescription(Main.IsekaiContext, "You gain immunity to bleed, blindness, curses, poison, disease, sickened, and nauseated conditions.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_PurityOfBody;
+				bp.AddComponent(delegate(AddConditionImmunity c)
+				{
+					c.Condition = UnitCondition.Sickened;
+				});
+				bp.AddComponent(delegate(AddConditionImmunity c)
+				{
+					c.Condition = UnitCondition.Nauseated;
+				});
+				bp.AddComponent(delegate(AddConditionImmunity c)
+				{
+					c.Condition = UnitCondition.Blindness;
+				});
+				bp.AddComponent(delegate(BuffDescriptorImmunity c)
+				{
+					c.Descriptor = SpellDescriptor.Poison | SpellDescriptor.Disease | SpellDescriptor.Sickened | SpellDescriptor.Nauseated | SpellDescriptor.Blindness | SpellDescriptor.Curse | SpellDescriptor.Bleed;
+				});
+				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+				{
+					c.Descriptor = SpellDescriptor.Poison | SpellDescriptor.Disease | SpellDescriptor.Sickened | SpellDescriptor.Nauseated | SpellDescriptor.Blindness | SpellDescriptor.Curse | SpellDescriptor.Bleed;
+				});
+			}));
+		}
+	}
 }

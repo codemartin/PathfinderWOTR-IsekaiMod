@@ -8,51 +8,53 @@ using Kingmaker.Enums.Damage;
 using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Mechanics.Components;
 using TabletopTweaks.Core.Utilities;
-using static IsekaiMod.Main;
 
-namespace IsekaiMod.Content.Features.Deathsnatcher {
-
-    internal class DeathsnatcherResistances {
-
-        public static void Add() {
-            var DeathsnatcherResistances = Helpers.CreateBlueprint<BlueprintFeature>(IsekaiContext, "DeathsnatcherResistances", bp => {
-                bp.SetName(IsekaiContext, "Deathsnatcher Resistances");
-                bp.SetDescription(IsekaiContext, "The Deathsnatcher is immune to negative energy and deaths effects, and has cold and fire resistance 30. "
-                    + "It also has spell resistance equal to 10 + the Deathsnatcher's level.");
-                bp.AddComponent<BuffDescriptorImmunity>(c => {
-                    c.Descriptor = SpellDescriptor.Death
-                    | SpellDescriptor.ChannelNegativeHarm;
-                });
-                bp.AddComponent<SpellImmunityToSpellDescriptor>(c => {
-                    c.Descriptor = SpellDescriptor.Death
-                    | SpellDescriptor.ChannelNegativeHarm;
-                });
-                bp.AddComponent<AddEnergyDamageImmunity>(c => {
-                    c.EnergyType = DamageEnergyType.NegativeEnergy;
-                });
-                bp.AddComponent<AddDamageResistanceEnergy>(c => {
-                    c.Type = DamageEnergyType.Cold;
-                    c.Value = 30;
-                });
-                bp.AddComponent<AddDamageResistanceEnergy>(c => {
-                    c.Type = DamageEnergyType.Fire;
-                    c.Value = 30;
-                });
-                // Add Spell Resistance
-                bp.AddComponent<AddSpellResistance>(c => {
-                    c.Value = Values.CreateContextRankValue(AbilityRankType.StatBonus);
-                });
-                bp.AddComponent<ContextRankConfig>(c => {
-                    c.m_Type = AbilityRankType.StatBonus;
-                    c.m_BaseValueType = ContextRankBaseValueType.ClassLevel;
-                    c.m_Progression = ContextRankProgression.BonusValue;
-                    c.m_StepLevel = 10;
-                    c.m_Class = new BlueprintCharacterClassReference[] { DeathsnatcherClass.GetReference() };
-                });
-                // The resistance reads a class-level context rank. Recalculate
-                // that context without rebuilding the resistance component.
-                bp.ReapplyOnLevelUp = false;
-            });
-        }
-    }
+namespace IsekaiMod.Content.Features.Deathsnatcher
+{
+	internal class DeathsnatcherResistances
+	{
+		public static void Add()
+		{
+			Helpers.CreateBlueprint(Main.IsekaiContext, "DeathsnatcherResistances", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Deathsnatcher Resistances");
+				bp.SetDescription(Main.IsekaiContext, "The Deathsnatcher is immune to negative energy and deaths effects, and has cold and fire resistance 30. It also has spell resistance equal to 10 + the Deathsnatcher's level.");
+				bp.AddComponent(delegate(BuffDescriptorImmunity c)
+				{
+					c.Descriptor = SpellDescriptor.Death | SpellDescriptor.ChannelNegativeHarm;
+				});
+				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+				{
+					c.Descriptor = SpellDescriptor.Death | SpellDescriptor.ChannelNegativeHarm;
+				});
+				bp.AddComponent(delegate(AddEnergyDamageImmunity c)
+				{
+					c.EnergyType = DamageEnergyType.NegativeEnergy;
+				});
+				bp.AddComponent(delegate(AddDamageResistanceEnergy c)
+				{
+					c.Type = DamageEnergyType.Cold;
+					c.Value = 30;
+				});
+				bp.AddComponent(delegate(AddDamageResistanceEnergy c)
+				{
+					c.Type = DamageEnergyType.Fire;
+					c.Value = 30;
+				});
+				bp.AddComponent(delegate(AddSpellResistance c)
+				{
+					c.Value = Values.CreateContextRankValue(AbilityRankType.StatBonus);
+				});
+				bp.AddComponent(delegate(ContextRankConfig c)
+				{
+					c.m_Type = AbilityRankType.StatBonus;
+					c.m_BaseValueType = ContextRankBaseValueType.ClassLevel;
+					c.m_Progression = ContextRankProgression.BonusValue;
+					c.m_StepLevel = 10;
+					c.m_Class = new BlueprintCharacterClassReference[1] { DeathsnatcherClass.GetReference() };
+				});
+				bp.ReapplyOnLevelUp = true;
+			});
+		}
+	}
 }
