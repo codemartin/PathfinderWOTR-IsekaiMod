@@ -5,6 +5,7 @@ using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Prerequisites;
 using Kingmaker.Blueprints.Classes.Spells;
 using Kingmaker.Blueprints.Facts;
+using Kingmaker.Designers.EventConditionActionSystem.Actions;
 using Kingmaker.Designers.Mechanics.Facts;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.Enums;
@@ -24,6 +25,7 @@ using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Mechanics.Actions;
 using Kingmaker.UnitLogic.Mechanics.Components;
+using Kingmaker.UnitLogic.Mechanics.Conditions;
 using Kingmaker.UnitLogic.Mechanics.Properties;
 using Kingmaker.Visual.Animation.Kingmaker.Actions;
 using TabletopTweaks.Core.Utilities;
@@ -91,25 +93,35 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 								contextActionApplyBuff.m_Buff = Stunned.ToReference<BlueprintBuffReference>();
 								contextActionApplyBuff.DurationValue = Values.Duration.OneRound;
 							});
-							contextActionConditionalSaved.Failed = Helpers.CreateActionList(new ContextActionKill
+							contextActionConditionalSaved.Failed = ActionFlow.DoSingle(delegate(Conditional conditional)
 							{
-								Dismember = UnitState.DismemberType.Normal
-							}, new ContextActionDealDamage
-							{
-								DamageType = new DamageTypeDescription
+								conditional.ConditionsChecker = ActionFlow.IfSingle(delegate(ContextConditionHasBuffImmunityWithDescriptor condition)
 								{
-									Type = DamageType.Energy,
-									Energy = DamageEnergyType.Unholy
-								},
-								Value = new ContextDiceValue
+									condition.CheckBuffDescriptorComponent = true;
+									condition.CheckSpellDescriptorComponent = true;
+									condition.SpellDescriptor = SpellDescriptor.Death;
+								});
+								conditional.IfTrue = Helpers.CreateActionList(new ContextActionDealDamage
 								{
-									DiceType = DiceType.D6,
-									DiceCountValue = Values.CreateContextRankValue(AbilityRankType.Default),
-									BonusValue = 100
-								},
-								HalfIfSaved = false,
-								IsAoE = false,
-								IgnoreCritical = true
+									DamageType = new DamageTypeDescription
+									{
+										Type = DamageType.Energy,
+										Energy = DamageEnergyType.Unholy
+									},
+									Value = new ContextDiceValue
+									{
+										DiceType = DiceType.D6,
+										DiceCountValue = Values.CreateContextRankValue(AbilityRankType.Default),
+										BonusValue = 100
+									},
+									HalfIfSaved = false,
+									IsAoE = false,
+									IgnoreCritical = true
+								});
+								conditional.IfFalse = ActionFlow.DoSingle(delegate(ContextActionKill contextActionKill)
+								{
+									contextActionKill.Dismember = UnitState.DismemberType.Normal;
+								});
 							});
 						});
 					});
@@ -161,7 +173,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 				bp.ActionType = UnitCommand.CommandType.Standard;
 				bp.AvailableMetamagic = Metamagic.Quicken | Metamagic.Reach;
 				bp.LocalizedDuration = StaticReferences.Strings.Null;
-				bp.LocalizedSavingThrow = StaticReferences.Strings.Null;
+				bp.LocalizedSavingThrow = StaticReferences.Strings.SavingThrow.FortitudeNegates;
 			});
 			BlueprintFeature blueprintFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "InstakillFeature", delegate(BlueprintFeature bp)
 			{

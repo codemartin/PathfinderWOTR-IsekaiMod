@@ -109,7 +109,7 @@ namespace IsekaiMod.Content.Features.ExceptionalFeats
 				{
 					c.Stat = StatType.HitPoints;
 					c.Value = Values.CreateContextRankValue(AbilityRankType.StatBonus);
-					c.Multiplier = 5;
+					c.Multiplier = 10;
 				});
 				bp.AddComponent(delegate(AddContextStatBonus c)
 				{

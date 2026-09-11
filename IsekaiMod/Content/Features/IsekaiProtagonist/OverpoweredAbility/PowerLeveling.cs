@@ -43,8 +43,21 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 					c.Value = 2;
 					c.Descriptor = ModifierDescriptor.UntypedStackable;
 				});
-				bp.AddComponent<GainExperienceOnKill>();
+				bp.Stacking = StackingType.Replace;
 				bp.m_Flags = (BlueprintBuff.Flags)0;
+			});
+			BlueprintBuff PowerLevelingBuff = Helpers.CreateBlueprint(Main.IsekaiContext, "PowerLevelingBuff", delegate(BlueprintBuff bp)
+			{
+				bp.SetName(PowerLevelingName);
+				bp.SetDescription(PowerLevelingDesc);
+				((BlueprintUnitFact)bp).m_Icon = Icon_DimensionalAnchor;
+				bp.IsClassFeature = true;
+				bp.m_Flags = BlueprintBuff.Flags.HiddenInUi;
+				bp.AddComponent(delegate(ApplyPartyBuffOnKill c)
+				{
+					c.m_Buff = PowerLevelingTempBuff.ToReference<BlueprintBuffReference>();
+				});
+				bp.AddComponent<GainExperienceOnKill>();
 			});
 			BlueprintAbilityAreaEffect PowerLevelingAura = Helpers.CreateBlueprint(Main.IsekaiContext, "PowerLevelingAura", delegate(BlueprintAbilityAreaEffect bp)
 			{
@@ -57,7 +70,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 				bp.Fx = new PrefabLink();
 				bp.AddComponent(delegate(AbilityAreaEffectBuff c)
 				{
-					c.m_Buff = PowerLevelingTempBuff.ToReference<BlueprintBuffReference>();
+					c.m_Buff = PowerLevelingBuff.ToReference<BlueprintBuffReference>();
 					c.Condition = new ConditionsChecker
 					{
 						Conditions = new Condition[0]

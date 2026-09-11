@@ -11,7 +11,7 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist
 			int x = Main.IsekaiContext.AddedContent.IsekaiSpellsKnownIncrement;
 			int x2 = 2 * x;
 			int x3 = 3 * x;
-			int x34 = 3 * x;
+			int x34 = 34 * x / 10;
 			int x35 = 4 * x;
 			int x36 = 5 * x;
 			Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiProtagonistSpellsKnown", delegate(BlueprintSpellsTable bp)
