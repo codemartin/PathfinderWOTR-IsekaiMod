@@ -1,4 +1,5 @@
-﻿using Kingmaker.Blueprints.Classes;
+﻿using IsekaiMod.Components;
+using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Prerequisites;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Designers.Mechanics.Facts;
@@ -20,16 +21,13 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 				bp.SetName(Main.IsekaiContext, "Overpowered Ability - Perfect Roll");
 				bp.SetDescription(Main.IsekaiContext, "You navigate every fight with perfect accuracy. Every word is predicted; every action is foreseen. Your premonitions guide you on your quest, as if you have experienced this before...\nBenefit: You gain a +5 bonus to all d20 rolls.");
 				((BlueprintUnitFact)bp).m_Icon = Icon_TrickFate;
-				bp.AddComponent(delegate(ModifyD20 c)
+				// ModifyD20 with RuleType.All ran a per-roll handler on every d20 (including the
+				// engine's simulated preview/AI rolls) and caused in-combat stutter. Apply the
+				// flat bonus to the consuming rule instead (see PerfectRollRuleBonus).
+				bp.AddComponent(delegate(PerfectRollRuleBonus c)
 				{
-					c.Rule = RuleType.All;
-					c.AddBonus = true;
-					c.Bonus = new ContextValue
-					{
-						ValueType = ContextValueType.Simple,
-						Value = 5
-					};
-					c.BonusDescriptor = ModifierDescriptor.UntypedStackable;
+					c.Bonus = 5;
+					c.Descriptor = ModifierDescriptor.UntypedStackable;
 				});
 			});
 			blueprintFeature.AddComponent(delegate(PrerequisiteCharacterLevel c)

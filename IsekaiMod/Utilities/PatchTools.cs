@@ -781,14 +781,10 @@ namespace IsekaiMod.Utilities
 				Main.IsekaiContext.Logger.LogError("Attempt to patch Progression Tree stopped at Level 30 to prevent endless loop, if you see this message please report so we can figure out if someone created a loop here or if this limit needs to be higher");
 				if (feature.name != null)
 				{
-					Main.IsekaiContext.Logger.LogError($"reference class={referenceClass.Guid} Stop Feature={feature.AssetGuid} name={feature.name}");
-					{
-						foreach (BlueprintFact item in loopPrevention)
-						{
-							Main.IsekaiContext.Logger.LogError($"guid={item.AssetGuid}");
-						}
-						return;
-					}
+					// One line instead of one stack-trace-capturing LogError per visited fact
+					// (this loop alone produced most of the 128 MB log and the slow load).
+					Main.IsekaiContext.Logger.Log($"reference class={referenceClass.Guid} Stop Feature={feature.AssetGuid} name={feature.name} visited={string.Join(",", loopPrevention.Select(f => f.AssetGuid))}");
+					return;
 				}
 				Main.IsekaiContext.Logger.LogError($"reference class={referenceClass.Guid} Stop Feature={feature.AssetGuid}");
 			}
