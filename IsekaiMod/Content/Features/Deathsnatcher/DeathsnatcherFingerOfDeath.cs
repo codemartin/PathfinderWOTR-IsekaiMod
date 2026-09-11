@@ -131,6 +131,10 @@ namespace IsekaiMod.Content.Features.Deathsnatcher
 					c.m_StepLevel = 1;
 					c.m_Class = new BlueprintCharacterClassReference[1] { DeathsnatcherClass.GetReference() };
 				});
+				bp.AddComponent(delegate(ContextSetAbilityParams c)
+				{
+					c.DC = Values.CreateContextCasterCustomPropertyValue(DeathsnatcherSpellLikeDC.Get());
+				});
 				bp.AddComponent(delegate(AbilityResourceLogic c)
 				{
 					c.m_RequiredResource = DeathsnatcherFingerOfDeathResource.ToReference<BlueprintAbilityResourceReference>();

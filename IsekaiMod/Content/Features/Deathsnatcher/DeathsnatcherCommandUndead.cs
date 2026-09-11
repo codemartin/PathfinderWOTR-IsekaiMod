@@ -135,11 +135,14 @@ namespace IsekaiMod.Content.Features.Deathsnatcher
 				});
 				bp.AddComponent(delegate(ContextRankConfig c)
 				{
-					c.m_Type = AbilityRankType.Default;
+					c.m_Type = AbilityRankType.DamageBonus;
 					c.m_BaseValueType = ContextRankBaseValueType.ClassLevel;
-					c.m_Progression = ContextRankProgression.BonusValue;
-					c.m_StepLevel = 1;
+					c.m_Progression = ContextRankProgression.AsIs;
 					c.m_Class = new BlueprintCharacterClassReference[1] { DeathsnatcherClass.GetReference() };
+				});
+				bp.AddComponent(delegate(ContextSetAbilityParams c)
+				{
+					c.DC = Values.CreateContextCasterCustomPropertyValue(DeathsnatcherSpellLikeDC.Get());
 				});
 				bp.AddComponent(delegate(AbilityResourceLogic c)
 				{

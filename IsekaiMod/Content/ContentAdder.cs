@@ -347,6 +347,7 @@ namespace IsekaiMod.Content
 				EpicPrestigeClasses.Add();
 				OtherworldRetinuePrestige.Add();
 				DeathsnatcherClass.Add();
+				DeathsnatcherSpellLikeDC.Add();
 				DeathsnatcherSizeBaby.Add();
 				DeathsnatcherResistances.Add();
 				DeathsnatcherCommandUndead.Add();

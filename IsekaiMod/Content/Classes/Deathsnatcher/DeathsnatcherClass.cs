@@ -24,9 +24,11 @@ namespace IsekaiMod.Content.Classes.Deathsnatcher
 
 		private static readonly BlueprintStatProgression SavesLow = BlueprintTools.GetBlueprint<BlueprintStatProgression>("dc0c7c1aba755c54f96c089cdf7d14a3");
 
+		private static BlueprintCharacterClass deathsnatcherClass;
+
 		public static void Add()
 		{
-			BlueprintCharacterClass bp = Helpers.CreateBlueprint(Main.IsekaiContext, "DeathsnatcherClass", delegate(BlueprintCharacterClass blueprintCharacterClass)
+			deathsnatcherClass = Helpers.CreateBlueprint(Main.IsekaiContext, "DeathsnatcherClass", delegate(BlueprintCharacterClass blueprintCharacterClass)
 			{
 				blueprintCharacterClass.LocalizedName = Name;
 				blueprintCharacterClass.LocalizedDescription = Description;
@@ -78,7 +80,7 @@ namespace IsekaiMod.Content.Classes.Deathsnatcher
 				c.m_Feature = MonstrousHumanoidType.ToReference<BlueprintFeatureReference>();
 			});
 			BlueprintTools.GetBlueprint<BlueprintRoot>("2d77316c72b9ed44f888ceefc2a131f6");
-			BlueprintRoot.Instance.Progression.m_PetClasses = BlueprintRoot.Instance.Progression.m_PetClasses.AppendToArray(bp.ToReference<BlueprintCharacterClassReference>());
+			BlueprintRoot.Instance.Progression.m_PetClasses = BlueprintRoot.Instance.Progression.m_PetClasses.AppendToArray(deathsnatcherClass.ToReference<BlueprintCharacterClassReference>());
 		}
 
 		public static void SetProgression(BlueprintProgression progression)
@@ -88,7 +90,7 @@ namespace IsekaiMod.Content.Classes.Deathsnatcher
 
 		public static BlueprintCharacterClass Get()
 		{
-			return BlueprintTools.GetModBlueprint<BlueprintCharacterClass>(Main.IsekaiContext, "DeathsnatcherClass");
+			return deathsnatcherClass ?? BlueprintTools.GetModBlueprint<BlueprintCharacterClass>(Main.IsekaiContext, "DeathsnatcherClass");
 		}
 
 		public static BlueprintCharacterClassReference GetReference()
