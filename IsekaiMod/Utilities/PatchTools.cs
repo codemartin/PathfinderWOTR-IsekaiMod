@@ -230,7 +230,9 @@ namespace IsekaiMod.Utilities
 								blueprintAbility2.ComponentsArray[k] = new ContextCalculateAbilityParamsBasedOnClasses
 								{
 									m_CharacterClasses = new BlueprintCharacterClassReference[2] { contextCalculateAbilityParamsBasedOnClass.m_CharacterClass, classRef },
-									StatType = contextCalculateAbilityParamsBasedOnClass.StatType
+									StatType = contextCalculateAbilityParamsBasedOnClass.StatType,
+									// Without this, inherited kinetic blasts use the stored stat instead of the kineticist main stat.
+									UseKineticistMainStat = contextCalculateAbilityParamsBasedOnClass.UseKineticistMainStat
 								};
 							}
 						}
