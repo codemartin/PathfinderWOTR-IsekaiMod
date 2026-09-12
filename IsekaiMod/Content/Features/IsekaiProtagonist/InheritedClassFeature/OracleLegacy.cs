@@ -65,6 +65,8 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature
 			PatchTools.PatchClassIntoFeatureOfReferenceClass(FeatTools.Selections.OracleMysterySelection, reference, referenceClass);
 			PatchTools.PatchClassIntoFeatureOfReferenceClass(FeatTools.Selections.OracleRevelationSelection, reference, referenceClass);
 			PatchTools.PatchClassIntoFeatureOfReferenceClass(FeatTools.Selections.OracleCureOrInflictSelection, reference, referenceClass);
+			// Beneficial Curse's no-penalty curse progressions advance on Oracle levels; let them advance on Isekai levels too.
+			PatchTools.PatchClassIntoFeatureOfReferenceClass(BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("2dda67424ee8e0b4d83ef01a73ca6bff"), reference, referenceClass);
 			prog.AddComponent(delegate(ClassLevelsForPrerequisites c)
 			{
 				c.m_FakeClass = ClassTools.Classes.OracleClass.ToReference<BlueprintCharacterClassReference>();

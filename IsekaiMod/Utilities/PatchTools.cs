@@ -1027,14 +1027,30 @@ namespace IsekaiMod.Utilities
 				}
 				try
 				{
-					if (component is AddFacts { m_Facts: not null, Facts: var facts })
+					if (component is AddFacts { m_Facts: not null, Facts: var facts } addFacts)
 					{
+						bool hasMissingFact = false;
 						foreach (BlueprintUnitFact item in facts)
 						{
 							if (item != null)
 							{
 								PatchClassIntoFeatureOfReferenceClass(item, myClass, referenceClass, num, loopPrevention);
 							}
+							else
+							{
+								hasMissingFact = true;
+							}
+						}
+						// Expanded Content 0.13.68 references CrueltyFact on TouchOfProfaneCorruptionFeature even though that
+						// version never creates the blueprint. Remove its unusable null entry.
+						if (hasMissingFact && featureGuid.ToString().Equals("3910a52a11134219ad17ed7a9f0e353e"))
+						{
+							addFacts.m_Facts = addFacts.m_Facts.Where((BlueprintUnitFactReference factReference) => factReference?.Get() != null).ToArray();
+							Main.IsekaiContext.Logger.Log($"Removed unresolved CrueltyFact reference from feature={featureGuid}");
+						}
+						else if (hasMissingFact)
+						{
+							Main.IsekaiContext.Logger.Log($"{featureGuid} component AddFacts contains an unresolved reference"); // Log, not LogError: no stack trace per feature during load
 						}
 					}
 				}
