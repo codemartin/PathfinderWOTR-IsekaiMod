@@ -67,6 +67,14 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature
 			}
 		}
 
+		public static void PatchPrerequisiteCompatibility()
+		{
+			BlueprintFeatureSelection secondBloodline = BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("b7f62628915bdb14d8888c25da3fac56");
+			PrerequisiteAlternatives.Add(BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("ce85aee1726900641ab53ede61ac5c19"), FeatTools.Selections.BloodragerBloodlineSelection, bloodlines);
+			PrerequisiteAlternatives.Add(secondBloodline, FeatTools.Selections.BloodragerBloodlineSelection, bloodlines);
+			PrerequisiteAlternatives.RequireUnownedChoices(secondBloodline);
+		}
+
 		public static BlueprintProgression Get()
 		{
 			if (prog != null)

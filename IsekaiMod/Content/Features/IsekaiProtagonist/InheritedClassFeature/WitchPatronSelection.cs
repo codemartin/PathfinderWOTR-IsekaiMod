@@ -1,4 +1,5 @@
-﻿using Kingmaker.Blueprints;
+﻿using IsekaiMod.Utilities;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes.Selection;
 using TabletopTweaks.Core.Utilities;
 
@@ -28,6 +29,11 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature
 				return myfeat;
 			}
 			return BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "IsekaiWitchSelection");
+		}
+
+		public static void PatchPrerequisiteCompatibility()
+		{
+			PrerequisiteAlternatives.Add(BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("24afc8be7a964e5a939b2a199ba60682"), FeatTools.Selections.WitchPatronSelection, Get());
 		}
 	}
 }

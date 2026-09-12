@@ -9,6 +9,7 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Prerequisites;
 using Kingmaker.Blueprints.Classes.Selection;
+using Kingmaker.Designers.Mechanics.Facts;
 using TabletopTweaks.Core.Utilities;
 
 namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature
@@ -51,6 +52,13 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature
 					Helpers.CreateLevelEntry(18, shamanFeat)
 				};
 				bp.UIGroups = new UIGroup[1] { Helpers.CreateUIGroup(shamanFeat) };
+			});
+			// Count Isekai levels as Shaman levels for prerequisites, as the builder-made legacies do.
+			prog.AddComponent(delegate(ClassLevelsForPrerequisites c)
+			{
+				c.m_FakeClass = ClassTools.ClassReferences.ShamanClass;
+				c.m_ActualClass = IsekaiProtagonistClass.GetReference();
+				c.Modifier = 1.0;
 			});
 			LegacySelection.RegisterForFeat(prog);
 			LegacySelection.Register(prog);
