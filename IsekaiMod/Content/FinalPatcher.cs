@@ -113,7 +113,6 @@ namespace IsekaiMod.Content
 
 		private static void PatchHeritages()
 		{
-			IsekaiHumanCrossbreedLegacy.Patch();
 			HumanHeritageSelection.Patch();
 		}
 	}
