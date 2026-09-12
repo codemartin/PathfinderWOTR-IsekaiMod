@@ -214,6 +214,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature
 			SlayerLegacy.PatchProgression();
 			WarpriestLegacy.PatchProgression();
 			WizardLegacy.PatchProgression();
+			PatchAllRegisteredLegacies();
 			Finish();
 			MastermindLegacySelection.Finish();
 			OverlordLegacySelection.Finish();
@@ -237,6 +238,37 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature
 				ClassSelection.AddFeatures(blueprintFeature);
 			}
 			TriLegacySelection.Finish();
+		}
+
+		// Generic pass over every registered legacy progression. Archetype-based and separately assembled
+		// legacies only walked the archetype's added features, so retained base-class features, nested
+		// selections, resources and level-gated facts never got the Isekai class. Each legacy progression
+		// carries a ClassLevelsForPrerequisites component naming its source class, which tells the walker
+		// what to patch against. The walker is idempotent, so legacies that already walked are unaffected.
+		public static void PatchAllRegisteredLegacies()
+		{
+			System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
+			BlueprintCharacterClassReference isekai = Classes.IsekaiProtagonist.IsekaiProtagonistClass.GetReference();
+			int walked = 0;
+			foreach (BlueprintProgression prog in registered)
+			{
+				if (prog == null)
+				{
+					continue;
+				}
+				foreach (Kingmaker.Designers.Mechanics.Facts.ClassLevelsForPrerequisites component in prog.GetComponents<Kingmaker.Designers.Mechanics.Facts.ClassLevelsForPrerequisites>())
+				{
+					BlueprintCharacterClassReference source = component.m_FakeClass;
+					if (source == null || source.Equals(isekai) || source.Get() == null)
+					{
+						continue;
+					}
+					Utilities.PatchTools.PatchProgressionFeaturesBasedOnReferenceClass(prog, isekai, source);
+					walked++;
+				}
+			}
+			stopwatch.Stop();
+			Main.IsekaiContext.Logger.Log($"Legacy generic pass: walked {walked} legacy progression(s) in {stopwatch.ElapsedMilliseconds} ms");
 		}
 	}
 }
