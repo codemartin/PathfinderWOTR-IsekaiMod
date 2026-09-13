@@ -228,13 +228,13 @@ namespace IsekaiMod.Utilities
 						{
 							if (blueprintAbility2.ComponentsArray[k] is ContextCalculateAbilityParamsBasedOnClass contextCalculateAbilityParamsBasedOnClass)
 							{
-								blueprintAbility2.ComponentsArray[k] = new ContextCalculateAbilityParamsBasedOnClasses
+								ReplaceComponentInSlot(blueprintAbility2.ComponentsArray, k, new ContextCalculateAbilityParamsBasedOnClasses
 								{
 									m_CharacterClasses = new BlueprintCharacterClassReference[2] { contextCalculateAbilityParamsBasedOnClass.m_CharacterClass, classRef },
 									StatType = contextCalculateAbilityParamsBasedOnClass.StatType,
 									// Without this, inherited kinetic blasts use the stored stat instead of the kineticist main stat.
 									UseKineticistMainStat = contextCalculateAbilityParamsBasedOnClass.UseKineticistMainStat
-								};
+								});
 							}
 						}
 					}
@@ -1156,6 +1156,17 @@ namespace IsekaiMod.Utilities
 			return baseValueType == ContextRankBaseValueType.ClassLevel || baseValueType == ContextRankBaseValueType.SummClassLevelWithArchetype || baseValueType == ContextRankBaseValueType.MaxClassLevelWithArchetype || baseValueType == ContextRankBaseValueType.OwnerSummClassLevelWithArchetype || baseValueType == ContextRankBaseValueType.Bombs;
 		}
 
+		// Replacement components must keep the original's name (and owner): EntityFact.ComponentsDictionary keys
+		// runtime component data by BlueprintComponent.name, and a null name throws on save.
+		private static T ReplaceComponentInSlot<T>(BlueprintComponent[] components, int index, T replacement) where T : BlueprintComponent
+		{
+			BlueprintComponent original = components[index];
+			replacement.name = string.IsNullOrEmpty(original?.name) ? ("$" + typeof(T).Name + "$" + Guid.NewGuid().ToString("N")) : original.name;
+			replacement.OwnerBlueprint = original?.OwnerBlueprint;
+			components[index] = replacement;
+			return replacement;
+		}
+
 		// Replaces single-class game components that cannot take an additional class with the mod's multi-class
 		// equivalents (same slot, same settings, reference class + Isekai class). Returns the component now in the slot.
 		private static BlueprintComponent ReplaceSingleClassComponent(BlueprintComponent[] components, int index, BlueprintCharacterClassReference myClass, BlueprintCharacterClassReference referenceClass)
@@ -1163,14 +1174,13 @@ namespace IsekaiMod.Utilities
 			BlueprintComponent component = components[index];
 			if (component is ContextCalculateAbilityParamsBasedOnClass { m_CharacterClass: not null } abilityParams && abilityParams.m_CharacterClass.Equals(referenceClass))
 			{
-				component = new ContextCalculateAbilityParamsBasedOnClasses
+				component = ReplaceComponentInSlot(components, index, new ContextCalculateAbilityParamsBasedOnClasses
 				{
 					m_CharacterClasses = new BlueprintCharacterClassReference[2] { abilityParams.m_CharacterClass, myClass },
 					StatType = abilityParams.StatType,
 					// Same as KineticistPatcher: inherited kinetic blasts must keep using the kineticist main stat.
 					UseKineticistMainStat = abilityParams.UseKineticistMainStat
-				};
-				components[index] = component;
+				});
 			}
 			else if (component is ContextCalculateAbilityParamsBasedOnClasses { m_CharacterClasses: not null } abilityParamsByClasses && abilityParamsByClasses.m_CharacterClasses.Contains(referenceClass) && !abilityParamsByClasses.m_CharacterClasses.Contains(myClass))
 			{
@@ -1178,12 +1188,11 @@ namespace IsekaiMod.Utilities
 			}
 			if (component is SpellLevelByClassLevel { m_Class: not null } spellLevelByClassLevel && spellLevelByClassLevel.m_Class.Equals(referenceClass))
 			{
-				component = new SpellLevelByClassLevels
+				component = ReplaceComponentInSlot(components, index, new SpellLevelByClassLevels
 				{
 					m_Ability = spellLevelByClassLevel.m_Ability,
 					m_Classes = new BlueprintCharacterClassReference[2] { spellLevelByClassLevel.m_Class, myClass }
-				};
-				components[index] = component;
+				});
 			}
 			else if (component is SpellLevelByClassLevels { m_Classes: not null } spellLevelByClassLevels && spellLevelByClassLevels.m_Classes.Contains(referenceClass) && !spellLevelByClassLevels.m_Classes.Contains(myClass))
 			{
@@ -1191,12 +1200,11 @@ namespace IsekaiMod.Utilities
 			}
 			if (component is AddClassLevelToSummonDuration { m_CharacterClass: not null } summonDuration && summonDuration.m_CharacterClass.Equals(referenceClass))
 			{
-				component = new AddClassLevelsToSummonDuration
+				component = ReplaceComponentInSlot(components, index, new AddClassLevelsToSummonDuration
 				{
 					Half = summonDuration.Half,
 					m_CharacterClasses = new BlueprintCharacterClassReference[2] { summonDuration.m_CharacterClass, myClass }
-				};
-				components[index] = component;
+				});
 			}
 			else if (component is AddClassLevelsToSummonDuration { m_CharacterClasses: not null } summonDurationByClasses && summonDurationByClasses.m_CharacterClasses.Contains(referenceClass) && !summonDurationByClasses.m_CharacterClasses.Contains(myClass))
 			{
@@ -1272,12 +1280,12 @@ namespace IsekaiMod.Utilities
 				BlueprintComponent component = components[i];
 				if (component is ClassLevelGetter { m_Class: not null } classLevelGetter && classLevelGetter.m_Class.Equals(referenceClass))
 				{
-					components[i] = new ClassLevelGetterWithAlternatives
+					ReplaceComponentInSlot(components, i, new ClassLevelGetterWithAlternatives
 					{
 						m_Class = classLevelGetter.m_Class,
 						m_Archetype = classLevelGetter.m_Archetype,
 						m_AlternativeClasses = new BlueprintCharacterClassReference[1] { myClass }
-					};
+					});
 				}
 				else if (component is ClassLevelGetterWithAlternatives { m_Class: not null } classLevelGetterWithAlternatives && classLevelGetterWithAlternatives.m_Class.Equals(referenceClass))
 				{
@@ -1285,13 +1293,13 @@ namespace IsekaiMod.Utilities
 				}
 				else if (component is SummClassLevelGetter { m_Class: not null } summClassLevelGetter && summClassLevelGetter.m_Class.Contains(referenceClass))
 				{
-					components[i] = new SummClassLevelGetterWithAlternatives
+					ReplaceComponentInSlot(components, i, new SummClassLevelGetterWithAlternatives
 					{
 						m_Classes = summClassLevelGetter.m_Class,
 						Archetype = summClassLevelGetter.Archetype,
 						m_Archetypes = summClassLevelGetter.m_Archetypes,
 						m_AlternativeClasses = new BlueprintCharacterClassReference[1] { myClass }
-					};
+					});
 				}
 				else if (component is SummClassLevelGetterWithAlternatives { m_Classes: not null } summClassLevelGetterWithAlternatives && summClassLevelGetterWithAlternatives.m_Classes.Contains(referenceClass))
 				{
