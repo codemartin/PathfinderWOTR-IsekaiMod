@@ -63,6 +63,7 @@ namespace IsekaiMod.Content
 			// Runs after every other mod's BlueprintsCache.Init postfix, so mirrored selections
 			// (Exceptional Feats, Isekai Bonus Feat, Extra Special Power) pick up features those mods added.
 			SafeStep("MirroredSelections.Sync", MirroredSelections.Sync);
+			SafeStep("ModItemFixer.FixEnchantmentArrays", ModItemFixer.FixEnchantmentArrays);
 			if (!Main.IsekaiContext.AddedContent.Isekai.IsDisabled("Isekai Protagonist"))
 			{
 				// Let Isekai wrapper selections satisfy feat and mythic prerequisites that expect the base-game selections.

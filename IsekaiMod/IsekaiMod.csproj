@@ -180,6 +180,7 @@
     <Compile Include="Utilities\IsekaiDlcManager.cs" />
     <Compile Include="Utilities\LateSpellListMergePatch.cs" />
     <Compile Include="Utilities\MirroredSelections.cs" />
+    <Compile Include="Utilities\ModItemFixer.cs" />
     <Compile Include="Utilities\ModSupport.cs" />
     <Compile Include="Utilities\PatchTools.cs" />
     <Compile Include="Utilities\StaticReferences.cs" />
