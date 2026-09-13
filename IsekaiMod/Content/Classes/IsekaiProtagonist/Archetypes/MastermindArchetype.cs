@@ -28,6 +28,8 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist.Archetypes
 			BlueprintFeature EldritchFontImprovedSurge = BlueprintTools.GetBlueprint<BlueprintFeature>("718fe8e143d38cc4899ae798dd098b6e");
 			BlueprintFeature EldritchFontGreaterSurge = BlueprintTools.GetBlueprint<BlueprintFeature>("685ee64e43fcb6546b65436a3deb98bd");
 			BlueprintFeatureSelection ArcanistExploitSelection = BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("b8bf3d5023f2d8c428fdf6438cecaea7");
+			// Every greater exploit requires this marker, which the Arcanist progression grants at level 11.
+			BlueprintFeature ArcanistGreaterExploitsFeature = BlueprintTools.GetBlueprint<BlueprintFeature>("c7536b93f17c70d4fa3a8cf9aa76bfb7");
 			BlueprintFeatureSelection AutoMetamagicSelectionMastermind = BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "AutoMetamagicSelectionMastermind");
 			BlueprintFeature IsekaiProficiencies = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "IsekaiProficiencies");
 			BlueprintFeature ReleaseEnergy = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "ReleaseEnergy");
@@ -89,7 +91,7 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist.Archetypes
 					Helpers.CreateLevelEntry(6, SignatureAbility),
 					Helpers.CreateLevelEntry(7, modBlueprint, ArcanistExploitSelection, EldritchFontImprovedSurge),
 					Helpers.CreateLevelEntry(9, AutoMetamagicSelectionMastermind, modBlueprint5),
-					Helpers.CreateLevelEntry(11, modBlueprint, ArcanistExploitSelection),
+					Helpers.CreateLevelEntry(11, modBlueprint, ArcanistGreaterExploitsFeature, ArcanistExploitSelection),
 					Helpers.CreateLevelEntry(13, AutoMetamagicSelectionMastermind, EldritchFontGreaterSurge, modBlueprint6),
 					Helpers.CreateLevelEntry(15, modBlueprint, ArcanistExploitSelection, MastermindQuickFooted),
 					Helpers.CreateLevelEntry(17, AutoMetamagicSelectionMastermind, modBlueprint7),

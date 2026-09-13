@@ -53,6 +53,42 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature
 				array = array.AppendToArray(BaseArchetype.AddFeatures);
 				prog = PatchTools.PatchClassProgressionBasedOnSeparateLists(prog, ClassTools.Classes.MagusClass, array, array2);
 				BlueprintCharacterClassReference reference = IsekaiProtagonistClass.GetReference();
+				// Spell Dancer retains the normal Magus arcane pool. Owlcat keeps that feature
+				// outside the archetype additions copied above in some game versions, which left
+				// inherited Spell Dancers without the pool and unable to qualify for related feats.
+				BlueprintFeature arcanePool = BlueprintTools.GetBlueprint<BlueprintFeature>("a2fe27d00ece46a5a109d2d1f0bfafa7");
+				if (arcanePool != null)
+				{
+					bool hasArcanePool = false;
+					LevelEntry levelOne = null;
+					LevelEntry[] levelEntries = prog.LevelEntries;
+					foreach (LevelEntry levelEntry in levelEntries)
+					{
+						if (levelEntry.Level == 1)
+						{
+							levelOne = levelEntry;
+						}
+						foreach (BlueprintFeatureBaseReference feature4 in levelEntry.m_Features)
+						{
+							if (feature4 != null && feature4.Guid == arcanePool.AssetGuid)
+							{
+								hasArcanePool = true;
+							}
+						}
+					}
+					if (!hasArcanePool)
+					{
+						if (levelOne == null)
+						{
+							prog.LevelEntries = prog.LevelEntries.AppendToArray(Helpers.CreateLevelEntry(1, arcanePool));
+						}
+						else
+						{
+							levelOne.m_Features.Add(arcanePool.ToReference<BlueprintFeatureBaseReference>());
+						}
+					}
+					PatchTools.PatchClassIntoFeatureOfReferenceClass(arcanePool, reference, ClassTools.ClassReferences.MagusClass);
+				}
 				LevelEntry[] addFeatures = BaseArchetype.AddFeatures;
 				for (int i = 0; i < addFeatures.Length; i++)
 				{

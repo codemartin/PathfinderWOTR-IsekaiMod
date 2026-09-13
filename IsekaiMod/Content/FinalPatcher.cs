@@ -63,6 +63,18 @@ namespace IsekaiMod.Content
 			// Runs after every other mod's BlueprintsCache.Init postfix, so mirrored selections
 			// (Exceptional Feats, Isekai Bonus Feat, Extra Special Power) pick up features those mods added.
 			SafeStep("MirroredSelections.Sync", MirroredSelections.Sync);
+			SafeStep("ModItemFixer.FixEnchantmentArrays", ModItemFixer.FixEnchantmentArrays);
+			if (!Main.IsekaiContext.AddedContent.Isekai.IsDisabled("Isekai Protagonist"))
+			{
+				// Let Isekai wrapper selections satisfy feat and mythic prerequisites that expect the base-game selections.
+				SafeStep("ShamanSelection.PatchPrerequisiteCompatibility", ShamanSelection.PatchPrerequisiteCompatibility);
+				SafeStep("ExtraOracleSelection.PatchPrerequisiteCompatibility", ExtraOracleSelection.PatchPrerequisiteCompatibility);
+				SafeStep("BloodragerChimeraLegacy.PatchPrerequisiteCompatibility", BloodragerChimeraLegacy.PatchPrerequisiteCompatibility);
+				SafeStep("ExtraBloodlineSelection.PatchPrerequisiteCompatibility", ExtraBloodlineSelection.PatchPrerequisiteCompatibility);
+				SafeStep("WitchPatronSelection.PatchPrerequisiteCompatibility", WitchPatronSelection.PatchPrerequisiteCompatibility);
+				SafeStep("InquisitorTacticianLegacy.PatchPrerequisiteCompatibility", InquisitorTacticianLegacy.PatchPrerequisiteCompatibility);
+				SafeStep("InquisitorDomainLordLegacy.PatchPrerequisiteCompatibility", InquisitorDomainLordLegacy.PatchPrerequisiteCompatibility);
+			}
 		}
 
 		private static void SafeStep(string name, Action action)
@@ -102,7 +114,6 @@ namespace IsekaiMod.Content
 
 		private static void PatchHeritages()
 		{
-			IsekaiHumanCrossbreedLegacy.Patch();
 			HumanHeritageSelection.Patch();
 		}
 	}

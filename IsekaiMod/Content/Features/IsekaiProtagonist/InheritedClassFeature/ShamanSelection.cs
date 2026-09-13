@@ -79,5 +79,11 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature
 			}
 			return BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "IsekaiSpiritSelection");
 		}
+
+		public static void PatchPrerequisiteCompatibility()
+		{
+			PrerequisiteAlternatives.Add(BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("08d9f686b2944ba6b3f7763882c0ded4"), ShamanLegacy.shamanHex, GetHex());
+			PrerequisiteAlternatives.Add(BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("2faa80662a56ab644aec2f875a68597f"), ShamanLegacy.shamanSpirit, GetSpirit());
+		}
 	}
 }

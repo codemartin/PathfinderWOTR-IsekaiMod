@@ -1,4 +1,5 @@
-﻿using IsekaiMod.Utilities;
+﻿using IsekaiMod.Content.Classes.IsekaiProtagonist;
+using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Items.Armors;
@@ -35,6 +36,13 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Mastermind
 						ArmorProficiencyGroup.Medium,
 						ArmorProficiencyGroup.Heavy
 					};
+				});
+				// Count Mastermind levels as Arcanist levels for prerequisites, so exploits such as Swift Consume qualify.
+				bp.AddComponent(delegate(ClassLevelsForPrerequisites c)
+				{
+					c.m_FakeClass = BlueprintTools.GetBlueprintReference<BlueprintCharacterClassReference>("52dbfd8505e22f84fad8d702611f60b7");
+					c.m_ActualClass = IsekaiProtagonistClass.GetReference();
+					c.Modifier = 1.0;
 				});
 			});
 		}
