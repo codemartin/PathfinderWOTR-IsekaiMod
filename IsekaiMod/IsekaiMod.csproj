@@ -99,6 +99,14 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Data.Entity" />
     <Reference Include="System.Net.Http" />
+    <Reference Include="System.IO.Compression">
+      <HintPath>$(WrathPath)\Wrath_Data\Managed\System.IO.Compression.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.IO.Compression.FileSystem">
+      <HintPath>$(WrathPath)\Wrath_Data\Managed\System.IO.Compression.FileSystem.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="System.Web" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -112,6 +120,11 @@
     <Reference Include="UnityEngine.AnimationModule">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>$(WrathPath)\Wrath_Data\Managed\UnityEngine.AnimationModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.AIModule">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(WrathPath)\Wrath_Data\Managed\UnityEngine.AIModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.AssetBundleModule">
@@ -145,6 +158,10 @@
     </Reference>
     <Reference Include="UnityModManager">
       <HintPath>$(WrathPath)\Wrath_Data\Managed\UnityModManager\UnityModManager.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UniRx">
+      <HintPath>$(WrathPath)\Wrath_Data\Managed\UniRx.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="AstarPathfindingProject">
