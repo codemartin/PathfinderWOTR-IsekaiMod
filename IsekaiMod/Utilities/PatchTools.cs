@@ -842,10 +842,6 @@ namespace IsekaiMod.Utilities
 								if (IsClassBasedRankType(contextRankConfig.m_BaseValueType) && contextRankConfig.m_Class != null && !contextRankConfig.m_Class.Contains(myClass) && contextRankConfig.m_Class.Contains(referenceClass))
 								{
 									contextRankConfig.m_Class = contextRankConfig.m_Class.AddToArray(myClass);
-									if (contextRankConfig.m_BaseValueType == ContextRankBaseValueType.ClassLevel || contextRankConfig.m_BaseValueType == ContextRankBaseValueType.SummClassLevelWithArchetype || contextRankConfig.m_BaseValueType == ContextRankBaseValueType.MaxClassLevelWithArchetype)
-									{
-										contextRankConfig.m_BaseValueType = ContextRankBaseValueType.SummClassLevelWithArchetype;
-									}
 								}
 								// CustomProperty / MaxCustomProperty configs scale off unit properties whose getters name the class.
 								PatchReferencedUnitProperties(contextRankConfig, myClass, referenceClass);
