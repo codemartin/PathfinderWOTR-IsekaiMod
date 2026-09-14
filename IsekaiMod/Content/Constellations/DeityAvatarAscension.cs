@@ -87,6 +87,15 @@ namespace IsekaiMod.Content.Constellations
 				{
 					c.Condition = UnitCondition.Nauseated;
 				});
+				// Condition immunity alone leaves the delivering buff in place; blocking the descriptor stops it, as the game's own immunities do.
+				bp.AddComponent(delegate(BuffDescriptorImmunity c)
+				{
+					c.Descriptor = SpellDescriptor.Nauseated;
+				});
+				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+				{
+					c.Descriptor = SpellDescriptor.Nauseated;
+				});
 				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
 				{
 					c.Descriptor = SpellDescriptor.Fear | SpellDescriptor.Compulsion;
@@ -199,6 +208,15 @@ namespace IsekaiMod.Content.Constellations
 				{
 					c.Condition = UnitCondition.Entangled;
 				});
+				// Condition immunity alone leaves the delivering buff in place; blocking the descriptor stops it, as the game's own immunities do.
+				bp.AddComponent(delegate(BuffDescriptorImmunity c)
+				{
+					c.Descriptor = SpellDescriptor.Paralysis;
+				});
+				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+				{
+					c.Descriptor = SpellDescriptor.Paralysis;
+				});
 				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
 				{
 					c.Descriptor = SpellDescriptor.Curse | SpellDescriptor.MovementImpairing;
@@ -291,6 +309,15 @@ namespace IsekaiMod.Content.Constellations
 				{
 					c.Condition = UnitCondition.Exhausted;
 				});
+				// Condition immunity alone leaves the delivering buff in place; blocking the descriptor stops it, as the game's own immunities do.
+				bp.AddComponent(delegate(BuffDescriptorImmunity c)
+				{
+					c.Descriptor = SpellDescriptor.Fatigue | SpellDescriptor.Exhausted;
+				});
+				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+				{
+					c.Descriptor = SpellDescriptor.Fatigue | SpellDescriptor.Exhausted;
+				});
 				bp.AddComponent(delegate(AddStatBonus c)
 				{
 					c.Descriptor = ModifierDescriptor.UntypedStackable;
@@ -359,6 +386,15 @@ namespace IsekaiMod.Content.Constellations
 				bp.AddComponent(delegate(AddConditionImmunity c)
 				{
 					c.Condition = UnitCondition.Entangled;
+				});
+				// Condition immunity alone leaves the delivering buff in place; blocking the descriptor stops it, as the game's own immunities do.
+				bp.AddComponent(delegate(BuffDescriptorImmunity c)
+				{
+					c.Descriptor = SpellDescriptor.Paralysis;
+				});
+				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+				{
+					c.Descriptor = SpellDescriptor.Paralysis;
 				});
 			});
 			AvatarChaldiraFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "AvatarChaldiraFeature", delegate(BlueprintFeature bp)

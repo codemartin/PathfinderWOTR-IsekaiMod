@@ -167,6 +167,15 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist
 			{
 				bp.SetName(Main.IsekaiContext, "Record: Leper's Smile Purged");
 				bp.SetDescription(Main.IsekaiContext, "Purged the subterranean swarm matriarch. Grants immunity to confusion effects caused by swarms and +2 Fortitude saves.");
+				// Immunities named in the description.
+				bp.AddComponent(delegate(BuffDescriptorImmunity c)
+				{
+					c.Descriptor = SpellDescriptor.Confusion;
+				});
+				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+				{
+					c.Descriptor = SpellDescriptor.Confusion;
+				});
 				((BlueprintUnitFact)bp).m_Icon = Icon_Shield;
 				bp.IsClassFeature = true;
 				bp.AddComponent(delegate(AddStatBonus c)
@@ -235,6 +244,15 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist
 				bp.AddComponent(delegate(AddConditionImmunity c)
 				{
 					c.Condition = UnitCondition.Nauseated;
+				});
+				// Condition immunity alone leaves the delivering buff in place; blocking the descriptor stops it, as the game's own immunities do.
+				bp.AddComponent(delegate(BuffDescriptorImmunity c)
+				{
+					c.Descriptor = SpellDescriptor.Nauseated;
+				});
+				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+				{
+					c.Descriptor = SpellDescriptor.Nauseated;
 				});
 				bp.AddComponent(delegate(BuffDescriptorImmunity c)
 				{

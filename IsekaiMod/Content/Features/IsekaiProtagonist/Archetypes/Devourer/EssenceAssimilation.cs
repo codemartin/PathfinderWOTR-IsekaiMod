@@ -48,6 +48,15 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Devourer
 				{
 					c.Condition = UnitCondition.Sickened;
 				});
+				// Condition immunity alone leaves the delivering buff in place; blocking the descriptor stops it, as the game's own immunities do.
+				bp.AddComponent(delegate(BuffDescriptorImmunity c)
+				{
+					c.Descriptor = SpellDescriptor.Sickened;
+				});
+				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+				{
+					c.Descriptor = SpellDescriptor.Sickened;
+				});
 				bp.AddComponent(delegate(AddStatBonus c)
 				{
 					c.Descriptor = ModifierDescriptor.Profane;

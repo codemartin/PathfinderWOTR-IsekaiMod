@@ -19,6 +19,8 @@ using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components;
+using Kingmaker.UnitLogic.ActivatableAbilities;
+using Kingmaker.UnitLogic.ActivatableAbilities.Restrictions;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Mechanics.Components;
@@ -810,6 +812,12 @@ namespace IsekaiMod.Utilities
 						{
 							PatchClassSelection(selection, myClass, referenceClass, num, loopPrevention);
 						}
+						// The buff of an activatable ability (shifter aspects, rage, judgments, ...) is a blueprint field rather
+						// than a component, so it is walked here; its ContextRankConfigs scale by the source class level.
+						if (feature is BlueprintActivatableAbility activatableAbility && activatableAbility.m_Buff?.Get() is BlueprintBuff activatableBuff)
+						{
+							PatchClassIntoFeatureOfReferenceClass(activatableBuff, myClass, referenceClass, num, loopPrevention);
+						}
 						if (((BlueprintScriptableObject)feature).Components == null || ((BlueprintScriptableObject)feature).Components.Length == 0)
 						{
 							return;
@@ -817,6 +825,7 @@ namespace IsekaiMod.Utilities
 						HashSet<SpellReference> hashSet = new HashSet<SpellReference>();
 						List<SpontaneousSpellConversion> list = new List<SpontaneousSpellConversion>();
 						List<CannyDefensePermanent> list2 = new List<CannyDefensePermanent>();
+						HashSet<object> visitedMechanicsObjects = new HashSet<object>(ReferenceObjectComparer.Instance);
 						BlueprintComponent[] components = ((BlueprintScriptableObject)feature).Components;
 						for (int i = 0; i < components.Length; i++)
 						{
@@ -827,7 +836,7 @@ namespace IsekaiMod.Utilities
 							}
 							// Single-class game components are swapped for multi-class replacements in place (same slot).
 							blueprintComponent = ReplaceSingleClassComponent(components, i, myClass, referenceClass);
-							HandleComponent(feature.AssetGuid, myClass, referenceClass, num, hashSet, blueprintComponent, loopPrevention);
+							HandleComponent(feature.AssetGuid, myClass, referenceClass, num, hashSet, blueprintComponent, loopPrevention, visitedMechanicsObjects);
 							if (blueprintComponent is ContextRankConfig contextRankConfig)
 							{
 								if (IsClassBasedRankType(contextRankConfig.m_BaseValueType) && contextRankConfig.m_Class != null && !contextRankConfig.m_Class.Contains(myClass) && contextRankConfig.m_Class.Contains(referenceClass))
@@ -947,7 +956,7 @@ namespace IsekaiMod.Utilities
 			}
 		}
 
-		private static void HandleComponent(BlueprintGuid featureGuid, BlueprintCharacterClassReference myClass, BlueprintCharacterClassReference referenceClass, int level, HashSet<SpellReference> mySpellSet, BlueprintComponent component, HashSet<BlueprintFact> loopPrevention)
+		private static void HandleComponent(BlueprintGuid featureGuid, BlueprintCharacterClassReference myClass, BlueprintCharacterClassReference referenceClass, int level, HashSet<SpellReference> mySpellSet, BlueprintComponent component, HashSet<BlueprintFact> loopPrevention, HashSet<object> visitedMechanicsObjects)
 		{
 			int num = level + 1;
 			if (num > 20)
@@ -1107,47 +1116,165 @@ namespace IsekaiMod.Utilities
 					// Use-limited inherited abilities (e.g. kineticist wild talents, witch hexes) must count Isekai levels.
 					PatchResourceBasedOnReferenceClass(requiredResource.Get(), myClass, referenceClass);
 				}
-				if (!(component is AddAbilityResources { m_Resource: { } resource }))
+				if (component is ActivatableAbilityResourceLogic { m_RequiredResource: { } activatableResource })
+				{
+					PatchResourceBasedOnReferenceClass(activatableResource.Get(), myClass, referenceClass);
+				}
+				if (component is AddAbilityResources { m_Resource: { } resource })
+				{
+					PatchResourceBasedOnReferenceClass(resource.Get(), myClass, referenceClass);
+				}
+				// Buffs, abilities, resources and unit properties referenced from inside action lists and other nested
+				// mechanics (ContextActionApplyBuff, AbilityEffectRunAction, ...) are reached through reflection.
+				PatchNestedMechanicsReferences(component, myClass, referenceClass, num, loopPrevention, 0, visitedMechanicsObjects);
+			}
+		}
+
+		private const int MaxMechanicsTraversalDepth = 16;
+
+		private static readonly Dictionary<Type, System.Reflection.FieldInfo[]> MechanicsFieldCache = new Dictionary<Type, System.Reflection.FieldInfo[]>();
+
+		private static readonly Dictionary<Type, bool> PatchableReferenceTypeCache = new Dictionary<Type, bool>();
+
+		// Follows blueprint references found in nested mechanics objects. Only abilities, buffs, resources and unit
+		// properties are followed; features, selections and progressions reached this way are left to the explicit
+		// handlers above, because following them here would expand into whole class and bloodline graphs.
+		private static void PatchNestedMechanicsReferences(object value, BlueprintCharacterClassReference myClass, BlueprintCharacterClassReference referenceClass, int level, HashSet<BlueprintFact> loopPrevention, int mechanicsDepth, HashSet<object> visitedObjects)
+		{
+			if (value == null || mechanicsDepth > MaxMechanicsTraversalDepth)
+			{
+				return;
+			}
+			if (value is BlueprintReferenceBase blueprintReference)
+			{
+				if (!IsPatchableBlueprintReference(blueprintReference.GetType()))
 				{
 					return;
 				}
-				BlueprintAbilityResource blueprintAbilityResource = resource.Get();
-				if (blueprintAbilityResource == null)
+				SimpleBlueprint referencedBlueprint;
+				try
+				{
+					referencedBlueprint = blueprintReference.GetBlueprint();
+				}
+				catch (Exception)
 				{
 					return;
 				}
-				bool flag = false;
-				bool flag2 = false;
-				if (blueprintAbilityResource.m_MaxAmount.m_ClassDiv != null && blueprintAbilityResource.m_MaxAmount.m_ClassDiv.Length != 0)
+				if (referencedBlueprint is BlueprintAbility nestedAbility)
 				{
-					if (blueprintAbilityResource.m_MaxAmount.m_ClassDiv.Contains(referenceClass))
-					{
-						flag = true;
-					}
-					if (blueprintAbilityResource.m_MaxAmount.m_ClassDiv.Contains(myClass))
-					{
-						flag2 = true;
-					}
-					if (flag && !flag2)
-					{
-						blueprintAbilityResource.m_MaxAmount.m_ClassDiv = blueprintAbilityResource.m_MaxAmount.m_ClassDiv.AddToArray(myClass);
-					}
+					PatchClassIntoFeatureOfReferenceClass(nestedAbility, myClass, referenceClass, level, loopPrevention);
 				}
-				if (!flag && blueprintAbilityResource.m_MaxAmount.m_Class != null && blueprintAbilityResource.m_MaxAmount.m_Class.Length != 0)
+				else if (referencedBlueprint is BlueprintBuff nestedBuff)
 				{
-					if (blueprintAbilityResource.m_MaxAmount.m_Class.Contains(referenceClass))
-					{
-						flag = true;
-					}
-					if (blueprintAbilityResource.m_MaxAmount.m_Class.Contains(myClass))
-					{
-						flag2 = true;
-					}
-					if (flag && !flag2)
-					{
-						blueprintAbilityResource.m_MaxAmount.m_Class = blueprintAbilityResource.m_MaxAmount.m_Class.AddToArray(myClass);
-					}
+					PatchClassIntoFeatureOfReferenceClass(nestedBuff, myClass, referenceClass, level, loopPrevention);
 				}
+				else if (referencedBlueprint is BlueprintAbilityResource nestedResource)
+				{
+					PatchResourceBasedOnReferenceClass(nestedResource, myClass, referenceClass);
+				}
+				else if (referencedBlueprint is BlueprintUnitProperty nestedProperty)
+				{
+					PatchUnitProperty(nestedProperty, myClass, referenceClass);
+				}
+				return;
+			}
+			if (value is SimpleBlueprint || value is string || value is Delegate || value is Type)
+			{
+				return;
+			}
+			Type valueType = value.GetType();
+			if (valueType.IsPrimitive || valueType.IsEnum || valueType == typeof(decimal))
+			{
+				return;
+			}
+			if (value is System.Collections.IEnumerable enumerable && (valueType.IsArray || value is System.Collections.IList))
+			{
+				foreach (object item in enumerable)
+				{
+					PatchNestedMechanicsReferences(item, myClass, referenceClass, level, loopPrevention, mechanicsDepth + 1, visitedObjects);
+				}
+				return;
+			}
+			if (!IsMechanicsContainer(valueType))
+			{
+				return;
+			}
+			if (!valueType.IsValueType && !visitedObjects.Add(value))
+			{
+				return;
+			}
+			System.Reflection.FieldInfo[] fields = GetMechanicsFields(valueType);
+			foreach (System.Reflection.FieldInfo field in fields)
+			{
+				object fieldValue;
+				try
+				{
+					fieldValue = field.GetValue(value);
+				}
+				catch (Exception)
+				{
+					continue;
+				}
+				PatchNestedMechanicsReferences(fieldValue, myClass, referenceClass, level, loopPrevention, mechanicsDepth + 1, visitedObjects);
+			}
+		}
+
+		private static bool IsMechanicsContainer(Type valueType)
+		{
+			if (typeof(BlueprintComponent).IsAssignableFrom(valueType) || typeof(GameAction).IsAssignableFrom(valueType) || typeof(Condition).IsAssignableFrom(valueType) || valueType == typeof(ActionList) || valueType == typeof(ConditionsChecker))
+			{
+				return true;
+			}
+			return valueType.IsValueType && valueType.Namespace != null && valueType.Namespace.StartsWith("Kingmaker.UnitLogic.Mechanics", StringComparison.Ordinal);
+		}
+
+		private static bool IsPatchableBlueprintReference(Type referenceType)
+		{
+			if (PatchableReferenceTypeCache.TryGetValue(referenceType, out bool isPatchable))
+			{
+				return isPatchable;
+			}
+			for (Type currentType = referenceType; currentType != null && currentType != typeof(object); currentType = currentType.BaseType)
+			{
+				if (currentType.IsGenericType && currentType.GetGenericTypeDefinition() == typeof(BlueprintReference<>))
+				{
+					Type blueprintType = currentType.GetGenericArguments()[0];
+					isPatchable = typeof(BlueprintFact).IsAssignableFrom(blueprintType) || typeof(BlueprintAbilityResource).IsAssignableFrom(blueprintType) || typeof(BlueprintUnitProperty).IsAssignableFrom(blueprintType);
+					break;
+				}
+			}
+			PatchableReferenceTypeCache[referenceType] = isPatchable;
+			return isPatchable;
+		}
+
+		private static System.Reflection.FieldInfo[] GetMechanicsFields(Type valueType)
+		{
+			if (MechanicsFieldCache.TryGetValue(valueType, out System.Reflection.FieldInfo[] cachedFields))
+			{
+				return cachedFields;
+			}
+			List<System.Reflection.FieldInfo> fields = new List<System.Reflection.FieldInfo>();
+			for (Type currentType = valueType; currentType != null && currentType != typeof(object); currentType = currentType.BaseType)
+			{
+				fields.AddRange(currentType.GetFields(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.DeclaredOnly).Where((System.Reflection.FieldInfo field) => !field.IsStatic && !field.IsNotSerialized));
+			}
+			cachedFields = fields.ToArray();
+			MechanicsFieldCache[valueType] = cachedFields;
+			return cachedFields;
+		}
+
+		private sealed class ReferenceObjectComparer : IEqualityComparer<object>
+		{
+			public static readonly ReferenceObjectComparer Instance = new ReferenceObjectComparer();
+
+			public new bool Equals(object left, object right)
+			{
+				return ReferenceEquals(left, right);
+			}
+
+			public int GetHashCode(object value)
+			{
+				return System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(value);
 			}
 		}
 

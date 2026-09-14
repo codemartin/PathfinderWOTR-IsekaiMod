@@ -1,6 +1,7 @@
 ﻿using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
+using Kingmaker.Blueprints.Classes.Spells;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Designers.Mechanics.Buffs;
 using Kingmaker.Designers.Mechanics.Facts;
@@ -169,6 +170,15 @@ namespace IsekaiMod.Content.Guardians
 				bp.AddComponent(delegate(AddConditionImmunity c)
 				{
 					c.Condition = UnitCondition.Confusion;
+				});
+				// Condition immunity alone leaves the delivering buff in place; blocking the descriptor stops it, as the game's own immunities do.
+				bp.AddComponent(delegate(BuffDescriptorImmunity c)
+				{
+					c.Descriptor = SpellDescriptor.Shaken | SpellDescriptor.Frightened | SpellDescriptor.Confusion;
+				});
+				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+				{
+					c.Descriptor = SpellDescriptor.Shaken | SpellDescriptor.Frightened | SpellDescriptor.Confusion;
 				});
 			});
 			BlueprintFeature ShadowMarshallDominion = Helpers.CreateBlueprint(Main.IsekaiContext, "ShadowMarshallDominion", delegate(BlueprintFeature bp)
@@ -560,6 +570,19 @@ namespace IsekaiMod.Content.Guardians
 			{
 				bp.SetName(Main.IsekaiContext, "Hey! Listen! Temporal Guidance");
 				bp.SetDescription(Main.IsekaiContext, "The Chrono Sprite flits ahead of danger, providing tactical alerts. Gains a +4 dodge bonus to AC, +4 bonus on Initiative, and immunity to ground hazards.");
+				// Immunities named in the description.
+				bp.AddComponent(delegate(BuffDescriptorImmunity c)
+				{
+					c.Descriptor = SpellDescriptor.Ground;
+				});
+				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+				{
+					c.Descriptor = SpellDescriptor.Ground;
+				});
+				bp.AddComponent(delegate(AddConditionImmunity c)
+				{
+					c.Condition = UnitCondition.DifficultTerrain;
+				});
 				((BlueprintUnitFact)bp).m_Icon = Icon_Pet;
 				bp.AddComponent(delegate(AddStatBonus c)
 				{
@@ -681,6 +704,15 @@ namespace IsekaiMod.Content.Guardians
 				bp.AddComponent(delegate(AddConditionImmunity c)
 				{
 					c.Condition = UnitCondition.Confusion;
+				});
+				// Condition immunity alone leaves the delivering buff in place; blocking the descriptor stops it, as the game's own immunities do.
+				bp.AddComponent(delegate(BuffDescriptorImmunity c)
+				{
+					c.Descriptor = SpellDescriptor.Shaken | SpellDescriptor.Frightened | SpellDescriptor.Confusion;
+				});
+				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+				{
+					c.Descriptor = SpellDescriptor.Shaken | SpellDescriptor.Frightened | SpellDescriptor.Confusion;
 				});
 			});
 			BlueprintFeature EnigmaticCoConspiratorCodeContact = Helpers.CreateBlueprint(Main.IsekaiContext, "EnigmaticCoConspiratorCodeContact", delegate(BlueprintFeature bp)

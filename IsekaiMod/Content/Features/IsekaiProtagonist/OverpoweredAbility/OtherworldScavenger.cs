@@ -3,6 +3,7 @@ using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Selection;
+using Kingmaker.Blueprints.Classes.Spells;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.Enums;
@@ -55,6 +56,16 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 				bp.AddComponent(delegate(AddConditionImmunity c)
 				{
 					c.Condition = UnitCondition.Exhausted;
+				});
+				// The rage fatigue is a buff (Fatigued, e6f2fc5d) that adds the condition; the condition immunities above
+				// leave that buff on the character, so block the buffs themselves the way the game's own immunity does.
+				bp.AddComponent(delegate(BuffDescriptorImmunity c)
+				{
+					c.Descriptor = SpellDescriptor.Fatigue | SpellDescriptor.Exhausted;
+				});
+				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+				{
+					c.Descriptor = SpellDescriptor.Fatigue | SpellDescriptor.Exhausted;
 				});
 			});
 			BlueprintFeatureSelection modBlueprint = BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "IsekaiBonusFeatSelection");

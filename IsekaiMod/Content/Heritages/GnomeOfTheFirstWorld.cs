@@ -74,6 +74,15 @@ namespace IsekaiMod.Content.Heritages
 				{
 					c.Condition = UnitCondition.Confusion;
 				});
+				// Condition immunity alone leaves the delivering buff in place; blocking the descriptor stops it, as the game's own immunities do.
+				bp.AddComponent(delegate(BuffDescriptorImmunity c)
+				{
+					c.Descriptor = SpellDescriptor.Confusion;
+				});
+				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+				{
+					c.Descriptor = SpellDescriptor.Confusion;
+				});
 				bp.Groups = new FeatureGroup[0];
 				bp.ReapplyOnLevelUp = true;
 			});

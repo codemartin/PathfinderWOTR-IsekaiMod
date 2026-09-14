@@ -5,6 +5,7 @@ using IsekaiMod.Content.Constellations;
 using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
+using Kingmaker.Blueprints.Classes.Spells;
 using Kingmaker.Blueprints.Classes.Experience;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.Items;
@@ -173,6 +174,15 @@ namespace IsekaiMod.Content.Dialogue
 				bp.AddComponent(delegate(AddConditionImmunity c)
 				{
 					c.Condition = UnitCondition.Frightened;
+				});
+				// Condition immunity alone leaves the delivering buff in place; blocking the descriptor stops it, as the game's own immunities do.
+				bp.AddComponent(delegate(BuffDescriptorImmunity c)
+				{
+					c.Descriptor = SpellDescriptor.Frightened;
+				});
+				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+				{
+					c.Descriptor = SpellDescriptor.Frightened;
 				});
 			});
 			MindOfTheOtherworlderBuff = Helpers.CreateBlueprint(Main.IsekaiContext, "MindOfTheOtherworlderBuff", delegate(BlueprintBuff bp)
@@ -374,6 +384,15 @@ namespace IsekaiMod.Content.Dialogue
 				{
 					c.Condition = UnitCondition.Frightened;
 				});
+				// Condition immunity alone leaves the delivering buff in place; blocking the descriptor stops it, as the game's own immunities do.
+				bp.AddComponent(delegate(BuffDescriptorImmunity c)
+				{
+					c.Descriptor = SpellDescriptor.Frightened;
+				});
+				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+				{
+					c.Descriptor = SpellDescriptor.Frightened;
+				});
 			});
 			SwordOfValorResonantFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "SwordOfValorResonantFeature", delegate(BlueprintFeature bp)
 			{
@@ -508,6 +527,15 @@ namespace IsekaiMod.Content.Dialogue
 				{
 					c.Condition = UnitCondition.Sleeping;
 				});
+				// Condition immunity alone leaves the delivering buff in place; blocking the descriptor stops it, as the game's own immunities do.
+				bp.AddComponent(delegate(BuffDescriptorImmunity c)
+				{
+					c.Descriptor = SpellDescriptor.Fatigue | SpellDescriptor.Sleep;
+				});
+				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+				{
+					c.Descriptor = SpellDescriptor.Fatigue | SpellDescriptor.Sleep;
+				});
 			});
 			ItemOtherworldEspresso = Helpers.CreateBlueprint(Main.IsekaiContext, "ItemOtherworldEspresso", delegate(BlueprintItemEquipmentUsable bp)
 			{
@@ -586,6 +614,15 @@ namespace IsekaiMod.Content.Dialogue
 				bp.AddComponent(delegate(AddConditionImmunity c)
 				{
 					c.Condition = UnitCondition.Exhausted;
+				});
+				// Condition immunity alone leaves the delivering buff in place; blocking the descriptor stops it, as the game's own immunities do.
+				bp.AddComponent(delegate(BuffDescriptorImmunity c)
+				{
+					c.Descriptor = SpellDescriptor.Fatigue | SpellDescriptor.Exhausted;
+				});
+				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+				{
+					c.Descriptor = SpellDescriptor.Fatigue | SpellDescriptor.Exhausted;
 				});
 			});
 			ItemAmuletOfOtherworldEquilibrium = Helpers.CreateBlueprint(Main.IsekaiContext, "ItemAmuletOfOtherworldEquilibrium", delegate(BlueprintItemEquipmentNeck bp)

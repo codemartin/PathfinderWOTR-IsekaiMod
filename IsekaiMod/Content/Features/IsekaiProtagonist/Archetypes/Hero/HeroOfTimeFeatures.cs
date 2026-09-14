@@ -324,6 +324,15 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Hero
 				{
 					c.Condition = UnitCondition.Petrified;
 				});
+				// Condition immunity alone leaves the delivering buff in place; blocking the descriptor stops it, as the game's own immunities do.
+				bp.AddComponent(delegate(BuffDescriptorImmunity c)
+				{
+					c.Descriptor = SpellDescriptor.Petrified;
+				});
+				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+				{
+					c.Descriptor = SpellDescriptor.Petrified;
+				});
 				bp.AddComponent(delegate(BuffDescriptorImmunity c)
 				{
 					c.Descriptor = SpellDescriptor.Death | SpellDescriptor.NegativeLevel;
@@ -380,6 +389,15 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Hero
 				bp.AddComponent(delegate(AddConditionImmunity c)
 				{
 					c.Condition = UnitCondition.Blindness;
+				});
+				// Condition immunity alone leaves the delivering buff in place; blocking the descriptor stops it, as the game's own immunities do.
+				bp.AddComponent(delegate(BuffDescriptorImmunity c)
+				{
+					c.Descriptor = SpellDescriptor.Blindness;
+				});
+				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+				{
+					c.Descriptor = SpellDescriptor.Blindness;
 				});
 			});
 			CorruptedSongOfTimeFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "CorruptedSongOfTimeFeature", delegate(BlueprintFeature bp)

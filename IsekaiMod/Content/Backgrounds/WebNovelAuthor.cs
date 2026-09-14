@@ -1,5 +1,6 @@
 ﻿using IsekaiMod.Utilities;
 using Kingmaker.Blueprints.Classes;
+using Kingmaker.Blueprints.Classes.Spells;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.Enums;
 using Kingmaker.UnitLogic;
@@ -23,6 +24,15 @@ namespace IsekaiMod.Content.Backgrounds
 				bp.AddComponent(delegate(AddConditionImmunity c)
 				{
 					c.Condition = UnitCondition.Confusion;
+				});
+				// Condition immunity alone leaves the delivering buff in place; blocking the descriptor stops it, as the game's own immunities do.
+				bp.AddComponent(delegate(BuffDescriptorImmunity c)
+				{
+					c.Descriptor = SpellDescriptor.Daze | SpellDescriptor.Confusion;
+				});
+				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+				{
+					c.Descriptor = SpellDescriptor.Daze | SpellDescriptor.Confusion;
 				});
 				bp.AddComponent(delegate(AddClassSkill c)
 				{

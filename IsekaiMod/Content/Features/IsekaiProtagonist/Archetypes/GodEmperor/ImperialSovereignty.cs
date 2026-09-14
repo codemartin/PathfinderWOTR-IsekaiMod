@@ -1,6 +1,7 @@
 ﻿using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
+using Kingmaker.Blueprints.Classes.Spells;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.Enums;
@@ -71,6 +72,15 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.GodEmperor
 				bp.AddComponent(delegate(AddConditionImmunity c)
 				{
 					c.Condition = UnitCondition.Frightened;
+				});
+				// Condition immunity alone leaves the delivering buff in place; blocking the descriptor stops it, as the game's own immunities do.
+				bp.AddComponent(delegate(BuffDescriptorImmunity c)
+				{
+					c.Descriptor = SpellDescriptor.Shaken | SpellDescriptor.Frightened;
+				});
+				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+				{
+					c.Descriptor = SpellDescriptor.Shaken | SpellDescriptor.Frightened;
 				});
 			});
 			BlueprintAbilityAreaEffect ImperialStandardArea = Helpers.CreateBlueprint(Main.IsekaiContext, "ImperialStandardArea", delegate(BlueprintAbilityAreaEffect bp)

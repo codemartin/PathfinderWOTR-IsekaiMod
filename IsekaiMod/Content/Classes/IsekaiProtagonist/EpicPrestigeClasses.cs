@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
+using Kingmaker.UnitLogic;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Prerequisites;
 using Kingmaker.Blueprints.Classes.Selection;
@@ -279,6 +280,15 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist
 					{
 						b.SetName(Main.IsekaiContext, "Immortal Ascension");
 						b.SetDescription(Main.IsekaiContext, "You achieve full apotheosis: permanent immunity to death, bleed, petrification, and mind-affecting effects, and an additional +4 to all ability scores.");
+						// Immunities named in the description.
+						b.AddComponent(delegate(BuffDescriptorImmunity c)
+						{
+							c.Descriptor = SpellDescriptor.Death | SpellDescriptor.Bleed | SpellDescriptor.Petrified | SpellDescriptor.MindAffecting;
+						});
+						b.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+						{
+							c.Descriptor = SpellDescriptor.Death | SpellDescriptor.Bleed | SpellDescriptor.Petrified | SpellDescriptor.MindAffecting;
+						});
 						((BlueprintUnitFact)b).m_Icon = Icon_Crown;
 						b.AddComponent(delegate(AddStatBonus c)
 						{

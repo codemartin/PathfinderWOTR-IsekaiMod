@@ -1,5 +1,6 @@
 ﻿using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
+using Kingmaker.UnitLogic;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Spells;
 using Kingmaker.Blueprints.Facts;
@@ -86,6 +87,19 @@ namespace IsekaiMod.Content.Guardians
 			{
 				bp.SetName(Main.IsekaiContext, "Angelic Wings");
 				bp.SetDescription(Main.IsekaiContext, "Radiant feathered wings grant a +3 dodge bonus to AC against melee attacks and immunity to ground hazards.");
+				// Immunities named in the description.
+				bp.AddComponent(delegate(BuffDescriptorImmunity c)
+				{
+					c.Descriptor = SpellDescriptor.Ground;
+				});
+				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+				{
+					c.Descriptor = SpellDescriptor.Ground;
+				});
+				bp.AddComponent(delegate(AddConditionImmunity c)
+				{
+					c.Condition = UnitCondition.DifficultTerrain;
+				});
 				((BlueprintUnitFact)bp).m_Icon = Icon_Angel;
 				bp.AddComponent(delegate(AddStatBonus c)
 				{

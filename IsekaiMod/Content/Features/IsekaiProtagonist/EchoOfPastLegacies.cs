@@ -387,9 +387,49 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist
 				bp.m_AllFeatures = new BlueprintFeatureReference[0];
 				bp.m_Features = new BlueprintFeatureReference[0];
 			});
+			// The +2 extra channel uses named in the Cleric echo.
+			BlueprintAbilityResource channelResource = BlueprintTools.GetBlueprint<BlueprintAbilityResource>("5e2bba3e07c37be42909a12945c27de7");
+			if (channelResource != null)
+			{
+				blueprintFeature12.AddComponent(delegate(IncreaseResourceAmount c)
+				{
+					c.m_Resource = channelResource.ToReference<BlueprintAbilityResourceReference>();
+					c.Value = 2;
+				});
+			}
+			// The borrowed class features scale from their own class level (monk AC bonus, mutagen duration, aspect
+			// uses and bonuses, channel dice). Give them the Isekai class as well, the same way legacies are adapted.
+			BlueprintCharacterClassReference isekai = Classes.IsekaiProtagonist.IsekaiProtagonistClass.GetReference();
+			AdaptToIsekaiLevels(isekai, ClassTools.ClassReferences.PaladinClass, "8a5b5e272e5c34e41aa8b4facbb746d3");
+			AdaptToIsekaiLevels(isekai, ClassTools.ClassReferences.MonkClass, "e241bdfd6333b9843a7bfd674d607ac4", "332362f3bd39ebe46a740a36960fdcb4");
+			AdaptToIsekaiLevels(isekai, ClassTools.ClassReferences.RogueClass, "576933720c440aa4d8d42b0c54b77e80");
+			AdaptToIsekaiLevels(isekai, ClassTools.ClassReferences.MagusClass, "be50f4e97fff8a24ba92561f1694a945");
+			AdaptToIsekaiLevels(isekai, ClassTools.ClassReferences.KineticistClass, "0601925a028b788469365d5f8f39e14a");
+			AdaptToIsekaiLevels(isekai, ClassTools.ClassReferences.FighterClass, "3c380607706f209499d951b29d3c44f3", "73c471386ce917c4c8c9f70d46b48eeb");
+			AdaptToIsekaiLevels(isekai, ClassTools.ClassReferences.BarbarianClass, "3c08d842e802c3e4eb19d15496145709");
+			AdaptToIsekaiLevels(isekai, ClassTools.ClassReferences.InquisitorClass, "5602845cd22683840a6f28ec46331051");
+			AdaptToIsekaiLevels(isekai, ClassTools.ClassReferences.AlchemistClass, "cee8f65448ce71c4b8b8ca13751dd8ea");
+			AdaptToIsekaiLevels(isekai, ClassTools.ClassReferences.ShifterClass, "73ef2c330ff14e4bb2f5b7300622c552", "512f845e29514539b1943b74633dba24");
+			AdaptToIsekaiLevels(isekai, ClassTools.ClassReferences.ClericClass, "a79013ff4bcd4864cb669622a29ddafb");
 			Selection.AddFeatures(blueprintFeature, blueprintFeature2, blueprintFeature3, blueprintFeature4, blueprintFeature5, blueprintFeature6, blueprintFeature7, blueprintFeature8, blueprintFeature9, blueprintFeature10, blueprintFeature11, blueprintFeature12);
 			SpecialPowerSelection.AddToSelection(Selection);
 			FeatTools.Selections.BasicFeatSelection.AddToSelection(Selection);
+		}
+
+		private static void AdaptToIsekaiLevels(BlueprintCharacterClassReference isekai, BlueprintCharacterClassReference sourceClass, params string[] featureGuids)
+		{
+			if (isekai == null || sourceClass == null || sourceClass.Get() == null)
+			{
+				return;
+			}
+			foreach (string guid in featureGuids)
+			{
+				BlueprintFeature feature = BlueprintTools.GetBlueprint<BlueprintFeature>(guid);
+				if (feature != null)
+				{
+					PatchTools.PatchClassIntoFeatureOfReferenceClass(feature, isekai, sourceClass);
+				}
+			}
 		}
 
 		public static BlueprintFeatureSelection Get()

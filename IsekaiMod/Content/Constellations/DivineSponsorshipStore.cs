@@ -176,6 +176,15 @@ namespace IsekaiMod.Content.Constellations
 				{
 					c.Condition = UnitCondition.Paralyzed;
 				});
+				// Condition immunity alone leaves the delivering buff in place; blocking the descriptor stops it, as the game's own immunities do.
+				obj.AddComponent(delegate(BuffDescriptorImmunity c)
+				{
+					c.Descriptor = SpellDescriptor.Fatigue | SpellDescriptor.Exhausted | SpellDescriptor.Paralysis;
+				});
+				obj.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+				{
+					c.Descriptor = SpellDescriptor.Fatigue | SpellDescriptor.Exhausted | SpellDescriptor.Paralysis;
+				});
 				obj.AddComponent(delegate(AddStatBonus c)
 				{
 					c.Descriptor = ModifierDescriptor.Morale;
@@ -1556,6 +1565,15 @@ namespace IsekaiMod.Content.Constellations
 				blueprintFeature2.AddComponent(delegate(AddConditionImmunity c)
 				{
 					c.Condition = UnitCondition.Exhausted;
+				});
+				// Condition immunity alone leaves the delivering buff in place; blocking the descriptor stops it, as the game's own immunities do.
+				blueprintFeature2.AddComponent(delegate(BuffDescriptorImmunity c)
+				{
+					c.Descriptor = SpellDescriptor.Fatigue | SpellDescriptor.Exhausted;
+				});
+				blueprintFeature2.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+				{
+					c.Descriptor = SpellDescriptor.Fatigue | SpellDescriptor.Exhausted;
 				});
 			});
 			BlueprintAnswer bp58 = CreateStoreAnswer("AnswerBuyCheatInstakill", "(5,000 Coins) [Death Note: True Instakill] Slay any mortal or immortal foe with an unblockable death decree bypassing immunities.", blueprintCue5, new ContextActionSpendCoinsAndGrantFact

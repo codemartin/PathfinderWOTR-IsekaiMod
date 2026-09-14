@@ -1,6 +1,8 @@
 ﻿using IsekaiMod.Components;
 using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
+using Kingmaker.UnitLogic;
+using Kingmaker.Blueprints.Classes.Spells;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Designers.Mechanics.Facts;
@@ -36,6 +38,15 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.ShadowMonarch
 			{
 				bp.SetName(Main.IsekaiContext, "Shadow Soldier: Extracted Essence");
 				bp.SetDescription(Main.IsekaiContext, "A loyal warrior risen from the shadows of death. Deals additional unholy and cold damage on all attacks, gains a +10 ft speed bonus, and is immune to fear and mind-affecting effects.");
+				// Immunities named in the description.
+				bp.AddComponent(delegate(BuffDescriptorImmunity c)
+				{
+					c.Descriptor = SpellDescriptor.Fear | SpellDescriptor.MindAffecting;
+				});
+				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+				{
+					c.Descriptor = SpellDescriptor.Fear | SpellDescriptor.MindAffecting;
+				});
 				((BlueprintUnitFact)bp).m_Icon = Icon_Arise;
 				bp.IsClassFeature = true;
 				bp.AddComponent(delegate(AddStatBonus c)
