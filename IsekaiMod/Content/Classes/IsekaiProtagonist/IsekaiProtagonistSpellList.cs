@@ -1535,13 +1535,14 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist
 					}
 				}
 			}
-			BlueprintSpellList[] array = new BlueprintSpellList[70]
+			BlueprintSpellList[] array = new BlueprintSpellList[71]
 			{
 				SpellTools.SpellList.AirDomainSpellList,
 				SpellTools.SpellList.AnimalDomainSpellList,
 				SpellTools.SpellList.ArmagsBladeSpellList,
 				SpellTools.SpellList.ArtificeDomainSpellList,
 				SpellTools.SpellList.BattleSpiritSpellList,
+				SpellTools.SpellList.AlchemistSpellList, // extracts, so the Alchemist legacy and echo have their formulae
 				SpellTools.SpellList.BloodragerSpellList,
 				SpellTools.SpellList.BonesSpiritSpellList,
 				SpellTools.SpellList.ChaosDomainSpellList,
