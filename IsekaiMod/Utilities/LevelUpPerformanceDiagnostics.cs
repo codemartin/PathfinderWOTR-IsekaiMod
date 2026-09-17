@@ -20,7 +20,7 @@ namespace IsekaiMod.Utilities {
     [HarmonyPatch(typeof(UnitProgressionData), nameof(UnitProgressionData.ReapplyFeaturesOnLevelUp))]
     internal static class LevelUpPerformanceDiagnostics {
         private const double SlowRefreshMilliseconds = 25.0;
-        private const int ReportedFeatureCount = 10;
+        private const int ReportedFeatureCount = 14;
         private static readonly TimeSpan LogThrottle = TimeSpan.FromSeconds(1);
 
         [ThreadStatic]
@@ -70,9 +70,22 @@ namespace IsekaiMod.Utilities {
 
         internal static void EndFeature(EntityFact fact, long startedAt) {
             if (startedAt == 0 || currentProfile == null || !(fact is Feature feature)) return;
-            string name = feature.Blueprint?.name;
-            if (string.IsNullOrEmpty(name)) name = "(unnamed feature)";
+            Record(feature.Blueprint?.name, "(unnamed feature)", startedAt);
+        }
 
+        internal static long Begin() {
+            return currentProfile == null ? 0 : Stopwatch.GetTimestamp();
+        }
+
+        // Activatable-ability buff reapplies and context recalculations run in the same refresh and are
+        // not features, so they are recorded under a prefix that says what kind of work they were.
+        internal static void End(string kind, string name, long startedAt) {
+            if (startedAt == 0 || currentProfile == null) return;
+            Record(kind + ":" + (string.IsNullOrEmpty(name) ? "(unnamed)" : name), null, startedAt);
+        }
+
+        private static void Record(string name, string fallback, long startedAt) {
+            if (string.IsNullOrEmpty(name)) name = fallback ?? "(unnamed)";
             long elapsed = Stopwatch.GetTimestamp() - startedAt;
             if (!currentProfile.Features.TryGetValue(name, out var timing)) {
                 timing = new FeatureTiming();
@@ -94,6 +107,32 @@ namespace IsekaiMod.Utilities {
         private sealed class FeatureTiming {
             internal long ElapsedTicks;
             internal int Count;
+        }
+    }
+
+    [HarmonyPatch(typeof(Kingmaker.UnitLogic.ActivatableAbilities.ActivatableAbility), "ReapplyBuff")]
+    internal static class IsekaiActivatableReapplyTimingPatch {
+        [HarmonyPrefix]
+        private static void Prefix(out long __state) {
+            __state = LevelUpPerformanceDiagnostics.Begin();
+        }
+
+        [HarmonyPostfix]
+        private static void Postfix(Kingmaker.UnitLogic.ActivatableAbilities.ActivatableAbility __instance, long __state) {
+            LevelUpPerformanceDiagnostics.End("toggle", __instance?.Blueprint?.name, __state);
+        }
+    }
+
+    [HarmonyPatch(typeof(Kingmaker.UnitLogic.Mechanics.MechanicsContext), "Recalculate")]
+    internal static class IsekaiContextRecalculateTimingPatch {
+        [HarmonyPrefix]
+        private static void Prefix(out long __state) {
+            __state = LevelUpPerformanceDiagnostics.Begin();
+        }
+
+        [HarmonyPostfix]
+        private static void Postfix(Kingmaker.UnitLogic.Mechanics.MechanicsContext __instance, long __state) {
+            LevelUpPerformanceDiagnostics.End("recalc", __instance?.AssociatedBlueprint?.name, __state);
         }
     }
 

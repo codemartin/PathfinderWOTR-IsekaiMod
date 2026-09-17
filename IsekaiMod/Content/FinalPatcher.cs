@@ -74,6 +74,7 @@ namespace IsekaiMod.Content
 				SafeStep("WitchPatronSelection.PatchPrerequisiteCompatibility", WitchPatronSelection.PatchPrerequisiteCompatibility);
 				SafeStep("InquisitorTacticianLegacy.PatchPrerequisiteCompatibility", InquisitorTacticianLegacy.PatchPrerequisiteCompatibility);
 				SafeStep("InquisitorDomainLordLegacy.PatchPrerequisiteCompatibility", InquisitorDomainLordLegacy.PatchPrerequisiteCompatibility);
+				PatchTools.ReportWalkStatistics("final patcher");
 			}
 		}
 

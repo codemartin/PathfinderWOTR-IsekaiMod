@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using IsekaiMod.Components;
 using IsekaiMod.Utilities;
@@ -197,6 +197,7 @@ namespace IsekaiMod.Content.Constellations
 				obj.AddComponent(delegate(CriticalConfirmationBonus c)
 				{
 					c.Bonus = 2;
+					c.Value = 0; // the component reads Value unconditionally, so a missing one throws on every attack roll
 				});
 				obj.AddComponent(delegate(AddStatBonus c)
 				{

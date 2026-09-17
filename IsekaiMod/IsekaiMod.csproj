@@ -188,9 +188,11 @@
     <Compile Include="Content\*\*\*\*\*\*.cs" />
     <Compile Include="Components\*.cs" />
     <Compile Include="Utilities\ActionFlow.cs" />
+    <Compile Include="Utilities\AreaEffectActionSafety.cs" />
     <Compile Include="Utilities\AssetLoaderExtension.cs" />
     <Compile Include="Utilities\BlueprintSafetyExtensions.cs" />
     <Compile Include="Utilities\CharGenSafetyPatch.cs" />
+    <Compile Include="Utilities\CombatPerformanceDiagnostics.cs" />
     <Compile Include="Utilities\DescriptionTools.cs" />
     <Compile Include="Utilities\ExtensionMethods.cs" />
     <Compile Include="Utilities\EyePortraitInjector.cs" />
@@ -201,6 +203,8 @@
     <Compile Include="Utilities\ModItemFixer.cs" />
     <Compile Include="Utilities\ModSupport.cs" />
     <Compile Include="Utilities\PatchTools.cs" />
+    <Compile Include="Utilities\SpellbookOriginDiagnostics.cs" />
+    <Compile Include="Utilities\SwallowedExceptionDiagnostics.cs" />
     <Compile Include="Utilities\StaticReferences.cs" />
     <Compile Include="Utilities\TTCoreExtensions.cs" />
     <Compile Include="Utilities\TextTemplateSafetyPatch.cs" />

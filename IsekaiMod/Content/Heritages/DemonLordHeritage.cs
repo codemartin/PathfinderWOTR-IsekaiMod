@@ -52,20 +52,31 @@ namespace IsekaiMod.Content.Heritages
 				});
 				bp.AddComponent(delegate(AbilityEffectRunAction c)
 				{
-					c.Actions = Helpers.CreateActionList(new ContextActionDealDamage
+					// The description promises a Reflex save for half; HalfIfSaved only works inside a saving throw action.
+					c.Actions = Helpers.CreateActionList(new ContextActionSavingThrow
 					{
-						DamageType = new DamageTypeDescription
+						Type = SavingThrowType.Reflex,
+						Actions = Helpers.CreateActionList(new ContextActionDealDamage
 						{
-							Type = DamageType.Energy,
-							Energy = DamageEnergyType.Unholy
-						},
-						Value = new ContextDiceValue
-						{
-							DiceType = DiceType.D6,
-							DiceCountValue = Values.CreateContextRankValue(AbilityRankType.Default),
-							BonusValue = 0
-						},
-						HalfIfSaved = true
+							DamageType = new DamageTypeDescription
+							{
+								Type = DamageType.Energy,
+								Energy = DamageEnergyType.Unholy
+							},
+							Duration = new ContextDurationValue
+							{
+								Rate = DurationRate.Rounds,
+								DiceType = DiceType.Zero
+							},
+							Value = new ContextDiceValue
+							{
+								DiceType = DiceType.D6,
+								DiceCountValue = Values.CreateContextRankValue(AbilityRankType.Default),
+								BonusValue = 0
+							},
+							IsAoE = true,
+							HalfIfSaved = true
+						})
 					});
 				});
 				bp.AddComponent(delegate(ContextRankConfig c)

@@ -269,6 +269,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature
 			}
 			stopwatch.Stop();
 			Main.IsekaiContext.Logger.Log($"Legacy generic pass: walked {walked} legacy progression(s) in {stopwatch.ElapsedMilliseconds} ms");
+			Utilities.PatchTools.ReportWalkStatistics("class and legacy setup");
 		}
 	}
 }

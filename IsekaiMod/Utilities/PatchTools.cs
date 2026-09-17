@@ -781,17 +781,12 @@ namespace IsekaiMod.Utilities
 				loopPrevention = new HashSet<BlueprintFact>();
 			}
 			int num = level + 1;
-			if (num > 30)
+			if (num > MaxPatchTraversalDepth)
 			{
-				Main.IsekaiContext.Logger.LogError("Attempt to patch Progression Tree stopped at Level 30 to prevent endless loop, if you see this message please report so we can figure out if someone created a loop here or if this limit needs to be higher");
-				if (feature.name != null)
-				{
-					// One line instead of one stack-trace-capturing LogError per visited fact
-					// (this loop alone produced most of the 128 MB log and the slow load).
-					Main.IsekaiContext.Logger.Log($"reference class={referenceClass.Guid} Stop Feature={feature.AssetGuid} name={feature.name} visited={string.Join(",", loopPrevention.Select(f => f.AssetGuid))}");
-					return;
-				}
-				Main.IsekaiContext.Logger.LogError($"reference class={referenceClass.Guid} Stop Feature={feature.AssetGuid}");
+				// Depth is expected to run out on buff/ability chains reached through nested mechanics (wild shape,
+				// stances, rage buffs reference each other endlessly). Count it; a stack-trace-capturing LogError
+				// per stop made the log unreadable and the load slow.
+				depthStops++;
 			}
 			else
 			{
@@ -842,6 +837,10 @@ namespace IsekaiMod.Utilities
 								if (IsClassBasedRankType(contextRankConfig.m_BaseValueType) && contextRankConfig.m_Class != null && !contextRankConfig.m_Class.Contains(myClass) && contextRankConfig.m_Class.Contains(referenceClass))
 								{
 									contextRankConfig.m_Class = contextRankConfig.m_Class.AddToArray(myClass);
+									if (contextRankConfig.m_BaseValueType == ContextRankBaseValueType.ClassLevel || contextRankConfig.m_BaseValueType == ContextRankBaseValueType.SummClassLevelWithArchetype || contextRankConfig.m_BaseValueType == ContextRankBaseValueType.MaxClassLevelWithArchetype)
+									{
+										contextRankConfig.m_BaseValueType = ContextRankBaseValueType.SummClassLevelWithArchetype;
+									}
 								}
 								// CustomProperty / MaxCustomProperty configs scale off unit properties whose getters name the class.
 								PatchReferencedUnitProperties(contextRankConfig, myClass, referenceClass);
@@ -896,7 +895,7 @@ namespace IsekaiMod.Utilities
 						return;
 					}
 				}
-				Main.IsekaiContext.Logger.Log($"reference class={referenceClass.Guid} feature re-encountered at level={num} guid={feature.AssetGuid} name={feature.name}");
+				revisits++;
 			}
 		}
 
@@ -955,9 +954,9 @@ namespace IsekaiMod.Utilities
 		private static void HandleComponent(BlueprintGuid featureGuid, BlueprintCharacterClassReference myClass, BlueprintCharacterClassReference referenceClass, int level, HashSet<SpellReference> mySpellSet, BlueprintComponent component, HashSet<BlueprintFact> loopPrevention, HashSet<object> visitedMechanicsObjects)
 		{
 			int num = level + 1;
-			if (num > 20)
+			if (num > MaxPatchTraversalDepth)
 			{
-				Main.IsekaiContext.Logger.LogError("Attempt to patch Progression Tree stopped at Level 20 to prevent endless loop, if you see this message please report so we can figure out if someone created a loop here or if this limit needs to be higher");
+				depthStops++;
 			}
 			else
 			{
@@ -1128,6 +1127,25 @@ namespace IsekaiMod.Utilities
 
 		private const int MaxMechanicsTraversalDepth = 16;
 
+		// Depth budget for one walk. Features and selections cost 1 per hop; a buff or ability reached through
+		// nested mechanics (an applied buff, a triggered ability) costs NestedHopCost, so the walk follows at most a
+		// couple of those hops instead of crawling the whole buff graph of the game.
+		private const int MaxPatchTraversalDepth = 30;
+
+		private const int NestedHopCost = 12;
+
+		private static int depthStops;
+
+		private static int revisits;
+
+		// Called once after all legacy walks so the counters land in the log as a single line.
+		internal static void ReportWalkStatistics(string phase)
+		{
+			Main.IsekaiContext.Logger.Log($"Legacy walker ({phase}): {revisits} revisit(s) skipped, {depthStops} branch(es) stopped at the depth limit");
+			depthStops = 0;
+			revisits = 0;
+		}
+
 		private static readonly Dictionary<Type, System.Reflection.FieldInfo[]> MechanicsFieldCache = new Dictionary<Type, System.Reflection.FieldInfo[]>();
 
 		private static readonly Dictionary<Type, bool> PatchableReferenceTypeCache = new Dictionary<Type, bool>();
@@ -1158,11 +1176,11 @@ namespace IsekaiMod.Utilities
 				}
 				if (referencedBlueprint is BlueprintAbility nestedAbility)
 				{
-					PatchClassIntoFeatureOfReferenceClass(nestedAbility, myClass, referenceClass, level, loopPrevention);
+					PatchClassIntoFeatureOfReferenceClass(nestedAbility, myClass, referenceClass, level + NestedHopCost, loopPrevention);
 				}
 				else if (referencedBlueprint is BlueprintBuff nestedBuff)
 				{
-					PatchClassIntoFeatureOfReferenceClass(nestedBuff, myClass, referenceClass, level, loopPrevention);
+					PatchClassIntoFeatureOfReferenceClass(nestedBuff, myClass, referenceClass, level + NestedHopCost, loopPrevention);
 				}
 				else if (referencedBlueprint is BlueprintAbilityResource nestedResource)
 				{

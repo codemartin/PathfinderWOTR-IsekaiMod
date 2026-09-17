@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using Kingmaker.Blueprints.Classes;
+using Kingmaker.Blueprints.Classes.Spells;
 using Kingmaker.Designers.Mechanics.Facts;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
@@ -33,6 +34,52 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist {
             if (isekai?.Spellbook == null) return false;
             spellbook = unit.DemandSpellbook(isekai.Spellbook);
             return spellbook != null;
+        }
+
+        /// <summary>
+        /// The general case. UnitDescriptor.DemandSpellbook(class) answers a request for a class the unit does
+        /// not have with that class's default spellbook, which then sits on the character as an empty book
+        /// and shows as a level 0 class row. The level-up UI does this while listing a parametrized feature's
+        /// spells (BlueprintParametrizedFeature.ExtractItemsFromSpellList), and other callers exist. For an
+        /// Isekai Protagonist the answer is its own spellbook instead.
+        /// </summary>
+        [HarmonyPatch(typeof(UnitDescriptor), nameof(UnitDescriptor.DemandSpellbook), new System.Type[] { typeof(BlueprintCharacterClass) })]
+        private static class DemandSpellbookPatcher {
+            [HarmonyPrefix]
+            private static bool Prefix(UnitDescriptor __instance, BlueprintCharacterClass characterClass, ref Spellbook __result) {
+                if (!TryGetSpellbook(__instance, characterClass, out Spellbook spellbook)) return true;
+                __result = spellbook;
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Saves made before the redirect above can already carry such an empty stray book. Drop it on load
+        /// when the unit has Isekai levels, no levels in the book's class, and nothing learned in the book.
+        /// </summary>
+        [HarmonyPatch(typeof(UnitDescriptor), nameof(UnitDescriptor.PostLoad))]
+        private static class StraySpellbookCleanup {
+            [HarmonyPostfix]
+            private static void Postfix(UnitDescriptor __instance) {
+                try {
+                    BlueprintCharacterClass isekaiClass = IsekaiProtagonistClass.Get();
+                    if (isekaiClass == null || __instance?.Progression?.GetClassData(isekaiClass) == null) return;
+                    var stray = __instance.Spellbooks
+                        .Where(book => book?.Blueprint != null && book.Blueprint.CharacterClass != null
+                            && book.Blueprint.CharacterClass != isekaiClass
+                            && __instance.Progression.GetClassData(book.Blueprint.CharacterClass) == null
+                            && __instance.Progression.Classes.All(cd => cd.Spellbook != book.Blueprint)
+                            && !book.GetAllKnownSpells().Any())
+                        .Select(book => book.Blueprint)
+                        .ToList();
+                    foreach (BlueprintSpellbook book in stray) {
+                        __instance.DeleteSpellbook(book);
+                        Main.IsekaiContext.Logger.Log($"Removed empty stray {book.name} from {__instance.CharacterName}");
+                    }
+                } catch (System.Exception ex) {
+                    Main.IsekaiContext.Logger.Log($"Stray spellbook cleanup skipped for {__instance?.CharacterName}: {ex.Message}");
+                }
+            }
         }
 
         /// <summary>

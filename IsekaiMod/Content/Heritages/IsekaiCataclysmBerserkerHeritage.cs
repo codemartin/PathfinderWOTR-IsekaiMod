@@ -1,4 +1,4 @@
-﻿using IsekaiMod.Utilities;
+using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Selection;
@@ -42,6 +42,7 @@ namespace IsekaiMod.Content.Heritages
 				bp.AddComponent(delegate(CriticalConfirmationBonus c)
 				{
 					c.Bonus = 4;
+					c.Value = 0; // the component reads Value unconditionally, so a missing one throws on every attack roll
 				});
 				bp.AddComponent(delegate(AddStatBonus c)
 				{

@@ -1,4 +1,5 @@
-﻿using IsekaiMod.Content.Classes.IsekaiProtagonist;
+﻿using IsekaiMod.Components;
+using IsekaiMod.Content.Classes.IsekaiProtagonist;
 using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
@@ -77,24 +78,14 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 				{
 					c.Condition = UnitCondition.TrueSeeing;
 				});
-				bp.AddComponent(delegate(ModifyD20 c)
+				// ModifyD20 with AddBonus rewrites every stat on the character per roll and stalls combat;
+				// ChanceRollBonusAndReroll gives the same 20% reroll-and-+4 on the consuming rule instead.
+				bp.AddComponent(delegate(ChanceRollBonusAndReroll c)
 				{
-					c.Rule = RuleType.All;
-					c.TakeBest = true;
-					c.RollsAmount = 1;
-					c.WithChance = true;
-					c.Chance = new ContextValue
-					{
-						ValueType = ContextValueType.Simple,
-						Value = 20
-					};
-					c.AddBonus = true;
-					c.Bonus = new ContextValue
-					{
-						ValueType = ContextValueType.Simple,
-						Value = 4
-					};
-					c.BonusDescriptor = ModifierDescriptor.Sacred;
+					c.Chance = 20;
+					c.Bonus = 4;
+					c.Descriptor = ModifierDescriptor.Sacred;
+					c.RerollTakeBest = true;
 				});
 			});
 			BlueprintAbility MerchantsGambleAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "MerchantsGambleAbility", delegate(BlueprintAbility bp)

@@ -1,5 +1,6 @@
 ﻿using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
+using Kingmaker.ResourceLinks;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.UnitLogic;
@@ -53,6 +54,14 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.MartialGod
 					c.PortalBone = DimensionDoor?.GetComponent<AbilityCustomDimensionDoor>()?.PortalBone ?? "";
 					c.CasterDisappearFx = DimensionDoor?.GetComponent<AbilityCustomDimensionDoor>()?.CasterDisappearFx;
 					c.CasterAppearFx = DimensionDoor?.GetComponent<AbilityCustomDimensionDoor>()?.CasterAppearFx;
+					// Every PrefabLink on this component is loaded during delivery; a null one throws and the teleport
+					// silently never happens. Copy the side effects too and fall back to empty links.
+					c.SideDisappearFx = DimensionDoor?.GetComponent<AbilityCustomDimensionDoor>()?.SideDisappearFx ?? new PrefabLink();
+					c.SideAppearFx = DimensionDoor?.GetComponent<AbilityCustomDimensionDoor>()?.SideAppearFx ?? new PrefabLink();
+					c.PortalFromPrefab = c.PortalFromPrefab ?? new PrefabLink();
+					c.PortalToPrefab = c.PortalToPrefab ?? new PrefabLink();
+					c.CasterDisappearFx = c.CasterDisappearFx ?? new PrefabLink();
+					c.CasterAppearFx = c.CasterAppearFx ?? new PrefabLink();
 				});
 				bp.AddComponent(delegate(AbilityEffectRunAction c)
 				{
@@ -61,7 +70,9 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.MartialGod
 						m_Buff = MartialBlinkBuff.ToReference<BlueprintBuffReference>(),
 						Permanent = false,
 						DurationValue = Values.Duration.OneRound,
-						IsNotDispelable = true
+						IsNotDispelable = true,
+						// The ability targets a point, so without this the buff had nobody to land on.
+						ToCaster = true
 					});
 				});
 			});

@@ -1,5 +1,6 @@
 ﻿using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
+using Kingmaker.ResourceLinks;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Selection;
 using Kingmaker.Blueprints.Facts;
@@ -58,6 +59,14 @@ namespace IsekaiMod.Content.Heritages
 					c.PortalBone = DimDoorAbility?.GetComponent<AbilityCustomDimensionDoor>()?.PortalBone ?? "";
 					c.CasterDisappearFx = DimDoorAbility?.GetComponent<AbilityCustomDimensionDoor>()?.CasterDisappearFx;
 					c.CasterAppearFx = DimDoorAbility?.GetComponent<AbilityCustomDimensionDoor>()?.CasterAppearFx;
+					// Every PrefabLink on this component is loaded during delivery; a null one throws and the teleport
+					// silently never happens. Copy the side effects too and fall back to empty links.
+					c.SideDisappearFx = DimDoorAbility?.GetComponent<AbilityCustomDimensionDoor>()?.SideDisappearFx ?? new PrefabLink();
+					c.SideAppearFx = DimDoorAbility?.GetComponent<AbilityCustomDimensionDoor>()?.SideAppearFx ?? new PrefabLink();
+					c.PortalFromPrefab = c.PortalFromPrefab ?? new PrefabLink();
+					c.PortalToPrefab = c.PortalToPrefab ?? new PrefabLink();
+					c.CasterDisappearFx = c.CasterDisappearFx ?? new PrefabLink();
+					c.CasterAppearFx = c.CasterAppearFx ?? new PrefabLink();
 				});
 			});
 			BlueprintFeature feature = Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiFateweaverHeritage", delegate(BlueprintFeature bp)

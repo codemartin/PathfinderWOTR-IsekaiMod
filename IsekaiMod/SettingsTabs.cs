@@ -47,6 +47,9 @@ namespace IsekaiMod
 			UI.Toggle("Mythic Overpowered Abilities no longer restricted to one.", ref addedContent.MultipleMythicOPAbility);
 			UI.Toggle("Mythic Special Powers no longer restricted to one.", ref addedContent.MultipleMythicSpecialPower);
 			UI.Slider("Isekai Protagonist Spells Known Increment", ref addedContent.IsekaiSpellsKnownIncrement, 1, 6, 6, "spells per level", GUILayout.ExpandWidth(expand: false));
+			// Without the merge the Isekai spell list only holds the spells written into the mod, so spells other
+			// mods add to the class lists (Bladed Dash, Shadow Claws and the like) never appear on it.
+			UI.Toggle("Merge every class spell list into the Isekai Protagonist spell list (includes spells added by other mods).", ref addedContent.MergeIsekaiSpellList);
 			UI.Toggle("Enable Native Level Uncapping (Levels 21 to 40).", ref addedContent.EnableLevelUncapping);
 			UI.Toggle("Enable Dynamic Cosmic Threat Scaling for Enemies.", ref addedContent.EnableCosmicThreatScaling);
 			UI.Toggle("Enable Rival Reincarnator Encounters.", ref addedContent.EnableRivalReincarnators);

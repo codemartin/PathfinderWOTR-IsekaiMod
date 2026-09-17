@@ -1,4 +1,4 @@
-﻿using Kingmaker.Blueprints.Classes;
+using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Spells;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Designers.Mechanics.Facts;
@@ -563,6 +563,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist
 				bp.AddComponent(delegate(CriticalConfirmationBonus c)
 				{
 					c.Bonus = 2;
+					c.Value = 0; // the component reads Value unconditionally, so a missing one throws on every attack roll
 				});
 				bp.AddComponent(delegate(AddStatBonus c)
 				{
