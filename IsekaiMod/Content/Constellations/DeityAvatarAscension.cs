@@ -446,7 +446,7 @@ namespace IsekaiMod.Content.Constellations
 			GodDefierFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "GodDefierFeature", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Transcendence: The God Defier");
-				bp.SetDescription(Main.IsekaiContext, "You have rejected every celestial throne, broken every divine chain, and stood tall as an unyielding mortal. The Constellations watch in stunned awe as your sheer will carves a sovereign sanctuary in reality.\nBenefit: Grants a +4 Untyped bonus to all ability scores, immunity to curses and death magic, spell resistance equal to 6 + your character level, and your weapon attacks deal +4d6 untyped damage against outsiders.");
+				bp.SetDescription(Main.IsekaiContext, "You have rejected every celestial throne, broken every divine chain, and stood tall as an unyielding mortal. The Constellations watch in stunned awe as your sheer will carves a sovereign sanctuary in reality.\nBenefit: Grants a +4 Untyped bonus to all ability scores, immunity to curses and death magic, spell resistance 35, and your weapon attacks deal +4d6 untyped damage against outsiders.");
 				((BlueprintUnitFact)bp).m_Icon = Icon_Coin;
 				bp.IsClassFeature = true;
 				bp.AddComponent(delegate(AddStatBonus c)
@@ -490,22 +490,14 @@ namespace IsekaiMod.Content.Constellations
 					c.Descriptor = SpellDescriptor.Curse | SpellDescriptor.Death;
 				});
 				// The description promises spell resistance and bonus dice against outsiders; a flat +8 damage
-				// was all the feature carried. Spell resistance is 6 + character level (the game has no
-				// "divine spells only" resistance), and the 4d6 lands on weapon hits against outsiders.
+				// was all the feature carried. Spell resistance 35 (the game has no "divine spells only" resistance), and the 4d6 lands on weapon hits against outsiders.
 				bp.AddComponent(delegate(BuffDescriptorImmunity c)
 				{
 					c.Descriptor = SpellDescriptor.Curse | SpellDescriptor.Death;
 				});
 				bp.AddComponent(delegate(AddSpellResistance c)
 				{
-					c.Value = Values.CreateContextRankValue(AbilityRankType.Default);
-				});
-				bp.AddComponent(delegate(ContextRankConfig c)
-				{
-					c.m_Type = AbilityRankType.Default;
-					c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
-					c.m_Progression = ContextRankProgression.BonusValue;
-					c.m_StepLevel = 6;
+					c.Value = 35;
 				});
 				bp.AddComponent(delegate(AdditionalDiceOnAttack c)
 				{
