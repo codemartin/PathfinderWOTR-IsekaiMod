@@ -1,4 +1,6 @@
-﻿using IsekaiMod.Utilities;
+﻿using Kingmaker.UnitLogic.Mechanics;
+using Kingmaker.RuleSystem.Rules.Damage;
+using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.UnitLogic;
 using Kingmaker.Blueprints.Classes;
@@ -113,10 +115,16 @@ namespace IsekaiMod.Content.Guardians
 				bp.SetName(Main.IsekaiContext, "Holy Strike");
 				bp.SetDescription(Main.IsekaiContext, "The angel's weapon and natural strikes gleam with sacred light, dealing an additional 1d6 holy damage.");
 				((BlueprintUnitFact)bp).m_Icon = Icon_Angel;
-				bp.AddComponent(delegate(WeaponEnergyDamageDice c)
+				bp.AddComponent(delegate(AdditionalDiceOnAttack c)
 				{
-					c.EnergyDamageDice = new DiceFormula(1, DiceType.D6);
-					c.Element = DamageEnergyType.Holy;
+					// WeaponEnergyDamageDice is a weapon-enchantment component; on a unit feature it throws and adds nothing.
+					c.AttackType = AdditionalDiceOnAttack.WeaponOptions.OnlyWeaponAttacks;
+					c.OnHit = true;
+					// Both condition checkers are read unconditionally, so they must exist even when empty.
+					c.InitiatorConditions = ActionFlow.EmptyCondition();
+					c.TargetConditions = ActionFlow.EmptyCondition();
+					c.Value = new ContextDiceValue { DiceType = DiceType.D6, DiceCountValue = 1, BonusValue = 0 };
+					c.DamageType = new DamageTypeDescription { Type = DamageType.Energy, Energy = DamageEnergyType.Holy };
 				});
 			});
 			// (a stray duplicate GuardianAngelAuraOfMenaceBuff was created here; CreateToggleAuraBuffFeature below builds the real one)
@@ -369,10 +377,16 @@ namespace IsekaiMod.Content.Guardians
 				bp.SetName(Main.IsekaiContext, "Profane Strike");
 				bp.SetDescription(Main.IsekaiContext, "Attacks deal an additional 1d6 unholy damage.");
 				((BlueprintUnitFact)bp).m_Icon = Icon_Demon;
-				bp.AddComponent(delegate(WeaponEnergyDamageDice c)
+				bp.AddComponent(delegate(AdditionalDiceOnAttack c)
 				{
-					c.EnergyDamageDice = new DiceFormula(1, DiceType.D6);
-					c.Element = DamageEnergyType.Unholy;
+					// WeaponEnergyDamageDice is a weapon-enchantment component; on a unit feature it throws and adds nothing.
+					c.AttackType = AdditionalDiceOnAttack.WeaponOptions.OnlyWeaponAttacks;
+					c.OnHit = true;
+					// Both condition checkers are read unconditionally, so they must exist even when empty.
+					c.InitiatorConditions = ActionFlow.EmptyCondition();
+					c.TargetConditions = ActionFlow.EmptyCondition();
+					c.Value = new ContextDiceValue { DiceType = DiceType.D6, DiceCountValue = 1, BonusValue = 0 };
+					c.DamageType = new DamageTypeDescription { Type = DamageType.Energy, Energy = DamageEnergyType.Unholy };
 				});
 			});
 			BlueprintFeature DemonAllure = Helpers.CreateBlueprint(Main.IsekaiContext, "LoyalDemonAllure", delegate(BlueprintFeature bp)
@@ -479,10 +493,16 @@ namespace IsekaiMod.Content.Guardians
 				bp.SetName(Main.IsekaiContext, "Ethereal Claws");
 				bp.SetDescription(Main.IsekaiContext, "Claw attacks inflict an additional 1d6 force damage.");
 				((BlueprintUnitFact)bp).m_Icon = Icon_Pet;
-				bp.AddComponent(delegate(WeaponEnergyDamageDice c)
+				bp.AddComponent(delegate(AdditionalDiceOnAttack c)
 				{
-					c.EnergyDamageDice = new DiceFormula(1, DiceType.D6);
-					c.Element = DamageEnergyType.Magic;
+					// WeaponEnergyDamageDice is a weapon-enchantment component; on a unit feature it throws and adds nothing.
+					c.AttackType = AdditionalDiceOnAttack.WeaponOptions.OnlyWeaponAttacks;
+					c.OnHit = true;
+					// Both condition checkers are read unconditionally, so they must exist even when empty.
+					c.InitiatorConditions = ActionFlow.EmptyCondition();
+					c.TargetConditions = ActionFlow.EmptyCondition();
+					c.Value = new ContextDiceValue { DiceType = DiceType.D6, DiceCountValue = 1, BonusValue = 0 };
+					c.DamageType = new DamageTypeDescription { Type = DamageType.Energy, Energy = DamageEnergyType.Magic };
 				});
 			});
 			BlueprintFeature DevourerSingularity = Helpers.CreateBlueprint(Main.IsekaiContext, "AstralDevourerSingularity", delegate(BlueprintFeature bp)

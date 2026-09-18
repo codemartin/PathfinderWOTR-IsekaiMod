@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using IsekaiMod.Components;
 using IsekaiMod.Utilities;
@@ -1749,7 +1749,7 @@ namespace IsekaiMod.Content.Constellations
 			} : null);
 			blueprintCue8.Answers.Add(bp76.ToReference<BlueprintAnswerBaseReference>());
 			blueprintCue8.Answers.Add(bp17.ToReference<BlueprintAnswerBaseReference>());
-			Helpers.CreateBlueprint(Main.IsekaiContext, "OpenCosmicStoreAbility", delegate(BlueprintAbility blueprintAbility)
+			BlueprintAbility openStoreAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "OpenCosmicStoreAbility", delegate(BlueprintAbility blueprintAbility)
 			{
 				blueprintAbility.SetName(Main.IsekaiContext, "Commune with Constellations");
 				blueprintAbility.SetDescription(Main.IsekaiContext, "Open the Cosmic Constellation Exchange dialog to browse offerings, redeem accumulated Cosmic Coins for divine blessings, mythic boons, web novel elixirs, modular wishes, infusions, switch patron deities, or ascend as a divine Avatar.");
@@ -1796,7 +1796,8 @@ namespace IsekaiMod.Content.Constellations
 				storeAbilities.Add(ModularCosmicWishAbility);
 				blueprintFeature2.AddComponent(delegate(AddFacts c)
 				{
-					c.m_Facts = new BlueprintUnitFactReference[1] { ModularCosmicWishAbility.ToReference<BlueprintUnitFactReference>() };
+					// The store ability was created but never granted, so the exchange only handed out the Cosmic Wish.
+					c.m_Facts = new BlueprintUnitFactReference[2] { ModularCosmicWishAbility.ToReference<BlueprintUnitFactReference>(), openStoreAbility.ToReference<BlueprintUnitFactReference>() };
 				});
 			});
 			void AddBlessing(string name, string displayName, string desc, int cost, Action<BlueprintBuff> configureBuff)

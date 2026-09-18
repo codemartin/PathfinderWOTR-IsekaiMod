@@ -43,7 +43,9 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 					c.Value = 2;
 					c.Descriptor = ModifierDescriptor.UntypedStackable;
 				});
-				bp.Stacking = StackingType.Replace;
+				// Prolong extends the running buff instead of removing and re-adding it; with Replace every kill
+				// re-added both modifiers on every party member, which showed up as the busiest modifier source in combat.
+				bp.Stacking = StackingType.Prolong;
 				bp.m_Flags = (BlueprintBuff.Flags)0;
 			});
 			BlueprintBuff PowerLevelingBuff = Helpers.CreateBlueprint(Main.IsekaiContext, "PowerLevelingBuff", delegate(BlueprintBuff bp)

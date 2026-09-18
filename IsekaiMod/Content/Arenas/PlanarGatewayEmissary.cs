@@ -86,7 +86,7 @@ namespace IsekaiMod.Content.Arenas
 		private static void CreateEmissaryBlueprints()
 		{
 			BlueprintUnit baseDeva = BlueprintTools.GetBlueprint<BlueprintUnit>("7bcffd91514f489469a6fb6dea0a50d2");
-			PlanarGatewayEmissaryUnit = Helpers.CreateBlueprint(Main.IsekaiContext, "PlanarGatewayEmissaryUnit", delegate(BlueprintUnit bp)
+			PlanarGatewayEmissaryUnit = HubUnitFactory.Create(baseDeva, "PlanarGatewayEmissaryUnit", delegate(BlueprintUnit bp)
 			{
 				bp.SetLocalisedName(Main.IsekaiContext, "Otherworldly Emissary");
 				if (baseDeva != null)

@@ -131,7 +131,7 @@ namespace IsekaiMod.Content.Arenas
 		private static void CreateHubBlueprints()
 		{
 			BlueprintUnit baseDeva = BlueprintTools.GetBlueprint<BlueprintUnit>("7bcffd91514f489469a6fb6dea0a50d2");
-			AstralCoinEnvoyUnit = Helpers.CreateBlueprint(Main.IsekaiContext, "AstralCoinEnvoyUnit", delegate(BlueprintUnit bp)
+			AstralCoinEnvoyUnit = HubUnitFactory.Create(baseDeva, "AstralCoinEnvoyUnit", delegate(BlueprintUnit bp)
 			{
 				bp.SetLocalisedName(Main.IsekaiContext, "The Astral Coin Envoy");
 				if (baseDeva != null)
@@ -221,7 +221,7 @@ namespace IsekaiMod.Content.Arenas
 					Cues = new List<BlueprintCueBaseReference> { blueprintCue.ToReference<BlueprintCueBaseReference>() }
 				};
 			});
-			VoidMarketSmugglerUnit = Helpers.CreateBlueprint(Main.IsekaiContext, "VoidMarketSmugglerUnit", delegate(BlueprintUnit bp)
+			VoidMarketSmugglerUnit = HubUnitFactory.Create(baseDeva, "VoidMarketSmugglerUnit", delegate(BlueprintUnit bp)
 			{
 				bp.SetLocalisedName(Main.IsekaiContext, "The Void Market Smuggler");
 				if (baseDeva != null)
@@ -311,7 +311,7 @@ namespace IsekaiMod.Content.Arenas
 					Cues = new List<BlueprintCueBaseReference> { blueprintCue.ToReference<BlueprintCueBaseReference>() }
 				};
 			});
-			ConstellationOracleUnit = Helpers.CreateBlueprint(Main.IsekaiContext, "ConstellationOracleUnit", delegate(BlueprintUnit bp)
+			ConstellationOracleUnit = HubUnitFactory.Create(baseDeva, "ConstellationOracleUnit", delegate(BlueprintUnit bp)
 			{
 				bp.SetLocalisedName(Main.IsekaiContext, "The High Oracle of the Constellations");
 				if (baseDeva != null)

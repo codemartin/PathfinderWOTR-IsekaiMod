@@ -1,4 +1,4 @@
-using Kingmaker.Blueprints;
+﻿using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Prerequisites;
 using Kingmaker.Blueprints.Classes.Selection;
@@ -46,6 +46,11 @@ namespace IsekaiMod.Utilities {
                 Sources = (sources ?? new BlueprintFeatureSelection[0]).Where(s => s != null).ToArray(),
                 Excluded = new HashSet<BlueprintGuid>((exclude ?? Enumerable.Empty<BlueprintFeatureReference>()).Where(r => r != null).Select(r => r.Guid))
             });
+        }
+
+        /// <summary>Every base-game selection that a registered mirror copies from, plus the mirrors themselves.</summary>
+        public static IEnumerable<BlueprintFeatureSelection> AllSelections() {
+            return mirrors.SelectMany(m => m.Sources.Concat(new[] { m.Target })).Where(s => s != null).Distinct();
         }
 
         /// <summary>

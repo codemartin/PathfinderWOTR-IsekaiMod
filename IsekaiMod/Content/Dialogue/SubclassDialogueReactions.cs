@@ -2,6 +2,8 @@
 using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
+using Kingmaker.AreaLogic.Etudes;
+using Kingmaker.Designers.EventConditionActionSystem.Actions;
 using Kingmaker.Designers.EventConditionActionSystem.Conditions;
 using Kingmaker.Designers.EventConditionActionSystem.Evaluators;
 using Kingmaker.DialogSystem;
@@ -49,6 +51,9 @@ namespace IsekaiMod.Content.Dialogue
 		{
 			BlueprintAnswersList answersList = BlueprintTools.GetBlueprint<BlueprintAnswersList>("e27807b731f3b1a4eb19c1a04fdfcf53");
 			BlueprintCue dontRememberCue = BlueprintTools.GetBlueprint<BlueprintCue>("ba9c82193a32275408973a8aebdb3a6d");
+			// The vanilla "I don't remember" answer starts this etude; the Aeon Kenabres flashback in chapter 5 reads it
+			// to replay the choice. The archetype answers rejoin that path, so they start it too.
+			BlueprintEtude dontRememberEtude = BlueprintTools.GetBlueprint<BlueprintEtude>("d6c6161d2cf0ac44786f9df67fca5ce9");
 			if (answersList != null)
 			{
 				AddArchetypeHulrunAnswer("IsekaiHulrunMartialGod", "(Martial God) \"Lower that halberd, inquisitor. I just woke up in this square, and waving polearms at recovering patients is hardly proper festival etiquette.\"", "{n}Hulrun blinks rapidly, his knuckles whitening on his halberd.{/n} \"A speedster... and an arrogant one at that. I saw no dust from your stride. Either you are blessed by an astral wind, or you bear strange foreign sorcery...\"", "MartialGodProficiencies");
@@ -87,6 +92,14 @@ namespace IsekaiMod.Content.Dialogue
 							Unit = new PlayerCharacter(),
 							m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>()
 						});
+						if (dontRememberEtude != null)
+						{
+							blueprintAnswer.OnSelect = ActionFlow.DoSingle(delegate(StartEtude c)
+							{
+								c.Etude = dontRememberEtude.ToReference<BlueprintEtudeReference>();
+								c.Evaluate = false;
+							});
+						}
 					});
 					answersList.Answers.Insert(0, bp.ToReference<BlueprintAnswerBaseReference>());
 				}
@@ -191,7 +204,9 @@ namespace IsekaiMod.Content.Dialogue
 		private static void AddWelcomeDialogueReactions()
 		{
 			BlueprintAnswersList answersList = BlueprintTools.GetBlueprint<BlueprintAnswersList>("87997a477e6a58d4aae46e26a3712825");
-			BlueprintCue continueCue = BlueprintTools.GetBlueprint<BlueprintCue>("871b1e1fa68e49fb999f893fbef9f0b3");
+			// Cue_0017: the unconditional line every vanilla answer here leads to. The previous target (Cue_0002) is the
+			// Dahak-worshipper branch and has a HasFact condition, so for anyone else the dialogue simply ended.
+			BlueprintCue continueCue = BlueprintTools.GetBlueprint<BlueprintCue>("76c6a0e7880db144c9138c6b39d386d9");
 			if (answersList != null && continueCue != null)
 			{
 				BlueprintCue dejaVuReply = TTCoreExtensions.CreateCue("IsekaiWelcomeDejaVuReply", delegate(BlueprintCue blueprintCue)
@@ -262,7 +277,9 @@ namespace IsekaiMod.Content.Dialogue
 		private static void AddMeetCameliaReactions()
 		{
 			BlueprintAnswersList answersList = BlueprintTools.GetBlueprint<BlueprintAnswersList>("1ca6cf08fceeac141a0df689cecc784a");
-			BlueprintCue continueCue = BlueprintTools.GetBlueprint<BlueprintCue>("a3b4f763acce63b499983c4a47f652d4");
+			// Cue_0023: Camellia's closing line that all vanilla answers converge on. The previous target (Cue_0007) was
+			// Seelah's earlier introduction, which replayed out of order.
+			BlueprintCue continueCue = BlueprintTools.GetBlueprint<BlueprintCue>("6c60c319a85446f4dbfe60aeffb65080");
 			if (answersList != null && continueCue != null)
 			{
 				AddMeetCameliaAnswer("IsekaiCameliaGeneral", "(Isekai Protagonist) \"Did... did you see that giant silver dragon up there?! In my world, dragons are myths and fantasy legends! That thing was REAL! And that demon with the giant scythe... holy crap, are you alright?!\"", "{n}Camellia wipes a smudge of dirt from her pale cheek, giving you a cool, calculating look.{/n} \"Of course Terendelev was real. She was the ancient protector of Kenabres. But dwelling on her fall won't pull us out of this pit. Stand up; panicking like a startled peasant will get us killed down here.\"", "IsekaiProficiencies");
@@ -444,11 +461,9 @@ namespace IsekaiMod.Content.Dialogue
 					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue blueprintCue)
 					{
 						blueprintCue.SetText(Main.IsekaiContext, cueText);
-						blueprintCue.Continue = new CueSelection
-						{
-							Cues = new List<BlueprintCueBaseReference> { continueCue.ToReference<BlueprintCueBaseReference>() },
-							Strategy = Strategy.First
-						};
+						// This conversation is a question hub; Cue_0003 ("Lann nods silently") is its exit line, so
+						// continuing there closed the dialogue before Lann could be recruited. Return to the hub instead.
+						blueprintCue.Answers = answersList.Answers;
 					});
 					BlueprintAnswer bp = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer blueprintAnswer)
 					{

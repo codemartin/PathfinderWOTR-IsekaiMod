@@ -52,6 +52,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 				bp.AddComponent(delegate(CriticalConfirmationBonus c)
 				{
 					c.Bonus = 4;
+					c.Value = 0; // the component reads Value unconditionally, so a missing one throws on every attack roll
 				});
 				bp.AddComponent(delegate(IncreaseAllSpellsDC c)
 				{

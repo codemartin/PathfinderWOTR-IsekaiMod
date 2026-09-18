@@ -1,4 +1,7 @@
-﻿using IsekaiMod.Utilities;
+﻿using Kingmaker.UnitLogic.Mechanics.Components;
+using Kingmaker.UnitLogic.Mechanics;
+using Kingmaker.RuleSystem.Rules.Damage;
+using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Facts;
@@ -171,10 +174,16 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.MartialGod
 				bp.SetDescription(Main.IsekaiContext, "Attaining absolute divine combat mastery, all your attacks deal an additional 2d6 force damage and you gain a +4 dodge bonus to AC. Furthermore, you can unleash a Limit Breaker Combat Surge as a swift action.");
 				((BlueprintUnitFact)bp).m_Icon = Icon_InnerSoul;
 				bp.IsClassFeature = true;
-				bp.AddComponent(delegate(WeaponEnergyDamageDice c)
+				bp.AddComponent(delegate(AdditionalDiceOnAttack c)
 				{
-					c.EnergyDamageDice = new DiceFormula(2, DiceType.D6);
-					c.Element = DamageEnergyType.Magic;
+					// WeaponEnergyDamageDice is a weapon-enchantment component; on a unit feature it throws and adds nothing.
+					c.AttackType = AdditionalDiceOnAttack.WeaponOptions.OnlyWeaponAttacks;
+					c.OnHit = true;
+					// Both condition checkers are read unconditionally, so they must exist even when empty.
+					c.InitiatorConditions = ActionFlow.EmptyCondition();
+					c.TargetConditions = ActionFlow.EmptyCondition();
+					c.Value = new ContextDiceValue { DiceType = DiceType.D6, DiceCountValue = 2, BonusValue = 0 };
+					c.DamageType = new DamageTypeDescription { Type = DamageType.Energy, Energy = DamageEnergyType.Magic };
 				});
 				bp.AddComponent(delegate(AddStatBonus c)
 				{

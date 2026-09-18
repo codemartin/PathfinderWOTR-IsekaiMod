@@ -35,7 +35,7 @@ namespace IsekaiMod.Content.Arenas
 		private static void CreateColiseumDialogue()
 		{
 			BlueprintUnit baseDeva = BlueprintTools.GetBlueprint<BlueprintUnit>("7bcffd91514f489469a6fb6dea0a50d2");
-			ColiseumHeraldUnit = Helpers.CreateBlueprint(Main.IsekaiContext, "PlanarColiseumHeraldUnit", delegate(BlueprintUnit bp)
+			ColiseumHeraldUnit = HubUnitFactory.Create(baseDeva, "PlanarColiseumHeraldUnit", delegate(BlueprintUnit bp)
 			{
 				bp.SetLocalisedName(Main.IsekaiContext, "Herald of the Planar Coliseum");
 				if (baseDeva != null)

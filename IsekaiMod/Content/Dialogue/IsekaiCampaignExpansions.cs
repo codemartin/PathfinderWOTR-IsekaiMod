@@ -20,6 +20,8 @@ using Kingmaker.Designers.Mechanics.Facts;
 using Kingmaker.DialogSystem;
 using Kingmaker.DialogSystem.Blueprints;
 using Kingmaker.EntitySystem.Stats;
+using Kingmaker.UnitLogic.Abilities.Blueprints;
+using Kingmaker.Utility;
 using Kingmaker.Enums;
 using Kingmaker.Localization;
 using Kingmaker.UnitLogic;
@@ -46,6 +48,20 @@ namespace IsekaiMod.Content.Dialogue
 		public static BlueprintFeature ResonantMythicSparkFeature;
 
 		public static BlueprintItem ItemSilverDragonShard;
+
+		public static BlueprintItemEquipmentNeck ItemSilverDragonShardPendant;
+
+		public static BlueprintItemEquipmentHead ItemLarielFeatherCirclet;
+
+		public static BlueprintItemEquipmentWrist ItemThieflingCharmBracelet;
+
+		public static BlueprintItemEquipmentRing ItemRoyalMendevianSignetRing;
+
+		public static BlueprintItemEquipmentShoulders ItemHellknightOfficerCloak;
+
+		public static BlueprintItemEquipmentBelt ItemThieflingMasterLockpicksBelt;
+
+		public static BlueprintItemEquipmentGloves ItemNenioInscribedJournalGloves;
 
 		public static BlueprintItemEquipmentUsable ItemTearOfSilverDragon;
 
@@ -283,6 +299,59 @@ namespace IsekaiMod.Content.Dialogue
 				bp.m_IsNotable = true;
 				bp.m_Destructible = false;
 			});
+			// The original shard is a plain inventory item with no effect; it stays defined so saves that already
+			// hold one keep loading. The pendant below is what the healing scene hands out now.
+			BlueprintItemEquipmentNeck shardBaseNeck = BlueprintTools.GetBlueprint<BlueprintItemEquipmentNeck>("afd04948b8f211c448f1cc4bd9a67e3e");
+			BlueprintFeature shardFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "ItemSilverDragonShardPendantFeature", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Silver Dragon's Shard");
+				bp.SetDescription(Main.IsekaiContext, "Terendelev's starlight shields the wearer from dark sorceries: a +2 sacred bonus on saving throws against necromancy spells and against effects with the evil descriptor, and a +1 sacred bonus on all other saving throws.");
+				((BlueprintUnitFact)bp).m_Icon = ((BlueprintItem)shardBaseNeck)?.m_Icon ?? iconCoin;
+				bp.AddComponent(delegate(SavingThrowBonusAgainstSchool c)
+				{
+					c.ModifierDescriptor = ModifierDescriptor.Sacred;
+					c.School = SpellSchool.Necromancy;
+					c.Value = 2;
+				});
+				bp.AddComponent(delegate(SavingThrowBonusAgainstDescriptor c)
+				{
+					c.ModifierDescriptor = ModifierDescriptor.Sacred;
+					c.SpellDescriptor = SpellDescriptor.Evil;
+					c.Value = 2;
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Sacred;
+					c.Stat = StatType.SaveFortitude;
+					c.Value = 1;
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Sacred;
+					c.Stat = StatType.SaveReflex;
+					c.Value = 1;
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Sacred;
+					c.Stat = StatType.SaveWill;
+					c.Value = 1;
+				});
+			});
+			ItemSilverDragonShardPendant = Helpers.CreateBlueprint(Main.IsekaiContext, "ItemSilverDragonShardPendant", delegate(BlueprintItemEquipmentNeck bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Silver Dragon's Shard");
+				bp.SetDescription(Main.IsekaiContext, "A radiant silver crystal fragment imbued with Terendelev's sacred starlight, strung on a simple cord. It pulses with gentle warmth, shielding its wearer from dark sorceries: a +2 sacred bonus on saving throws against necromancy spells and evil effects, and a +1 sacred bonus on all other saving throws.");
+				((BlueprintItem)bp).m_Icon = ((BlueprintItem)shardBaseNeck)?.m_Icon ?? iconCoin;
+				((BlueprintItem)bp).m_Cost = 4000;
+				((BlueprintItem)bp).m_Weight = 0.5f;
+				((BlueprintItem)bp).m_IsNotable = true;
+				((BlueprintItem)bp).m_Destructible = false;
+				bp.AddComponent(delegate(AddFactToEquipmentWielder c)
+				{
+					c.m_Fact = shardFeature.ToReference<BlueprintUnitFactReference>();
+				});
+			});
 			ItemTearOfSilverDragon = Helpers.CreateBlueprint(Main.IsekaiContext, "ItemTearOfSilverDragon", delegate(BlueprintItemEquipmentUsable bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Tear of the Silver Dragon");
@@ -466,6 +535,171 @@ namespace IsekaiMod.Content.Dialogue
 				bp.m_Weight = 1f;
 				bp.m_IsNotable = true;
 				bp.m_Destructible = false;
+			});
+			// Wearable versions of the story keepsakes. The plain items above stay defined so saves that already
+			// hold one keep loading; the answers hand out these from now on.
+			BlueprintItemEquipmentHead keepsakeBaseHead = BlueprintTools.GetBlueprint<BlueprintItemEquipmentHead>("a3e8e907908ca7a40ac6da78e70bf33d");
+			BlueprintItemEquipmentWrist keepsakeBaseWrist = BlueprintTools.GetBlueprint<BlueprintItemEquipmentWrist>("9482c62934be44044918c3aac3730232");
+			BlueprintItemEquipmentRing keepsakeBaseRing = BlueprintTools.GetBlueprint<BlueprintItemEquipmentRing>("f333bf86cd122974792162cbcd27c9ed");
+			BlueprintItemEquipmentShoulders keepsakeBaseCloak = BlueprintTools.GetBlueprint<BlueprintItemEquipmentShoulders>("4aea6773c1da01c42bd382c1b7c384bc");
+			BlueprintItemEquipmentBelt keepsakeBaseBelt = BlueprintTools.GetBlueprint<BlueprintItemEquipmentBelt>("b9cc5d85d4a5032458ef4491f5fed251");
+			BlueprintItemEquipmentGloves keepsakeBaseGloves = BlueprintTools.GetBlueprint<BlueprintItemEquipmentGloves>("6555965e6540c3b48b9a352214ecba41");
+			BlueprintFeature subtypeDemon = BlueprintTools.GetBlueprint<BlueprintFeature>("dc960a234d365cb4f905bdc5937e623a");
+
+			BlueprintFeature featherFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "ItemLarielFeatherCircletFeature", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Lariel's Radiant Feather");
+				bp.SetDescription(Main.IsekaiContext, "Lariel's memory burns against the Abyss: a +2 sacred bonus on attack and damage rolls against demons.");
+				((BlueprintUnitFact)bp).m_Icon = ((BlueprintItem)keepsakeBaseHead)?.m_Icon ?? iconCoin;
+				if (subtypeDemon != null)
+				{
+					bp.AddComponent(delegate(AttackBonusAgainstFactOwner c)
+					{
+						c.m_CheckedFact = subtypeDemon.ToReference<BlueprintUnitFactReference>();
+						c.AttackBonus = 2;
+						c.Bonus = 0;
+						c.Descriptor = ModifierDescriptor.Sacred;
+					});
+					bp.AddComponent(delegate(DamageBonusAgainstFactOwner c)
+					{
+						c.m_CheckedFact = subtypeDemon.ToReference<BlueprintUnitFactReference>();
+						c.DamageBonus = 2;
+						c.Bonus = 0;
+						c.Descriptor = ModifierDescriptor.Sacred;
+					});
+				}
+			});
+			ItemLarielFeatherCirclet = Helpers.CreateBlueprint(Main.IsekaiContext, "ItemLarielFeatherCirclet", delegate(BlueprintItemEquipmentHead bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Lariel's Radiant Feather");
+				bp.SetDescription(Main.IsekaiContext, "A pristine celestial feather plucked from the memory of the angel Lariel, bound into a simple circlet. Glows with unyielding righteousness against the demonic hordes: +2 sacred bonus on attack and damage rolls against demons.");
+				((BlueprintItem)bp).m_Icon = ((BlueprintItem)keepsakeBaseHead)?.m_Icon ?? iconCoin;
+				((BlueprintItem)bp).m_Cost = 6000;
+				((BlueprintItem)bp).m_Weight = 0.1f;
+				((BlueprintItem)bp).m_IsNotable = true;
+				((BlueprintItem)bp).m_Destructible = false;
+				bp.AddComponent(delegate(AddFactToEquipmentWielder c)
+				{
+					c.m_Fact = featherFeature.ToReference<BlueprintUnitFactReference>();
+				});
+			});
+
+			BlueprintFeature charmFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "ItemThieflingCharmBraceletFeature", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Thiefling's Luck Charm");
+				bp.SetDescription(Main.IsekaiContext, "The Thieflings' luck rubs off: a +1 luck bonus on all saving throws and a +2 competence bonus to Trickery checks.");
+				((BlueprintUnitFact)bp).m_Icon = ((BlueprintItem)keepsakeBaseWrist)?.m_Icon ?? iconCoin;
+				bp.AddComponent(delegate(AddStatBonus c) { c.Descriptor = ModifierDescriptor.Luck; c.Stat = StatType.SaveFortitude; c.Value = 1; });
+				bp.AddComponent(delegate(AddStatBonus c) { c.Descriptor = ModifierDescriptor.Luck; c.Stat = StatType.SaveReflex; c.Value = 1; });
+				bp.AddComponent(delegate(AddStatBonus c) { c.Descriptor = ModifierDescriptor.Luck; c.Stat = StatType.SaveWill; c.Value = 1; });
+				bp.AddComponent(delegate(AddStatBonus c) { c.Descriptor = ModifierDescriptor.Competence; c.Stat = StatType.SkillThievery; c.Value = 2; });
+			});
+			ItemThieflingCharmBracelet = Helpers.CreateBlueprint(Main.IsekaiContext, "ItemThieflingCharmBracelet", delegate(BlueprintItemEquipmentWrist bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Thiefling's Luck Charm");
+				bp.SetDescription(Main.IsekaiContext, "A brass coin stamped with the mark of the Kenabres Thieflings, pledged by Woljif Jefto under an Otherworlder retainer contract and worn on a leather cord. +1 luck bonus on all saving throws and +2 competence bonus to Trickery checks.");
+				((BlueprintItem)bp).m_Icon = ((BlueprintItem)keepsakeBaseWrist)?.m_Icon ?? iconCoin;
+				((BlueprintItem)bp).m_Cost = 3000;
+				((BlueprintItem)bp).m_Weight = 0.1f;
+				((BlueprintItem)bp).m_IsNotable = true;
+				((BlueprintItem)bp).m_Destructible = false;
+				bp.AddComponent(delegate(AddFactToEquipmentWielder c)
+				{
+					c.m_Fact = charmFeature.ToReference<BlueprintUnitFactReference>();
+				});
+			});
+
+			BlueprintFeature signetAura = TTCoreExtensions.CreateToggleAuraBuffFeature("RoyalMendevianCommandAura", "The signet's authority rallies nearby allies: allies within 30 feet gain a +1 morale bonus on attack rolls and saving throws.", "Rallied by the Royal Mendevian Command Signet: +1 morale bonus on attack rolls and saving throws.", ((BlueprintItem)keepsakeBaseRing)?.m_Icon ?? iconCoin, BlueprintAbilityAreaEffect.TargetType.Ally, new Feet(30f), affectEnemies: false, delegate(BlueprintBuff bp)
+			{
+				bp.AddComponent(delegate(AddStatBonus c) { c.Descriptor = ModifierDescriptor.Morale; c.Stat = StatType.AdditionalAttackBonus; c.Value = 1; });
+				bp.AddComponent(delegate(AddStatBonus c) { c.Descriptor = ModifierDescriptor.Morale; c.Stat = StatType.SaveFortitude; c.Value = 1; });
+				bp.AddComponent(delegate(AddStatBonus c) { c.Descriptor = ModifierDescriptor.Morale; c.Stat = StatType.SaveReflex; c.Value = 1; });
+				bp.AddComponent(delegate(AddStatBonus c) { c.Descriptor = ModifierDescriptor.Morale; c.Stat = StatType.SaveWill; c.Value = 1; });
+			});
+			ItemRoyalMendevianSignetRing = Helpers.CreateBlueprint(Main.IsekaiContext, "ItemRoyalMendevianSignetRing", delegate(BlueprintItemEquipmentRing bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Royal Mendevian Command Signet");
+				bp.SetDescription(Main.IsekaiContext, "A gold signet ring engraved with the royal crest of Mendev, gifted directly by Queen Galfrey. Radiates sovereign authority: the wearer can project a Command Aura that grants allies within 30 feet a +1 morale bonus on attack rolls and saving throws.");
+				((BlueprintItem)bp).m_Icon = ((BlueprintItem)keepsakeBaseRing)?.m_Icon ?? iconCoin;
+				((BlueprintItem)bp).m_Cost = 8000;
+				((BlueprintItem)bp).m_Weight = 0.1f;
+				((BlueprintItem)bp).m_IsNotable = true;
+				((BlueprintItem)bp).m_Destructible = false;
+				bp.AddComponent(delegate(AddFactToEquipmentWielder c)
+				{
+					c.m_Fact = signetAura.ToReference<BlueprintUnitFactReference>();
+				});
+			});
+
+			BlueprintFeature regaliaFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "ItemHellknightOfficerCloakFeature", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Hellknight Officer's Field Regalia");
+				bp.SetDescription(Main.IsekaiContext, "Godclaw discipline: a +2 competence bonus to Persuasion checks and a +2 resistance bonus on Fortitude and Will saving throws.");
+				((BlueprintUnitFact)bp).m_Icon = ((BlueprintItem)keepsakeBaseCloak)?.m_Icon ?? iconCoin;
+				bp.AddComponent(delegate(AddStatBonus c) { c.Descriptor = ModifierDescriptor.Competence; c.Stat = StatType.SkillPersuasion; c.Value = 2; });
+				bp.AddComponent(delegate(AddStatBonus c) { c.Descriptor = ModifierDescriptor.Resistance; c.Stat = StatType.SaveFortitude; c.Value = 2; });
+				bp.AddComponent(delegate(AddStatBonus c) { c.Descriptor = ModifierDescriptor.Resistance; c.Stat = StatType.SaveWill; c.Value = 2; });
+			});
+			ItemHellknightOfficerCloak = Helpers.CreateBlueprint(Main.IsekaiContext, "ItemHellknightOfficerCloak", delegate(BlueprintItemEquipmentShoulders bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Hellknight Officer's Field Regalia");
+				bp.SetDescription(Main.IsekaiContext, "A polished cold iron medallion on an officer's half-cloak, stamped with the symbol of the Order of the Godclaw and conferred by Paralictor Regill Derenge in recognition of impeccable field triage and strategic logic. +2 competence bonus to Persuasion and +2 resistance bonus on Fortitude and Will saves.");
+				((BlueprintItem)bp).m_Icon = ((BlueprintItem)keepsakeBaseCloak)?.m_Icon ?? iconCoin;
+				((BlueprintItem)bp).m_Cost = 5000;
+				((BlueprintItem)bp).m_Weight = 0.5f;
+				((BlueprintItem)bp).m_IsNotable = true;
+				((BlueprintItem)bp).m_Destructible = false;
+				bp.AddComponent(delegate(AddFactToEquipmentWielder c)
+				{
+					c.m_Fact = regaliaFeature.ToReference<BlueprintUnitFactReference>();
+				});
+			});
+
+			BlueprintFeature lockpicksFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "ItemThieflingMasterLockpicksBeltFeature", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Thiefling Master Lockpicks");
+				bp.SetDescription(Main.IsekaiContext, "Grants a +3 competence bonus to Trickery checks.");
+				((BlueprintUnitFact)bp).m_Icon = ((BlueprintItem)keepsakeBaseBelt)?.m_Icon ?? iconCoin;
+				bp.AddComponent(delegate(AddStatBonus c) { c.Descriptor = ModifierDescriptor.Competence; c.Stat = StatType.SkillThievery; c.Value = 3; });
+			});
+			ItemThieflingMasterLockpicksBelt = Helpers.CreateBlueprint(Main.IsekaiContext, "ItemThieflingMasterLockpicksBelt", delegate(BlueprintItemEquipmentBelt bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Thiefling Master Lockpicks");
+				bp.SetDescription(Main.IsekaiContext, "A set of finely-tempered cold iron tension wrenches and skeleton picks gifted by Sister Kerisme, carried on a tool belt. Grants a +3 competence bonus to Trickery checks.");
+				((BlueprintItem)bp).m_Icon = ((BlueprintItem)keepsakeBaseBelt)?.m_Icon ?? iconCoin;
+				((BlueprintItem)bp).m_Cost = 2500;
+				((BlueprintItem)bp).m_Weight = 0.5f;
+				((BlueprintItem)bp).m_IsNotable = true;
+				((BlueprintItem)bp).m_Destructible = false;
+				bp.AddComponent(delegate(AddFactToEquipmentWielder c)
+				{
+					c.m_Fact = lockpicksFeature.ToReference<BlueprintUnitFactReference>();
+				});
+			});
+
+			BlueprintFeature journalFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "ItemNenioInscribedJournalGlovesFeature", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Nenio's Inscribed Research Journal");
+				bp.SetDescription(Main.IsekaiContext, "Nenio's notes inspire profound intellectual curiosity: a +2 competence bonus to Knowledge (Arcana), Knowledge (World), Lore (Nature) and Lore (Religion) checks.");
+				((BlueprintUnitFact)bp).m_Icon = ((BlueprintItem)keepsakeBaseGloves)?.m_Icon ?? iconCoin;
+				bp.AddComponent(delegate(AddStatBonus c) { c.Descriptor = ModifierDescriptor.Competence; c.Stat = StatType.SkillKnowledgeArcana; c.Value = 2; });
+				bp.AddComponent(delegate(AddStatBonus c) { c.Descriptor = ModifierDescriptor.Competence; c.Stat = StatType.SkillKnowledgeWorld; c.Value = 2; });
+				bp.AddComponent(delegate(AddStatBonus c) { c.Descriptor = ModifierDescriptor.Competence; c.Stat = StatType.SkillLoreNature; c.Value = 2; });
+				bp.AddComponent(delegate(AddStatBonus c) { c.Descriptor = ModifierDescriptor.Competence; c.Stat = StatType.SkillLoreReligion; c.Value = 2; });
+			});
+			ItemNenioInscribedJournalGloves = Helpers.CreateBlueprint(Main.IsekaiContext, "ItemNenioInscribedJournalGloves", delegate(BlueprintItemEquipmentGloves bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Nenio's Inscribed Research Journal");
+				bp.SetDescription(Main.IsekaiContext, "A thick leather-bound compendium filled with Nenio's frantic diagrams, multiversal theorems, and cellular taxonomy notes, strapped to the forearm for reading on the move. Inspires profound intellectual curiosity: +2 competence bonus to Knowledge (Arcana), Knowledge (World), Lore (Nature) and Lore (Religion) checks.");
+				((BlueprintItem)bp).m_Icon = ((BlueprintItem)keepsakeBaseGloves)?.m_Icon ?? iconCoin;
+				((BlueprintItem)bp).m_Cost = 4000;
+				((BlueprintItem)bp).m_Weight = 1f;
+				((BlueprintItem)bp).m_IsNotable = true;
+				((BlueprintItem)bp).m_Destructible = false;
+				bp.AddComponent(delegate(AddFactToEquipmentWielder c)
+				{
+					c.m_Fact = journalFeature.ToReference<BlueprintUnitFactReference>();
+				});
 			});
 			TavernDefianceMoraleBuff = Helpers.CreateBlueprint(Main.IsekaiContext, "TavernDefianceMoraleBuff", delegate(BlueprintBuff bp)
 			{
@@ -1244,7 +1478,7 @@ namespace IsekaiMod.Content.Dialogue
 					{
 						c.Coins = 300;
 						c.Sponsor = "The Fading Dragon";
-						c.DirectItems = new BlueprintItem[1] { ItemSilverDragonShard };
+						c.DirectItems = new BlueprintItem[1] { ItemSilverDragonShardPendant };
 						c.BannerMessage = "<color=#FFD700><b>[The Fading Dragon]</b></color>: <i>\"A brave soul from beyond the threshold stirs! Accept this blessing, traveler.\"</i>";
 					});
 				});
@@ -1338,7 +1572,7 @@ namespace IsekaiMod.Content.Dialogue
 					{
 						c.Coins = 350;
 						c.Sponsor = "The Dawnflower";
-						c.DirectItems = new BlueprintItem[1] { ItemLarielFeather };
+						c.DirectItems = new BlueprintItem[1] { ItemLarielFeatherCirclet };
 						c.BannerMessage = "<color=#FFD700><b>[The Dawnflower]</b></color>: <i>\"Mercy and vigilance intertwined. The golden flame burns brightest in your hands.\"</i>";
 					});
 				});
@@ -1477,7 +1711,7 @@ namespace IsekaiMod.Content.Dialogue
 					{
 						c.Coins = 350;
 						c.Sponsor = "The Laughing King";
-						c.DirectItems = new BlueprintItem[1] { ItemThieflingCharm };
+						c.DirectItems = new BlueprintItem[1] { ItemThieflingCharmBracelet };
 						c.BannerMessage = "<color=#FFD700><b>[The Laughing King]</b></color>: <i>\"Recruiting the trickster right from under the inquisitors' noses! Glorious!\"</i>";
 					});
 				});
@@ -1627,7 +1861,7 @@ namespace IsekaiMod.Content.Dialogue
 					{
 						c.Coins = 450;
 						c.Sponsor = "The Hermit";
-						c.DirectItems = new BlueprintItem[1] { ItemNenioInscribedJournal };
+						c.DirectItems = new BlueprintItem[1] { ItemNenioInscribedJournalGloves };
 						c.BannerMessage = "<color=#9370DB><b>[The Hermit]</b></color>: <i>\"A meeting of unfathomable intellects. Knowledge transcends dimensional boundaries!\"</i>";
 					});
 				});
@@ -1662,7 +1896,7 @@ namespace IsekaiMod.Content.Dialogue
 						c.Gold = 800;
 						c.Coins = 450;
 						c.Sponsor = "The Laughing King";
-						c.DirectItems = new BlueprintItem[1] { ItemThieflingMasterLockpicks };
+						c.DirectItems = new BlueprintItem[1] { ItemThieflingMasterLockpicksBelt };
 						c.BannerMessage = "<color=#FFD700><b>[The Laughing King]</b></color>: <i>\"A forensic audit that leaves the underworld speechless! Outstanding work!\"</i>";
 					});
 				});
@@ -1802,7 +2036,7 @@ namespace IsekaiMod.Content.Dialogue
 			BlueprintBookPage blueprint29 = BlueprintTools.GetBlueprint<BlueprintBookPage>("ffd65d469961ff74c822be943a521775");
 			if (blueprint29 != null)
 			{
-				AddBookPageAnswer(blueprint29, "IsekaiAct1MarketSquareAeonRiftBookEvent", "(Isekai Protagonist) [Cosmic Equilibrium: Planar Rift Stabilization] Step before the tearing planar anomaly. As an entity whose very existence spans disparate dimensions, reach out with focused will and weave cosmic threads of equilibrium across the rift, sealing the abyssal fracture with the absolute authority of the cosmos.", "a73e2dfa834c9d5408b454e67e98a81f", 4, delegate(BlueprintAnswer bp)
+				AddBookPageAnswer(blueprint29, "IsekaiAct1MarketSquareAeonRiftBookEvent", "(Isekai Protagonist) [Cosmic Equilibrium: Planar Rift Stabilization] Step before the tearing planar anomaly. As an entity whose very existence spans disparate dimensions, reach out with focused will and weave cosmic threads of equilibrium across the rift, sealing the abyssal fracture with the absolute authority of the cosmos.", "e5069fb8a9fbc7d47a6ff74139f72a36" /* BookPage_0025, the present vision; Cue_0002 was the page narration itself and ended the event */, 4, delegate(BlueprintAnswer bp)
 				{
 					bp.OnSelect = ActionFlow.DoSingle(delegate(ContextActionGiveOtherworlderRewards c)
 					{
@@ -1815,7 +2049,7 @@ namespace IsekaiMod.Content.Dialogue
 			BlueprintBookPage blueprint30 = BlueprintTools.GetBlueprint<BlueprintBookPage>("b3f4b3f4de3494e4fb60d82d3f7c187e");
 			if (blueprint30 != null)
 			{
-				AddBookPageAnswer(blueprint30, "IsekaiAct1MarketSquareDesnaHymnBookEvent", "(Isekai Protagonist) [Harmonic Resonance: Celestial Hymn of the Spheres] Touch the ancient altar of the Song of the Spheres, blending your otherworldly mana with the sacred melody of Elysium. Chime the bells in perfect octave resonance, suffusing the ruined square with celestial starlight.", "406d51afd5990ff4081457c7f1e1a5f2", 4, delegate(BlueprintAnswer bp)
+				AddBookPageAnswer(blueprint30, "IsekaiAct1MarketSquareDesnaHymnBookEvent", "(Isekai Protagonist) [Harmonic Resonance: Celestial Hymn of the Spheres] Touch the ancient altar of the Song of the Spheres, blending your otherworldly mana with the sacred melody of Elysium. Chime the bells in perfect octave resonance, suffusing the ruined square with celestial starlight.", "7c54ae222f65b6a4e8af0e318fe5dfed" /* BookPage_0009, where every vanilla answer leads; Cue_0002 was the page narration itself and ended the event */, 4, delegate(BlueprintAnswer bp)
 				{
 					bp.OnSelect = ActionFlow.DoSingle(delegate(ContextActionGiveOtherworlderRewards c)
 					{
@@ -1920,7 +2154,7 @@ namespace IsekaiMod.Content.Dialogue
 						c.Gold = 600;
 						c.Coins = 400;
 						c.Sponsor = "The World Sovereign";
-						c.DirectItems = new BlueprintItem[1] { ItemRoyalMendevianSignet };
+						c.DirectItems = new BlueprintItem[1] { ItemRoyalMendevianSignetRing };
 						c.BannerMessage = "<color=#FFD700><b>[The World Sovereign]</b></color>: <i>\"A true commander does not rely on miracles when logistics can conquer kingdoms!\"</i>";
 					});
 				});
@@ -1958,7 +2192,7 @@ namespace IsekaiMod.Content.Dialogue
 						c.Gold = 500;
 						c.Coins = 450;
 						c.Sponsor = "The Iron Warden";
-						c.DirectItems = new BlueprintItem[1] { ItemHellknightOfficerRegalia };
+						c.DirectItems = new BlueprintItem[1] { ItemHellknightOfficerCloak };
 						c.BannerMessage = "<color=#FFD700><b>[The Iron Warden]</b></color>: <i>\"Cold logic yields to superior otherworldly doctrine! Zero executions!\"</i>";
 					});
 				});
@@ -2006,7 +2240,7 @@ namespace IsekaiMod.Content.Dialogue
 			BlueprintBookPage blueprint6 = BlueprintTools.GetBlueprint<BlueprintBookPage>("7be206b993f3dea49a89a88ce5e6ce6f");
 			if (blueprint6 != null)
 			{
-				AddBookPageAnswer(blueprint6, "IsekaiLepersSmileSpatialStasis", "(Isekai Protagonist) [Spatial Stasis Extraction: The Zero-Casualty Protocol] \"Hold the army on the high ridge and form a thermal barricade of cold iron and Greek fire! I will plunge into the ravine alone, enveloped in an Otherworlder spatial stasis barrier. While the swarm fruitlessly breaks against my impenetrable aegis, my dimensional storage will retrieve every submerged supply wagon, relic, and trapped scout without sacrificing a single crusader's life!\"", "ae220817bc08d0d4c920ba38b5828a5b", 5, delegate(BlueprintAnswer bp)
+				AddBookPageAnswer(blueprint6, "IsekaiLepersSmileSpatialStasis", "(Isekai Protagonist) [Spatial Stasis Extraction: The Zero-Casualty Protocol] \"Hold the army on the high ridge and form a thermal barricade of cold iron and Greek fire! I will plunge into the ravine alone, enveloped in an Otherworlder spatial stasis barrier. While the swarm fruitlessly breaks against my impenetrable aegis, my dimensional storage will retrieve every submerged supply wagon, relic, and trapped scout without sacrificing a single crusader's life!\"", "802031c7fc1bceb49b4ade6f06aa138c" /* BookPage_0011, the field council the vanilla plan answer leads to; Cue_0002 was the page narration itself and ended the event */, 5, delegate(BlueprintAnswer bp)
 				{
 					bp.OnSelect = ActionFlow.DoSingle(delegate(ContextActionGiveOtherworlderRewards c)
 					{
@@ -2017,10 +2251,10 @@ namespace IsekaiMod.Content.Dialogue
 						c.BannerMessage = "<color=#FFD700><b>[The Lucky Drunk]</b></color>: <i>\"Retrieving the sunken treasure without losing a single drop of soldier blood! Legendary!\"</i>";
 					});
 				});
-				AddBookPageAnswer(blueprint6, "IsekaiLepersSmileMartialSoloSweep", "(Martial God) [Chaotic] [Ki-Barrier Solo Cultivation] \"A boiling canyon of flesh-eating insects? The ultimate trial for my kinetic ki shield! Hold the army back; I will carve a clean path to the queen with bare hands!\"", "ae220817bc08d0d4c920ba38b5828a5b", 5);
-				AddBookPageAnswer(blueprint6, "IsekaiLepersSmileMastermindAcousticRupture", "(Mastermind) [Lawful] [Resonant Ultrasonic Decoy] \"Tune our war horns to high pitch G-sharp and blast the canyon walls. The ultrasonic resonance will scramble the Vescavors' antennal sensors and force them to turn upon each other!\"", "ae220817bc08d0d4c920ba38b5828a5b", 5);
-				AddBookPageAnswer(blueprint6, "IsekaiLepersSmileHeroRearguardAegis", "(Hero) [Good] [Vanguard Aegis for the Baggage Train] \"Form ranks! I will lead the front row with my shield raised, intercepting every swarm cloud so the baggage handlers can withdraw safely!\"", "ae220817bc08d0d4c920ba38b5828a5b", 5);
-				AddBookPageAnswer(blueprint6, "IsekaiLepersSmileOverlordExpendableMarch", "(Overlord) [Evil] [Calculated Vanguard Sacrifice] \"Order the forward ranks to march straight through the canyon. The insects will exhaust their mandibles on the vanguard while our primary forces advance unhindered. Move!\"", "ae220817bc08d0d4c920ba38b5828a5b", 5);
+				AddBookPageAnswer(blueprint6, "IsekaiLepersSmileMartialSoloSweep", "(Martial God) [Chaotic] [Ki-Barrier Solo Cultivation] \"A boiling canyon of flesh-eating insects? The ultimate trial for my kinetic ki shield! Hold the army back; I will carve a clean path to the queen with bare hands!\"", "802031c7fc1bceb49b4ade6f06aa138c" /* BookPage_0011, the field council the vanilla plan answer leads to; Cue_0002 was the page narration itself and ended the event */, 5);
+				AddBookPageAnswer(blueprint6, "IsekaiLepersSmileMastermindAcousticRupture", "(Mastermind) [Lawful] [Resonant Ultrasonic Decoy] \"Tune our war horns to high pitch G-sharp and blast the canyon walls. The ultrasonic resonance will scramble the Vescavors' antennal sensors and force them to turn upon each other!\"", "802031c7fc1bceb49b4ade6f06aa138c" /* BookPage_0011, the field council the vanilla plan answer leads to; Cue_0002 was the page narration itself and ended the event */, 5);
+				AddBookPageAnswer(blueprint6, "IsekaiLepersSmileHeroRearguardAegis", "(Hero) [Good] [Vanguard Aegis for the Baggage Train] \"Form ranks! I will lead the front row with my shield raised, intercepting every swarm cloud so the baggage handlers can withdraw safely!\"", "802031c7fc1bceb49b4ade6f06aa138c" /* BookPage_0011, the field council the vanilla plan answer leads to; Cue_0002 was the page narration itself and ended the event */, 5);
+				AddBookPageAnswer(blueprint6, "IsekaiLepersSmileOverlordExpendableMarch", "(Overlord) [Evil] [Calculated Vanguard Sacrifice] \"Order the forward ranks to march straight through the canyon. The insects will exhaust their mandibles on the vanguard while our primary forces advance unhindered. Move!\"", "802031c7fc1bceb49b4ade6f06aa138c" /* BookPage_0011, the field council the vanilla plan answer leads to; Cue_0002 was the page narration itself and ended the event */, 5);
 			}
 			BlueprintAnswersList blueprint7 = BlueprintTools.GetBlueprint<BlueprintAnswersList>("6856a7d6e123a0c46b666e8052008405");
 			if (blueprint7 != null)

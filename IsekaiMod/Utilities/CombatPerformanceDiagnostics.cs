@@ -152,7 +152,9 @@ namespace IsekaiMod.Utilities {
             // The owning fact is only reachable while the component's runtime is current, i.e. inside the call.
             string owner = null;
             try {
-                owner = (__instance as Kingmaker.EntitySystem.EntityFactComponent)?.Fact?.Blueprint?.name;
+                // Handlers are BlueprintComponents; the blueprint that carries the component is the stable name.
+                owner = (__instance as Kingmaker.Blueprints.BlueprintComponent)?.OwnerBlueprint?.name
+                    ?? (__instance as Kingmaker.EntitySystem.EntityFactComponent)?.Fact?.Blueprint?.name;
             } catch (Exception) {
                 // some components have no runtime bound at this point
             }

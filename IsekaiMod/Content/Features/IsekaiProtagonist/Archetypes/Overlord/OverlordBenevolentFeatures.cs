@@ -1,4 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using IsekaiMod.Utilities;
+using Kingmaker.UnitLogic.Mechanics.Components;
+using Kingmaker.UnitLogic.Mechanics;
+using Kingmaker.RuleSystem.Rules.Damage;
+using System.Collections.Generic;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Spells;
@@ -68,14 +72,16 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Overlord
 					c.Stat = StatType.AC;
 					c.Value = 4;
 				});
-				bp.AddComponent(delegate(WeaponEnergyDamageDice c)
+				bp.AddComponent(delegate(AdditionalDiceOnAttack c)
 				{
-					c.EnergyDamageDice = new DiceFormula
-					{
-						m_Dice = DiceType.D6,
-						m_Rolls = 1
-					};
-					c.Element = DamageEnergyType.Holy;
+					// WeaponEnergyDamageDice is a weapon-enchantment component; on a unit feature it throws and adds nothing.
+					c.AttackType = AdditionalDiceOnAttack.WeaponOptions.OnlyWeaponAttacks;
+					c.OnHit = true;
+					// Both condition checkers are read unconditionally, so they must exist even when empty.
+					c.InitiatorConditions = ActionFlow.EmptyCondition();
+					c.TargetConditions = ActionFlow.EmptyCondition();
+					c.Value = new ContextDiceValue { DiceType = DiceType.D6, DiceCountValue = 1, BonusValue = 0 };
+					c.DamageType = new DamageTypeDescription { Type = DamageType.Energy, Energy = DamageEnergyType.Holy };
 				});
 			});
 			AuraOfRighteousMajestyBuff = Helpers.CreateBlueprint(Main.IsekaiContext, "AuraOfRighteousMajestyBuff", delegate(BlueprintBuff bp)

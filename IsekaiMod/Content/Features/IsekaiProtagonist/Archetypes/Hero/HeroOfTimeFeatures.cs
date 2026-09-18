@@ -1,4 +1,7 @@
-﻿using Kingmaker.Blueprints;
+﻿using IsekaiMod.Utilities;
+using Kingmaker.UnitLogic.Mechanics.Components;
+using Kingmaker.RuleSystem.Rules.Damage;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Spells;
 using Kingmaker.Blueprints.Facts;
@@ -113,14 +116,16 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Hero
 					c.Stat = StatType.Constitution;
 					c.Value = 2;
 				});
-				bp.AddComponent(delegate(WeaponEnergyDamageDice c)
+				bp.AddComponent(delegate(AdditionalDiceOnAttack c)
 				{
-					c.EnergyDamageDice = new DiceFormula
-					{
-						m_Dice = DiceType.D6,
-						m_Rolls = 1
-					};
-					c.Element = DamageEnergyType.Holy;
+					// WeaponEnergyDamageDice is a weapon-enchantment component; on a unit feature it throws and adds nothing.
+					c.AttackType = AdditionalDiceOnAttack.WeaponOptions.OnlyWeaponAttacks;
+					c.OnHit = true;
+					// Both condition checkers are read unconditionally, so they must exist even when empty.
+					c.InitiatorConditions = ActionFlow.EmptyCondition();
+					c.TargetConditions = ActionFlow.EmptyCondition();
+					c.Value = new ContextDiceValue { DiceType = DiceType.D6, DiceCountValue = 1, BonusValue = 0 };
+					c.DamageType = new DamageTypeDescription { Type = DamageType.Energy, Energy = DamageEnergyType.Holy };
 				});
 			});
 			TriforcePowerFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "TriforcePowerFeature", delegate(BlueprintFeature bp)
@@ -370,14 +375,16 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Hero
 				bp.SetDescription(Main.IsekaiContext, "Your master sword is infused with malice and dark miasma. Weapon attacks deal an additional +2d6 unholy damage on hit and ignore damage reduction.");
 				((BlueprintUnitFact)bp).m_Icon = Icon_Dark;
 				bp.IsClassFeature = true;
-				bp.AddComponent(delegate(WeaponEnergyDamageDice c)
+				bp.AddComponent(delegate(AdditionalDiceOnAttack c)
 				{
-					c.EnergyDamageDice = new DiceFormula
-					{
-						m_Dice = DiceType.D6,
-						m_Rolls = 2
-					};
-					c.Element = DamageEnergyType.Unholy;
+					// WeaponEnergyDamageDice is a weapon-enchantment component; on a unit feature it throws and adds nothing.
+					c.AttackType = AdditionalDiceOnAttack.WeaponOptions.OnlyWeaponAttacks;
+					c.OnHit = true;
+					// Both condition checkers are read unconditionally, so they must exist even when empty.
+					c.InitiatorConditions = ActionFlow.EmptyCondition();
+					c.TargetConditions = ActionFlow.EmptyCondition();
+					c.Value = new ContextDiceValue { DiceType = DiceType.D6, DiceCountValue = 2, BonusValue = 0 };
+					c.DamageType = new DamageTypeDescription { Type = DamageType.Energy, Energy = DamageEnergyType.Unholy };
 				});
 			});
 			CorruptedEyeOfTheVoidFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "CorruptedEyeOfTheVoidFeature", delegate(BlueprintFeature bp)

@@ -1,4 +1,5 @@
-﻿using IsekaiMod.Utilities;
+﻿using Kingmaker.RuleSystem.Rules.Damage;
+using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Spells;
@@ -50,10 +51,16 @@ namespace IsekaiMod.Content.Guardians
 				bp.SetName(Main.IsekaiContext, "Tempest Fang & Lightning Strike");
 				bp.SetDescription(Main.IsekaiContext, "The Tempest Star Wolf's natural bite attacks deal an extra 1d6 electricity damage and gain the Trip combat maneuver upon landing a successful hit.");
 				((BlueprintUnitFact)bp).m_Icon = Icon_Pet;
-				bp.AddComponent(delegate(WeaponEnergyDamageDice c)
+				bp.AddComponent(delegate(AdditionalDiceOnAttack c)
 				{
-					c.EnergyDamageDice = new DiceFormula(1, DiceType.D6);
-					c.Element = DamageEnergyType.Electricity;
+					// WeaponEnergyDamageDice is a weapon-enchantment component; on a unit feature it throws and adds nothing.
+					c.AttackType = AdditionalDiceOnAttack.WeaponOptions.OnlyWeaponAttacks;
+					c.OnHit = true;
+					// Both condition checkers are read unconditionally, so they must exist even when empty.
+					c.InitiatorConditions = ActionFlow.EmptyCondition();
+					c.TargetConditions = ActionFlow.EmptyCondition();
+					c.Value = new ContextDiceValue { DiceType = DiceType.D6, DiceCountValue = 1, BonusValue = 0 };
+					c.DamageType = new DamageTypeDescription { Type = DamageType.Energy, Energy = DamageEnergyType.Electricity };
 				});
 				bp.AddComponent(delegate(AddStatBonus c)
 				{
@@ -73,10 +80,16 @@ namespace IsekaiMod.Content.Guardians
 					c.Stat = StatType.AC;
 					c.Value = 4;
 				});
-				bp.AddComponent(delegate(WeaponEnergyDamageDice c)
+				bp.AddComponent(delegate(AdditionalDiceOnAttack c)
 				{
-					c.EnergyDamageDice = new DiceFormula(1, DiceType.D6);
-					c.Element = DamageEnergyType.Unholy;
+					// WeaponEnergyDamageDice is a weapon-enchantment component; on a unit feature it throws and adds nothing.
+					c.AttackType = AdditionalDiceOnAttack.WeaponOptions.OnlyWeaponAttacks;
+					c.OnHit = true;
+					// Both condition checkers are read unconditionally, so they must exist even when empty.
+					c.InitiatorConditions = ActionFlow.EmptyCondition();
+					c.TargetConditions = ActionFlow.EmptyCondition();
+					c.Value = new ContextDiceValue { DiceType = DiceType.D6, DiceCountValue = 1, BonusValue = 0 };
+					c.DamageType = new DamageTypeDescription { Type = DamageType.Energy, Energy = DamageEnergyType.Unholy };
 				});
 			});
 			BlueprintBuff TempestStarWolfShadowPackBuff = TTCoreExtensions.CreateBuff("TempestStarWolfShadowPackBuff", delegate(BlueprintBuff bp)
@@ -118,15 +131,27 @@ namespace IsekaiMod.Content.Guardians
 					c.Stat = StatType.AC;
 					c.Value = 6;
 				});
-				bp.AddComponent(delegate(WeaponEnergyDamageDice c)
+				bp.AddComponent(delegate(AdditionalDiceOnAttack c)
 				{
-					c.EnergyDamageDice = new DiceFormula(2, DiceType.D6);
-					c.Element = DamageEnergyType.Electricity;
+					// WeaponEnergyDamageDice is a weapon-enchantment component; on a unit feature it throws and adds nothing.
+					c.AttackType = AdditionalDiceOnAttack.WeaponOptions.OnlyWeaponAttacks;
+					c.OnHit = true;
+					// Both condition checkers are read unconditionally, so they must exist even when empty.
+					c.InitiatorConditions = ActionFlow.EmptyCondition();
+					c.TargetConditions = ActionFlow.EmptyCondition();
+					c.Value = new ContextDiceValue { DiceType = DiceType.D6, DiceCountValue = 2, BonusValue = 0 };
+					c.DamageType = new DamageTypeDescription { Type = DamageType.Energy, Energy = DamageEnergyType.Electricity };
 				});
-				bp.AddComponent(delegate(WeaponEnergyDamageDice c)
+				bp.AddComponent(delegate(AdditionalDiceOnAttack c)
 				{
-					c.EnergyDamageDice = new DiceFormula(2, DiceType.D6);
-					c.Element = DamageEnergyType.Unholy;
+					// WeaponEnergyDamageDice is a weapon-enchantment component; on a unit feature it throws and adds nothing.
+					c.AttackType = AdditionalDiceOnAttack.WeaponOptions.OnlyWeaponAttacks;
+					c.OnHit = true;
+					// Both condition checkers are read unconditionally, so they must exist even when empty.
+					c.InitiatorConditions = ActionFlow.EmptyCondition();
+					c.TargetConditions = ActionFlow.EmptyCondition();
+					c.Value = new ContextDiceValue { DiceType = DiceType.D6, DiceCountValue = 2, BonusValue = 0 };
+					c.DamageType = new DamageTypeDescription { Type = DamageType.Energy, Energy = DamageEnergyType.Unholy };
 				});
 			});
 			TempestStarWolfProgression = Helpers.CreateBlueprint(Main.IsekaiContext, "TempestStarWolfProgression", delegate(BlueprintProgression bp)
@@ -186,10 +211,16 @@ namespace IsekaiMod.Content.Guardians
 				bp.SetName(Main.IsekaiContext, "Shadow Sovereign Strike");
 				bp.SetDescription(Main.IsekaiContext, "Igris's greatsword sweeps cleave through multiple foes, dealing an additional 2d6 negative energy damage on all attacks.");
 				((BlueprintUnitFact)bp).m_Icon = Icon_Demon;
-				bp.AddComponent(delegate(WeaponEnergyDamageDice c)
+				bp.AddComponent(delegate(AdditionalDiceOnAttack c)
 				{
-					c.EnergyDamageDice = new DiceFormula(2, DiceType.D6);
-					c.Element = DamageEnergyType.Unholy;
+					// WeaponEnergyDamageDice is a weapon-enchantment component; on a unit feature it throws and adds nothing.
+					c.AttackType = AdditionalDiceOnAttack.WeaponOptions.OnlyWeaponAttacks;
+					c.OnHit = true;
+					// Both condition checkers are read unconditionally, so they must exist even when empty.
+					c.InitiatorConditions = ActionFlow.EmptyCondition();
+					c.TargetConditions = ActionFlow.EmptyCondition();
+					c.Value = new ContextDiceValue { DiceType = DiceType.D6, DiceCountValue = 2, BonusValue = 0 };
+					c.DamageType = new DamageTypeDescription { Type = DamageType.Energy, Energy = DamageEnergyType.Unholy };
 				});
 				bp.AddComponent(delegate(AddStatBonus c)
 				{
@@ -314,10 +345,16 @@ namespace IsekaiMod.Content.Guardians
 				bp.SetName(Main.IsekaiContext, "Unholy Black Spear");
 				bp.SetDescription(Main.IsekaiContext, "The Dark Valkyrie's spear pierces through divine wards, dealing an additional 2d6 unholy damage and bypassing DR/good and DR/silver.");
 				((BlueprintUnitFact)bp).m_Icon = Icon_Demon;
-				bp.AddComponent(delegate(WeaponEnergyDamageDice c)
+				bp.AddComponent(delegate(AdditionalDiceOnAttack c)
 				{
-					c.EnergyDamageDice = new DiceFormula(2, DiceType.D6);
-					c.Element = DamageEnergyType.Unholy;
+					// WeaponEnergyDamageDice is a weapon-enchantment component; on a unit feature it throws and adds nothing.
+					c.AttackType = AdditionalDiceOnAttack.WeaponOptions.OnlyWeaponAttacks;
+					c.OnHit = true;
+					// Both condition checkers are read unconditionally, so they must exist even when empty.
+					c.InitiatorConditions = ActionFlow.EmptyCondition();
+					c.TargetConditions = ActionFlow.EmptyCondition();
+					c.Value = new ContextDiceValue { DiceType = DiceType.D6, DiceCountValue = 2, BonusValue = 0 };
+					c.DamageType = new DamageTypeDescription { Type = DamageType.Energy, Energy = DamageEnergyType.Unholy };
 				});
 			});
 			BlueprintBuff OverlordGuardianDespairAuraBuff = TTCoreExtensions.CreateBuff("OverlordGuardianDespairAuraBuff", delegate(BlueprintBuff bp)
@@ -493,10 +530,16 @@ namespace IsekaiMod.Content.Guardians
 				bp.SetName(Main.IsekaiContext, "Solar Radiance Strike");
 				bp.SetDescription(Main.IsekaiContext, "Strikes burst with blinding solar brilliance, dealing an additional 2d6 holy damage.");
 				((BlueprintUnitFact)bp).m_Icon = Icon_Angel;
-				bp.AddComponent(delegate(WeaponEnergyDamageDice c)
+				bp.AddComponent(delegate(AdditionalDiceOnAttack c)
 				{
-					c.EnergyDamageDice = new DiceFormula(2, DiceType.D6);
-					c.Element = DamageEnergyType.Holy;
+					// WeaponEnergyDamageDice is a weapon-enchantment component; on a unit feature it throws and adds nothing.
+					c.AttackType = AdditionalDiceOnAttack.WeaponOptions.OnlyWeaponAttacks;
+					c.OnHit = true;
+					// Both condition checkers are read unconditionally, so they must exist even when empty.
+					c.InitiatorConditions = ActionFlow.EmptyCondition();
+					c.TargetConditions = ActionFlow.EmptyCondition();
+					c.Value = new ContextDiceValue { DiceType = DiceType.D6, DiceCountValue = 2, BonusValue = 0 };
+					c.DamageType = new DamageTypeDescription { Type = DamageType.Energy, Energy = DamageEnergyType.Holy };
 				});
 			});
 			BlueprintFeature DivineHeraldApotheosis = Helpers.CreateBlueprint(Main.IsekaiContext, "DivineHeraldApotheosis", delegate(BlueprintFeature bp)
@@ -835,10 +878,16 @@ namespace IsekaiMod.Content.Guardians
 				{
 					c.Number = 1;
 				});
-				bp.AddComponent(delegate(WeaponEnergyDamageDice c)
+				bp.AddComponent(delegate(AdditionalDiceOnAttack c)
 				{
-					c.EnergyDamageDice = new DiceFormula(1, DiceType.D6);
-					c.Element = DamageEnergyType.Magic;
+					// WeaponEnergyDamageDice is a weapon-enchantment component; on a unit feature it throws and adds nothing.
+					c.AttackType = AdditionalDiceOnAttack.WeaponOptions.OnlyWeaponAttacks;
+					c.OnHit = true;
+					// Both condition checkers are read unconditionally, so they must exist even when empty.
+					c.InitiatorConditions = ActionFlow.EmptyCondition();
+					c.TargetConditions = ActionFlow.EmptyCondition();
+					c.Value = new ContextDiceValue { DiceType = DiceType.D6, DiceCountValue = 1, BonusValue = 0 };
+					c.DamageType = new DamageTypeDescription { Type = DamageType.Energy, Energy = DamageEnergyType.Magic };
 				});
 			});
 			BlueprintFeature ManifestedMartialSpiritPerfectParry = Helpers.CreateBlueprint(Main.IsekaiContext, "ManifestedMartialSpiritPerfectParry", delegate(BlueprintFeature bp)
@@ -888,10 +937,16 @@ namespace IsekaiMod.Content.Guardians
 					c.Stat = StatType.SaveWill;
 					c.Value = 4;
 				});
-				bp.AddComponent(delegate(WeaponEnergyDamageDice c)
+				bp.AddComponent(delegate(AdditionalDiceOnAttack c)
 				{
-					c.EnergyDamageDice = new DiceFormula(2, DiceType.D6);
-					c.Element = DamageEnergyType.Magic;
+					// WeaponEnergyDamageDice is a weapon-enchantment component; on a unit feature it throws and adds nothing.
+					c.AttackType = AdditionalDiceOnAttack.WeaponOptions.OnlyWeaponAttacks;
+					c.OnHit = true;
+					// Both condition checkers are read unconditionally, so they must exist even when empty.
+					c.InitiatorConditions = ActionFlow.EmptyCondition();
+					c.TargetConditions = ActionFlow.EmptyCondition();
+					c.Value = new ContextDiceValue { DiceType = DiceType.D6, DiceCountValue = 2, BonusValue = 0 };
+					c.DamageType = new DamageTypeDescription { Type = DamageType.Energy, Energy = DamageEnergyType.Magic };
 				});
 			});
 			ManifestedMartialSpiritProgression = Helpers.CreateBlueprint(Main.IsekaiContext, "ManifestedMartialSpiritProgression", delegate(BlueprintProgression bp)

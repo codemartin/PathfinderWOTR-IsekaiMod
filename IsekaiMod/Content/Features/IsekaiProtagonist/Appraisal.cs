@@ -1,4 +1,6 @@
-﻿using Kingmaker.Blueprints;
+﻿using IsekaiMod.Utilities;
+using Kingmaker.RuleSystem.Rules.Damage;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Spells;
 using Kingmaker.Blueprints.Facts;
@@ -501,14 +503,16 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist
 				bp.SetName(Main.IsekaiContext, "Lexicon of the Technic League");
 				bp.SetDescription(Main.IsekaiContext, "Extracted from the biomechanical terminals of Blackwater. Your weapons bypass adamantine damage reduction and deal an additional 2d6 electricity damage on hit.");
 				((BlueprintUnitFact)bp).m_Icon = Icon_Foretell;
-				bp.AddComponent(delegate(WeaponEnergyDamageDice c)
+				bp.AddComponent(delegate(AdditionalDiceOnAttack c)
 				{
-					c.EnergyDamageDice = new DiceFormula
-					{
-						m_Dice = DiceType.D6,
-						m_Rolls = 2
-					};
-					c.Element = DamageEnergyType.Electricity;
+					// WeaponEnergyDamageDice is a weapon-enchantment component; on a unit feature it throws and adds nothing.
+					c.AttackType = AdditionalDiceOnAttack.WeaponOptions.OnlyWeaponAttacks;
+					c.OnHit = true;
+					// Both condition checkers are read unconditionally, so they must exist even when empty.
+					c.InitiatorConditions = ActionFlow.EmptyCondition();
+					c.TargetConditions = ActionFlow.EmptyCondition();
+					c.Value = new ContextDiceValue { DiceType = DiceType.D6, DiceCountValue = 2, BonusValue = 0 };
+					c.DamageType = new DamageTypeDescription { Type = DamageType.Energy, Energy = DamageEnergyType.Electricity };
 				});
 			});
 			ItemSkillBookTechnicLeague = CreateSkillBookItem("ItemSkillBookTechnicLeague", "Lexicon of the Technic League", "Cybernetic data crystals retrieved from Blackwater (Knowledge: Arcana DC 32). Imbues weapon strikes with shocking circuitry and adamantine penetration.", featureToGrant11, Icon_Foretell);

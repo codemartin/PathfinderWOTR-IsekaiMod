@@ -51,6 +51,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 				bp.AddComponent(delegate(CriticalConfirmationBonus c)
 				{
 					c.Bonus = 20;
+					c.Value = 0; // the component reads Value unconditionally, so a missing one throws on every attack roll
 				});
 				bp.AddComponent(delegate(IncreaseAllSpellsDC c)
 				{
