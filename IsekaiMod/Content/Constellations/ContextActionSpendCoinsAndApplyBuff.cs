@@ -38,6 +38,7 @@ namespace IsekaiMod.Content.Constellations
 				{
 					unitEntityData.Descriptor.Buffs.AddBuff(buff, unitEntityData, new TimeSpan(DurationHours, 0, 0));
 				}
+				Main.Log(System.Text.RegularExpressions.Regex.Replace($"<color=#F5C542>[Cosmic Store]</color> Activated blessing: {buff.Name} ({DurationHours}h)!", "<[^>]+>", ""));
 				EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
 				{
 					h.HandleLogMessage($"<color=#F5C542>[Cosmic Store]</color> Activated blessing: {buff.Name} ({DurationHours}h)!");
@@ -45,6 +46,7 @@ namespace IsekaiMod.Content.Constellations
 			}
 			else
 			{
+				Main.Log(System.Text.RegularExpressions.Regex.Replace($"<color=#DC143C>[Cosmic Store]</color> Insufficient Cosmic Coins! Required: {Cost}. Current: {DivineTokens.GetBalance()}.", "<[^>]+>", ""));
 				EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
 				{
 					h.HandleLogMessage($"<color=#DC143C>[Cosmic Store]</color> Insufficient Cosmic Coins! Required: {Cost}. Current: {DivineTokens.GetBalance()}.");

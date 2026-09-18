@@ -27,6 +27,7 @@ namespace IsekaiMod.Content.Constellations
 			if (DivineTokens.SpendCoins(Cost))
 			{
 				unitEntityData.Descriptor.Resources.Restore(blueprintAbilityResource, 1);
+				Main.Log(System.Text.RegularExpressions.Regex.Replace("<color=#FFD700>[Cosmic Store]</color> Purchased 1 Cosmic Wish charge! You may now cast the Cosmic Wish modular ability in the field.", "<[^>]+>", ""));
 				EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
 				{
 					h.HandleLogMessage("<color=#FFD700>[Cosmic Store]</color> Purchased 1 Cosmic Wish charge! You may now cast the Cosmic Wish modular ability in the field.");
@@ -34,6 +35,7 @@ namespace IsekaiMod.Content.Constellations
 			}
 			else
 			{
+				Main.Log(System.Text.RegularExpressions.Regex.Replace($"<color=#DC143C>[Cosmic Store]</color> Insufficient Cosmic Coins! Required: {Cost}. Current: {DivineTokens.GetBalance()}.", "<[^>]+>", ""));
 				EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
 				{
 					h.HandleLogMessage($"<color=#DC143C>[Cosmic Store]</color> Insufficient Cosmic Coins! Required: {Cost}. Current: {DivineTokens.GetBalance()}.");

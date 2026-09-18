@@ -29,6 +29,7 @@ namespace IsekaiMod.Content.Constellations
 				}
 				unitEntityData.Descriptor.Resources.FullRestoreAll();
 				unitEntityData.Descriptor.Damage = 0;
+				Main.Log(System.Text.RegularExpressions.Regex.Replace("<color=#FFD700>[Cosmic Elixir]</color> Rejuvenated body, mind, and soul! All spell slots and class abilities fully restored!", "<[^>]+>", ""));
 				EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
 				{
 					h.HandleLogMessage("<color=#FFD700>[Cosmic Elixir]</color> Rejuvenated body, mind, and soul! All spell slots and class abilities fully restored!");
@@ -36,6 +37,7 @@ namespace IsekaiMod.Content.Constellations
 			}
 			else
 			{
+				Main.Log(System.Text.RegularExpressions.Regex.Replace($"<color=#DC143C>[Cosmic Store]</color> Insufficient Cosmic Coins! Required: {Cost}.", "<[^>]+>", ""));
 				EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
 				{
 					h.HandleLogMessage($"<color=#DC143C>[Cosmic Store]</color> Insufficient Cosmic Coins! Required: {Cost}.");

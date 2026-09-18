@@ -34,6 +34,7 @@ namespace IsekaiMod.Content.Constellations
 			}
 			if (unitEntityData.Descriptor.Progression.Features.HasFact(fact))
 			{
+				Main.Log(System.Text.RegularExpressions.Regex.Replace("<color=#DC143C>[Cosmic Store]</color> You already possess this permanent cosmic boon!", "<[^>]+>", ""));
 				EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
 				{
 					h.HandleLogMessage("<color=#DC143C>[Cosmic Store]</color> You already possess this permanent cosmic boon!");
@@ -41,6 +42,7 @@ namespace IsekaiMod.Content.Constellations
 			}
 			else if ((m_KeyOfInfinitePathways == null || !unitEntityData.Descriptor.Progression.Features.HasFact(m_KeyOfInfinitePathways.Get())) && AllowedAlignment != AlignmentMaskType.Any && (AllowedAlignment & unitEntityData.Descriptor.Alignment.ValueRaw.ToMask()) == 0)
 			{
+				Main.Log(System.Text.RegularExpressions.Regex.Replace("<color=#DC143C>[Cosmic Store]</color> Your alignment does not align with this mythic path! (Requires Key of Infinite Pathways to bypass)", "<[^>]+>", ""));
 				EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
 				{
 					h.HandleLogMessage("<color=#DC143C>[Cosmic Store]</color> Your alignment does not align with this mythic path! (Requires Key of Infinite Pathways to bypass)");
@@ -49,6 +51,7 @@ namespace IsekaiMod.Content.Constellations
 			else if (DivineTokens.SpendCoins(Cost))
 			{
 				unitEntityData.Descriptor.AddFact(fact);
+				Main.Log(System.Text.RegularExpressions.Regex.Replace("<color=#FFD700>[Cosmic Store]</color> Acquired permanent boon: " + fact.Name + "!", "<[^>]+>", ""));
 				EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
 				{
 					h.HandleLogMessage("<color=#FFD700>[Cosmic Store]</color> Acquired permanent boon: " + fact.Name + "!");
@@ -56,6 +59,7 @@ namespace IsekaiMod.Content.Constellations
 			}
 			else
 			{
+				Main.Log(System.Text.RegularExpressions.Regex.Replace($"<color=#DC143C>[Cosmic Store]</color> Insufficient Cosmic Coins! Required: {Cost}. Current: {DivineTokens.GetBalance()}.", "<[^>]+>", ""));
 				EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
 				{
 					h.HandleLogMessage($"<color=#DC143C>[Cosmic Store]</color> Insufficient Cosmic Coins! Required: {Cost}. Current: {DivineTokens.GetBalance()}.");

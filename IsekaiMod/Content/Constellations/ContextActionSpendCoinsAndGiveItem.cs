@@ -27,6 +27,7 @@ namespace IsekaiMod.Content.Constellations
 				if (item != null)
 				{
 					Game.Instance?.Player?.Inventory?.Add(item, Amount);
+					Main.Log(System.Text.RegularExpressions.Regex.Replace($"<color=#FFD700>[Cosmic Store]</color> Purchased {item.Name} x{Amount}!", "<[^>]+>", ""));
 					EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
 					{
 						h.HandleLogMessage($"<color=#FFD700>[Cosmic Store]</color> Purchased {item.Name} x{Amount}!");
@@ -35,6 +36,7 @@ namespace IsekaiMod.Content.Constellations
 			}
 			else
 			{
+				Main.Log(System.Text.RegularExpressions.Regex.Replace($"<color=#DC143C>[Cosmic Store]</color> Insufficient Cosmic Coins! Required: {Cost}. Current: {DivineTokens.GetBalance()}.", "<[^>]+>", ""));
 				EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
 				{
 					h.HandleLogMessage($"<color=#DC143C>[Cosmic Store]</color> Insufficient Cosmic Coins! Required: {Cost}. Current: {DivineTokens.GetBalance()}.");
