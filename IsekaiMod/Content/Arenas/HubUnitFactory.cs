@@ -43,5 +43,47 @@ namespace IsekaiMod.Content.Arenas
 				init?.Invoke(bp);
 			});
 		}
+
+		/// <summary>
+		/// Makes a spawned NPC talkable. SpawnerInteractionDialog only registers its interaction when a
+		/// UnitSpawner initialises the unit, which never happens for units spawned in code, so the
+		/// interaction wrapper is registered on the unit's interaction part directly. Safe to call again on
+		/// a unit that already has it.
+		/// </summary>
+		public static void AttachDialog(Kingmaker.EntitySystem.Entities.UnitEntityData unit, Kingmaker.DialogSystem.Blueprints.BlueprintDialog dialog)
+		{
+			if (unit == null || dialog == null)
+			{
+				return;
+			}
+			try
+			{
+				Kingmaker.View.UnitEntityView view = unit.View;
+				if (view == null)
+				{
+					return;
+				}
+				Kingmaker.UnitLogic.Interaction.SpawnerInteractionDialog component = view.gameObject.GetComponent<Kingmaker.UnitLogic.Interaction.SpawnerInteractionDialog>()
+					?? view.gameObject.AddComponent<Kingmaker.UnitLogic.Interaction.SpawnerInteractionDialog>();
+				component.m_Dialog = dialog.ToReference<BlueprintDialogReference>();
+				if (component.Conditions == null)
+				{
+					component.Conditions = new Kingmaker.ElementsSystem.ConditionsReference();
+				}
+				component.OverrideDistance = 3f;
+				Kingmaker.UnitLogic.Parts.UnitPartInteractions interactions = unit.Ensure<Kingmaker.UnitLogic.Parts.UnitPartInteractions>();
+				// Drop any earlier wrapper for this component so a reload does not register it twice.
+				interactions.RemoveInteractions((Kingmaker.UnitLogic.Interaction.IUnitInteraction i) => i is Kingmaker.UnitLogic.Interaction.SpawnerInteractionPart.Wrapper w && w.Source == component);
+				bool alreadyRegistered = false;
+				if (!alreadyRegistered)
+				{
+					interactions.AddInteraction(new Kingmaker.UnitLogic.Interaction.SpawnerInteractionPart.Wrapper { Source = component });
+				}
+			}
+			catch (Exception ex)
+			{
+				Main.IsekaiContext.Logger.LogError("Error attaching dialog to unit: " + ex);
+			}
+		}
 	}
 }

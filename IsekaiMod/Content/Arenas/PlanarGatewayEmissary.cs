@@ -35,6 +35,11 @@ namespace IsekaiMod.Content.Arenas
 					IEnumerable<UnitEntityData> enumerable = Game.Instance?.LoadedAreaState?.AllEntityData?.OfType<UnitEntityData>();
 					if (enumerable != null && enumerable.Any((UnitEntityData u) => u.Blueprint?.name == "PlanarGatewayEmissaryUnit"))
 					{
+						// The unit survives in the save but its interaction does not, so it is attached again on every load.
+						foreach (UnitEntityData existing in enumerable.Where((UnitEntityData u) => u.Blueprint?.name == "PlanarGatewayEmissaryUnit").ToList())
+						{
+							HubUnitFactory.AttachDialog(existing, GatewayEmissaryDialog);
+						}
 						return;
 					}
 					UnitEntityData unitEntityData = BlueprintSafetyExtensions.SafeGetMainCharacter();
@@ -176,24 +181,7 @@ namespace IsekaiMod.Content.Arenas
 
 		public static void AttachDialog(UnitEntityData unit, BlueprintDialog dialog)
 		{
-			if (unit == null || dialog == null)
-			{
-				return;
-			}
-			try
-			{
-				UnitEntityView view = unit.View;
-				if (view != null)
-				{
-					SpawnerInteractionDialog obj = view.gameObject.GetComponent<SpawnerInteractionDialog>() ?? view.gameObject.AddComponent<SpawnerInteractionDialog>();
-					obj.m_Dialog = dialog.ToReference<BlueprintDialogReference>();
-					obj.EnsureEntityPart();
-				}
-			}
-			catch (Exception ex)
-			{
-				Main.IsekaiContext.Logger.LogError("Error attaching dialog to unit: " + ex);
-			}
+			HubUnitFactory.AttachDialog(unit, dialog);
 		}
 	}
 }

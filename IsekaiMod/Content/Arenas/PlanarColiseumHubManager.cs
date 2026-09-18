@@ -35,7 +35,21 @@ namespace IsekaiMod.Content.Arenas
 					}
 					IEnumerable<UnitEntityData> enumerable = Game.Instance?.LoadedAreaState?.AllEntityData?.OfType<UnitEntityData>();
 					BlueprintFaction neutrals;
-					if (enumerable == null || !enumerable.Any((UnitEntityData u) => u.Blueprint?.name == "AstralCoinEnvoyUnit"))
+					if (enumerable != null && enumerable.Any((UnitEntityData u) => u.Blueprint?.name == "AstralCoinEnvoyUnit"))
+					{
+						// The units survive in the save but their interaction does not, so it is attached again on every load.
+						foreach (UnitEntityData existing in enumerable.ToList())
+						{
+							switch (existing.Blueprint?.name)
+							{
+								case "PlanarColiseumHeraldUnit": HubUnitFactory.AttachDialog(existing, PlanarColiseumEntrance.ColiseumHeraldDialog); break;
+								case "AstralCoinEnvoyUnit": HubUnitFactory.AttachDialog(existing, AstralCoinEnvoyDialog); break;
+								case "VoidMarketSmugglerUnit": HubUnitFactory.AttachDialog(existing, VoidMarketSmugglerDialog); break;
+								case "ConstellationOracleUnit": HubUnitFactory.AttachDialog(existing, ConstellationOracleDialog); break;
+							}
+						}
+					}
+					else
 					{
 						UnitEntityData unitEntityData = Game.Instance?.Player?.MainCharacter.Value;
 						if (!(unitEntityData == null) && Game.Instance?.LoadedAreaState?.MainState != null)
@@ -401,24 +415,7 @@ namespace IsekaiMod.Content.Arenas
 
 		public static void AttachDialog(UnitEntityData unit, BlueprintDialog dialog)
 		{
-			if (unit == null || dialog == null)
-			{
-				return;
-			}
-			try
-			{
-				UnitEntityView view = unit.View;
-				if (view != null)
-				{
-					SpawnerInteractionDialog obj = view.gameObject.GetComponent<SpawnerInteractionDialog>() ?? view.gameObject.AddComponent<SpawnerInteractionDialog>();
-					obj.m_Dialog = dialog.ToReference<BlueprintDialogReference>();
-					obj.EnsureEntityPart();
-				}
-			}
-			catch (Exception ex)
-			{
-				Main.IsekaiContext.Logger.LogError("Error attaching dialog to unit: " + ex);
-			}
+			HubUnitFactory.AttachDialog(unit, dialog);
 		}
 	}
 }
