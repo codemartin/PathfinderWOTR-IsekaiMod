@@ -832,6 +832,14 @@ namespace IsekaiMod.Utilities
 			{
 				return;
 			}
+			// A rule that names its own owner means "not already owned". The pending level-up actions and the
+			// preview always contain the feature being selected, so treating them as ownership would refuse
+			// every re-selection. Other mods attach such rules to entries in the background list, which is
+			// how the Isekai background group became unselectable after a change of mind.
+			if (__instance.Feature == __instance.OwnerBlueprint)
+			{
+				return;
+			}
 			try
 			{
 				LevelUpController levelUpController = Game.Instance?.LevelUpController;
