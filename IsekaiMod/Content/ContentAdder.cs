@@ -378,6 +378,7 @@ namespace IsekaiMod.Content
 			public static void AddIsekaiDialogue()
 			{
 				IsekaiHulrun.Add();
+				LegacyDialogueStubs.Add();
 				IsekaiRadiance.Add();
 				IsekaiKaylessaDrowLeader.Add();
 				IsekaiHorgus.Add();
