@@ -16,7 +16,7 @@ namespace IsekaiMod.Content.Constellations
 
 		public override void RunAction()
 		{
-			UnitEntityData unitEntityData = base.Target.Unit ?? DivineTokens.GetPlayer();
+			UnitEntityData unitEntityData = base.Target?.Unit ?? DivineTokens.GetPlayer();
 			if (unitEntityData == null)
 			{
 				return;

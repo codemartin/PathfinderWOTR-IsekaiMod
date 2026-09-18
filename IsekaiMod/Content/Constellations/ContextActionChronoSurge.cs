@@ -16,7 +16,7 @@ namespace IsekaiMod.Content.Constellations
 
 		public override void RunAction()
 		{
-			UnitEntityData unit = base.Target.Unit ?? base.Context?.MaybeCaster ?? Game.Instance?.Player?.SafeGetMainCharacter();
+			UnitEntityData unit = base.Target?.Unit ?? base.Context?.MaybeCaster ?? Game.Instance?.Player?.SafeGetMainCharacter();
 			if (!(unit == null))
 			{
 				try

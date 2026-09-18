@@ -22,7 +22,7 @@ namespace IsekaiMod.Content.Constellations
 
 		public override void RunAction()
 		{
-			UnitEntityData unitEntityData = base.Target.Unit ?? DivineTokens.GetPlayer();
+			UnitEntityData unitEntityData = base.Target?.Unit ?? DivineTokens.GetPlayer();
 			BlueprintBuff buff = m_Buff?.Get();
 			if (unitEntityData == null || buff == null)
 			{

@@ -26,7 +26,7 @@ namespace IsekaiMod.Content.Constellations
 
 		public override void RunAction()
 		{
-			UnitEntityData target = base.Target.Unit ?? Game.Instance?.Player?.SafeGetMainCharacter();
+			UnitEntityData target = base.Target?.Unit ?? Game.Instance?.Player?.SafeGetMainCharacter();
 			BlueprintFeature blueprintFeature = m_Feature?.Get();
 			if (!(target == null) && blueprintFeature != null)
 			{
