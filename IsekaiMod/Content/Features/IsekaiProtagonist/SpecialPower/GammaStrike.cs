@@ -15,7 +15,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 
 		public static void Add()
 		{
-			SpecialPowerSelection.AddToSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "GammaStrike", delegate(BlueprintFeature bp)
+			SpecialPowerSelection.AddToMartialSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "GammaStrike", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Gamma Strike");
 				bp.SetDescription(Main.IsekaiContext, "Your attacks ignore concealment and are treated as adamantite for the purpose of overcoming {g|Encyclopedia:Damage_Reduction}damage reduction{/g}.\nRequires character level 5.");

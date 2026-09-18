@@ -42,6 +42,11 @@ namespace IsekaiMod.Content.Constellations
 
 		public static List<PastCycleRecord> PastCycles => Data.PastCycles;
 
+		public static int GetCurrentCycle()
+		{
+			return Math.Max(1, Data.TotalRuns + 1);
+		}
+
 		private static void EnsureFilePath()
 		{
 			if (!string.IsNullOrEmpty(_filePath))
@@ -121,9 +126,18 @@ namespace IsekaiMod.Content.Constellations
 			}
 		}
 
+		public static void ClearActiveRunArchetype()
+		{
+			if (!string.IsNullOrEmpty(Data.ActiveRunArchetype))
+			{
+				Data.ActiveRunArchetype = "";
+				Save();
+			}
+		}
+
 		public static void RecordChoice(string choiceKey)
 		{
-			if (!Data.PastChoices.Contains(choiceKey))
+			if (!string.IsNullOrEmpty(choiceKey) && !Data.PastChoices.Contains(choiceKey))
 			{
 				Data.PastChoices.Add(choiceKey);
 				Save();
@@ -132,7 +146,7 @@ namespace IsekaiMod.Content.Constellations
 
 		public static void RecordMythicPath(string pathName)
 		{
-			if (!Data.PastMythicPaths.Contains(pathName))
+			if (!string.IsNullOrEmpty(pathName) && !Data.PastMythicPaths.Contains(pathName))
 			{
 				Data.PastMythicPaths.Add(pathName);
 				Save();
@@ -143,6 +157,7 @@ namespace IsekaiMod.Content.Constellations
 		{
 			_data = new TimelineData();
 			Save();
+			ConstellationChatManager.ResetMilestones();
 			EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
 			{
 				h.HandleLogMessage("<color=#9400D3><b>[Karmic Thread Severed]</b></color> The causal timeline chronicle has been completely reset to Loop 1. A fresh destiny awaits.");
@@ -324,6 +339,11 @@ namespace IsekaiMod.Content.Constellations
 				IsekaiTransmigrationQuest.StartQuest();
 				CodexOfReincarnation.EnsureCodexDelivered();
 				DivineTokens.SyncInventoryCoins(DivineTokens.GetCoins());
+				string text = Game.Instance?.CurrentlyLoadedArea?.name ?? "";
+				if ((Game.Instance?.Player?.Chapter).GetValueOrDefault() >= 1 || text.IndexOf("DefendersHeart", StringComparison.OrdinalIgnoreCase) >= 0 || text.IndexOf("DH_Outdoor", StringComparison.OrdinalIgnoreCase) >= 0 || text.IndexOf("Kenabres_BurningCity", StringComparison.OrdinalIgnoreCase) >= 0 || text.IndexOf("MarketPlace", StringComparison.OrdinalIgnoreCase) >= 0)
+				{
+					IsekaiTransmigrationQuest.CheckAdvancePrologue();
+				}
 				if (Data.TotalRuns > 1)
 				{
 					UnitEntityData unitEntityData = BlueprintSafetyExtensions.SafeGetMainCharacter();
@@ -356,7 +376,7 @@ namespace IsekaiMod.Content.Constellations
 						}
 					}
 				}
-				if (Data.LoopBreakerAchieved && !Data.ShardRelicGranted)
+				if (Data.LoopBreakerAchieved)
 				{
 					UnitEntityData unitEntityData2 = BlueprintSafetyExtensions.SafeGetMainCharacter();
 					BlueprintFeature blueprintFeature2 = ShardOfTheShatteredLoop.Get();

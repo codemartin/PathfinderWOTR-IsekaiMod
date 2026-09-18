@@ -22,11 +22,6 @@ namespace IsekaiMod.Components
 	[TypeId("83ffe0002e564ab2a97029983b4b409a")]
 	public class GainExperienceOnKill : UnitFactComponentDelegate<AddOutgoingDamageTrigger.ComponentData>, IInitiatorRulebookHandler<RuleDealDamage>, IRulebookHandler<RuleDealDamage>, ISubscriber, IInitiatorRulebookSubscriber, IInitiatorRulebookHandler<RuleDrainEnergy>, IRulebookHandler<RuleDrainEnergy>, IInitiatorRulebookHandler<RuleDealStatDamage>, IRulebookHandler<RuleDealStatDamage>
 	{
-		public class ComponentData
-		{
-			public bool WasTargetAlive;
-		}
-
 		public void OnEventAboutToTrigger(RuleDealDamage evt)
 		{
 			SetDataTargetWasAlive(evt);
@@ -59,55 +54,67 @@ namespace IsekaiMod.Components
 
 		private void SetDataTargetWasAlive(RulebookTargetEvent evt)
 		{
-			if (base.Data != null && !(evt.Initiator != base.Owner) && evt.Target?.Descriptor != null)
+			try
 			{
-				if (TacticalCombatHelper.IsActive)
+				if (evt != null && !(base.Owner == null) && !(evt.Initiator != base.Owner) && evt.Target?.Descriptor != null && base.Data != null)
 				{
-					int num = evt.Target.Get<UnitPartTacticalCombat>()?.Count ?? 1;
-					base.Data.WasTargetAlive = num > TacticalCombatHelper.GetDeathCount(evt.Target, evt.Target.HPLeft, num);
+					if (TacticalCombatHelper.IsActive)
+					{
+						int num = evt.Target.Get<UnitPartTacticalCombat>()?.Count ?? 1;
+						base.Data.WasTargetAlive = num > TacticalCombatHelper.GetDeathCount(evt.Target, evt.Target.HPLeft, num);
+					}
+					else
+					{
+						base.Data.WasTargetAlive = !evt.Target.Descriptor.State.IsDead;
+					}
 				}
-				else
-				{
-					base.Data.WasTargetAlive = !evt.Target.Descriptor.State.IsDead;
-				}
+			}
+			catch
+			{
 			}
 		}
 
 		private void GainExperience(RulebookTargetEvent evt)
 		{
-			if (base.Data == null || evt.Initiator != base.Owner || evt.Target?.Stats == null || evt.Target.Blueprint == null)
+			try
 			{
-				return;
-			}
-			bool flag;
-			if (TacticalCombatHelper.IsActive)
-			{
-				int num = evt.Target.Get<UnitPartTacticalCombat>()?.Count ?? 1;
-				flag = num <= TacticalCombatHelper.GetDeathCount(evt.Target, evt.Target.HPLeft, num);
-			}
-			else
-			{
-				flag = (int)evt.Target.Stats.HitPoints <= evt.Target.Damage;
-			}
-			if (!base.Data.WasTargetAlive || !flag || !(base.Fact is IFactContextOwner factContextOwner))
-			{
-				return;
-			}
-			Experience experience = evt.Target.Blueprint.GetComponent<Experience>();
-			if (experience != null)
-			{
-				ActionList action = ActionFlow.DoSingle(delegate(GainExp c)
+				if (evt == null || base.Owner == null || evt.Initiator != base.Owner || evt.Target?.Stats == null || evt.Target.Blueprint == null || base.Data == null)
 				{
-					c.GainPureExp = false;
-					c.Encounter = experience.Encounter;
-					c.CR = experience.CR;
-					c.Modifier = experience.Modifier;
-					c.Count = new IntConstant
+					return;
+				}
+				bool flag;
+				if (TacticalCombatHelper.IsActive)
+				{
+					int num = evt.Target.Get<UnitPartTacticalCombat>()?.Count ?? 1;
+					flag = num <= TacticalCombatHelper.GetDeathCount(evt.Target, evt.Target.HPLeft, num);
+				}
+				else
+				{
+					flag = (int)evt.Target.Stats.HitPoints <= evt.Target.Damage;
+				}
+				if (!base.Data.WasTargetAlive || !flag || !(base.Fact is IFactContextOwner factContextOwner))
+				{
+					return;
+				}
+				Experience experience = evt.Target.Blueprint.GetComponent<Experience>();
+				if (experience != null)
+				{
+					ActionList action = ActionFlow.DoSingle(delegate(GainExp c)
 					{
-						Value = 1
-					};
-				});
-				factContextOwner.RunActionInContext(action, base.Owner);
+						c.GainPureExp = false;
+						c.Encounter = experience.Encounter;
+						c.CR = experience.CR;
+						c.Modifier = experience.Modifier;
+						c.Count = new IntConstant
+						{
+							Value = 1
+						};
+					});
+					factContextOwner.RunActionInContext(action, base.Owner);
+				}
+			}
+			catch
+			{
 			}
 		}
 	}

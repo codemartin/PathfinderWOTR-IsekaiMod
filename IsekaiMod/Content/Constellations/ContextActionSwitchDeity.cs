@@ -26,6 +26,14 @@ namespace IsekaiMod.Content.Constellations
 			{
 				return;
 			}
+			if (DeityAvatarAscension.HasAnyAvatar(player))
+			{
+				EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
+				{
+					h.HandleLogMessage("<color=#DC143C>[Cosmic Ascension]</color> You embody a divine Avatar! Your soul covenant is eternally sealed for this cycle.");
+				});
+				return;
+			}
 			List<BlueprintFeature> list = new List<BlueprintFeature>();
 			foreach (Feature feature in player.Descriptor.Progression.Features)
 			{

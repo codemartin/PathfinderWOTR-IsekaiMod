@@ -19,7 +19,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 
 		public static void Add()
 		{
-			SpecialPowerSelection.AddToSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "ApexPredator", delegate(BlueprintFeature bp)
+			SpecialPowerSelection.AddToAuthoritySelection(Helpers.CreateBlueprint(Main.IsekaiContext, "ApexPredator", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Special Power - Apex Predator");
 				bp.SetDescription(Main.IsekaiContext, "You have claimed your rightful seat atop the food chain. \nBenefit: You gain a +4 competence bonus on all attack rolls with natural weapons (bites, claws, gores) and critical rolls with natural weapons automatically attempt a free Trip combat maneuver.\nRequires character level 5.");

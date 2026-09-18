@@ -13,7 +13,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 
 		public static void Add()
 		{
-			SpecialPowerSelection.AddToSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "MundaneAura", delegate(BlueprintFeature bp)
+			SpecialPowerSelection.AddToAuthoritySelection(Helpers.CreateBlueprint(Main.IsekaiContext, "MundaneAura", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Mundane Aura");
 				bp.SetDescription(Main.IsekaiContext, "You emit a subtle aura of complete mundanity, granting you immunity to precision damage, sneak attacks, and {g|Encyclopedia:Critical}critical hits{/g}.");
@@ -22,7 +22,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 				bp.AddComponent<AddImmunityToPrecisionDamage>();
 				bp.AddComponent(delegate(PrerequisiteCharacterLevel c)
 				{
-					c.Level = 5;
+					c.Level = 9;
 				});
 			}));
 		}

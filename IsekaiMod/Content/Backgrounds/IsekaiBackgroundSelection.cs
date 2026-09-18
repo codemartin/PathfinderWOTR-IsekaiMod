@@ -13,7 +13,7 @@ namespace IsekaiMod.Content.Backgrounds
 			BlueprintFeatureSelection feature = Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiBackgroundSelection", delegate(BlueprintFeatureSelection bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Isekai");
-				bp.SetDescription(Main.IsekaiContext, "Before you were transmigrated across the cosmic rift into Golarion, in your past life you were a...");
+				bp.SetDescription(Main.IsekaiContext, "Before you were summoned across the cosmic rift into Golarion, in your past life you were a...");
 				bp.HideInUI = true;
 				bp.Groups = new FeatureGroup[1] { FeatureGroup.BackgroundSelection };
 				bp.m_AllFeatures = new BlueprintFeatureReference[0];

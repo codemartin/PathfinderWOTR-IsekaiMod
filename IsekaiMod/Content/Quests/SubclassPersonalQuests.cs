@@ -144,7 +144,7 @@ namespace IsekaiMod.Content.Quests
 			ObjectiveNostalgiaAct2 = CreateObjective(QuestUniversalNostalgia, "ObjectiveNostalgiaAct2", "Locate the scorched technological power core near the Lost Chapel wastes.");
 			ObjectiveNostalgiaAct3 = CreateObjective(QuestUniversalNostalgia, "ObjectiveNostalgiaAct3", "Decode the interdimensional transmission echoing beneath the Drezen Citadel.");
 			ObjectiveNostalgiaAct4 = CreateObjective(QuestUniversalNostalgia, "ObjectiveNostalgiaAct4", "Trace the memory resonance shimmering through the lower alleys of Alushinyrra.");
-			ObjectiveNostalgiaAct5 = CreateObjective(QuestUniversalNostalgia, "ObjectiveNostalgiaAct5", "Synthesize your memories at the Threshold of the Multiverse and forge the Transmigrant's Locket.");
+			ObjectiveNostalgiaAct5 = CreateObjective(QuestUniversalNostalgia, "ObjectiveNostalgiaAct5", "Synthesize your memories at the Threshold of the Multiverse and forge the Otherworlder's Locket.");
 			QuestUniversalNostalgia.m_Objectives = new List<BlueprintQuestObjectiveReference>
 			{
 				ObjectiveNostalgiaAct1.ToReference<BlueprintQuestObjectiveReference>(),
@@ -290,7 +290,7 @@ namespace IsekaiMod.Content.Quests
 		private static void CreateDualTierItems()
 		{
 			Sprite icon = ((BlueprintUnitFact)BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "CosmicTokensFeature"))?.m_Icon;
-			ItemTransmigrantLocket = CreateEquipmentItem<BlueprintItemEquipmentNeck>("ItemTransmigrantLocket", "The Transmigrant's Locket", "A weathered locket containing a tiny digital clock and a miniature photo of a bustling metropolitan skyline.\n<b>Universal:</b> Grants a +3 Luck bonus to AC and all saving throws.\n<b>Awakened [Isekai Protagonist]:</b> Grants an additional +2 Luck bonus to attack rolls and spell DC.", icon, delegate(BlueprintFeature feat)
+			ItemTransmigrantLocket = CreateEquipmentItem<BlueprintItemEquipmentNeck>("ItemTransmigrantLocket", "The Otherworlder's Locket", "A weathered locket containing a tiny digital clock and a miniature photo of a bustling metropolitan skyline.\n<b>Universal:</b> Grants a +3 Luck bonus to AC and all saving throws.\n<b>Awakened [Isekai Protagonist]:</b> Grants an additional +2 Luck bonus to attack rolls and spell DC.", icon, delegate(BlueprintFeature feat)
 			{
 				feat.AddComponent(delegate(AddStatBonus c)
 				{
@@ -318,7 +318,7 @@ namespace IsekaiMod.Content.Quests
 				});
 				BlueprintFeature awakenedFeat = Helpers.CreateBlueprint(Main.IsekaiContext, "ItemTransmigrantLocketAwakened", delegate(BlueprintFeature af)
 				{
-					af.SetName(Main.IsekaiContext, "Transmigrant's Locket (Awakened)");
+					af.SetName(Main.IsekaiContext, "Otherworlder's Locket (Awakened)");
 					af.SetDescription(Main.IsekaiContext, "Grants a +2 Luck bonus to attack rolls and spell DC.");
 					af.AddComponent(delegate(AddStatBonus c)
 					{
@@ -668,6 +668,7 @@ namespace IsekaiMod.Content.Quests
 					{
 						TryStart(QuestMastermind, ObjectiveMastermindAct1, ItemTomeOfInfiniteContingencies);
 					}
+					CheckAdvanceByChapter();
 				}
 				void TryStart(BlueprintQuest quest, BlueprintQuestObjective obj, BlueprintItem itemReward)
 				{
@@ -692,6 +693,135 @@ namespace IsekaiMod.Content.Quests
 			catch (Exception ex)
 			{
 				Main.IsekaiContext.Logger.LogError("Error in CheckAndActivateArchetypeQuest: " + ex);
+			}
+		}
+
+		public static void CheckAdvanceByChapter()
+		{
+			try
+			{
+				int valueOrDefault = (Game.Instance?.Player?.Chapter).GetValueOrDefault();
+				if (valueOrDefault >= 2)
+				{
+					AdvanceAct(1);
+				}
+				if (valueOrDefault >= 3)
+				{
+					AdvanceAct(2);
+				}
+				if (valueOrDefault >= 4)
+				{
+					AdvanceAct(3);
+				}
+				if (valueOrDefault >= 5)
+				{
+					AdvanceAct(4);
+				}
+			}
+			catch
+			{
+			}
+		}
+
+		public static void AdvanceAct(int act)
+		{
+			try
+			{
+				QuestBook qb = (Game.Instance?.Player)?.QuestBook;
+				if (qb == null)
+				{
+					return;
+				}
+				switch (act)
+				{
+				case 1:
+					AdvanceStage(ObjectiveNostalgiaAct1, ObjectiveNostalgiaAct2);
+					break;
+				case 2:
+					AdvanceStage(ObjectiveNostalgiaAct2, ObjectiveNostalgiaAct3);
+					break;
+				case 3:
+					AdvanceStage(ObjectiveNostalgiaAct3, ObjectiveNostalgiaAct4);
+					break;
+				case 4:
+					AdvanceStage(ObjectiveNostalgiaAct4, ObjectiveNostalgiaAct5);
+					break;
+				case 5:
+				case 6:
+					if (ObjectiveNostalgiaAct5 != null && qb.GetObjectiveState(ObjectiveNostalgiaAct5) == QuestObjectiveState.Started)
+					{
+						qb.CompleteObjective(ObjectiveNostalgiaAct5);
+						EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
+						{
+							h.HandleLogMessage($"<color=#FFD700><b>[Personal Origin Quest Completed]</b></color> <b>{QuestUniversalNostalgia.Title}</b>!");
+						});
+					}
+					break;
+				}
+				if (act == 1 || act == 2)
+				{
+					AdvanceStage(ObjectiveMartialGodAct1, ObjectiveMartialGodAct2);
+					AdvanceStage(ObjectiveGodEmperorAct1, ObjectiveGodEmperorAct2);
+					AdvanceStage(ObjectiveOverlordAct1, ObjectiveOverlordAct2);
+					AdvanceStage(ObjectiveDevourerAct1, ObjectiveDevourerAct2);
+					AdvanceStage(ObjectiveShadowMonarchAct1, ObjectiveShadowMonarchAct2);
+					AdvanceStage(ObjectiveHeroAct1, ObjectiveHeroAct2);
+					AdvanceStage(ObjectiveMastermindAct1, ObjectiveMastermindAct2);
+				}
+				else if (act == 3 || act == 4)
+				{
+					AdvanceStage(ObjectiveMartialGodAct2, ObjectiveMartialGodAct3);
+					AdvanceStage(ObjectiveGodEmperorAct2, ObjectiveGodEmperorAct3);
+					AdvanceStage(ObjectiveOverlordAct2, ObjectiveOverlordAct3);
+					AdvanceStage(ObjectiveDevourerAct2, ObjectiveDevourerAct3);
+					AdvanceStage(ObjectiveShadowMonarchAct2, ObjectiveShadowMonarchAct3);
+					AdvanceStage(ObjectiveHeroAct2, ObjectiveHeroAct3);
+					AdvanceStage(ObjectiveMastermindAct2, ObjectiveMastermindAct3);
+				}
+				else if (act >= 5)
+				{
+					CompleteFinal(QuestMartialGod, ObjectiveMartialGodAct3);
+					CompleteFinal(QuestGodEmperor, ObjectiveGodEmperorAct3);
+					CompleteFinal(QuestOverlord, ObjectiveOverlordAct3);
+					CompleteFinal(QuestDevourer, ObjectiveDevourerAct3);
+					CompleteFinal(QuestShadowMonarch, ObjectiveShadowMonarchAct3);
+					CompleteFinal(QuestHero, ObjectiveHeroAct3);
+					CompleteFinal(QuestMastermind, ObjectiveMastermindAct3);
+				}
+				void AdvanceStage(BlueprintQuestObjective current, BlueprintQuestObjective next)
+				{
+					if (current != null && qb.GetObjectiveState(current) == QuestObjectiveState.Started)
+					{
+						qb.CompleteObjective(current);
+						EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
+						{
+							h.HandleLogMessage($"<color=#32CD32><b>[Personal Quest Step Completed]</b></color> <b>{current.Title}</b>!");
+						});
+						if (next != null && qb.GetObjectiveState(next) == QuestObjectiveState.None)
+						{
+							qb.GiveObjective(next);
+							EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
+							{
+								h.HandleLogMessage($"<color=#9400D3><b>[Personal Quest Updated]</b></color> <b>{next.Title}</b>!");
+							});
+						}
+					}
+				}
+				void CompleteFinal(BlueprintQuest quest, BlueprintQuestObjective finalObj)
+				{
+					if (finalObj != null && qb.GetObjectiveState(finalObj) == QuestObjectiveState.Started)
+					{
+						qb.CompleteObjective(finalObj);
+						EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
+						{
+							h.HandleLogMessage($"<color=#FFD700><b>[Archetype Hero's Journey Completed]</b></color> <b>{quest?.Title ?? finalObj.Title}</b>!");
+						});
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				Main.IsekaiContext.Logger.LogError("Error in SubclassPersonalQuests.AdvanceAct: " + ex);
 			}
 		}
 	}

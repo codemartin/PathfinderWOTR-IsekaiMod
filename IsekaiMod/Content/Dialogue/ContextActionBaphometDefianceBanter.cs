@@ -1,5 +1,5 @@
-﻿using IsekaiMod.Content.Constellations;
-using Kingmaker.PubSubSystem;
+﻿using System.Collections.Generic;
+using IsekaiMod.Content.Constellations;
 using Kingmaker.UnitLogic.Mechanics.Actions;
 
 namespace IsekaiMod.Content.Dialogue
@@ -13,11 +13,23 @@ namespace IsekaiMod.Content.Dialogue
 
 		public override void RunAction()
 		{
-			DivineTokens.AddCoins(500, "The Laughing King");
-			EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
+			if (ConstellationChatManager.HasTriggeredMilestone("Act4BaphometConfrontation"))
 			{
-				h.HandleLogMessage("<color=#FFD700><b>[The Laughing King]</b></color>: <i>\"Did the Commander just threaten to turn the Lord of the Labyrinth into soup and drinking cups?! Absolute legendary performance!\"</i>");
-			});
+				return;
+			}
+			ConstellationChatManager.MarkMilestoneTriggered("Act4BaphometConfrontation");
+			List<string> act4BaphometConfrontationBanter = ConstellationDialogueBanter.GetAct4BaphometConfrontationBanter(TimelineManager.GetCurrentCycle(), out var coinsAwarded, out var primarySponsor);
+			if (act4BaphometConfrontationBanter != null)
+			{
+				foreach (string item in act4BaphometConfrontationBanter)
+				{
+					ConstellationChatManager.PostLog(item, primarySponsor, ConstellationCategory.Quest, 0, "Defying the Lord of the Labyrinth");
+				}
+			}
+			if (coinsAwarded > 0)
+			{
+				DivineTokens.AddCoins(coinsAwarded, primarySponsor);
+			}
 		}
 	}
 }

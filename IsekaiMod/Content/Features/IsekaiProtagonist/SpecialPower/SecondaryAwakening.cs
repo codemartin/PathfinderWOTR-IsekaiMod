@@ -177,9 +177,9 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 			});
 			SecondaryAwakeningFeature.AddComponent(delegate(PrerequisiteCharacterLevel c)
 			{
-				c.Level = 7;
+				c.Level = 9;
 			});
-			SpecialPowerSelection.AddToSelection(SecondaryAwakeningFeature);
+			SpecialPowerSelection.AddToMagicSelection(SecondaryAwakeningFeature);
 		}
 	}
 }

@@ -157,7 +157,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 				});
 				bp.AddComponent(delegate(PrerequisiteCharacterLevel c)
 				{
-					c.Level = 7;
+					c.Level = 9;
 				});
 			});
 			SummonBeastAbility.AddComponent(delegate(AbilityVariants c)
@@ -170,7 +170,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 					SummonMinotaur.ToReference<BlueprintAbilityReference>()
 				};
 			});
-			SpecialPowerSelection.AddToSelection(feature);
+			SpecialPowerSelection.AddToAuthoritySelection(feature);
 		}
 
 		private static BlueprintAbility CreateSummonAbility(string name, BlueprintAbilityResource resource, Action<BlueprintAbility> init = null)

@@ -1,4 +1,5 @@
 ﻿using System;
+using IsekaiMod.Components;
 using IsekaiMod.Content.Classes.IsekaiProtagonist;
 using IsekaiMod.Content.Classes.IsekaiProtagonist.Archetypes;
 using IsekaiMod.Utilities;
@@ -68,7 +69,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 			BlueprintAbility SummonShadowKnight = CreateSummonAbility("SummonShadowKnight", ShadowMonarchResource, delegate(BlueprintAbility bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Shadow Monarch - Extract Shadow Knight");
-				bp.SetSummonDescription(Main.IsekaiContext, "Summons an armored Shadow Knight imbued with dark resilience and heavy melee strikes.");
+				bp.SetSummonDescription(Main.IsekaiContext, "Extracts the shadow of an armored Shadow Knight imbued with dark resilience and heavy melee strikes (Available at Level 1).");
 				bp.AddComponent(delegate(AbilityEffectRunAction c)
 				{
 					c.Actions = SpawnShadow(ShadowKnightTemplate);
@@ -77,7 +78,11 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 			BlueprintAbility SummonShadowDemon = CreateSummonAbility("SummonShadowDemon", ShadowMonarchResource, delegate(BlueprintAbility bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Shadow Monarch - Extract Shadow Infiltrator");
-				bp.SetSummonDescription(Main.IsekaiContext, "Summons an incorporeal Shadow Infiltrator capable of bypassing physical barriers.");
+				bp.SetSummonDescription(Main.IsekaiContext, "Extracts the shadow of an incorporeal Shadow Infiltrator capable of bypassing physical barriers (Unlocks at Character Level 10).");
+				bp.AddComponent(delegate(AbilityCasterCharacterLevelRestriction c)
+				{
+					c.RequiredLevel = 10;
+				});
 				bp.AddComponent(delegate(AbilityEffectRunAction c)
 				{
 					c.Actions = SpawnShadow(ShadowDemonTemplate);
@@ -86,7 +91,11 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 			BlueprintAbility SummonShadowSovereign = CreateSummonAbility("SummonShadowSovereign", ShadowMonarchResource, delegate(BlueprintAbility bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Shadow Monarch - Extract Shadow Sovereign");
-				bp.SetSummonDescription(Main.IsekaiContext, "Summons a devastating Mythic Shadow Sovereign wielding apocalyptic shadowy magic.");
+				bp.SetSummonDescription(Main.IsekaiContext, "Extracts the shadow of a devastating Mythic Shadow Sovereign wielding apocalyptic shadowy magic (Unlocks at Character Level 15).");
+				bp.AddComponent(delegate(AbilityCasterCharacterLevelRestriction c)
+				{
+					c.RequiredLevel = 15;
+				});
 				bp.AddComponent(delegate(AbilityEffectRunAction c)
 				{
 					c.Actions = SpawnShadow(ShadowMythicTemplate);
@@ -104,7 +113,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 			OverpoweredAbilitySelection.AddToSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "ShadowMonarchFeature", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Overpowered Ability - Shadow Monarch");
-				bp.SetDescription(Main.IsekaiContext, "Exclusive to the Shadow Monarch archetype. Death is not the end of service for your foes. As the Shadow Monarch, you can extract the shadows of slain elites to serve as eternal guardians. \nBenefit: As a standard action, summon an elite Shadow Soldier. You maintain a hard limit of 1 active shadow to prevent planar disruption. Extracting a new shadow replaces the previous one.");
+				bp.SetDescription(Main.IsekaiContext, "Exclusive to the Shadow Monarch archetype. Death is not the end of service for your foes. As the Shadow Monarch, you can extract the shadows of slain elites to serve as eternal guardians.\nBenefit: As a standard action, summon an elite Shadow Soldier (Shadow Knight at levels 1--9, Shadow Infiltrator unlocking at level 10, and Shadow Sovereign unlocking at level 15). You maintain a hard limit of 1 active shadow to prevent planar disruption. Extracting a new shadow replaces the previous one.");
 				((BlueprintUnitFact)bp).m_Icon = Icon_ShadowMonarch;
 				bp.AddComponent(delegate(AddFacts c)
 				{

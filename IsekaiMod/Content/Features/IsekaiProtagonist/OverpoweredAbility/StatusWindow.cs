@@ -1,5 +1,7 @@
-﻿using Kingmaker.Blueprints.Classes;
+﻿using Kingmaker.Blueprints.Classes.Prerequisites;
 using Kingmaker.Blueprints.Classes.Spells;
+using Kingmaker.Blueprints.Classes;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Designers.Mechanics.Buffs;
 using Kingmaker.Designers.Mechanics.Facts;
@@ -19,10 +21,10 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 
 		public static void Add()
 		{
-			OverpoweredAbilitySelection.AddToSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "StatusWindowFeature", delegate(BlueprintFeature bp)
+			BlueprintFeature blueprintFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "StatusWindowFeature", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Overpowered Ability - Status Window");
-				bp.SetDescription(Main.IsekaiContext, "You project a translucent RPG system interface over reality, granting real-time appraisal of enemy attributes, incoming trajectories, and structural weak spots.\nBenefit: You gain permanent True Seeing and See Invisibility, complete immunity to blindness, a +4 insight bonus to Armor Class, attack rolls, damage rolls, and saving throws, a +5 competence bonus on all skill checks, and your weapon critical threat range increases by 1 (which stacks with Improved Critical).");
+				bp.SetDescription(Main.IsekaiContext, "You project a translucent RPG system interface over reality, granting real-time appraisal of enemy attributes, incoming trajectories, and structural weak spots.\nBenefit: You gain permanent True Seeing and See Invisibility, complete immunity to blindness, a +4 insight bonus to Armor Class, attack rolls, damage rolls, and saving throws, a +5 competence bonus on all skill checks, and your weapon critical threat range increases by 1 (which stacks with Improved Critical).\nNote: Mutually exclusive with Omniscient Mimicry (Great Sage) and Paradox Sovereign (Temporal Inevitable).");
 				((BlueprintUnitFact)bp).m_Icon = Icon_Appraisal;
 				bp.Ranks = 1;
 				bp.IsClassFeature = true;
@@ -97,7 +99,20 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 				{
 					c.Value = 1;
 				});
-			}));
+			});
+			blueprintFeature.AddComponent(delegate(PrerequisiteNoFeature c)
+			{
+				c.m_Feature = BlueprintTools.GetModBlueprintReference<BlueprintFeatureReference>(Main.IsekaiContext, "OmniscientMimicryFeature");
+			});
+			blueprintFeature.AddComponent(delegate(PrerequisiteNoFeature c)
+			{
+				c.m_Feature = BlueprintTools.GetModBlueprintReference<BlueprintFeatureReference>(Main.IsekaiContext, "ParadoxSovereignFeature");
+			});
+			blueprintFeature.AddComponent(delegate(PrerequisiteNoFeature c)
+			{
+				c.m_Feature = BlueprintTools.GetModBlueprintReference<BlueprintFeatureReference>(Main.IsekaiContext, "AllAccordingToPlanFeature");
+			});
+			OverpoweredAbilitySelection.AddToSelection(blueprintFeature);
 		}
 	}
 }

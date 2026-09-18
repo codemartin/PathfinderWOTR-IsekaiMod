@@ -13,7 +13,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 
 		public static void Add()
 		{
-			SpecialPowerSelection.AddToSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "AlphaStrike", delegate(BlueprintFeature bp)
+			SpecialPowerSelection.AddToMartialSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "AlphaStrike", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Alpha Strike");
 				bp.SetDescription(Main.IsekaiContext, "You have become an alpha. Your critical threats are automatically confirmed.");

@@ -1,4 +1,5 @@
 ﻿using IsekaiMod.Utilities;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Spells;
 using Kingmaker.Designers.Mechanics.Facts;
@@ -301,6 +302,7 @@ namespace IsekaiMod.Content.Backgrounds
 					c.Skill = StatType.SkillKnowledgeWorld;
 				});
 			}));
+			BlueprintFeature UncannyDodge = BlueprintTools.GetBlueprint<BlueprintFeature>("3c08d842e802c3e4eb19d15496145709");
 			IsekaiBackgroundSelection.AddToSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "BackgroundShrunkHighSchoolSleuth", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Shrunk High School Sleuth");
@@ -325,6 +327,13 @@ namespace IsekaiMod.Content.Backgrounds
 				{
 					c.Skill = StatType.SkillPerception;
 				});
+				if (UncannyDodge != null)
+				{
+					bp.AddComponent(delegate(AddFacts c)
+					{
+						c.m_Facts = new BlueprintUnitFactReference[1] { UncannyDodge.ToReference<BlueprintUnitFactReference>() };
+					});
+				}
 			}));
 			IsekaiBackgroundSelection.AddToSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "BackgroundUndergroundGambler", delegate(BlueprintFeature bp)
 			{

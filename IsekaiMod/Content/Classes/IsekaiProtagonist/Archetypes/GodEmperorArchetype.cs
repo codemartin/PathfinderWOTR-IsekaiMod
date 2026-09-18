@@ -3,6 +3,7 @@ using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.GodEmperor;
 using IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
+using Kingmaker.Blueprints.Classes.Prerequisites;
 using Kingmaker.Blueprints.Classes.Selection;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.Localization;
@@ -49,6 +50,10 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist.Archetypes
 			BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "OverpoweredAbilitySelection");
 			BlueprintFeature ChronicleOtherworldFeature = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "ChronicleOtherworldFeature");
 			BlueprintFeature ImperialEdictsFeature = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "ImperialEdictsFeature");
+			BlueprintFeature TranscendentProtagonistFeature = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "TranscendentProtagonistFeature");
+			BlueprintFeature AnimeFinalFormFeature = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "AnimeFinalFormFeature");
+			BlueprintFeature GodEmperorApotheosis = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "GodEmperorApotheosis");
+			BlueprintFeature GodEmperorTrueSolarGodhood = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "GodEmperorTrueSolarGodhood");
 			IsekaiProtagonistClass.RegisterArchetype(Helpers.CreateBlueprint(Main.IsekaiContext, "GodEmperorArchetype", delegate(BlueprintArchetype bp)
 			{
 				bp.LocalizedName = Name;
@@ -56,7 +61,7 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist.Archetypes
 				bp.LocalizedDescriptionShort = Description;
 				bp.IsArcaneCaster = true;
 				bp.IsDivineCaster = true;
-				bp.RemoveFeatures = new LevelEntry[13]
+				bp.RemoveFeatures = new LevelEntry[25]
 				{
 					Helpers.CreateLevelEntry(1, IsekaiProficiencies, Gifted, LegacySelection.GetClassFeature(), ChronicleOtherworldFeature),
 					Helpers.CreateLevelEntry(3, SpecialPowerSelection, ReleaseEnergy),
@@ -70,12 +75,24 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist.Archetypes
 					Helpers.CreateLevelEntry(15, IsekaiQuickFooted, SecondReincarnation),
 					Helpers.CreateLevelEntry(17, SpecialPowerSelection),
 					Helpers.CreateLevelEntry(19, SpecialPowerSelection),
-					Helpers.CreateLevelEntry(20, HaxSelection)
+					Helpers.CreateLevelEntry(20, HaxSelection),
+					Helpers.CreateLevelEntry(21, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(23, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(25, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(27, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(29, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(30, SecretPowerSelection, TranscendentProtagonistFeature),
+					Helpers.CreateLevelEntry(31, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(33, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(35, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(37, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(39, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(40, HaxSelection, AnimeFinalFormFeature)
 				};
 				BlueprintFeature modBlueprint = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "ImperialWorshipFeature");
 				BlueprintFeature modBlueprint2 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "ImperialSovereigntyFeature");
 				BlueprintFeature modBlueprint3 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "ImperialTitheFeature");
-				bp.AddFeatures = new LevelEntry[9]
+				bp.AddFeatures = new LevelEntry[15]
 				{
 					Helpers.CreateLevelEntry(1, NascentApotheosis, GodEmperorProficiencies, modBlueprint, modBlueprint2, modBlueprint3, ImperialEdictsFeature, GodEmperorLegacySelection.getClassFeature()),
 					Helpers.CreateLevelEntry(3, GodEmperorEnergySelection, ArmorSaint),
@@ -85,7 +102,13 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist.Archetypes
 					Helpers.CreateLevelEntry(12, PathSelection),
 					Helpers.CreateLevelEntry(15, RealmSelection, GodEmperorQuickFooted),
 					Helpers.CreateLevelEntry(17, GodlyVessel),
-					Helpers.CreateLevelEntry(20, Godhood)
+					Helpers.CreateLevelEntry(20, Godhood),
+					Helpers.CreateLevelEntry(23, EnergyCondensationSelection),
+					Helpers.CreateLevelEntry(25, BarrierSelection),
+					Helpers.CreateLevelEntry(27, PathSelection),
+					Helpers.CreateLevelEntry(29, RealmSelection),
+					Helpers.CreateLevelEntry(30, GodEmperorApotheosis),
+					Helpers.CreateLevelEntry(40, GodEmperorTrueSolarGodhood)
 				};
 				bp.OverrideAttributeRecommendations = true;
 				bp.m_ReplaceSpellbook = GodEmperorSpellbook.GetReference();
@@ -93,7 +116,24 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist.Archetypes
 				bp.AddComponent(delegate(PrerequisiteCycleOriginLock c)
 				{
 					c.AllowedOrigin = "GodEmperor";
+					c.HideInUI = true;
 				});
+				BlueprintFeature SlimeHeritage = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "SlimeReincarnateHeritage");
+				if (SlimeHeritage != null)
+				{
+					bp.AddComponent(delegate(PrerequisiteNoFeature c)
+					{
+						c.m_Feature = SlimeHeritage.ToReference<BlueprintFeatureReference>();
+					});
+				}
+				BlueprintFeature OverlordHeritage = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "HeteromorphicOverlordHeritage");
+				if (OverlordHeritage != null)
+				{
+					bp.AddComponent(delegate(PrerequisiteNoFeature c)
+					{
+						c.m_Feature = OverlordHeritage.ToReference<BlueprintFeatureReference>();
+					});
+				}
 				bp.RemoveSpellbook = Main.IsekaiContext.AddedContent.DisableSpellbookGodEmperor;
 			}));
 		}

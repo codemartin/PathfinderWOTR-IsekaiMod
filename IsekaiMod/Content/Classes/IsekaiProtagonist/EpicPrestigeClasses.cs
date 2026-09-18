@@ -57,11 +57,15 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist
 
 		public static BlueprintBuff AnimeFinalFormBuff;
 
-		public static void Add()
+		private static bool CapstonesAdded = false;
+
+		public static void AddCapstones()
 		{
-			BlueprintFeatureSelection isekaiBonus = BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "IsekaiBonusFeatSelection");
-			BlueprintFeatureSelection specialPower = BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "SpecialPowerSelection");
-			BlueprintFeatureSelection opAbilitySelection = BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "OverpoweredAbilitySelection");
+			if (CapstonesAdded)
+			{
+				return;
+			}
+			CapstonesAdded = true;
 			TranscendentProtagonistFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "TranscendentProtagonistFeature", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Transcendent Protagonist");
@@ -201,6 +205,14 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist
 					c.m_Facts = new BlueprintUnitFactReference[1] { AnimeFinalFormAbility.ToReference<BlueprintUnitFactReference>() };
 				});
 			});
+		}
+
+		public static void Add()
+		{
+			AddCapstones();
+			BlueprintFeatureSelection isekaiBonus = BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "IsekaiBonusFeatSelection");
+			BlueprintFeatureSelection specialPower = BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "SpecialPowerSelection");
+			BlueprintFeatureSelection opAbilitySelection = BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "OverpoweredAbilitySelection");
 			CreateEpicPrestige("DemigodPrestigeClass", "DemigodProgression", "The Demigod", "A mortal vessel ascending to divine status. Channeling direct celestial or abyssal divinity, the Demigod wields transcendent divine authority, unyielding immortal durability, and absolute presence.", DiceType.D12, BABFull, SavesHigh, SavesHigh, SavesHigh, Icon_Crown, delegate(int level)
 			{
 				List<BlueprintFeature> list = new List<BlueprintFeature>();

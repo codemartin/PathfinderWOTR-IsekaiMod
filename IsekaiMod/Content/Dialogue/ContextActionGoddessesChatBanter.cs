@@ -1,5 +1,5 @@
-﻿using IsekaiMod.Content.Constellations;
-using Kingmaker.PubSubSystem;
+﻿using System.Collections.Generic;
+using IsekaiMod.Content.Constellations;
 using Kingmaker.UnitLogic.Mechanics.Actions;
 
 namespace IsekaiMod.Content.Dialogue
@@ -8,20 +8,28 @@ namespace IsekaiMod.Content.Dialogue
 	{
 		public override string GetCaption()
 		{
-			return "Triggers Constellation Live Chat Banter at the Goddesses Summit";
+			return "Triggers Constellation Banter at the Goddesses Summit";
 		}
 
 		public override void RunAction()
 		{
-			DivineTokens.AddCoins(500, "The Laughing King");
-			EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
+			if (ConstellationChatManager.HasTriggeredMilestone("Act5DivineSummit"))
 			{
-				h.HandleLogMessage("<color=#FFD700><b>[The Laughing King]</b></color>: <i>\"HAHAHA! Standing between the Inheritor and the Demon Queen and checking the chat poll! Maximum ratings unlocked!\"</i>");
-			});
-			EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
+				return;
+			}
+			ConstellationChatManager.MarkMilestoneTriggered("Act5DivineSummit");
+			List<string> act5DivineSummitBanter = ConstellationDialogueBanter.GetAct5DivineSummitBanter(TimelineManager.GetCurrentCycle(), out var coinsAwarded, out var primarySponsor);
+			if (act5DivineSummitBanter != null)
 			{
-				h.HandleLogMessage("<color=#00FFFF><b>[The Song of the Spheres]</b></color>: <i>\"Freedom is never chosen from someone else's menu. Dance on your own stage, starlight!\"</i>");
-			});
+				foreach (string item in act5DivineSummitBanter)
+				{
+					ConstellationChatManager.PostLog(item, primarySponsor, ConstellationCategory.Quest, 0, "The Goddesses Summit");
+				}
+			}
+			if (coinsAwarded > 0)
+			{
+				DivineTokens.AddCoins(coinsAwarded, primarySponsor);
+			}
 		}
 	}
 }

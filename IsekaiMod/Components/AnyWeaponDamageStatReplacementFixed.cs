@@ -19,7 +19,7 @@ namespace IsekaiMod.Components
 
 		public void OnEventAboutToTrigger(RuleCalculateWeaponStats evt)
 		{
-			if (evt.Initiator != base.Owner)
+			if (evt?.Initiator == null || evt.Initiator != base.Owner || evt.Initiator.Descriptor?.Stats == null)
 			{
 				return;
 			}
@@ -28,7 +28,7 @@ namespace IsekaiMod.Components
 			{
 				evt.OverrideDamageBonusStat(Stat);
 				evt.TwoHandedStatReplacement = true;
-				if (Stat != StatType.Strength && Stat != StatType.Dexterity && (evt.Weapon.HoldInTwoHands || (evt.SlotToInsert != null && evt.Weapon.CanTakeTwoHands() && (evt.SlotToInsert.HandsEquipmentSet.GripType == GripType.TwoHanded || !evt.Weapon.CanTakeOneHand()))))
+				if (Stat != StatType.Strength && Stat != StatType.Dexterity && evt.Weapon != null && (evt.Weapon.HoldInTwoHands || (evt.SlotToInsert != null && evt.Weapon.CanTakeTwoHands() && (evt.SlotToInsert.HandsEquipmentSet.GripType == GripType.TwoHanded || !evt.Weapon.CanTakeOneHand()))))
 				{
 					evt.OverrideDamageBonusStatMultiplier(1.5f);
 				}

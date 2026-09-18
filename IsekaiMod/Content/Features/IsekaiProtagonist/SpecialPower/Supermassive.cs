@@ -19,7 +19,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 
 		public static void Add()
 		{
-			SpecialPowerSelection.AddToSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "Supermassive", delegate(BlueprintFeature bp)
+			SpecialPowerSelection.AddToMartialSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "Supermassive", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Supermassive");
 				bp.SetDescription(Main.IsekaiContext, "You gain a size bonus to HP equal to your 10 times your Constitution modifier.");
@@ -43,7 +43,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 				});
 				bp.AddComponent(delegate(PrerequisiteCharacterLevel c)
 				{
-					c.Level = 5;
+					c.Level = 9;
 				});
 			}));
 		}

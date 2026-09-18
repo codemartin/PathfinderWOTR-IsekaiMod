@@ -15,15 +15,17 @@ namespace IsekaiMod.Components
 	{
 		public int Number = 1;
 
+		public int MinCharacterLevel = 1;
+
 		public void OnEventAboutToTrigger(RuleCalculateAttacksCount evt)
 		{
-			if (!(evt.Initiator != base.Owner) && evt.Initiator?.Body != null)
+			if (!(evt.Initiator != base.Owner) && evt.Initiator?.Body != null && (evt.Initiator.Progression?.CharacterLevel ?? 1) >= MinCharacterLevel)
 			{
 				HandSlot primaryHand = evt.Initiator.Body.PrimaryHand;
 				HandSlot secondaryHand = evt.Initiator.Body.SecondaryHand;
 				if (primaryHand != null && secondaryHand != null && primaryHand.HasWeapon && secondaryHand.HasWeapon && primaryHand.Weapon?.Blueprint != null && secondaryHand.Weapon?.Blueprint != null && !primaryHand.Weapon.Blueprint.IsNatural && !secondaryHand.Weapon.Blueprint.IsNatural && primaryHand.Weapon != evt.Initiator.Body.EmptyHandWeapon && secondaryHand.Weapon != evt.Initiator.Body.EmptyHandWeapon && evt.Result?.SecondaryHand != null)
 				{
-					evt.Result.SecondaryHand.AdditionalAttacks += Number * base.Fact.GetRank();
+					evt.Result.SecondaryHand.AdditionalAttacks += Number * (base.Fact?.GetRank() ?? 1);
 				}
 			}
 		}

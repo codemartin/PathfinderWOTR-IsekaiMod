@@ -29,12 +29,13 @@ namespace IsekaiMod.Content.Constellations
 
 		public static void Add()
 		{
-			Sprite iconCoin = AssetLoader.LoadInternal(Main.IsekaiContext, "Features", "ICON_COSMIC_COIN.png");
+			Sprite sprite = AssetLoader.LoadInternal(Main.IsekaiContext, "Features", "ICON_COSMIC_COIN.png");
+			Sprite iconBook = ((BlueprintItem)BlueprintTools.GetBlueprint<BlueprintItemEquipmentUsable>("289842de01a049249f0e921c18bd91a4"))?.m_Icon ?? sprite;
 			CodexKnowledgeBuff = Helpers.CreateBlueprint(Main.IsekaiContext, "CodexKnowledgeBuff", delegate(BlueprintBuff bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Cosmic Chronicle Insight");
 				bp.SetDescription(Main.IsekaiContext, "Attunement with the Codex of the Reincarnated Otherworlder grants a +2 insight bonus to all Knowledge and Lore checks, as well as a +1 sacred bonus on Will saving throws.");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconBook;
 				bp.IsClassFeature = true;
 				bp.AddComponent(delegate(AddStatBonus c)
 				{
@@ -70,8 +71,8 @@ namespace IsekaiMod.Content.Constellations
 			CodexAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "CodexOfReincarnationAbility", delegate(BlueprintAbility bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Read Codex of the Reincarnated Otherworlder");
-				bp.SetDescription(Main.IsekaiContext, "Read the chronicle of the stars to attune your soul to the multiverse, refreshing your insight and receiving your first-time streamer tip of 500 Cosmic Coins from The Grand Arbiter.");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				bp.SetDescription(Main.IsekaiContext, "Read the chronicle of the stars to attune your soul to the multiverse, refreshing your insight and receiving your initial celestial stipend of 500 Cosmic Coins from The Grand Arbiter.");
+				((BlueprintUnitFact)bp).m_Icon = iconBook;
 				bp.Type = AbilityType.Special;
 				bp.Range = AbilityRange.Personal;
 				bp.CanTargetSelf = true;
@@ -83,13 +84,13 @@ namespace IsekaiMod.Content.Constellations
 					c.Actions = ActionFlow.DoSingle<ContextActionReadCodex>();
 				});
 			});
-			string codexTitle = "Codex of the Reincarnated Otherworlder: The 13 Constellations & The Cosmic Stream";
-			string codexDescription = "A weighty, star-embossed grimoire bound in shimmering astral leather. Its parchment radiates faint multiversal warmth.\n\n--- PROLOGUE: THE OTHERWORLDER ARRIVAL ---\nYou were torn from your previous life on Earth across the multiversal threshold by an unprecedented planar convergence, awakening amid the Worldwound crisis on Golarion with fully unsealed potential.\n\n--- CHAPTER I: THE 13 WATCHING CONSTELLATIONS ---\nThirteen supreme entities and deities across the Great Beyond observe your journey as celestial sponsors:\n1. The Lucky Drunk: Loves daring wagers, taverns, and bold, impossible gambles.\n2. The Laughing King: Revels in chaos, mockery of arrogant tyrants, and outrageous stunts.\n3. The Song of the Spheres: Watches over travelers, dreamers, and joyous liberation.\n4. The Inheritor: Demands unyielding righteousness, chivalry, and crusade honor.\n5. The Dark Prince: Respects cold pragmatism, discipline, and uncompromising will.\n6. The Iron Warden: Favors unbreakable defenses, craftsmanship, and ancient oaths.\n7. The Dawnflower: Champions redemption, blazing sunlight, and healing mercy.\n8. The Silver Maiden: Oversees the cycle of souls and the integrity of destiny.\n9. The World Sovereign: Admits the imperial ambition and boundless potential of mortals.\n10. The Omniscient Hermit: Craves arcane secrets and the bending of physical laws.\n11. The Fading Dragon: Honors ancient draconic lineage and noble self-sacrifice.\n12. The Grand Arbiter: Maintains the fair rules of the celestial live broadcast.\n13. The Lurker at the Threshold: The enigmatic keeper of dimensional doors.\n\n--- CHAPTER II: THE LIVE BROADCAST & COSMIC COINS ---\nWhenever you take bold Otherworlder actions, resolve dilemmas creatively, or unleash Overpowered Abilities, the watching Constellations react in the live chat log and tip you Cosmic Coins.\nAll coins pool into a single universal wallet accepted at the Divine Sponsorship Store, where you can purchase mythic relics, stat tomes, and divine aids.\n\n--- CHAPTER III: SEVERING THE KARMIC THREAD ---\nShould you ever desire a clean slate to begin an untainted Loop 1 journey, you may sever the karmic timeline to reset all cycle records and reincarnate anew.";
+			string codexTitle = "Codex of the Reincarnated Otherworlder: The 13 Constellations & The Cosmic Tapestry";
+			string codexDescription = "A magnificent starlight-bound grimoire radiating multiversal resonance.\nWhen used, attunes your soul to the cosmos, permanently unlocking celestial chronicle lore and granting +2 to all Knowledge and Lore skills and +1 sacred bonus to Will saves for 24 hours.\nUpon first reading, The Grand Arbiter awards you 500 Cosmic Coins as an initial celestial stipend!\n\n--- CHAPTER I: THE 13 CONSTELLATIONS & THEIR DOMAINS ---\n1. The Laughing King (The Lantern King): Chaos, jokes, meta humor, twists.\n2. The Lucky Drunk (Cayden Cailean): Daring gambles, brawls, toasts, swagger.\n3. The Inheritor (Iomedae): Righteous honor, duty, crusade discipline.\n4. The Prince of Darkness (Asmodeus): Tyranny, contracts, sovereign order.\n5. The Song of the Spheres (Desna): Freedom, dreams, travel, hope.\n6. The Lady of Graves (Pharasma): Fate, death, soul cycles, solemn judgment.\n7. The Savored Sting (Calistria): Lust, revenge, audacity, intrigue.\n8. The All-Seeing Eye (Nethys): Arcane supremacy, reckless magic, knowledge.\n9. Our Lord in Iron (Gorum): Pure martial carnage, brute strength, warfare.\n10. The Pirate Queen (Besmara): Plunder, freedom on the high seas, defiance.\n11. The Roseguard Sentinel (Milani): Revolution, uprisings against tyrants.\n12. The Grand Arbiter: Maintains the fair balance and order of the celestial gallery.\n13. The Lurker at the Threshold: The enigmatic keeper of dimensional doors.\n\n--- CHAPTER II: THE CELESTIAL BROADCAST & COSMIC COINS ---\nWhenever you take bold Otherworlder actions, resolve dilemmas creatively, or unleash Overpowered Abilities, the watching Constellations react in the celestial log and sponsor you with Cosmic Coins.\nAll coins pool into a single universal wallet accepted at the Divine Sponsorship Store, where you can purchase mythic relics, stat tomes, and divine aids.\n\n--- CHAPTER III: SEVERING THE KARMIC THREAD ---\nShould you ever desire a clean slate to begin an untainted Loop 1 journey, you may sever the karmic timeline to reset all cycle records and reincarnate anew.";
 			ItemCodexOfReincarnation = Helpers.CreateBlueprint(Main.IsekaiContext, "ItemCodexOfReincarnation", delegate(BlueprintItemEquipmentUsable bp)
 			{
 				bp.SetName(Main.IsekaiContext, codexTitle);
 				bp.SetDescription(Main.IsekaiContext, codexDescription);
-				((BlueprintItem)bp).m_Icon = iconCoin;
+				((BlueprintItem)bp).m_Icon = iconBook;
 				((BlueprintItem)bp).m_Cost = 5000;
 				((BlueprintItem)bp).m_Weight = 1f;
 				((BlueprintItem)bp).m_IsNotable = true;

@@ -1,6 +1,7 @@
 ﻿using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.JsonSystem;
+using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UnitLogic;
 
 namespace IsekaiMod.Components
@@ -12,9 +13,10 @@ namespace IsekaiMod.Components
 		public override void OnTurnOn()
 		{
 			base.OnTurnOn();
-			base.Owner.State.Features.ImmunityToMediumArmorSpeedPenalty.Retain();
-			base.Owner.State.Features.ImmuneToArmorSpeedPenalty.Retain();
-			if (base.Owner.Body.Armor.HasArmor)
+			base.Owner?.State?.Features?.ImmunityToMediumArmorSpeedPenalty?.Retain();
+			base.Owner?.State?.Features?.ImmuneToArmorSpeedPenalty?.Retain();
+			UnitEntityData owner = base.Owner;
+			if ((object)owner != null && owner.Body?.Armor?.HasArmor == true)
 			{
 				base.Owner.Body.Armor.Armor.RecalculateStats();
 			}
@@ -23,9 +25,10 @@ namespace IsekaiMod.Components
 		public override void OnTurnOff()
 		{
 			base.OnTurnOff();
-			base.Owner.State.Features.ImmunityToMediumArmorSpeedPenalty.Release();
-			base.Owner.State.Features.ImmuneToArmorSpeedPenalty.Release();
-			if (base.Owner.Body.Armor.HasArmor)
+			base.Owner?.State?.Features?.ImmunityToMediumArmorSpeedPenalty?.Release();
+			base.Owner?.State?.Features?.ImmuneToArmorSpeedPenalty?.Release();
+			UnitEntityData owner = base.Owner;
+			if ((object)owner != null && owner.Body?.Armor?.HasArmor == true)
 			{
 				base.Owner.Body.Armor.Armor.RecalculateStats();
 			}

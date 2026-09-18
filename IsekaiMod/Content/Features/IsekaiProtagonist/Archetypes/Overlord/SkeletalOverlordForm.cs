@@ -4,10 +4,8 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Spells;
 using Kingmaker.Blueprints.Facts;
-using Kingmaker.Designers.EventConditionActionSystem.Actions;
 using Kingmaker.Designers.Mechanics.Buffs;
 using Kingmaker.Designers.Mechanics.Facts;
-using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.Enums;
 using Kingmaker.Enums.Damage;
@@ -21,7 +19,6 @@ using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Mechanics.Actions;
 using Kingmaker.UnitLogic.Mechanics.Components;
-using Kingmaker.UnitLogic.Mechanics.Conditions;
 using Kingmaker.Visual.Animation.Kingmaker.Actions;
 using TabletopTweaks.Core.Utilities;
 using UnityEngine;
@@ -71,6 +68,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Overlord
 					{
 						AssetId = "faff8234f920503479d069ce93800862"
 					};
+					c.m_PrefabFemale = c.m_Prefab;
 					c.m_KeepSlots = true;
 					c.Size = Size.Medium;
 					c.m_SilentCaster = true;
@@ -207,6 +205,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Overlord
 					{
 						AssetId = "5daad0238a0aa98429ad207c8f5174cb"
 					};
+					c.m_PrefabFemale = c.m_Prefab;
 					c.m_KeepSlots = true;
 					c.Size = Size.Medium;
 					c.m_SilentCaster = true;
@@ -247,6 +246,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Overlord
 					{
 						AssetId = "26d4e5b6eac936843962b2fcbf7b82ed"
 					};
+					c.m_PrefabFemale = c.m_Prefab;
 					c.m_KeepSlots = true;
 					c.Size = Size.Medium;
 					c.m_SilentCaster = true;
@@ -307,6 +307,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Overlord
 					{
 						AssetId = "911f71fa54003a148a50d5bd1430d4ec"
 					};
+					c.m_PrefabFemale = c.m_Prefab;
 					c.m_KeepSlots = true;
 					c.Size = Size.Medium;
 					c.m_SilentCaster = true;
@@ -362,6 +363,18 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Overlord
 					m_Buff = OverlordAspectRunelordBuff.ToReference<BlueprintBuffReference>()
 				});
 			});
+			BlueprintActivatableAbility SkeletalOverlordFormAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "SkeletalOverlordFormAbility", delegate(BlueprintActivatableAbility bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Shift Form: Overlord / Mortal Guise");
+				bp.SetDescription(Main.IsekaiContext, "Continuously maintain your true heteromorphic Skeletal Overlord body.\nYou gain complete undead immunities, cold immunity, Charisma to defenses, scaling damage resistance, and profane mastery.\nToggle off to instantly return to your Mortal Guise, concealing your undead nature.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_Lich;
+				bp.m_Buff = SkeletalOverlordFormBuff.ToReference<BlueprintBuffReference>();
+				bp.Group = ActivatableAbilityGroup.None;
+				bp.WeightInGroup = 1;
+				bp.IsOnByDefault = false;
+				bp.DeactivateImmediately = true;
+				bp.ActivationType = AbilityActivationType.Immediately;
+			});
 			BlueprintAbility SkeletalOverlordFormToggleAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "SkeletalOverlordFormToggleAbility", delegate(BlueprintAbility bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Shift Form: Overlord / Mortal Guise");
@@ -370,56 +383,24 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Overlord
 				bp.Type = AbilityType.Supernatural;
 				bp.Range = AbilityRange.Personal;
 				bp.CanTargetSelf = true;
+				bp.CanTargetFriends = true;
+				bp.CanTargetPoint = false;
+				bp.CanTargetEnemies = false;
+				bp.EffectOnAlly = AbilityEffectOnUnit.Helpful;
+				bp.EffectOnEnemy = AbilityEffectOnUnit.None;
 				bp.ActionType = UnitCommand.CommandType.Free;
-				bp.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Omni;
+				bp.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.SelfTouch;
 				bp.AddComponent(delegate(AbilityEffectRunAction c)
 				{
-					c.Actions = Helpers.CreateActionList(new Conditional
+					c.Actions = Helpers.CreateActionList(new ContextActionToggleOverlordForm
 					{
-						ConditionsChecker = new ConditionsChecker
-						{
-							Conditions = new Condition[1]
-							{
-								new ContextConditionHasBuff
-								{
-									m_Buff = SkeletalOverlordFormBuff.ToReference<BlueprintBuffReference>()
-								}
-							}
-						},
-						IfTrue = Helpers.CreateActionList(new ContextActionRemoveBuff
-						{
-							m_Buff = SkeletalOverlordFormBuff.ToReference<BlueprintBuffReference>()
-						}, new ContextActionRemoveBuff
-						{
-							m_Buff = OverlordAspectDeathKnightBuff.ToReference<BlueprintBuffReference>()
-						}, new ContextActionRemoveBuff
-						{
-							m_Buff = OverlordAspectRunelordBuff.ToReference<BlueprintBuffReference>()
-						}, new ContextActionRemoveBuff
-						{
-							m_Buff = OverlordAspectShadowBuff.ToReference<BlueprintBuffReference>()
-						}),
-						IfFalse = Helpers.CreateActionList(new ContextActionApplyBuff
-						{
-							m_Buff = SkeletalOverlordFormBuff.ToReference<BlueprintBuffReference>(),
-							Permanent = true,
-							DurationValue = Values.Duration.Zero,
-							AsChild = false
-						})
+						m_OverlordBuff = SkeletalOverlordFormBuff.ToReference<BlueprintBuffReference>(),
+						m_OverlordAbility = SkeletalOverlordFormAbility.ToReference<BlueprintActivatableAbilityReference>(),
+						m_Stance1 = OverlordAspectDeathKnightBuff.ToReference<BlueprintBuffReference>(),
+						m_Stance2 = OverlordAspectRunelordBuff.ToReference<BlueprintBuffReference>(),
+						m_Stance3 = OverlordAspectShadowBuff.ToReference<BlueprintBuffReference>()
 					});
 				});
-			});
-			BlueprintActivatableAbility SkeletalOverlordFormAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "SkeletalOverlordFormAbility", delegate(BlueprintActivatableAbility bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Skeletal Overlord Form (Auto-Maintain)");
-				bp.SetDescription(Main.IsekaiContext, "Continuously maintain your true heteromorphic Skeletal Overlord body.\nYou gain complete undead immunities, cold immunity, Charisma to defenses, scaling damage resistance, and profane mastery.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Lich;
-				bp.m_Buff = SkeletalOverlordFormBuff.ToReference<BlueprintBuffReference>();
-				bp.Group = ActivatableAbilityGroup.None;
-				bp.WeightInGroup = 1;
-				bp.IsOnByDefault = false;
-				bp.DeactivateImmediately = true;
-				bp.ActivationType = AbilityActivationType.Immediately;
 			});
 			BlueprintActivatableAbility OverlordAspectDeathKnightAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "OverlordAspectDeathKnightAbility", delegate(BlueprintActivatableAbility bp)
 			{

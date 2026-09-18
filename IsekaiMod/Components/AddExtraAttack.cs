@@ -16,9 +16,9 @@ namespace IsekaiMod.Components
 
 		public void OnEventAboutToTrigger(RuleCalculateAttacksCount evt)
 		{
-			if (!(evt.Initiator != base.Owner))
+			if (evt != null && !(evt.Initiator != base.Owner))
 			{
-				evt.AddExtraAttacks(Number * base.Fact.GetRank(), haste: false, penalized: false);
+				evt.AddExtraAttacks(Number * (base.Fact?.GetRank() ?? 1), haste: false, penalized: false);
 			}
 		}
 

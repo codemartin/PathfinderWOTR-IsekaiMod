@@ -26,21 +26,22 @@ using UnityEngine;
 
 namespace IsekaiMod.Utilities
 {
-	internal class TTCoreExtensions
+	internal static class TTCoreExtensions
 	{
 		private static readonly Dictionary<BlueprintSpellList, HashSet<BlueprintGuid>> _spellListCache = new Dictionary<BlueprintSpellList, HashSet<BlueprintGuid>>();
 
 		public static void RegisterClass(BlueprintCharacterClass classToRegister)
 		{
-			if (classToRegister != null)
+			if (classToRegister != null && BlueprintRoot.Instance?.Progression != null)
 			{
-				if (ContainsClass(ClassTools.Classes.AllClasses, classToRegister))
+				BlueprintCharacterClassReference[] array = BlueprintRoot.Instance.Progression.m_CharacterClasses ?? ClassTools.ClassReferences.AllClasses;
+				if (array.Any((BlueprintCharacterClassReference c) => c != null && ((BlueprintReferenceBase)c).deserializedGuid == classToRegister.AssetGuid))
 				{
 					Main.IsekaiContext.Logger.LogWarning("class already registered= " + classToRegister.name + " gui id=" + classToRegister.AssetGuid.m_Guid.ToString("N"));
 				}
-				else if (BlueprintRoot.Instance?.Progression != null)
+				else
 				{
-					BlueprintRoot.Instance.Progression.m_CharacterClasses = ClassTools.ClassReferences.AllClasses.AddToArray(classToRegister.ToReference<BlueprintCharacterClassReference>());
+					BlueprintRoot.Instance.Progression.m_CharacterClasses = array.AddToArray(classToRegister.ToReference<BlueprintCharacterClassReference>());
 				}
 			}
 		}
@@ -242,6 +243,76 @@ namespace IsekaiMod.Utilities
 			});
 			init?.Invoke(blueprintCue);
 			return blueprintCue;
+		}
+
+		public static void SetAnswersList(this BlueprintCue cue, BlueprintAnswersList answersList)
+		{
+			if (cue != null && answersList != null)
+			{
+				cue.Answers = new List<BlueprintAnswerBaseReference> { answersList.ToReference<BlueprintAnswerBaseReference>() };
+			}
+		}
+
+		public static void InsertAnswer(this BlueprintAnswersList answersList, BlueprintAnswerBaseReference answerRef, int index = 0)
+		{
+			if (answersList == null || answerRef == null)
+			{
+				return;
+			}
+			if (answersList.Answers == null)
+			{
+				answersList.Answers = new List<BlueprintAnswerBaseReference>();
+			}
+			if (!answersList.Answers.Any((BlueprintAnswerBaseReference a) => a != null && ((BlueprintReferenceBase)a).deserializedGuid == ((BlueprintReferenceBase)answerRef).deserializedGuid))
+			{
+				if (index >= 0 && index <= answersList.Answers.Count)
+				{
+					answersList.Answers.Insert(index, answerRef);
+				}
+				else
+				{
+					answersList.Answers.Add(answerRef);
+				}
+			}
+		}
+
+		public static void InsertAnswer(this BlueprintAnswersList answersList, BlueprintAnswer answer, int index = 0)
+		{
+			if (answersList != null && answer != null)
+			{
+				answersList.InsertAnswer(answer.ToReference<BlueprintAnswerBaseReference>(), index);
+			}
+		}
+
+		public static void InsertAnswer(this BlueprintBookPage page, BlueprintAnswerBaseReference answerRef, int index = 0)
+		{
+			if (page == null || answerRef == null)
+			{
+				return;
+			}
+			if (page.Answers == null)
+			{
+				page.Answers = new List<BlueprintAnswerBaseReference>();
+			}
+			if (!page.Answers.Any((BlueprintAnswerBaseReference a) => a != null && ((BlueprintReferenceBase)a).deserializedGuid == ((BlueprintReferenceBase)answerRef).deserializedGuid))
+			{
+				if (index >= 0 && index <= page.Answers.Count)
+				{
+					page.Answers.Insert(index, answerRef);
+				}
+				else
+				{
+					page.Answers.Add(answerRef);
+				}
+			}
+		}
+
+		public static void InsertAnswer(this BlueprintBookPage page, BlueprintAnswer answer, int index = 0)
+		{
+			if (page != null && answer != null)
+			{
+				page.InsertAnswer(answer.ToReference<BlueprintAnswerBaseReference>(), index);
+			}
 		}
 
 		public static BlueprintBuff CreateBuff(string name, Action<BlueprintBuff> init = null)

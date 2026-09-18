@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Kingmaker.ElementsSystem;
 using Kingmaker.UnitLogic.Mechanics.Actions;
 using TabletopTweaks.Core.Utilities;
@@ -44,7 +45,7 @@ namespace IsekaiMod.Utilities
 		{
 			return new ConditionsChecker
 			{
-				Conditions = conditions,
+				Conditions = (conditions?.Where((Condition c) => c != null).ToArray() ?? Array.Empty<Condition>()),
 				Operation = Operation.And
 			};
 		}
@@ -53,7 +54,7 @@ namespace IsekaiMod.Utilities
 		{
 			return new ConditionsChecker
 			{
-				Conditions = conditions,
+				Conditions = (conditions?.Where((Condition c) => c != null).ToArray() ?? Array.Empty<Condition>()),
 				Operation = Operation.Or
 			};
 		}
@@ -62,7 +63,7 @@ namespace IsekaiMod.Utilities
 		{
 			return new ConditionsChecker
 			{
-				Conditions = new Condition[0]
+				Conditions = Array.Empty<Condition>()
 			};
 		}
 	}

@@ -91,7 +91,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 					c.Level = 5;
 				});
 			});
-			SpecialPowerSelection.AddToSelection(InfiniteArmoryFeature);
+			SpecialPowerSelection.AddToAuthoritySelection(InfiniteArmoryFeature);
 		}
 	}
 }

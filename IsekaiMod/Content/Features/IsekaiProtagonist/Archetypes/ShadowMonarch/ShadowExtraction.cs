@@ -1,4 +1,6 @@
-﻿using IsekaiMod.Components;
+﻿using System.Collections.Generic;
+using System.Linq;
+using IsekaiMod.Components;
 using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.UnitLogic;
@@ -8,6 +10,7 @@ using Kingmaker.Blueprints.Facts;
 using Kingmaker.Designers.Mechanics.Facts;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.Enums;
+using Kingmaker.ResourceLinks;
 using Kingmaker.RuleSystem;
 using Kingmaker.UnitLogic.Abilities;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
@@ -26,7 +29,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.ShadowMonarch
 {
 	internal class ShadowExtraction
 	{
-		private static readonly BlueprintUnit ShadowSoldierUnit = BlueprintTools.GetBlueprint<BlueprintUnit>("7121303d0f344a5abb3b43b0c9cef8e4");
+		private static readonly BlueprintUnit ShadowSoldierUnit = BlueprintTools.GetBlueprint<BlueprintUnit>("7237a32613fe55e479d1141682f2bbd4") ?? BlueprintTools.GetBlueprint<BlueprintUnit>("7121303d0f344a5abb3b43b0c9cef8e4");
 
 		private static readonly BlueprintSummonPool ShadowSummonPool = BlueprintTools.GetBlueprint<BlueprintSummonPool>("d94c93e7240f10e41ae41db4c83d1cbe");
 
@@ -34,10 +37,30 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.ShadowMonarch
 
 		public static void Add()
 		{
+			BlueprintSummonPool ShadowExtractionPool = Helpers.CreateBlueprint<BlueprintSummonPool>(Main.IsekaiContext, "ShadowExtractionPool");
+			BlueprintBuff shadowFXBuff = BlueprintTools.GetBlueprint<BlueprintBuff>("8caafe9dc0ff21041b36ad225569d164");
+			BlueprintBuff legendShadowBuff = BlueprintTools.GetBlueprint<BlueprintBuff>("faf2133d48b641149343f4dac75fba47");
+			BlueprintUnit ShadowSoldierSummoned = ShadowSoldierUnit?.CreateCopy(Main.IsekaiContext, "ShadowSoldierSummoned", delegate(BlueprintUnit bp)
+			{
+				bp.SetLocalisedName(Main.IsekaiContext, "Extracted Shadow Soldier");
+				bp.m_Type = BlueprintTools.GetBlueprintReference<BlueprintUnitTypeReference>("d0aa7a6da15f0d3498b046bfaec72c9a");
+				bp.m_Portrait = BlueprintTools.GetBlueprintReference<BlueprintPortraitReference>("4ee2f49b8baf48fabe567465618bf3ce");
+				bp.m_Race = null;
+				List<BlueprintUnitFactReference> list = (bp.m_AddFacts ?? new BlueprintUnitFactReference[0]).ToList();
+				if (shadowFXBuff != null)
+				{
+					list.Add(shadowFXBuff.ToReference<BlueprintUnitFactReference>());
+				}
+				if (legendShadowBuff != null)
+				{
+					list.Add(legendShadowBuff.ToReference<BlueprintUnitFactReference>());
+				}
+				bp.m_AddFacts = list.ToArray();
+			});
 			BlueprintBuff ShadowSoldierBuff = Helpers.CreateBlueprint(Main.IsekaiContext, "ShadowSoldierBuff", delegate(BlueprintBuff bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Shadow Soldier: Extracted Essence");
-				bp.SetDescription(Main.IsekaiContext, "A loyal warrior risen from the shadows of death. Deals additional unholy and cold damage on all attacks, gains a +10 ft speed bonus, and is immune to fear and mind-affecting effects.");
+				bp.SetDescription(Main.IsekaiContext, "A loyal warrior risen from the shadows of death. Cloaked in an ominous shadow silhouette, deals additional unholy and cold damage on all attacks, gains a +10 ft speed bonus, and is immune to fear and mind-affecting effects.");
 				// Immunities named in the description.
 				bp.AddComponent(delegate(BuffDescriptorImmunity c)
 				{
@@ -49,6 +72,10 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.ShadowMonarch
 				});
 				((BlueprintUnitFact)bp).m_Icon = Icon_Arise;
 				bp.IsClassFeature = true;
+				bp.FxOnStart = new PrefabLink
+				{
+					AssetId = "6d63fc82e26d16842af4024295a1f6f8"
+				};
 				bp.AddComponent(delegate(AddStatBonus c)
 				{
 					c.Descriptor = ModifierDescriptor.Profane;
@@ -98,12 +125,15 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.ShadowMonarch
 				});
 				bp.AddComponent(delegate(AbilityEffectRunAction c)
 				{
-					c.Actions = ActionFlow.DoSingle(delegate(ContextActionOnNearbyPoint contextActionOnNearbyPoint)
+					c.Actions = Helpers.CreateActionList(new ContextActionEnforceShadowExtractionCap
 					{
-						contextActionOnNearbyPoint.Actions = Helpers.CreateActionList(new ContextActionSpawnMonster
+						m_SummonPool = ShadowExtractionPool.ToReference<BlueprintSummonPoolReference>()
+					}, new ContextActionOnNearbyPoint
+					{
+						Actions = Helpers.CreateActionList(new ContextActionSpawnMonster
 						{
-							m_Blueprint = ShadowSoldierUnit?.ToReference<BlueprintUnitReference>(),
-							m_SummonPool = ShadowSummonPool?.ToReference<BlueprintSummonPoolReference>(),
+							m_Blueprint = (ShadowSoldierSummoned ?? ShadowSoldierUnit)?.ToReference<BlueprintUnitReference>(),
+							m_SummonPool = ShadowExtractionPool.ToReference<BlueprintSummonPoolReference>(),
 							DurationValue = new ContextDurationValue
 							{
 								Rate = DurationRate.Minutes,
@@ -114,14 +144,26 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.ShadowMonarch
 							},
 							CountValue = Values.Dice.One,
 							LevelValue = 0,
-							AfterSpawn = ActionFlow.DoSingle(delegate(ContextActionApplyBuff contextActionApplyBuff)
+							AfterSpawn = Helpers.CreateActionList(new ContextActionApplyBuff
 							{
-								contextActionApplyBuff.Permanent = true;
-								contextActionApplyBuff.m_Buff = ShadowSoldierBuff?.ToReference<BlueprintBuffReference>();
-								contextActionApplyBuff.DurationValue = Values.Duration.Zero;
-								contextActionApplyBuff.IsNotDispelable = true;
+								Permanent = true,
+								m_Buff = ShadowSoldierBuff.ToReference<BlueprintBuffReference>(),
+								DurationValue = Values.Duration.Zero,
+								IsNotDispelable = true
+							}, new ContextActionApplyBuff
+							{
+								Permanent = true,
+								m_Buff = BlueprintTools.GetBlueprintReference<BlueprintBuffReference>("8caafe9dc0ff21041b36ad225569d164"),
+								DurationValue = Values.Duration.Zero,
+								IsNotDispelable = true
+							}, new ContextActionApplyBuff
+							{
+								Permanent = true,
+								m_Buff = BlueprintTools.GetBlueprintReference<BlueprintBuffReference>("faf2133d48b641149343f4dac75fba47"),
+								DurationValue = Values.Duration.Zero,
+								IsNotDispelable = true
 							})
-						});
+						})
 					});
 				});
 				bp.AddComponent(delegate(ContextRankConfig c)

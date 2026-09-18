@@ -24,13 +24,19 @@ using UnityEngine.AI;
 
 namespace IsekaiMod.Content.Features.IsekaiProtagonist
 {
-	public class CosmicThreatScaling : IUnitCombatHandler, ISubscriber, IGlobalSubscriber
+	public class CosmicThreatScaling : IUnitCombatHandler, ISubscriber, IGlobalSubscriber, IAreaHandler
 	{
 		private static bool _initialized = false;
 
 		private static CosmicThreatScaling _instance;
 
 		private static bool _incursionSpawnedForCurrentCombat = false;
+
+		private static int _cachedTotalCheats = -1;
+
+		private static int _cachedProtagCount = -1;
+
+		private static int _cachedCheatPoints = -1;
 
 		private static readonly Dictionary<string, BlueprintUnit> _incursionUnits = new Dictionary<string, BlueprintUnit>();
 
@@ -371,33 +377,47 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist
 				{
 					_isekaiClass = IsekaiProtagonistClass.Get();
 				}
-				int num = 0;
-				int num2 = 0;
-				List<UnitEntityData> list = Game.Instance?.Player?.Party;
-				if (list != null)
+				int num;
+				int num2;
+				int num3;
+				if (_cachedTotalCheats >= 0 && _cachedProtagCount >= 0 && _cachedCheatPoints >= 0)
 				{
-					foreach (UnitEntityData item in list)
+					num = _cachedProtagCount;
+					num2 = _cachedTotalCheats;
+					num3 = _cachedCheatPoints;
+				}
+				else
+				{
+					num = 0;
+					num3 = 0;
+					List<UnitEntityData> list = Game.Instance?.Player?.Party;
+					if (list != null)
 					{
-						if (item?.Descriptor?.Progression == null)
+						foreach (UnitEntityData item in list)
 						{
-							continue;
-						}
-						if (_isekaiClass != null && item.Descriptor.Progression.GetClassLevel(_isekaiClass) > 0)
-						{
-							num++;
-						}
-						foreach (Feature feature in item.Descriptor.Progression.Features)
-						{
-							string text = feature.Blueprint?.name;
-							if (!string.IsNullOrEmpty(text) && (text.StartsWith("ItemPrimordialAmbrosia") || text.StartsWith("ItemNectar") || text.StartsWith("ManaWellspring") || text.StartsWith("RealityPiercer") || text.StartsWith("CosmicChronoSurge") || text.StartsWith("GachaJackpot") || text.StartsWith("AegisUndying") || text.StartsWith("DimensionalSanctuary") || text.StartsWith("CosmicSupremeBeing") || text.StartsWith("CosmicAutoQuicken") || text.StartsWith("InstakillFeature")))
+							if (item?.Descriptor?.Progression == null)
 							{
-								num2 += feature.GetRank();
+								continue;
+							}
+							if (_isekaiClass != null && item.Descriptor.Progression.GetClassLevel(_isekaiClass) > 0)
+							{
+								num++;
+							}
+							foreach (Feature feature in item.Descriptor.Progression.Features)
+							{
+								string text = feature.Blueprint?.name;
+								if (!string.IsNullOrEmpty(text) && (text.StartsWith("ItemPrimordialAmbrosia") || text.StartsWith("ItemNectar") || text.StartsWith("ManaWellspring") || text.StartsWith("RealityPiercer") || text.StartsWith("CosmicChronoSurge") || text.StartsWith("GachaJackpot") || text.StartsWith("AegisUndying") || text.StartsWith("DimensionalSanctuary") || text.StartsWith("CosmicSupremeBeing") || text.StartsWith("CosmicAutoQuicken") || text.StartsWith("InstakillFeature")))
+								{
+									num3 += feature.GetRank();
+								}
 							}
 						}
 					}
+					num2 = (_cachedTotalCheats = num3 + Math.Max(0, (num - 1) * 10));
+					_cachedProtagCount = num;
+					_cachedCheatPoints = num3;
 				}
-				int num3 = num2 + Math.Max(0, (num - 1) * 10);
-				if (num > 1 || num2 >= 5)
+				if (num > 1 || num3 >= 5)
 				{
 					if (_cheatBuff == null)
 					{
@@ -407,13 +427,13 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist
 					{
 						unit.Descriptor.AddFact(_cheatBuff);
 					}
-					ConstellationChatManager.WarnRampantCheating((num > 1) ? num : (num2 / 2));
+					ConstellationChatManager.WarnRampantCheating((num > 1) ? num : (num3 / 2));
 				}
 				int num4 = Math.Max(1, Main.IsekaiContext.AddedContent.CosmicThreatDifficultyMultiplier);
-				int num5 = num3 / 3 * num4;
-				if (num5 > 50)
+				int num5 = num2 / 3 * num4;
+				if (num5 > 12)
 				{
-					num5 = 50;
+					num5 = 12;
 				}
 				if (num5 > 0 && unit.Descriptor != null)
 				{
@@ -440,10 +460,10 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist
 						}
 					}
 				}
-				if (!_incursionSpawnedForCurrentCombat && Main.IsekaiContext.AddedContent.EnablePlanarIncursions && (num3 >= 15 || Main.IsekaiContext.AddedContent.EnableIsekaiEncounterMultiplier))
+				if (!_incursionSpawnedForCurrentCombat && Main.IsekaiContext.AddedContent.EnablePlanarIncursions && (num2 >= 15 || Main.IsekaiContext.AddedContent.EnableIsekaiEncounterMultiplier))
 				{
 					_incursionSpawnedForCurrentCombat = true;
-					SpawnPlanarIncursion(unit, unitEntityData, num3);
+					SpawnPlanarIncursion(unit, unitEntityData, num2);
 				}
 				if (!Main.IsekaiContext.AddedContent.EnableCosmicThreatScaling)
 				{
@@ -550,9 +570,27 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist
 		{
 			if (Game.Instance?.Player != null && !Game.Instance.Player.IsInCombat)
 			{
-				_incursionSpawnedForCurrentCombat = false;
+				InvalidateCache();
 				ConstellationChatManager.ResetCombatWarning();
 			}
+		}
+
+		public static void InvalidateCache()
+		{
+			_cachedTotalCheats = -1;
+			_cachedProtagCount = -1;
+			_cachedCheatPoints = -1;
+			_incursionSpawnedForCurrentCombat = false;
+		}
+
+		public void OnAreaDidLoad()
+		{
+			InvalidateCache();
+		}
+
+		public void OnAreaBeginUnloading()
+		{
+			InvalidateCache();
 		}
 	}
 }

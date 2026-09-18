@@ -15,7 +15,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 
 		public static void Add()
 		{
-			SpecialPowerSelection.AddToSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "ArmorOfStrength", delegate(BlueprintFeature bp)
+			SpecialPowerSelection.AddToDefenseSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "ArmorOfStrength", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Armor of Strength");
 				bp.SetDescription(Main.IsekaiContext, "You gain a natural armor bonus to AC equal to your strength modifier.\nRequires character level 5.");

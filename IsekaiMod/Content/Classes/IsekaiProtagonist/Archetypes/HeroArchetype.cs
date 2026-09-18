@@ -47,7 +47,11 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist.Archetypes
 				bp.IsArcaneCaster = true;
 				BlueprintFeature modBlueprint = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "ChronicleOtherworldFeature");
 				BlueprintFeature modBlueprint2 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "HeroChronicleFeature");
-				bp.RemoveFeatures = new LevelEntry[9]
+				BlueprintFeature modBlueprint3 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "TranscendentProtagonistFeature");
+				BlueprintFeature modBlueprint4 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "AnimeFinalFormFeature");
+				BlueprintFeature modBlueprint5 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "HeroOfLegendTranscendentTriad");
+				BlueprintFeature modBlueprint6 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "HeroMasterSwordAwakened");
+				bp.RemoveFeatures = new LevelEntry[19]
 				{
 					Helpers.CreateLevelEntry(1, IsekaiProficiencies, Gifted, LegacySelection.GetClassFeature(), modBlueprint),
 					Helpers.CreateLevelEntry(3, ReleaseEnergy),
@@ -57,33 +61,65 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist.Archetypes
 					Helpers.CreateLevelEntry(11, SpecialPowerSelection),
 					Helpers.CreateLevelEntry(12, TrainingEpisodeBonusSelection),
 					Helpers.CreateLevelEntry(15, SecondReincarnation),
-					Helpers.CreateLevelEntry(20, HaxSelection)
+					Helpers.CreateLevelEntry(20, HaxSelection),
+					Helpers.CreateLevelEntry(21, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(23, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(27, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(29, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(30, SecretPowerSelection, modBlueprint3),
+					Helpers.CreateLevelEntry(31, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(33, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(37, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(39, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(40, HaxSelection, modBlueprint4)
 				};
-				BlueprintFeature modBlueprint3 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "BondsOfFellowshipFeature");
-				BlueprintFeature modBlueprint4 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "RetributionMiracleFeature");
-				BlueprintFeature modBlueprint5 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "TriforceCourageFeature");
-				BlueprintFeature modBlueprint6 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "TriforcePowerFeature");
-				BlueprintFeature modBlueprint7 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "TriforceWisdomFeature");
-				BlueprintFeature modBlueprint8 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "SongOfTimeFeature");
-				BlueprintFeature modBlueprint9 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "SacredTriadFeature");
-				bp.AddFeatures = new LevelEntry[9]
+				BlueprintFeature modBlueprint7 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "BondsOfFellowshipFeature");
+				BlueprintFeature modBlueprint8 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "RetributionMiracleFeature");
+				BlueprintFeature modBlueprint9 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "TriforceCourageFeature");
+				BlueprintFeature modBlueprint10 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "TriforcePowerFeature");
+				BlueprintFeature modBlueprint11 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "TriforceWisdomFeature");
+				BlueprintFeature modBlueprint12 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "SongOfTimeFeature");
+				BlueprintFeature modBlueprint13 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "SacredTriadFeature");
+				bp.AddFeatures = new LevelEntry[14]
 				{
-					Helpers.CreateLevelEntry(1, HeroProficiencies, GracefulCombat, HeroLegacySelection.getClassFeature(), modBlueprint5, modBlueprint2),
-					Helpers.CreateLevelEntry(3, modBlueprint3, IsekaiChannelPositiveEnergyFeature),
+					Helpers.CreateLevelEntry(1, HeroProficiencies, GracefulCombat, HeroLegacySelection.getClassFeature(), modBlueprint9, modBlueprint2),
+					Helpers.CreateLevelEntry(3, modBlueprint7, IsekaiChannelPositiveEnergyFeature),
 					Helpers.CreateLevelEntry(4, HandsOfSalvation),
-					Helpers.CreateLevelEntry(7, GoldBarrierFeature, modBlueprint6),
-					Helpers.CreateLevelEntry(10, HeroAuraSelection, GoldBarrierHeroism, modBlueprint8),
-					Helpers.CreateLevelEntry(12, modBlueprint4, GoldBarrierFastHealing),
-					Helpers.CreateLevelEntry(13, modBlueprint7),
+					Helpers.CreateLevelEntry(7, GoldBarrierFeature, modBlueprint10),
+					Helpers.CreateLevelEntry(10, HeroAuraSelection, GoldBarrierHeroism, modBlueprint12),
+					Helpers.CreateLevelEntry(12, modBlueprint8, GoldBarrierFastHealing),
+					Helpers.CreateLevelEntry(13, modBlueprint11),
 					Helpers.CreateLevelEntry(15, GoldBarrierResistance),
-					Helpers.CreateLevelEntry(20, DeusExMachinaFeature, modBlueprint9)
+					Helpers.CreateLevelEntry(20, DeusExMachinaFeature, modBlueprint13),
+					Helpers.CreateLevelEntry(23, HeroAuraSelection),
+					Helpers.CreateLevelEntry(25, modBlueprint7),
+					Helpers.CreateLevelEntry(30, modBlueprint5),
+					Helpers.CreateLevelEntry(35, HeroAuraSelection),
+					Helpers.CreateLevelEntry(40, modBlueprint6)
 				};
 				bp.OverrideAttributeRecommendations = true;
 				bp.RecommendedAttributes = new StatType[1] { StatType.Charisma };
 				bp.AddComponent(delegate(PrerequisiteCycleOriginLock c)
 				{
 					c.AllowedOrigin = "Hero";
+					c.HideInUI = true;
 				});
+				BlueprintFeature SlimeHeritage = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "SlimeReincarnateHeritage");
+				if (SlimeHeritage != null)
+				{
+					bp.AddComponent(delegate(PrerequisiteNoFeature c)
+					{
+						c.m_Feature = SlimeHeritage.ToReference<BlueprintFeatureReference>();
+					});
+				}
+				BlueprintFeature OverlordHeritage = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "HeteromorphicOverlordHeritage");
+				if (OverlordHeritage != null)
+				{
+					bp.AddComponent(delegate(PrerequisiteNoFeature c)
+					{
+						c.m_Feature = OverlordHeritage.ToReference<BlueprintFeatureReference>();
+					});
+				}
 				bp.RemoveSpellbook = Main.IsekaiContext.AddedContent.DisableSpellbookHero;
 			}));
 			PatchSpecialPowers();

@@ -50,6 +50,16 @@ namespace IsekaiMod.Config
 
 		public int CosmicThreatDifficultyMultiplier = 1;
 
+		public bool EnableConstellationChatOverlay = true;
+
+		public bool ConstellationChatAlwaysVisible = true;
+
+		public int ConstellationChatPosition;
+
+		public int ConstellationChatDurationSeconds = 14;
+
+		public int ConstellationChatMaxMessages = 5;
+
 		public int IsekaiDefaultClothes = 20;
 
 		public int IsekaiSpellsKnownIncrement = 6;
@@ -89,6 +99,11 @@ namespace IsekaiMod.Config
 			EnablePlanarIncursions = addedContent.EnablePlanarIncursions;
 			EnableBossPhaseGate = addedContent.EnableBossPhaseGate;
 			CosmicThreatDifficultyMultiplier = addedContent.CosmicThreatDifficultyMultiplier;
+			EnableConstellationChatOverlay = addedContent.EnableConstellationChatOverlay;
+			ConstellationChatAlwaysVisible = addedContent.ConstellationChatAlwaysVisible;
+			ConstellationChatPosition = addedContent.ConstellationChatPosition;
+			ConstellationChatDurationSeconds = addedContent.ConstellationChatDurationSeconds;
+			ConstellationChatMaxMessages = addedContent.ConstellationChatMaxMessages;
 			MergeIsekaiSpellList = addedContent.MergeIsekaiSpellList;
 			Isekai.LoadSettingGroup(addedContent.Isekai, NewSettingsOffByDefault);
 			Other.LoadSettingGroup(addedContent.Other, NewSettingsOffByDefault);

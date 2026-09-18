@@ -37,6 +37,7 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist.Archetypes
 			BlueprintFeatureSelection SecretPowerSelection = BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "SecretPowerSelection");
 			BlueprintFeatureSelection SignatureMoveBonusSelection = BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "SignatureMoveBonusSelection");
 			BlueprintFeatureSelection TrainingEpisodeBonusSelection = BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "TrainingEpisodeBonusSelection");
+			BlueprintFeatureSelection SpecialPowerSelection = BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "SpecialPowerSelection");
 			BlueprintFeature ChronicleOtherworldFeature = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "ChronicleOtherworldFeature");
 			BlueprintFeature GluttonyCompendiumFeature = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "GluttonyCompendiumFeature");
 			IsekaiProtagonistClass.RegisterArchetype(Helpers.CreateBlueprint(Main.IsekaiContext, "DevourerArchetype", delegate(BlueprintArchetype bp)
@@ -45,8 +46,11 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist.Archetypes
 				bp.LocalizedDescription = Description;
 				bp.LocalizedDescriptionShort = Description;
 				bp.IsArcaneCaster = true;
-				bp.IsDivineCaster = true;
-				bp.RemoveFeatures = new LevelEntry[7]
+				BlueprintFeature modBlueprint = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "TranscendentProtagonistFeature");
+				BlueprintFeature modBlueprint2 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "AnimeFinalFormFeature");
+				BlueprintFeature modBlueprint3 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "SlimeInfiniteSpatialStomach");
+				BlueprintFeature modBlueprint4 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "SlimeBeelzebubCosmicDevourer");
+				bp.RemoveFeatures = new LevelEntry[17]
 				{
 					Helpers.CreateLevelEntry(1, IsekaiProficiencies, Gifted, LegacySelection.GetClassFeature(), ChronicleOtherworldFeature),
 					Helpers.CreateLevelEntry(3, ReleaseEnergy),
@@ -54,22 +58,37 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist.Archetypes
 					Helpers.CreateLevelEntry(10, SecretPowerSelection),
 					Helpers.CreateLevelEntry(12, TrainingEpisodeBonusSelection),
 					Helpers.CreateLevelEntry(15, SecondReincarnation),
-					Helpers.CreateLevelEntry(20, HaxSelection)
+					Helpers.CreateLevelEntry(20, HaxSelection),
+					Helpers.CreateLevelEntry(21, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(23, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(27, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(29, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(30, SecretPowerSelection, modBlueprint),
+					Helpers.CreateLevelEntry(31, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(33, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(37, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(39, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(40, HaxSelection, modBlueprint2)
 				};
-				BlueprintFeature modBlueprint = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "PredatorArtStickyThreadFeature");
-				BlueprintFeature modBlueprint2 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "PredatorArtBodyArmorFeature");
-				BlueprintFeature modBlueprint3 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "PredatorArtBlackFlameFeature");
-				BlueprintFeature modBlueprint4 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "PredatorArtThoughtAccelerationFeature");
-				BlueprintFeature modBlueprint5 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "PredatorArtDragonBreathFeature");
-				bp.AddFeatures = new LevelEntry[7]
+				BlueprintFeature modBlueprint5 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "PredatorArtStickyThreadFeature");
+				BlueprintFeature modBlueprint6 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "PredatorArtBodyArmorFeature");
+				BlueprintFeature modBlueprint7 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "PredatorArtBlackFlameFeature");
+				BlueprintFeature modBlueprint8 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "PredatorArtThoughtAccelerationFeature");
+				BlueprintFeature modBlueprint9 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "PredatorArtDragonBreathFeature");
+				bp.AddFeatures = new LevelEntry[12]
 				{
 					Helpers.CreateLevelEntry(1, DevourerProficiencies, PredatorInstincts, PredatorMawFeature, SlimeFormFeature, GluttonyCompendiumFeature, DevourerLegacySelection.getClassFeature()),
-					Helpers.CreateLevelEntry(3, EssenceAssimilationFeature, modBlueprint),
-					Helpers.CreateLevelEntry(5, modBlueprint2),
-					Helpers.CreateLevelEntry(7, InfiniteStomachFeature, modBlueprint3),
-					Helpers.CreateLevelEntry(9, modBlueprint4),
-					Helpers.CreateLevelEntry(11, DevourMagicFeature, modBlueprint5),
-					Helpers.CreateLevelEntry(20, BeelzebubLordOfDevourersFeature)
+					Helpers.CreateLevelEntry(3, EssenceAssimilationFeature, modBlueprint5),
+					Helpers.CreateLevelEntry(5, modBlueprint6),
+					Helpers.CreateLevelEntry(7, InfiniteStomachFeature, modBlueprint7),
+					Helpers.CreateLevelEntry(9, modBlueprint8),
+					Helpers.CreateLevelEntry(11, DevourMagicFeature, modBlueprint9),
+					Helpers.CreateLevelEntry(20, BeelzebubLordOfDevourersFeature),
+					Helpers.CreateLevelEntry(23, PredatorInstincts),
+					Helpers.CreateLevelEntry(25, EssenceAssimilationFeature),
+					Helpers.CreateLevelEntry(30, modBlueprint3),
+					Helpers.CreateLevelEntry(35, InfiniteStomachFeature),
+					Helpers.CreateLevelEntry(40, modBlueprint4)
 				};
 				BlueprintFeature VampireHeritage = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "IsekaiVampireHeritage");
 				BlueprintFeature DragonHeritage = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "IsekaiDragonLordHeritage");
@@ -106,6 +125,7 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist.Archetypes
 				bp.AddComponent(delegate(PrerequisiteCycleOriginLock c)
 				{
 					c.AllowedOrigin = "Devourer";
+					c.HideInUI = true;
 				});
 				bp.OverrideAttributeRecommendations = true;
 				bp.RecommendedAttributes = new StatType[2]

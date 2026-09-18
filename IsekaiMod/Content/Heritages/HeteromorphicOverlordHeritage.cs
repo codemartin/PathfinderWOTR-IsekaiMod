@@ -1,7 +1,10 @@
-﻿using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Overlord;
+﻿using System.Linq;
+using IsekaiMod.Content.Classes.IsekaiProtagonist;
+using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Overlord;
 using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
+using Kingmaker.Blueprints.Classes.Prerequisites;
 using Kingmaker.Blueprints.Classes.Spells;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Designers.Mechanics.Facts;
@@ -72,11 +75,68 @@ namespace IsekaiMod.Content.Heritages
 						c.m_Facts = new BlueprintUnitFactReference[1] { overlordForm.ToReference<BlueprintUnitFactReference>() };
 					});
 				}
+				BlueprintFeature slimeHeritage = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "SlimeReincarnateHeritage");
+				if (slimeHeritage != null)
+				{
+					bp.AddComponent(delegate(PrerequisiteNoFeature c)
+					{
+						c.m_Feature = slimeHeritage.ToReference<BlueprintFeatureReference>();
+						c.Group = Prerequisite.GroupType.All;
+					});
+				}
+				string[] array = new string[6] { "DevourerArchetype", "GodEmperorArchetype", "HeroArchetype", "MartialGodArchetype", "MastermindArchetype", "ShadowMonarchArchetype" };
+				foreach (string name in array)
+				{
+					BlueprintArchetype arch = BlueprintTools.GetModBlueprint<BlueprintArchetype>(Main.IsekaiContext, name);
+					if (arch != null)
+					{
+						bp.AddComponent(delegate(PrerequisiteNoArchetype c)
+						{
+							c.m_CharacterClass = IsekaiProtagonistClass.GetReference();
+							c.m_Archetype = arch.ToReference<BlueprintArchetypeReference>();
+							c.Group = Prerequisite.GroupType.All;
+						});
+					}
+				}
+				bp.HideNotAvailibleInUI = true;
 				bp.Groups = new FeatureGroup[1] { FeatureGroup.Racial };
 				bp.ReapplyOnLevelUp = true;
 			});
 			FeatTools.Selections.DhampirHeritageSelection.AddToSelection(feature);
 			HumanHeritageSelection.Register(feature);
+		}
+
+		public static void Patch()
+		{
+			BlueprintFeature blueprintFeature = Get();
+			if (blueprintFeature == null)
+			{
+				return;
+			}
+			blueprintFeature.HideNotAvailibleInUI = true;
+			BlueprintFeature slimeHeritage = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "SlimeReincarnateHeritage");
+			if (slimeHeritage != null && !blueprintFeature.GetComponents<PrerequisiteNoFeature>().Any((PrerequisiteNoFeature p) => p.Feature == slimeHeritage))
+			{
+				blueprintFeature.AddComponent(delegate(PrerequisiteNoFeature c)
+				{
+					c.m_Feature = slimeHeritage.ToReference<BlueprintFeatureReference>();
+					c.Group = Prerequisite.GroupType.All;
+				});
+			}
+			string[] array = new string[6] { "DevourerArchetype", "GodEmperorArchetype", "HeroArchetype", "MartialGodArchetype", "MastermindArchetype", "ShadowMonarchArchetype" };
+			foreach (string name in array)
+			{
+				BlueprintArchetype arch = BlueprintTools.GetModBlueprint<BlueprintArchetype>(Main.IsekaiContext, name);
+				if (arch != null && !blueprintFeature.GetComponents<PrerequisiteNoArchetype>().Any((PrerequisiteNoArchetype p) => p.Archetype == arch))
+				{
+					blueprintFeature.AddComponent(delegate(PrerequisiteNoArchetype c)
+					{
+						c.m_CharacterClass = IsekaiProtagonistClass.GetReference();
+						c.m_Archetype = arch.ToReference<BlueprintArchetypeReference>();
+						c.Group = Prerequisite.GroupType.All;
+					});
+				}
+			}
 		}
 
 		public static BlueprintFeature Get()

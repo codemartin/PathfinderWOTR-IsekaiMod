@@ -56,18 +56,27 @@ namespace IsekaiMod.Utilities
 
 		public static void SetLocalisedName(this BlueprintUnit Unit, ModContextBase modContext, string name)
 		{
-			Unit.LocalizedName = ScriptableObject.CreateInstance<SharedStringAsset>();
-			Unit.LocalizedName.String = Helpers.CreateString(modContext, $"{Unit.LocalizedName}.LocalizedName", name);
+			if (Unit != null)
+			{
+				Unit.LocalizedName = ScriptableObject.CreateInstance<SharedStringAsset>();
+				Unit.LocalizedName.String = Helpers.CreateString(modContext, Unit.name + ".LocalizedName", name);
+			}
 		}
 
 		public static void AddToSelection(this BlueprintFeatureSelection selection, BlueprintFeature feature)
 		{
-			selection.m_AllFeatures = selection.m_AllFeatures.AppendToArray(feature.ToReference<BlueprintFeatureReference>());
+			if (selection != null && feature != null)
+			{
+				selection.m_AllFeatures = (selection.m_AllFeatures ?? Array.Empty<BlueprintFeatureReference>()).AppendToArray(feature.ToReference<BlueprintFeatureReference>());
+			}
 		}
 
 		public static void RemoveFromSelection(this BlueprintFeatureSelection selection, BlueprintFeature feature)
 		{
-			selection.m_AllFeatures = selection.m_AllFeatures.RemoveFromArray(feature.ToReference<BlueprintFeatureReference>());
+			if (selection != null && feature != null && selection.m_AllFeatures != null)
+			{
+				selection.m_AllFeatures = selection.m_AllFeatures.RemoveFromArray(feature.ToReference<BlueprintFeatureReference>());
+			}
 		}
 
 		public static void SetText(this BlueprintCue cue, ModContextBase modContext, string text)
@@ -92,30 +101,37 @@ namespace IsekaiMod.Utilities
 
 		public static void AddToFirst(this BlueprintFeatureSelection selection, BlueprintFeature feature)
 		{
-			BlueprintFeatureReference[] array = new BlueprintFeatureReference[selection.m_AllFeatures.Length + 1];
-			Array.Copy(selection.m_AllFeatures, 0, array, 1, selection.m_AllFeatures.Length);
-			array[0] = feature.ToReference<BlueprintFeatureReference>();
-			selection.m_AllFeatures = array;
+			if (selection != null && feature != null)
+			{
+				BlueprintFeatureReference[] array = selection.m_AllFeatures ?? Array.Empty<BlueprintFeatureReference>();
+				BlueprintFeatureReference[] array2 = new BlueprintFeatureReference[array.Length + 1];
+				Array.Copy(array, 0, array2, 1, array.Length);
+				array2[0] = feature.ToReference<BlueprintFeatureReference>();
+				selection.m_AllFeatures = array2;
+			}
 		}
 
 		public static void AddShowCondition<T>(this BlueprintAnswer answer, Action<T> init = null) where T : Condition, new()
 		{
-			T val = new T();
-			init?.Invoke(val);
-			if (answer.ShowConditions == null)
+			if (answer != null)
 			{
-				answer.ShowConditions = ActionFlow.EmptyCondition();
+				T val = new T();
+				init?.Invoke(val);
+				if (answer.ShowConditions == null)
+				{
+					answer.ShowConditions = ActionFlow.EmptyCondition();
+				}
+				if (answer.ShowConditions.Conditions == null)
+				{
+					answer.ShowConditions.Conditions = Array.Empty<Condition>();
+				}
+				answer.ShowConditions.Conditions = answer.ShowConditions.Conditions.AddToArray(val);
 			}
-			if (answer.ShowConditions.Conditions == null)
-			{
-				answer.ShowConditions.Conditions = new Condition[0];
-			}
-			answer.ShowConditions.Conditions = answer.ShowConditions.Conditions.AddToArray(val);
 		}
 
 		public static void RequirePlotArmor(this BlueprintAnswer answer)
 		{
-			answer.AddShowCondition(delegate(HasFact c)
+			answer?.AddShowCondition(delegate(HasFact c)
 			{
 				c.Unit = new PlayerCharacter();
 				c.m_Fact = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "PlotArmor")?.ToReference<BlueprintUnitFactReference>();

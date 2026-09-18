@@ -1,5 +1,6 @@
 ﻿using System;
 using Kingmaker;
+using Kingmaker.Blueprints.JsonSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.UI.Common;
@@ -9,6 +10,7 @@ using UnityEngine;
 
 namespace IsekaiMod.Content.Guardians
 {
+	[TypeId("7e0a4f6111394c5ca60a7751f89382f1")]
 	public class GuardianCompanionBarksComponent : UnitFactComponentDelegate, IUnitCombatHandler, ISubscriber, IGlobalSubscriber, IUnitRestHandler, IUnitClickUIHandler
 	{
 		public string[] CombatStartBarks = new string[0];

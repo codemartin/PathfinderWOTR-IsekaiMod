@@ -82,7 +82,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 			AdaptiveArmorFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "AdaptiveArmorFeature", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Special Power: Adaptive Armor");
-				bp.SetDescription(Main.IsekaiContext, "Your otherworldly armor and skin possess reactive evolutionary memory, hardening against hostile damage frequencies.\nBenefit: Whenever you take damage from an attack or hostile effect, you gain a stacking layer of Adaptive Armor lasting 1 minute. Each stack grants damage reduction 3/- and 5 resistance against all energy types (acid, cold, electricity, fire, sonic). This effect stacks up to 5 times for a maximum of DR 15/- and 25 energy resistance.\nRequires character level 5.");
+				bp.SetDescription(Main.IsekaiContext, "Your otherworldly armor and skin possess reactive evolutionary memory, hardening against hostile damage frequencies.\nBenefit: Whenever you take damage from an attack or hostile effect, you gain a stacking layer of Adaptive Armor lasting 1 minute. Each stack grants damage reduction 3/- and 5 resistance against all energy types (acid, cold, electricity, fire, sonic). This effect stacks up to 5 times for a maximum of DR 15/- and 25 energy resistance.\nRequires character level 9.");
 				((BlueprintUnitFact)bp).m_Icon = Icon_Armor;
 				bp.IsClassFeature = true;
 				bp.AddComponent(delegate(AddIncomingDamageTrigger c)
@@ -102,10 +102,10 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 				});
 				bp.AddComponent(delegate(PrerequisiteCharacterLevel c)
 				{
-					c.Level = 5;
+					c.Level = 9;
 				});
 			});
-			SpecialPowerSelection.AddToSelection(AdaptiveArmorFeature);
+			SpecialPowerSelection.AddToDefenseSelection(AdaptiveArmorFeature);
 		}
 	}
 }

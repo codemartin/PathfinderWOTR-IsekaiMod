@@ -15,10 +15,10 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 
 		public static void Add()
 		{
-			SpecialPowerSelection.AddToSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "SpellMaster", delegate(BlueprintFeature bp)
+			SpecialPowerSelection.AddToMagicSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "SpellMaster", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Spell Master");
-				bp.SetDescription(Main.IsekaiContext, "The DC of spells you cast increases by 2.\nRequires character level 5.");
+				bp.SetDescription(Main.IsekaiContext, "The DC of spells you cast increases by 2.\nRequires character level 9.");
 				((BlueprintUnitFact)bp).m_Icon = Icon_BatteringBlast;
 				bp.AddComponent(delegate(IncreaseAllSpellsDC c)
 				{
@@ -28,7 +28,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 				});
 				bp.AddComponent(delegate(PrerequisiteCharacterLevel c)
 				{
-					c.Level = 5;
+					c.Level = 9;
 				});
 			}));
 		}

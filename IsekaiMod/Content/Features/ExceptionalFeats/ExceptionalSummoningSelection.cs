@@ -187,7 +187,7 @@ namespace IsekaiMod.Content.Features.ExceptionalFeats
 				c.Group = Prerequisite.GroupType.All;
 				c.m_Feature = ForbiddenSummoningFeature.ToReference<BlueprintFeatureReference>();
 			});
-			BlueprintFeatureReference[] ExceptionalSummoingFeatures = new BlueprintFeatureReference[4]
+			BlueprintFeatureReference[] ExceptionalSummoningFeatures = new BlueprintFeatureReference[4]
 			{
 				MightySummoningFeature.ToReference<BlueprintFeatureReference>(),
 				MagicalSummoningFeature.ToReference<BlueprintFeatureReference>(),
@@ -200,20 +200,20 @@ namespace IsekaiMod.Content.Features.ExceptionalFeats
 				bp.SetName(Main.IsekaiContext, "Exceptional Summoning");
 				bp.SetDescription(ExceptionalSummoningDesc);
 				((BlueprintUnitFact)bp).m_Icon = Icon_ExceptionalSummoning;
-				bp.Ranks = 1;
+				bp.Ranks = 10;
 				bp.IsClassFeature = true;
-				bp.m_AllFeatures = ExceptionalSummoingFeatures;
-				bp.m_Features = ExceptionalSummoingFeatures;
+				bp.m_AllFeatures = ExceptionalSummoningFeatures;
+				bp.m_Features = ExceptionalSummoningFeatures;
 			});
 			BlueprintFeatureSelection bonusSelection = Helpers.CreateBlueprint(Main.IsekaiContext, "ExceptionalSummoningBonusSelection", delegate(BlueprintFeatureSelection bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Exceptional Summoning");
 				bp.SetDescription(ExceptionalSummoningDesc);
 				((BlueprintUnitFact)bp).m_Icon = Icon_ExceptionalSummoning;
-				bp.Ranks = 1;
+				bp.Ranks = 10;
 				bp.IsClassFeature = true;
-				bp.m_AllFeatures = ExceptionalSummoingFeatures;
-				bp.m_Features = ExceptionalSummoingFeatures;
+				bp.m_AllFeatures = ExceptionalSummoningFeatures;
+				bp.m_Features = ExceptionalSummoningFeatures;
 			});
 			ExceptionalFeatSelection.AddToSelection(selection, bonusSelection);
 		}

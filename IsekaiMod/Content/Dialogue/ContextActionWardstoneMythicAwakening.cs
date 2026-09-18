@@ -1,5 +1,6 @@
-﻿using IsekaiMod.Content.Constellations;
-using Kingmaker.PubSubSystem;
+﻿using System;
+using System.Collections.Generic;
+using IsekaiMod.Content.Constellations;
 using Kingmaker.UnitLogic.Mechanics.Actions;
 
 namespace IsekaiMod.Content.Dialogue
@@ -13,22 +14,26 @@ namespace IsekaiMod.Content.Dialogue
 
 		public override void RunAction()
 		{
-			double num = ConstellationDialogueBanter.RollMultiplier("The Laughing King", out var shoutout);
-			DivineTokens.AddCoins((int)(500.0 * num), "The Laughing King");
-			if (!string.IsNullOrEmpty(shoutout))
+			if (ConstellationChatManager.HasTriggeredMilestone("Act1WardstoneClimax"))
 			{
-				EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
-				{
-					h.HandleLogMessage(shoutout);
-				});
+				return;
 			}
-			foreach (string line in ConstellationDialogueBanter.GetWardstoneMythicAwakeningBanter("The Laughing King"))
+			ConstellationChatManager.MarkMilestoneTriggered("Act1WardstoneClimax");
+			List<string> wardstoneMythicAwakeningBanter = ConstellationDialogueBanter.GetWardstoneMythicAwakeningBanter(TimelineManager.GetCurrentCycle(), out var coinsAwarded, out var primarySponsor);
+			double num = ConstellationDialogueBanter.RollMultiplier(primarySponsor, out var shoutoutMsg);
+			int amount = (int)Math.Round((double)coinsAwarded * num);
+			if (wardstoneMythicAwakeningBanter != null)
 			{
-				EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
+				foreach (string item in wardstoneMythicAwakeningBanter)
 				{
-					h.HandleLogMessage(line);
-				});
+					ConstellationChatManager.PostLog(item, primarySponsor, ConstellationCategory.Quest, 0, "Wardstone Mythic Awakening");
+				}
 			}
+			if (!string.IsNullOrEmpty(shoutoutMsg))
+			{
+				ConstellationChatManager.PostLog(shoutoutMsg, primarySponsor, ConstellationCategory.Quest, 0, "Wardstone Mythic Awakening");
+			}
+			DivineTokens.AddCoins(amount, primarySponsor);
 		}
 	}
 }

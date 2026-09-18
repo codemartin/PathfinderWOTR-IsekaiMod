@@ -157,6 +157,8 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature
 			SlayerLegacy.Configure();
 			WarpriestLegacy.Configure();
 			WizardLegacy.Configure();
+			SummonerEvolutionLegacy.Configure();
+			TwinSummonerLegacy.Configure();
 			ArcanaSelection.Configure();
 			OverpoweredAbilitySelection.AddToSelection(GetOverwhelmingFeature());
 		}
@@ -214,6 +216,8 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature
 			SlayerLegacy.PatchProgression();
 			WarpriestLegacy.PatchProgression();
 			WizardLegacy.PatchProgression();
+			SummonerEvolutionLegacy.PatchProgression();
+			TwinSummonerLegacy.PatchProgression();
 			PatchAllRegisteredLegacies();
 			Finish();
 			MastermindLegacySelection.Finish();

@@ -1,4 +1,5 @@
 ﻿using IsekaiMod.Components;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Prerequisites;
 using Kingmaker.Blueprints.Facts;
@@ -19,7 +20,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 			BlueprintFeature blueprintFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "PerfectRollFeature", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Overpowered Ability - Perfect Roll");
-				bp.SetDescription(Main.IsekaiContext, "You navigate every fight with perfect accuracy. Every word is predicted; every action is foreseen. Your premonitions guide you on your quest, as if you have experienced this before...\nBenefit: You gain a +5 bonus to all d20 rolls.");
+				bp.SetDescription(Main.IsekaiContext, "You navigate every fight with mathematical perfection and absolute determinism. Every word is predicted; every action is foreseen. Your premonitions guide you through the flow of destiny like the clockwork mechanisms of Axis.\nBenefit: You gain a +5 bonus to all d20 rolls.\nNote: Mutually exclusive with Meta Luck (Chaotic Providence) and Otherworldly Gacha (Merchant's Gamble).");
 				((BlueprintUnitFact)bp).m_Icon = Icon_TrickFate;
 				// ModifyD20 with RuleType.All ran a per-roll handler on every d20 (including the
 				// engine's simulated preview/AI rolls) and caused in-combat stutter. Apply the
@@ -33,6 +34,14 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 			blueprintFeature.AddComponent(delegate(PrerequisiteCharacterLevel c)
 			{
 				c.Level = 10;
+			});
+			blueprintFeature.AddComponent(delegate(PrerequisiteNoFeature c)
+			{
+				c.m_Feature = BlueprintTools.GetModBlueprintReference<BlueprintFeatureReference>(Main.IsekaiContext, "MetaLuckFeature");
+			});
+			blueprintFeature.AddComponent(delegate(PrerequisiteNoFeature c)
+			{
+				c.m_Feature = BlueprintTools.GetModBlueprintReference<BlueprintFeatureReference>(Main.IsekaiContext, "MerchantsGambleFeature");
 			});
 			OverpoweredAbilitySelection.AddToSelection(blueprintFeature);
 		}

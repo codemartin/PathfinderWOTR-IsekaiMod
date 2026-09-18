@@ -24,7 +24,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 			{
 				c.Level = 7;
 			});
-			SpecialPowerSelection.AddToSelection(blueprintFeature);
+			SpecialPowerSelection.AddToDefenseSelection(blueprintFeature);
 		}
 	}
 }

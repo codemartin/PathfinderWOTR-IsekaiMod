@@ -86,7 +86,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 			});
 			SelectiveChannel.AddPrerequisiteFeature(feature, Prerequisite.GroupType.Any);
 			ExtraChannel.AddPrerequisiteFeature(feature, Prerequisite.GroupType.Any);
-			SpecialPowerSelection.AddToSelection(feature);
+			SpecialPowerSelection.AddToAuthoritySelection(feature);
 		}
 
 		private static void AddChannelEnergyPatchedComponents(BlueprintAbility ability, BlueprintComponent[] components)

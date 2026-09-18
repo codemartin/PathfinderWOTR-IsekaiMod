@@ -34,9 +34,9 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 			});
 			blueprintFeature.AddComponent(delegate(PrerequisiteCharacterLevel c)
 			{
-				c.Level = 7;
+				c.Level = 13;
 			});
-			SpecialPowerSelection.AddToSelection(blueprintFeature);
+			SpecialPowerSelection.AddToMagicSelection(blueprintFeature);
 		}
 	}
 }

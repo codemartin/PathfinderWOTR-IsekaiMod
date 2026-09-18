@@ -26,6 +26,8 @@ namespace IsekaiMod.Content.Constellations
 
 		public int GachaPityCount;
 
+		public int CosmicCoins;
+
 		public List<string> CompletedSideQuests = new List<string>();
 
 		public List<string> PastChoices = new List<string>();

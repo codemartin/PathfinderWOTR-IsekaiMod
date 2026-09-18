@@ -38,6 +38,7 @@ namespace IsekaiMod.Content.Dialogue
 				{
 					h.HandleLogMessage("<color=#00FFFF><b>[Harmony of Kenabres]</b></color> Prelate Hulrun and High Priest Ramien join forces under your authority!");
 				});
+				ConstellationBounties.CompleteBounty("Desna_MarketSquare_Mercy");
 			}
 			catch (Exception ex)
 			{

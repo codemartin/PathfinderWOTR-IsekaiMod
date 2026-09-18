@@ -1,4 +1,4 @@
-{
+﻿{
   "NewSettingsOffByDefault": false,
   "ExcludeCompanionsFromIsekaiClass": true,
   "AllowMainCharacterRetinue": false,
@@ -16,6 +16,11 @@
   "DisableSpellbookMastermind" : false,
   "DisableSpellbookOverlord" : false,
   "DisableSpellbookShadowMonarch" : false,
+  "EnableConstellationChatOverlay": true,
+  "ConstellationChatAlwaysVisible": true,
+  "ConstellationChatDurationSeconds": 14,
+  "ConstellationChatMaxMessages": 5,
+  "ConstellationChatPosition": 0,
   "Isekai": {
     "DisableAll": false,
     "Settings": {

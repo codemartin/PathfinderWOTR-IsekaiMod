@@ -36,7 +36,7 @@ namespace IsekaiMod.Content.Features.ExceptionalFeats
 			{
 				bp.SetName(Main.IsekaiContext, "Exceptional Feats");
 				bp.SetDescription(exceptionalFeatDescription);
-				bp.Ranks = 1;
+				bp.Ranks = 20;
 				bp.IsClassFeature = true;
 				((BlueprintUnitFact)bp).m_Icon = Icon_ExceptionalFeat;
 				bp.AddComponent(delegate(PureRecommendation c)
@@ -50,7 +50,7 @@ namespace IsekaiMod.Content.Features.ExceptionalFeats
 			{
 				bp.SetName(Main.IsekaiContext, "Exceptional Feats");
 				bp.SetDescription(exceptionalFeatDescription);
-				bp.Ranks = 1;
+				bp.Ranks = 20;
 				bp.IsClassFeature = true;
 				((BlueprintUnitFact)bp).m_Icon = Icon_ExceptionalFeat;
 				bp.AddComponent(delegate(PureRecommendation c)
@@ -92,6 +92,11 @@ namespace IsekaiMod.Content.Features.ExceptionalFeats
 		public static BlueprintFeatureSelection Get()
 		{
 			return BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "ExceptionalFeatSelection");
+		}
+
+		public static BlueprintFeatureSelection GetBonus()
+		{
+			return BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "ExceptionalFeatBonusSelection");
 		}
 	}
 }

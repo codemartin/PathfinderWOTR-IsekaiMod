@@ -3,6 +3,7 @@ using IsekaiMod.Content.Classes.IsekaiProtagonist;
 using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
+using Kingmaker.Blueprints.Classes.Prerequisites;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.Items;
 using Kingmaker.Designers.Mechanics.Buffs;
@@ -30,7 +31,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 
 		public static void Add()
 		{
-			LocalizedString GachaDesc = Helpers.CreateString(Main.IsekaiContext, "MerchantsGamble.Description", "Tap into interdimensional gacha algorithms to manifest wealth, cosmic tokens, and legendary relics across the multiverse:\n• 3-Star (Common - 81.8%): 1,500 to 4,000 Gold plus vital consumables (Diamond Dust, Restoration scrolls, or Elixirs).\n• 4-Star (SR - 15.0%): 15,000 to 35,000 Gold, 50 to 150 Cosmic Coins, and powerful metamagic rods.\n• 5-Star (SSR - 3.0%): 100,000 to 250,000 Gold, 500 to 1,000 Cosmic Coins, legendary relics, and patron deity blessings.\n• 6-Star (Transcendent UR - 0.2% or 100-pull pity): 1,000,000 Gold, 5,000 Cosmic Coins, 5 Cosmic Wish charges, and 'The Omnipotent Sovereign's Die' (+4 sacred bonus to all d20 rolls, True Seeing, and 20% reality-bending advantage).\n");
+			LocalizedString GachaDesc = Helpers.CreateString(Main.IsekaiContext, "MerchantsGamble.Description", "Tap into interdimensional gacha algorithms to manifest wealth, cosmic tokens, and legendary relics across the multiverse:\n• 3-Star (Common - 81.8%): 1,500 to 4,000 Gold plus vital consumables (Diamond Dust, Restoration scrolls, or Elixirs).\n• 4-Star (SR - 15.0%): 15,000 to 35,000 Gold, 50 to 150 Cosmic Coins, and powerful metamagic rods.\n• 5-Star (SSR - 3.0%): 100,000 to 250,000 Gold, 500 to 1,000 Cosmic Coins, legendary relics, and patron deity blessings.\n• 6-Star (Transcendent UR - 0.2% or 100-pull pity): 1,000,000 Gold, 5,000 Cosmic Coins, 5 Cosmic Wish charges, and 'The Omnipotent Sovereign's Die' (+4 sacred bonus to all d20 rolls, True Seeing, and 20% reality-bending advantage).\nNote: Mutually exclusive with Meta Luck (Chaotic Providence) and Perfect Roll (Axis Determinism).");
 			Sprite Icon_Merchants_Gamble = AssetLoader.LoadInternal(Main.IsekaiContext, "Features", "ICON_DUPE_GOLD.png");
 			BlueprintAbilityResource resource = CreateResource();
 			BlueprintFeature OmnipotentSovereignsDieFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "OmnipotentSovereignsDieFeature", delegate(BlueprintFeature bp)
@@ -115,7 +116,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 				bp.LocalizedDuration = StaticReferences.Strings.Null;
 				bp.LocalizedSavingThrow = StaticReferences.Strings.Null;
 			});
-			OverpoweredAbilitySelection.AddToSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "MerchantsGambleFeature", delegate(BlueprintFeature bp)
+			BlueprintFeature blueprintFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "MerchantsGambleFeature", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Overpowered Ability - Otherworldly Gacha");
 				bp.SetDescription(GachaDesc);
@@ -130,7 +131,16 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 					c.RestoreAmount = true;
 					c.RestoreOnLevelUp = true;
 				});
-			}));
+			});
+			blueprintFeature.AddComponent(delegate(PrerequisiteNoFeature c)
+			{
+				c.m_Feature = BlueprintTools.GetModBlueprintReference<BlueprintFeatureReference>(Main.IsekaiContext, "MetaLuckFeature");
+			});
+			blueprintFeature.AddComponent(delegate(PrerequisiteNoFeature c)
+			{
+				c.m_Feature = BlueprintTools.GetModBlueprintReference<BlueprintFeatureReference>(Main.IsekaiContext, "PerfectRollFeature");
+			});
+			OverpoweredAbilitySelection.AddToSelection(blueprintFeature);
 		}
 
 		private static BlueprintAbilityResource CreateResource()

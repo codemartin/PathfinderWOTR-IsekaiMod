@@ -13,7 +13,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 		public static void Add()
 		{
 			Sprite Icon_Regeneration = AssetLoader.LoadInternal(Main.IsekaiContext, "Features", "ICON_REGENERATION.png");
-			SpecialPowerSelection.AddToSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "RegenerationFeature", delegate(BlueprintFeature bp)
+			SpecialPowerSelection.AddToDefenseSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "RegenerationFeature", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Regeneration");
 				bp.SetDescription(Main.IsekaiContext, "You regain 10 hit points per round and cannot die while regeneration is functioning. Regeneration is disabled for 1 round when you are hit with an acid or fire attack. ");

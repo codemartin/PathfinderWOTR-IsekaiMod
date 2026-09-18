@@ -53,43 +53,116 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 			BlueprintBuff PredatorResonanceBuff = TTCoreExtensions.CreateBuff("PredatorResonanceBuff", delegate(BlueprintBuff bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Predator's Essence Absorption");
-				bp.SetDescription(Main.IsekaiContext, "You have devoured the essence of a worthy foe. Grants +2 profane bonus to Attack and Damage rolls, +10 energy resistance to all elements, and Fast Healing 5.");
+				bp.SetDescription(Main.IsekaiContext, "You have devoured the essence of a worthy foe. Grants a profane bonus to attack and damage rolls (+2 at levels 1--9, +3 at levels 10--14, and +4 at level 15+), energy resistance to all elements (5 at levels 1--9, 10 at levels 10--14, and 20 at level 15+), and Fast Healing (2 at levels 1--9, 4 at levels 10--14, and 6 at level 15+).");
 				((BlueprintUnitFact)bp).m_Icon = Icon_Gluttony;
-				bp.AddComponent(delegate(AddStatBonus c)
+				bp.AddComponent(delegate(ContextRankConfig c)
+				{
+					c.m_Type = AbilityRankType.StatBonus;
+					c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
+					c.m_Progression = ContextRankProgression.Custom;
+					c.m_CustomProgression = new ContextRankConfig.CustomProgressionItem[3]
+					{
+						new ContextRankConfig.CustomProgressionItem
+						{
+							BaseValue = 9,
+							ProgressionValue = 2
+						},
+						new ContextRankConfig.CustomProgressionItem
+						{
+							BaseValue = 14,
+							ProgressionValue = 3
+						},
+						new ContextRankConfig.CustomProgressionItem
+						{
+							BaseValue = 100,
+							ProgressionValue = 4
+						}
+					};
+				});
+				bp.AddComponent(delegate(AddContextStatBonus c)
 				{
 					c.Descriptor = ModifierDescriptor.Profane;
 					c.Stat = StatType.AdditionalAttackBonus;
-					c.Value = 2;
+					c.Value = Values.CreateContextRankValue(AbilityRankType.StatBonus);
 				});
-				bp.AddComponent(delegate(AddStatBonus c)
+				bp.AddComponent(delegate(AddContextStatBonus c)
 				{
 					c.Descriptor = ModifierDescriptor.Profane;
 					c.Stat = StatType.AdditionalDamage;
-					c.Value = 2;
+					c.Value = Values.CreateContextRankValue(AbilityRankType.StatBonus);
+				});
+				bp.AddComponent(delegate(ContextRankConfig c)
+				{
+					c.m_Type = AbilityRankType.Default;
+					c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
+					c.m_Progression = ContextRankProgression.Custom;
+					c.m_CustomProgression = new ContextRankConfig.CustomProgressionItem[3]
+					{
+						new ContextRankConfig.CustomProgressionItem
+						{
+							BaseValue = 9,
+							ProgressionValue = 5
+						},
+						new ContextRankConfig.CustomProgressionItem
+						{
+							BaseValue = 14,
+							ProgressionValue = 10
+						},
+						new ContextRankConfig.CustomProgressionItem
+						{
+							BaseValue = 100,
+							ProgressionValue = 20
+						}
+					};
 				});
 				bp.AddComponent(delegate(AddDamageResistanceEnergy c)
 				{
 					c.Type = DamageEnergyType.Fire;
-					c.Value = 10;
+					c.Value = Values.CreateContextRankValue(AbilityRankType.Default);
 				});
 				bp.AddComponent(delegate(AddDamageResistanceEnergy c)
 				{
 					c.Type = DamageEnergyType.Cold;
-					c.Value = 10;
+					c.Value = Values.CreateContextRankValue(AbilityRankType.Default);
 				});
 				bp.AddComponent(delegate(AddDamageResistanceEnergy c)
 				{
 					c.Type = DamageEnergyType.Acid;
-					c.Value = 10;
+					c.Value = Values.CreateContextRankValue(AbilityRankType.Default);
 				});
 				bp.AddComponent(delegate(AddDamageResistanceEnergy c)
 				{
 					c.Type = DamageEnergyType.Electricity;
-					c.Value = 10;
+					c.Value = Values.CreateContextRankValue(AbilityRankType.Default);
+				});
+				bp.AddComponent(delegate(ContextRankConfig c)
+				{
+					c.m_Type = AbilityRankType.DamageBonus;
+					c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
+					c.m_Progression = ContextRankProgression.Custom;
+					c.m_CustomProgression = new ContextRankConfig.CustomProgressionItem[3]
+					{
+						new ContextRankConfig.CustomProgressionItem
+						{
+							BaseValue = 9,
+							ProgressionValue = 2
+						},
+						new ContextRankConfig.CustomProgressionItem
+						{
+							BaseValue = 14,
+							ProgressionValue = 4
+						},
+						new ContextRankConfig.CustomProgressionItem
+						{
+							BaseValue = 100,
+							ProgressionValue = 6
+						}
+					};
 				});
 				bp.AddComponent(delegate(AddEffectFastHealing c)
 				{
-					c.Heal = 5;
+					c.Heal = 0;
+					c.Bonus = Values.CreateContextRankValue(AbilityRankType.DamageBonus);
 				});
 			});
 			BlueprintAbility PredatorMawAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "PredatorMawAbility", delegate(BlueprintAbility bp)
@@ -149,7 +222,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 			OverpoweredAbilitySelection.AddToSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "GluttonyPredatorFeature", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Overpowered Ability - Gluttony (Predator)");
-				bp.SetDescription(Main.IsekaiContext, "Exclusive to the Slime archetype. Like a primordial slime from another dimension, your body can ingest and process the spiritual essence of anything you slay. \nBenefit: Grants the swift-action Predator's Maw ability (3/day) to deal devastating unholy bite damage and absorb enemy essence.");
+				bp.SetDescription(Main.IsekaiContext, "Exclusive to the Slime archetype. Like a primordial slime from another dimension, your body can ingest and process the spiritual essence of anything you slay.\nBenefit: Grants the swift-action Predator's Maw ability (3/day) to deal devastating unholy bite damage (1d6 per character level) and absorb enemy essence, granting scaled profane attack/damage (+2 at levels 1--9, +3 at levels 10--14, +4 at level 15+), energy resistance (5 at levels 1--9, 10 at levels 10--14, 20 at level 15+), and Fast Healing (2 at levels 1--9, 4 at levels 10--14, 6 at level 15+) for 1 minute.");
 				((BlueprintUnitFact)bp).m_Icon = Icon_Gluttony;
 				bp.AddComponent(delegate(AddFacts c)
 				{

@@ -15,6 +15,7 @@ using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.UnitLogic.Buffs.Components;
 using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Mechanics.Actions;
+using Kingmaker.UnitLogic.Mechanics.Components;
 using Kingmaker.Utility;
 using TabletopTweaks.Core.Utilities;
 using UnityEngine;
@@ -30,49 +31,97 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 			BlueprintBuff MandateOfHeavenBuff = TTCoreExtensions.CreateBuff("MandateOfHeavenBuff", delegate(BlueprintBuff bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Imperial Grace of Heaven");
-				bp.SetDescription(Main.IsekaiContext, "Under the sovereign mandate of heaven, you receive a +4 sacred bonus to Armor Class, attack rolls, damage rolls, and saving throws, Fast Healing 5, and immunity to fear and mind-affecting effects.");
+				bp.SetDescription(Main.IsekaiContext, "Under the sovereign mandate of heaven, you receive a sacred bonus to Armor Class, attack rolls, damage rolls, and saving throws (+2 at levels 1--9, +3 at levels 10--14, and +4 at level 15+), Fast Healing (2 at levels 1--9, 4 at levels 10--14, and 6 at level 15+), and immunity to fear and mind-affecting effects.");
 				((BlueprintUnitFact)bp).m_Icon = Icon_Mandate;
 				bp.IsClassFeature = true;
-				bp.AddComponent(delegate(AddStatBonus c)
+				bp.AddComponent(delegate(ContextRankConfig c)
+				{
+					c.m_Type = AbilityRankType.StatBonus;
+					c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
+					c.m_Progression = ContextRankProgression.Custom;
+					c.m_CustomProgression = new ContextRankConfig.CustomProgressionItem[3]
+					{
+						new ContextRankConfig.CustomProgressionItem
+						{
+							BaseValue = 9,
+							ProgressionValue = 2
+						},
+						new ContextRankConfig.CustomProgressionItem
+						{
+							BaseValue = 14,
+							ProgressionValue = 3
+						},
+						new ContextRankConfig.CustomProgressionItem
+						{
+							BaseValue = 100,
+							ProgressionValue = 4
+						}
+					};
+				});
+				bp.AddComponent(delegate(AddContextStatBonus c)
 				{
 					c.Descriptor = ModifierDescriptor.Sacred;
 					c.Stat = StatType.AC;
-					c.Value = 4;
+					c.Value = Values.CreateContextRankValue(AbilityRankType.StatBonus);
 				});
-				bp.AddComponent(delegate(AddStatBonus c)
+				bp.AddComponent(delegate(AddContextStatBonus c)
 				{
 					c.Descriptor = ModifierDescriptor.Sacred;
 					c.Stat = StatType.AdditionalAttackBonus;
-					c.Value = 4;
+					c.Value = Values.CreateContextRankValue(AbilityRankType.StatBonus);
 				});
-				bp.AddComponent(delegate(AddStatBonus c)
+				bp.AddComponent(delegate(AddContextStatBonus c)
 				{
 					c.Descriptor = ModifierDescriptor.Sacred;
 					c.Stat = StatType.AdditionalDamage;
-					c.Value = 4;
+					c.Value = Values.CreateContextRankValue(AbilityRankType.StatBonus);
 				});
-				bp.AddComponent(delegate(AddStatBonus c)
+				bp.AddComponent(delegate(AddContextStatBonus c)
 				{
 					c.Descriptor = ModifierDescriptor.Sacred;
 					c.Stat = StatType.SaveFortitude;
-					c.Value = 4;
+					c.Value = Values.CreateContextRankValue(AbilityRankType.StatBonus);
 				});
-				bp.AddComponent(delegate(AddStatBonus c)
+				bp.AddComponent(delegate(AddContextStatBonus c)
 				{
 					c.Descriptor = ModifierDescriptor.Sacred;
 					c.Stat = StatType.SaveReflex;
-					c.Value = 4;
+					c.Value = Values.CreateContextRankValue(AbilityRankType.StatBonus);
 				});
-				bp.AddComponent(delegate(AddStatBonus c)
+				bp.AddComponent(delegate(AddContextStatBonus c)
 				{
 					c.Descriptor = ModifierDescriptor.Sacred;
 					c.Stat = StatType.SaveWill;
-					c.Value = 4;
+					c.Value = Values.CreateContextRankValue(AbilityRankType.StatBonus);
+				});
+				bp.AddComponent(delegate(ContextRankConfig c)
+				{
+					c.m_Type = AbilityRankType.Default;
+					c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
+					c.m_Progression = ContextRankProgression.Custom;
+					c.m_CustomProgression = new ContextRankConfig.CustomProgressionItem[3]
+					{
+						new ContextRankConfig.CustomProgressionItem
+						{
+							BaseValue = 9,
+							ProgressionValue = 2
+						},
+						new ContextRankConfig.CustomProgressionItem
+						{
+							BaseValue = 14,
+							ProgressionValue = 4
+						},
+						new ContextRankConfig.CustomProgressionItem
+						{
+							BaseValue = 100,
+							ProgressionValue = 6
+						}
+					};
 				});
 				bp.AddComponent(delegate(AddEffectFastHealing c)
 				{
-					c.Heal = 5;
-					c.Bonus = 0;
+					c.Heal = 0;
+					c.Bonus = Values.CreateContextRankValue(AbilityRankType.Default);
 				});
 				bp.AddComponent(delegate(AddConditionImmunity c)
 				{
@@ -96,7 +145,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 					c.Descriptor = SpellDescriptor.MindAffecting | SpellDescriptor.Fear;
 				});
 			});
-			BlueprintFeature blueprintFeature = TTCoreExtensions.CreateToggleAuraFeature("MandateOfHeaven", Helpers.CreateString(Main.IsekaiContext, "MandateOfHeaven.Name", "Overpowered Ability - Mandate of Heaven"), Helpers.CreateString(Main.IsekaiContext, "MandateOfHeaven.Description", "Exclusive to the God Emperor archetype. By divine cosmic decree, you radiate absolute imperial authority that uplifts all who serve beneath your banner.\nBenefit: You emit an aura within 50 feet. Allies inside the aura gain a +4 sacred bonus to Armor Class, attack rolls, damage rolls, and all saving throws, Fast Healing 5, and total immunity to fear and mind-affecting effects."), Icon_Mandate, delegate(BlueprintAbilityAreaEffect bp)
+			BlueprintFeature blueprintFeature = TTCoreExtensions.CreateToggleAuraFeature("MandateOfHeaven", Helpers.CreateString(Main.IsekaiContext, "MandateOfHeaven.Name", "Overpowered Ability - Mandate of Heaven"), Helpers.CreateString(Main.IsekaiContext, "MandateOfHeaven.Description", "Exclusive to the God Emperor archetype. By divine cosmic decree, you radiate absolute imperial authority that uplifts all who serve beneath your banner.\nBenefit: You emit an aura within 50 feet. Allies inside the aura gain a sacred bonus to Armor Class, attack rolls, damage rolls, and all saving throws (+2 at levels 1--9, +3 at levels 10--14, and +4 at level 15+), Fast Healing (2 at levels 1--9, 4 at levels 10--14, and 6 at level 15+), and total immunity to fear and mind-affecting effects."), Icon_Mandate, delegate(BlueprintAbilityAreaEffect bp)
 			{
 				bp.m_TargetType = BlueprintAbilityAreaEffect.TargetType.Ally;
 				bp.SpellResistance = false;

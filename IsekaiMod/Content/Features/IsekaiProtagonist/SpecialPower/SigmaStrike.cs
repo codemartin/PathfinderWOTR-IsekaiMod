@@ -14,7 +14,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 
 		public static void Add()
 		{
-			SpecialPowerSelection.AddToSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "SigmaStrike", delegate(BlueprintFeature bp)
+			SpecialPowerSelection.AddToMartialSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "SigmaStrike", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Sigma Strike");
 				bp.SetDescription(Main.IsekaiContext, "Your critical threat range is increased by 2.");
@@ -25,7 +25,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 				});
 				bp.AddComponent(delegate(PrerequisiteCharacterLevel c)
 				{
-					c.Level = 7;
+					c.Level = 9;
 				});
 			}));
 		}

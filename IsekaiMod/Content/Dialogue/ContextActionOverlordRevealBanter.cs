@@ -1,5 +1,5 @@
-﻿using IsekaiMod.Content.Constellations;
-using Kingmaker.PubSubSystem;
+﻿using System.Collections.Generic;
+using IsekaiMod.Content.Constellations;
 using Kingmaker.UnitLogic.Mechanics.Actions;
 
 namespace IsekaiMod.Content.Dialogue
@@ -14,12 +14,14 @@ namespace IsekaiMod.Content.Dialogue
 		public override void RunAction()
 		{
 			DivineTokens.AddCoins(250, "Urgathoa");
-			foreach (string line in ConstellationDialogueBanter.GetOverlordSkeletonRevealBanter())
+			List<string> overlordSkeletonRevealBanter = ConstellationDialogueBanter.GetOverlordSkeletonRevealBanter();
+			if (overlordSkeletonRevealBanter == null)
 			{
-				EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
-				{
-					h.HandleLogMessage(line);
-				});
+				return;
+			}
+			foreach (string item in overlordSkeletonRevealBanter)
+			{
+				ConstellationChatManager.PostLog(item, "Urgathoa", ConstellationCategory.Subclass, 0, "Overlord Reveal");
 			}
 		}
 	}

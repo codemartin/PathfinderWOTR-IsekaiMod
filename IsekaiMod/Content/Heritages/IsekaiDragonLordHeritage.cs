@@ -1,5 +1,5 @@
-﻿using IsekaiMod.Content.Classes.IsekaiProtagonist;
-using IsekaiMod.Utilities;
+﻿using IsekaiMod.Utilities;
+using Kingmaker.Assets.UnitLogic.Mechanics.Properties;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Selection;
@@ -19,6 +19,7 @@ using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Mechanics.Actions;
 using Kingmaker.UnitLogic.Mechanics.Components;
+using Kingmaker.UnitLogic.Mechanics.Properties;
 using Kingmaker.Utility;
 using Kingmaker.Visual.Animation.Kingmaker.Actions;
 using TabletopTweaks.Core.Utilities;
@@ -41,6 +42,23 @@ namespace IsekaiMod.Content.Heritages
 					IncreasedByLevel = false,
 					IncreasedByStat = false
 				};
+			});
+			BlueprintUnitProperty DragonLordBreathUnitProperty = Helpers.CreateBlueprint(Main.IsekaiContext, "DragonLordBreathUnitProperty", delegate(BlueprintUnitProperty bp)
+			{
+				bp.name = "DragonLordBreathUnitProperty";
+				bp.AddComponent(delegate(ComplexPropertyGetter c)
+				{
+					c.Property = UnitProperty.Level;
+					c.Denominator = 2;
+					c.Multiplier = 1;
+					c.Bonus = 0;
+				});
+				bp.AddComponent(delegate(SimplePropertyGetter c)
+				{
+					c.Property = UnitProperty.StatBonusConstitution;
+				});
+				bp.BaseValue = 10;
+				bp.OperationOnComponents = BlueprintUnitProperty.MathOperation.Sum;
 			});
 			BlueprintAbility DragonLordBreathAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "DragonLordBreathAbility", delegate(BlueprintAbility bp)
 			{
@@ -91,10 +109,9 @@ namespace IsekaiMod.Content.Heritages
 					c.m_Type = AbilityRankType.Default;
 					c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
 				});
-				bp.AddComponent(delegate(ContextCalculateAbilityParamsBasedOnClass c)
+				bp.AddComponent(delegate(ContextSetAbilityParams c)
 				{
-					c.StatType = StatType.Constitution;
-					c.m_CharacterClass = IsekaiProtagonistClass.GetReference();
+					c.DC = Values.CreateContextCasterCustomPropertyValue(DragonLordBreathUnitProperty);
 				});
 				bp.AddComponent(delegate(AbilityResourceLogic c)
 				{

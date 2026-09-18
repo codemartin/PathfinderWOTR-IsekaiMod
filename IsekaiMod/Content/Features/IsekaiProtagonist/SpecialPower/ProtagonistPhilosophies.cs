@@ -75,8 +75,12 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 				{
 					c.Heal = 3;
 				});
+				bp.AddComponent(delegate(PrerequisiteCharacterLevel c)
+				{
+					c.Level = 9;
+				});
 			});
-			SpecialPowerSelection.AddToSelection(PhilosophyShonenIdealistFeature);
+			SpecialPowerSelection.AddToAuthoritySelection(PhilosophyShonenIdealistFeature);
 			PhilosophyRuthlessPragmatistFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "PhilosophyRuthlessPragmatistFeature", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Protagonist Philosophy: Ruthless Pragmatist");
@@ -96,8 +100,12 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 					c.Value = 2;
 				});
 				bp.AddComponent<IgnoreConcealment>();
+				bp.AddComponent(delegate(PrerequisiteCharacterLevel c)
+				{
+					c.Level = 9;
+				});
 			});
-			SpecialPowerSelection.AddToSelection(PhilosophyRuthlessPragmatistFeature);
+			SpecialPowerSelection.AddToAuthoritySelection(PhilosophyRuthlessPragmatistFeature);
 			PhilosophySystemsExploiterFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "PhilosophySystemsExploiterFeature", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Protagonist Philosophy: Systems Exploiter");
@@ -118,8 +126,12 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 					c.Number = 1;
 					c.Haste = true;
 				});
+				bp.AddComponent(delegate(PrerequisiteCharacterLevel c)
+				{
+					c.Level = 9;
+				});
 			});
-			SpecialPowerSelection.AddToSelection(PhilosophySystemsExploiterFeature);
+			SpecialPowerSelection.AddToAuthoritySelection(PhilosophySystemsExploiterFeature);
 			PhilosophyChaoticWildcardFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "PhilosophyChaoticWildcardFeature", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Protagonist Philosophy: Chaotic Wildcard");
@@ -155,8 +167,12 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 					c.Concealment = Concealment.Partial;
 					c.Descriptor = ConcealmentDescriptor.Blur;
 				});
+				bp.AddComponent(delegate(PrerequisiteCharacterLevel c)
+				{
+					c.Level = 9;
+				});
 			});
-			SpecialPowerSelection.AddToSelection(PhilosophyChaoticWildcardFeature);
+			SpecialPowerSelection.AddToAuthoritySelection(PhilosophyChaoticWildcardFeature);
 			Action<BlueprintFeature, BlueprintFeature> action = delegate(BlueprintFeature target, BlueprintFeature excluded)
 			{
 				target.AddComponent(delegate(PrerequisiteNoFeature c)

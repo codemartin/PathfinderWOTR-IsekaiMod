@@ -61,7 +61,7 @@ namespace IsekaiMod.Content.Arenas
 				{
 					Conditions = Array.Empty<Condition>()
 				};
-				BlueprintCue blueprintCue = TTCoreExtensions.CreateCue("ColiseumHerald_CueIntro", delegate(BlueprintCue c)
+				BlueprintCue cueIntro = TTCoreExtensions.CreateCue("ColiseumHerald_CueIntro", delegate(BlueprintCue c)
 				{
 					c.SetText(Main.IsekaiContext, "{n}A rift of swirling astral light coalesces into a gilded amphitheater platform. Before you stands an otherworldly herald clad in starlit robes, bowing with theatrical grace.{/n}\n\n\"Greetings, champion beyond worlds! Welcome to the Planar Coliseum, where travelers from across the multiverse test their mettle before the observing constellations. What is your desire?\"");
 					c.Speaker = heraldSpeaker;
@@ -78,7 +78,7 @@ namespace IsekaiMod.Content.Arenas
 				{
 					string rulerName = KingmakerCrossSaveManager.GetRulerName();
 					a.SetText(Main.IsekaiContext, "Challenge the Stolen Lands Legacy Cup (Recommended Level 12 - Act 3, Echoes of " + rulerName + "'s Realm)");
-					BlueprintCue bp3 = TTCoreExtensions.CreateCue("Ans_Cup_StolenLands_Cue", delegate(BlueprintCue sc)
+					BlueprintCue bp2 = TTCoreExtensions.CreateCue("Ans_Cup_StolenLands_Cue", delegate(BlueprintCue sc)
 					{
 						sc.SetText(Main.IsekaiContext, "\"Ah, memories of the River Kingdoms! The beasts and fey of the Stolen Lands answer your challenge!\"");
 						sc.Speaker = heraldSpeaker;
@@ -89,17 +89,25 @@ namespace IsekaiMod.Content.Arenas
 					});
 					a.NextCue = new CueSelection
 					{
-						Cues = new List<BlueprintCueBaseReference> { bp3.ToReference<BlueprintCueBaseReference>() }
+						Cues = new List<BlueprintCueBaseReference> { bp2.ToReference<BlueprintCueBaseReference>() }
 					};
 				});
 				BlueprintAnswer ansRegisterCups = TTCoreExtensions.CreateAnswer("Ans_Coliseum_RegisterCups", delegate(BlueprintAnswer a)
 				{
 					a.SetText(Main.IsekaiContext, "I wish to register for a Tournament Cup.");
-					BlueprintCue bp3 = TTCoreExtensions.CreateCue("Cue_Coliseum_CupList", delegate(BlueprintCue cc)
+					BlueprintAnswer ansBackFromCups = TTCoreExtensions.CreateAnswer("Ans_Cup_Back", delegate(BlueprintAnswer blueprintAnswer)
+					{
+						blueprintAnswer.SetText(Main.IsekaiContext, "[Back] Return to the previous menu.");
+						blueprintAnswer.NextCue = new CueSelection
+						{
+							Cues = new List<BlueprintCueBaseReference> { cueIntro.ToReference<BlueprintCueBaseReference>() }
+						};
+					});
+					BlueprintCue bp2 = TTCoreExtensions.CreateCue("Cue_Coliseum_CupList", delegate(BlueprintCue cc)
 					{
 						cc.SetText(Main.IsekaiContext, "\"Which division of the coliseum do you wish to conquer? Each cup awards substantial gold, experience, and Cosmic Coins upon complete victory.\"");
 						cc.Speaker = heraldSpeaker;
-						BlueprintAnswersList bp4 = Helpers.CreateBlueprint(Main.IsekaiContext, "Coliseum_CupsAnswersList", delegate(BlueprintAnswersList cal)
+						BlueprintAnswersList answersList2 = Helpers.CreateBlueprint(Main.IsekaiContext, "Coliseum_CupsAnswersList", delegate(BlueprintAnswersList cal)
 						{
 							cal.Answers = new List<BlueprintAnswerBaseReference>
 							{
@@ -114,20 +122,21 @@ namespace IsekaiMod.Content.Arenas
 							};
 							if (KingmakerCrossSaveManager.IsKingmakerInstalled)
 							{
-								cal.Answers.Add(ansStolenLands.ToReference<BlueprintAnswerBaseReference>());
+								cal.InsertAnswer(ansStolenLands, cal.Answers.Count);
 							}
+							cal.Answers.Add(ansBackFromCups.ToReference<BlueprintAnswerBaseReference>());
 						});
-						cc.Answers = new List<BlueprintAnswerBaseReference> { bp4.ToReference<BlueprintAnswerBaseReference>() };
+						cc.SetAnswersList(answersList2);
 					});
 					a.NextCue = new CueSelection
 					{
-						Cues = new List<BlueprintCueBaseReference> { bp3.ToReference<BlueprintCueBaseReference>() }
+						Cues = new List<BlueprintCueBaseReference> { bp2.ToReference<BlueprintCueBaseReference>() }
 					};
 				});
 				BlueprintAnswer ansStore = TTCoreExtensions.CreateAnswer("Ans_Coliseum_Store", delegate(BlueprintAnswer a)
 				{
 					a.SetText(Main.IsekaiContext, "Browse the Cosmic Relic Exchange (Trade Cosmic Coins).");
-					BlueprintCue bp3 = TTCoreExtensions.CreateCue("Cue_Coliseum_Store", delegate(BlueprintCue cs)
+					BlueprintCue bp2 = TTCoreExtensions.CreateCue("Cue_Coliseum_Store", delegate(BlueprintCue cs)
 					{
 						cs.SetText(Main.IsekaiContext, "\"Certainly! Step right this way to the relic vault.\"");
 						cs.Speaker = heraldSpeaker;
@@ -135,26 +144,26 @@ namespace IsekaiMod.Content.Arenas
 					});
 					a.NextCue = new CueSelection
 					{
-						Cues = new List<BlueprintCueBaseReference> { bp3.ToReference<BlueprintCueBaseReference>() }
+						Cues = new List<BlueprintCueBaseReference> { bp2.ToReference<BlueprintCueBaseReference>() }
 					};
+				});
+				BlueprintCue cueLore = TTCoreExtensions.CreateCue("Cue_Coliseum_Lore", delegate(BlueprintCue cl)
+				{
+					cl.SetText(Main.IsekaiContext, "\"The coliseum stands anchored in the dimensional nexus between Golarion and divergent timelines. The constellations: Desna, Gorum, Iomedae, Calistria, Nethys, Asmodeus, the Lantern King, and Yog-Sothoth himself: watch your feats from the heavens, rewarding mortal champions who push past the boundaries of destiny.\"");
+					cl.Speaker = heraldSpeaker;
 				});
 				BlueprintAnswer ansLore = TTCoreExtensions.CreateAnswer("Ans_Coliseum_Lore", delegate(BlueprintAnswer a)
 				{
 					a.SetText(Main.IsekaiContext, "Tell me of this coliseum. Who observes these battles?");
-					BlueprintCue bp3 = TTCoreExtensions.CreateCue("Cue_Coliseum_Lore", delegate(BlueprintCue cl)
-					{
-						cl.SetText(Main.IsekaiContext, "\"The coliseum stands anchored in the dimensional nexus between Golarion and divergent timelines. The constellations: Desna, Gorum, Iomedae, Calistria, Nethys, Asmodeus, the Lantern King, and Yog-Sothoth himself: watch your feats from the heavens, rewarding mortal champions who push past the boundaries of destiny.\"");
-						cl.Speaker = heraldSpeaker;
-					});
 					a.NextCue = new CueSelection
 					{
-						Cues = new List<BlueprintCueBaseReference> { bp3.ToReference<BlueprintCueBaseReference>() }
+						Cues = new List<BlueprintCueBaseReference> { cueLore.ToReference<BlueprintCueBaseReference>() }
 					};
 				});
 				BlueprintAnswer ansReturn = TTCoreExtensions.CreateAnswer("Ans_Coliseum_ReturnGolarion", delegate(BlueprintAnswer a)
 				{
 					a.SetText(Main.IsekaiContext, "Step through the planar rift to return to Golarion.");
-					BlueprintCue bp3 = TTCoreExtensions.CreateCue("Cue_Coliseum_ReturnGolarion", delegate(BlueprintCue cr)
+					BlueprintCue bp2 = TTCoreExtensions.CreateCue("Cue_Coliseum_ReturnGolarion", delegate(BlueprintCue cr)
 					{
 						cr.SetText(Main.IsekaiContext, "\"May the constellations preserve your strength. Until next time, champion!\"");
 						cr.Speaker = heraldSpeaker;
@@ -162,23 +171,23 @@ namespace IsekaiMod.Content.Arenas
 					});
 					a.NextCue = new CueSelection
 					{
-						Cues = new List<BlueprintCueBaseReference> { bp3.ToReference<BlueprintCueBaseReference>() }
+						Cues = new List<BlueprintCueBaseReference> { bp2.ToReference<BlueprintCueBaseReference>() }
 					};
 				});
 				BlueprintAnswer ansLeave = TTCoreExtensions.CreateAnswer("Ans_Coliseum_Leave", delegate(BlueprintAnswer a)
 				{
 					a.SetText(Main.IsekaiContext, "I will return later.");
-					BlueprintCue bp3 = TTCoreExtensions.CreateCue("Cue_Coliseum_Leave", delegate(BlueprintCue cl)
+					BlueprintCue bp2 = TTCoreExtensions.CreateCue("Cue_Coliseum_Leave", delegate(BlueprintCue cl)
 					{
 						cl.SetText(Main.IsekaiContext, "\"May the constellations illuminate your journey, otherworlder. The coliseum shall await your return.\"");
 						cl.Speaker = heraldSpeaker;
 					});
 					a.NextCue = new CueSelection
 					{
-						Cues = new List<BlueprintCueBaseReference> { bp3.ToReference<BlueprintCueBaseReference>() }
+						Cues = new List<BlueprintCueBaseReference> { bp2.ToReference<BlueprintCueBaseReference>() }
 					};
 				});
-				BlueprintAnswersList bp2 = Helpers.CreateBlueprint(Main.IsekaiContext, "Coliseum_MainAnswersList", delegate(BlueprintAnswersList al)
+				BlueprintAnswersList answersList = Helpers.CreateBlueprint(Main.IsekaiContext, "Coliseum_MainAnswersList", delegate(BlueprintAnswersList al)
 				{
 					al.Answers = new List<BlueprintAnswerBaseReference>
 					{
@@ -189,10 +198,11 @@ namespace IsekaiMod.Content.Arenas
 						ansLeave.ToReference<BlueprintAnswerBaseReference>()
 					};
 				});
-				blueprintCue.Answers = new List<BlueprintAnswerBaseReference> { bp2.ToReference<BlueprintAnswerBaseReference>() };
+				cueLore.SetAnswersList(answersList);
+				cueIntro.SetAnswersList(answersList);
 				bp.FirstCue = new CueSelection
 				{
-					Cues = new List<BlueprintCueBaseReference> { blueprintCue.ToReference<BlueprintCueBaseReference>() }
+					Cues = new List<BlueprintCueBaseReference> { cueIntro.ToReference<BlueprintCueBaseReference>() }
 				};
 			});
 			BlueprintAnswer CreateCupAnswer(string id, string text, ArenaType cup)
@@ -253,7 +263,7 @@ namespace IsekaiMod.Content.Arenas
 		{
 			try
 			{
-				BlueprintAnswerBaseReference item = TTCoreExtensions.CreateAnswer("Ans_DH_PlanarColiseum", delegate(BlueprintAnswer a)
+				BlueprintAnswerBaseReference answerRef = TTCoreExtensions.CreateAnswer("Ans_DH_PlanarColiseum", delegate(BlueprintAnswer a)
 				{
 					a.SetText(Main.IsekaiContext, "{n}An ethereal humming reverberates from the tavern cellar.{/n} \"There is a strange planar resonance echoing below. I wish to enter the Planar Coliseum.\"");
 					BlueprintCue bp = TTCoreExtensions.CreateCue("Cue_DH_PlanarColiseum", delegate(BlueprintCue c)
@@ -266,16 +276,8 @@ namespace IsekaiMod.Content.Arenas
 						Cues = new List<BlueprintCueBaseReference> { bp.ToReference<BlueprintCueBaseReference>() }
 					};
 				}).ToReference<BlueprintAnswerBaseReference>();
-				BlueprintAnswersList blueprint = BlueprintTools.GetBlueprint<BlueprintAnswersList>("38adb0a43a5ac3043ad0fe59fdcba6b8");
-				if (blueprint != null && blueprint.Answers != null && !blueprint.Answers.Contains(item))
-				{
-					blueprint.Answers.Add(item);
-				}
-				BlueprintAnswersList blueprint2 = BlueprintTools.GetBlueprint<BlueprintAnswersList>("6c6ca2d78b121504ca4bedf0a1c6f07f");
-				if (blueprint2 != null && blueprint2.Answers != null && !blueprint2.Answers.Contains(item))
-				{
-					blueprint2.Answers.Add(item);
-				}
+				BlueprintTools.GetBlueprint<BlueprintAnswersList>("38adb0a43a5ac3043ad0fe59fdcba6b8")?.InsertAnswer(answerRef);
+				BlueprintTools.GetBlueprint<BlueprintAnswersList>("6c6ca2d78b121504ca4bedf0a1c6f07f")?.InsertAnswer(answerRef);
 				Main.IsekaiContext.Logger.Log("[PlanarColiseum] Successfully hooked Planar Coliseum into Defender's Heart Cellar.");
 			}
 			catch (Exception arg)
@@ -288,7 +290,7 @@ namespace IsekaiMod.Content.Arenas
 		{
 			try
 			{
-				BlueprintAnswerBaseReference item = TTCoreExtensions.CreateAnswer("Ans_WarCamp_PlanarColiseum", delegate(BlueprintAnswer a)
+				BlueprintAnswerBaseReference answerRef = TTCoreExtensions.CreateAnswer("Ans_WarCamp_PlanarColiseum", delegate(BlueprintAnswer a)
 				{
 					a.SetText(Main.IsekaiContext, "{n}A starlit rift pulses gently near the supply wagons at the camp perimeter.{/n} \"Step through the rift to the Planar Coliseum.\"");
 					BlueprintCue bp = TTCoreExtensions.CreateCue("Cue_WarCamp_PlanarColiseum", delegate(BlueprintCue c)
@@ -301,11 +303,7 @@ namespace IsekaiMod.Content.Arenas
 						Cues = new List<BlueprintCueBaseReference> { bp.ToReference<BlueprintCueBaseReference>() }
 					};
 				}).ToReference<BlueprintAnswerBaseReference>();
-				BlueprintAnswersList blueprint = BlueprintTools.GetBlueprint<BlueprintAnswersList>("e9355a3b814dbc24ea94193b093ba8e1");
-				if (blueprint != null && blueprint.Answers != null && !blueprint.Answers.Contains(item))
-				{
-					blueprint.Answers.Add(item);
-				}
+				BlueprintTools.GetBlueprint<BlueprintAnswersList>("e9355a3b814dbc24ea94193b093ba8e1")?.InsertAnswer(answerRef);
 				Main.IsekaiContext.Logger.Log("[PlanarColiseum] Successfully hooked Planar Coliseum into Crusader War Camp.");
 			}
 			catch (Exception arg)

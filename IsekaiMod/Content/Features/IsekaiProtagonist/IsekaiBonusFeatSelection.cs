@@ -1,4 +1,5 @@
-﻿using IsekaiMod.Utilities;
+﻿using IsekaiMod.Content.Features.ExceptionalFeats;
+using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Selection;
@@ -27,16 +28,16 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist
 
 		private static void PatchExceptionalFeatSelection(BlueprintFeatureSelection blueprintFeatureSelection)
 		{
-			BlueprintFeatureSelection modBlueprint = BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "ExceptionalFeatSelection");
-			BlueprintFeatureSelection modBlueprint2 = BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "ExceptionalFeatBonusSelection");
-			if (modBlueprint != null && modBlueprint2 != null)
+			BlueprintFeatureSelection blueprintFeatureSelection2 = ExceptionalFeatSelection.Get();
+			BlueprintFeatureSelection bonus = ExceptionalFeatSelection.GetBonus();
+			if (blueprintFeatureSelection2 != null && bonus != null)
 			{
-				blueprintFeatureSelection.RemoveFromSelection(modBlueprint);
-				blueprintFeatureSelection.AddToFirst(modBlueprint2);
+				blueprintFeatureSelection.RemoveFromSelection(blueprintFeatureSelection2);
+				blueprintFeatureSelection.AddToFirst(bonus);
 			}
 			// Mirror the basic feat list so feats other mods add later show up here too.
 			MirroredSelections.Register(blueprintFeatureSelection,
-				modBlueprint == null ? null : new BlueprintFeatureReference[] { modBlueprint.ToReference<BlueprintFeatureReference>() },
+				blueprintFeatureSelection2 == null ? null : new BlueprintFeatureReference[] { blueprintFeatureSelection2.ToReference<BlueprintFeatureReference>() },
 				BasicFeatSelection);
 		}
 	}

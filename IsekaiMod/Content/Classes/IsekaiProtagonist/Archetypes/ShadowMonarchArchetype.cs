@@ -3,6 +3,7 @@ using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.ShadowMonarch;
 using IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
+using Kingmaker.Blueprints.Classes.Prerequisites;
 using Kingmaker.Blueprints.Classes.Selection;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.Localization;
@@ -34,6 +35,7 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist.Archetypes
 			BlueprintFeatureSelection SecretPowerSelection = BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "SecretPowerSelection");
 			BlueprintFeatureSelection SignatureMoveBonusSelection = BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "SignatureMoveBonusSelection");
 			BlueprintFeatureSelection TrainingEpisodeBonusSelection = BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "TrainingEpisodeBonusSelection");
+			BlueprintFeatureSelection SpecialPowerSelection = BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "SpecialPowerSelection");
 			BlueprintFeature ChronicleOtherworldFeature = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "ChronicleOtherworldFeature");
 			BlueprintFeature HuntersLogFeature = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "HuntersLogFeature");
 			IsekaiProtagonistClass.RegisterArchetype(Helpers.CreateBlueprint(Main.IsekaiContext, "ShadowMonarchArchetype", delegate(BlueprintArchetype bp)
@@ -42,8 +44,11 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist.Archetypes
 				bp.LocalizedDescription = Description;
 				bp.LocalizedDescriptionShort = Description;
 				bp.IsArcaneCaster = true;
-				bp.IsDivineCaster = true;
-				bp.RemoveFeatures = new LevelEntry[7]
+				BlueprintFeature modBlueprint = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "TranscendentProtagonistFeature");
+				BlueprintFeature modBlueprint2 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "AnimeFinalFormFeature");
+				BlueprintFeature modBlueprint3 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "ShadowMonarchCosmicLegion");
+				BlueprintFeature modBlueprint4 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "ShadowMonarchTrueVoidSovereign");
+				bp.RemoveFeatures = new LevelEntry[17]
 				{
 					Helpers.CreateLevelEntry(1, IsekaiProficiencies, Gifted, LegacySelection.GetClassFeature(), ChronicleOtherworldFeature),
 					Helpers.CreateLevelEntry(3, ReleaseEnergy),
@@ -51,23 +56,38 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist.Archetypes
 					Helpers.CreateLevelEntry(10, SecretPowerSelection),
 					Helpers.CreateLevelEntry(12, TrainingEpisodeBonusSelection),
 					Helpers.CreateLevelEntry(15, SecondReincarnation),
-					Helpers.CreateLevelEntry(20, HaxSelection)
+					Helpers.CreateLevelEntry(20, HaxSelection),
+					Helpers.CreateLevelEntry(21, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(23, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(27, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(29, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(30, SecretPowerSelection, modBlueprint),
+					Helpers.CreateLevelEntry(31, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(33, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(37, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(39, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(40, HaxSelection, modBlueprint2)
 				};
-				BlueprintFeature modBlueprint = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "ShadowEssenceAbsorptionFeature");
-				BlueprintFeature modBlueprint2 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "RulersAuthorityFeature");
-				BlueprintFeature modBlueprint3 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "ShadowDaggerRushFeature");
-				BlueprintFeature modBlueprint4 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "ShadowCloakFeature");
-				BlueprintFeature modBlueprint5 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "MonarchDragonsFearFeature");
-				bp.AddFeatures = new LevelEntry[8]
+				BlueprintFeature modBlueprint5 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "ShadowEssenceAbsorptionFeature");
+				BlueprintFeature modBlueprint6 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "RulersAuthorityFeature");
+				BlueprintFeature modBlueprint7 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "ShadowDaggerRushFeature");
+				BlueprintFeature modBlueprint8 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "ShadowCloakFeature");
+				BlueprintFeature modBlueprint9 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "MonarchDragonsFearFeature");
+				bp.AddFeatures = new LevelEntry[13]
 				{
-					Helpers.CreateLevelEntry(1, ShadowMonarchProficiencies, ShadowHunterInstincts, ShadowExtractionFeature, modBlueprint, HuntersLogFeature, ShadowMonarchLegacySelection.getClassFeature()),
-					Helpers.CreateLevelEntry(3, ShadowStepFeature, modBlueprint2),
-					Helpers.CreateLevelEntry(5, modBlueprint3),
-					Helpers.CreateLevelEntry(7, ShadowArmorFeature, modBlueprint4),
+					Helpers.CreateLevelEntry(1, ShadowMonarchProficiencies, ShadowHunterInstincts, ShadowExtractionFeature, modBlueprint5, HuntersLogFeature, ShadowMonarchLegacySelection.getClassFeature()),
+					Helpers.CreateLevelEntry(3, ShadowStepFeature, modBlueprint6),
+					Helpers.CreateLevelEntry(5, modBlueprint7),
+					Helpers.CreateLevelEntry(7, ShadowArmorFeature, modBlueprint8),
 					Helpers.CreateLevelEntry(10, MonarchDomainFeature),
-					Helpers.CreateLevelEntry(11, modBlueprint5),
+					Helpers.CreateLevelEntry(11, modBlueprint9),
 					Helpers.CreateLevelEntry(15, ShadowExchangeFeature),
-					Helpers.CreateLevelEntry(20, ShadowMonarchFeature)
+					Helpers.CreateLevelEntry(20, ShadowMonarchFeature),
+					Helpers.CreateLevelEntry(23, ShadowHunterInstincts),
+					Helpers.CreateLevelEntry(25, ShadowArmorFeature),
+					Helpers.CreateLevelEntry(30, modBlueprint3),
+					Helpers.CreateLevelEntry(35, ShadowExchangeFeature),
+					Helpers.CreateLevelEntry(40, modBlueprint4)
 				};
 				bp.OverrideAttributeRecommendations = true;
 				bp.RecommendedAttributes = new StatType[2]
@@ -78,7 +98,24 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist.Archetypes
 				bp.AddComponent(delegate(PrerequisiteCycleOriginLock c)
 				{
 					c.AllowedOrigin = "ShadowMonarch";
+					c.HideInUI = true;
 				});
+				BlueprintFeature SlimeHeritage = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "SlimeReincarnateHeritage");
+				if (SlimeHeritage != null)
+				{
+					bp.AddComponent(delegate(PrerequisiteNoFeature c)
+					{
+						c.m_Feature = SlimeHeritage.ToReference<BlueprintFeatureReference>();
+					});
+				}
+				BlueprintFeature OverlordHeritage = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "HeteromorphicOverlordHeritage");
+				if (OverlordHeritage != null)
+				{
+					bp.AddComponent(delegate(PrerequisiteNoFeature c)
+					{
+						c.m_Feature = OverlordHeritage.ToReference<BlueprintFeatureReference>();
+					});
+				}
 				bp.m_ReplaceSpellbook = ShadowMonarchSpellbook.GetReference();
 			}));
 		}

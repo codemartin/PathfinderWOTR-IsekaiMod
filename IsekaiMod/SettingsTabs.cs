@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using IsekaiMod.Config;
+using IsekaiMod.Content.Constellations;
 using IsekaiMod.Utilities;
 using Kingmaker.Blueprints.Classes;
 using TabletopTweaks.Core.UMMTools;
@@ -58,6 +59,29 @@ namespace IsekaiMod
 			UI.Toggle("Enable Cosmic Planar Incursions (Summons Enforcers on High Cheats).", ref addedContent.EnablePlanarIncursions);
 			UI.Toggle("Enable Boss Cosmic Phase Gate (Prevents One-Shots & Triggers Phase 2).", ref addedContent.EnableBossPhaseGate);
 			UI.Slider("Cosmic Threat Scaling Multiplier", ref addedContent.CosmicThreatDifficultyMultiplier, 1, 4, 1, "x multiplier", GUILayout.ExpandWidth(expand: false));
+			UI.Div(0f, 20f);
+			UI.Label("Constellation Live-Chat & Broadcast Overlay".bold());
+			UI.Toggle("Enable Floating Constellation Live-Chat Overlay during conversations.", ref addedContent.EnableConstellationChatOverlay);
+			UI.Toggle("Keep Constellation Live-Chat Overlay Always Visible (Stream Chat Mode).", ref addedContent.ConstellationChatAlwaysVisible);
+			using (UI.HorizontalScope())
+			{
+				UI.Label("Screen Position: ", UI.Width(140f));
+				string[] texts = new string[3] { "Top Right (Default)", "Top Left", "Bottom Right" };
+				addedContent.ConstellationChatPosition = GUILayout.SelectionGrid(addedContent.ConstellationChatPosition, texts, 3, UI.Width(450f));
+			}
+			UI.Slider("Chat Message Display Duration (seconds)", ref addedContent.ConstellationChatDurationSeconds, 5, 30, 14, "s", GUILayout.ExpandWidth(expand: false));
+			UI.Slider("Max Visible Overlay Messages", ref addedContent.ConstellationChatMaxMessages, 1, 10, 5, "msgs", GUILayout.ExpandWidth(expand: false));
+			using (UI.HorizontalScope())
+			{
+				if (GUILayout.Button("Open Constellation Broadcast Archives Window", UI.Width(350f)))
+				{
+					ConstellationChatOverlay.ToggleHistoryWindow();
+				}
+				if (GUILayout.Button("Reset / Show Live Chat Overlay", UI.Width(250f)))
+				{
+					ConstellationChatOverlay.ResetAndShowOverlay();
+				}
+			}
 			UI.Div(0f, 25f);
 			UI.HStack("Disable Spellbook", 1, delegate
 			{

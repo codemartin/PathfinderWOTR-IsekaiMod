@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
-using Kingmaker.Blueprints.Classes;
 using Kingmaker.AreaLogic.Etudes;
+using Kingmaker.Blueprints.Classes;
 using Kingmaker.Designers.EventConditionActionSystem.Actions;
 using Kingmaker.Designers.EventConditionActionSystem.Conditions;
 using Kingmaker.Designers.EventConditionActionSystem.Evaluators;
@@ -54,8 +54,9 @@ namespace IsekaiMod.Content.Dialogue
 			// The vanilla "I don't remember" answer starts this etude; the Aeon Kenabres flashback in chapter 5 reads it
 			// to replay the choice. The archetype answers rejoin that path, so they start it too.
 			BlueprintEtude dontRememberEtude = BlueprintTools.GetBlueprint<BlueprintEtude>("d6c6161d2cf0ac44786f9df67fca5ce9");
-			if (answersList != null)
+			if (answersList != null && dontRememberCue != null)
 			{
+				AddArchetypeHulrunAnswer("IsekaiHulrunGeneral", "(Isekai Protagonist) \"Who am I? To be completely honest, I don't think you'd believe me if I told you. Let's just say I took a wrong turn across realities and woke up bleeding on your cobblestones.\"", "{n}Hulrun narrows his cold eyes, scrutinizing your face with fierce intensity.{/n} \"'Across realities'? Either you're delirious from blood loss, or you're mocking an officer of the crusade. Terendelev vouched for you, so I will let it pass for now. Step aside.\"", "IsekaiProficiencies");
 				AddArchetypeHulrunAnswer("IsekaiHulrunMartialGod", "(Martial God) \"Lower that halberd, inquisitor. I just woke up in this square, and waving polearms at recovering patients is hardly proper festival etiquette.\"", "{n}Hulrun blinks rapidly, his knuckles whitening on his halberd.{/n} \"A speedster... and an arrogant one at that. I saw no dust from your stride. Either you are blessed by an astral wind, or you bear strange foreign sorcery...\"", "MartialGodProficiencies");
 				AddArchetypeHulrunAnswer("IsekaiHulrunGodEmperor", "(God Emperor) \"You speak to an emperor whose ascension will eclipse the heavens. Lower your halberd before your sovereign, inquisitor, and remember your place.\"", "{n}Hulrun stumbles backward half a pace as a radiant, suffocating pressure radiates from your mantle.{/n} \"What madness is this... an emperor? In Kenabres? The festival heat must be twisting mortal minds...\"", "GodEmperorProficiencies");
 				AddArchetypeHulrunAnswer("IsekaiHulrunOverlord", "(Overlord) \"You dare interrogate an Overlord, mortal? Be grateful my unfathomable mercy permits your insignificant spark of life to continue burning.\"", "{n}Hulrun shudders as a cold, necrotic chill sweeps across the stones of the square.{/n} \"Such insolence! Such unhallowed darkness! By Iomedae's light, you reek of a tyrant from some forgotten age... but Terendelev herself vouched for your recovery, so I will not arrest you on a festival day. Mind yourself!\"", "OverlordProficiencies");
@@ -69,39 +70,39 @@ namespace IsekaiMod.Content.Dialogue
 				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
 				if (proficiencyFact != null)
 				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue blueprintCue)
+					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
 					{
-						blueprintCue.SetText(Main.IsekaiContext, cueText);
-						blueprintCue.Continue = new CueSelection
+						bp.SetText(Main.IsekaiContext, cueText);
+						bp.Continue = new CueSelection
 						{
 							Cues = new List<BlueprintCueBaseReference> { dontRememberCue.ToReference<BlueprintCueBaseReference>() },
 							Strategy = Strategy.First
 						};
 					});
-					BlueprintAnswer bp = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer blueprintAnswer)
+					BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
 					{
-						blueprintAnswer.SetText(Main.IsekaiContext, text);
-						blueprintAnswer.NextCue = new CueSelection
+						bp.SetText(Main.IsekaiContext, text);
+						bp.NextCue = new CueSelection
 						{
 							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
 							Strategy = Strategy.First
 						};
-						blueprintAnswer.ShowOnce = true;
-						blueprintAnswer.ShowConditions.Conditions = blueprintAnswer.ShowConditions.Conditions.AppendToArray(new HasFact
+						bp.ShowOnce = true;
+						bp.AddShowCondition(delegate(HasFact c)
 						{
-							Unit = new PlayerCharacter(),
-							m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>()
+							c.Unit = new PlayerCharacter();
+							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
 						});
 						if (dontRememberEtude != null)
 						{
-							blueprintAnswer.OnSelect = ActionFlow.DoSingle(delegate(StartEtude c)
+							bp.OnSelect = ActionFlow.DoSingle(delegate(StartEtude c)
 							{
 								c.Etude = dontRememberEtude.ToReference<BlueprintEtudeReference>();
 								c.Evaluate = false;
 							});
 						}
 					});
-					answersList.Answers.Insert(0, bp.ToReference<BlueprintAnswerBaseReference>());
+					answersList.InsertAnswer(answer);
 				}
 			}
 		}
@@ -110,7 +111,7 @@ namespace IsekaiMod.Content.Dialogue
 		{
 			BlueprintAnswersList answersList = BlueprintTools.GetBlueprint<BlueprintAnswersList>("5acd8001d9f7d2443bd57fb1291a03e4");
 			BlueprintCue thatsNotVeryNiceCue = BlueprintTools.GetBlueprint<BlueprintCue>("3bd9a4263d8064b49a9d1eec365807b9");
-			if (answersList != null)
+			if (answersList != null && thatsNotVeryNiceCue != null)
 			{
 				AddArchetypeMinaghoAnswer("IsekaiMinaghoOverlord", "(Overlord) \"A mere regional general of the Abyss? You are an insignificant insect before the absolute sovereign of the Great Tomb. Kneel and prepare to be crushed.\"", "{n}Minagho's seductive sneer freezes, a flicker of genuine bewilderment and rage flashing across her demonic features.{/n} \"Sovereign? Tomb? You babble like a concussed peasant, mortal! When I tear your heart out, I will see what kingdom lies inside your ribs!\"", "OverlordProficiencies");
 				AddArchetypeMinaghoAnswer("IsekaiMinaghoGodEmperor", "(God Emperor) \"Your demonic corruption ends here, Minagho. The radiant mandate of my empire shall cleanse Kenabres and cast your filth back to the dark.\"", "{n}Minagho recoils slightly as the aura of divine sovereignty flares around you.{/n} \"An empire? Your miserable crusade has no empire left! Only ash and despair await you!\"", "GodEmperorProficiencies");
@@ -125,31 +126,31 @@ namespace IsekaiMod.Content.Dialogue
 				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
 				if (proficiencyFact != null)
 				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue blueprintCue)
+					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
 					{
-						blueprintCue.SetText(Main.IsekaiContext, cueText);
-						blueprintCue.Continue = new CueSelection
+						bp.SetText(Main.IsekaiContext, cueText);
+						bp.Continue = new CueSelection
 						{
 							Cues = new List<BlueprintCueBaseReference> { thatsNotVeryNiceCue.ToReference<BlueprintCueBaseReference>() },
 							Strategy = Strategy.First
 						};
 					});
-					BlueprintAnswer bp = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer blueprintAnswer)
+					BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
 					{
-						blueprintAnswer.SetText(Main.IsekaiContext, text);
-						blueprintAnswer.NextCue = new CueSelection
+						bp.SetText(Main.IsekaiContext, text);
+						bp.NextCue = new CueSelection
 						{
 							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
 							Strategy = Strategy.First
 						};
-						blueprintAnswer.ShowOnce = true;
-						blueprintAnswer.ShowConditions.Conditions = blueprintAnswer.ShowConditions.Conditions.AppendToArray(new HasFact
+						bp.ShowOnce = true;
+						bp.AddShowCondition(delegate(HasFact c)
 						{
-							Unit = new PlayerCharacter(),
-							m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>()
+							c.Unit = new PlayerCharacter();
+							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
 						});
 					});
-					answersList.Answers.Insert(0, bp.ToReference<BlueprintAnswerBaseReference>());
+					answersList.InsertAnswer(answer);
 				}
 			}
 		}
@@ -168,69 +169,76 @@ namespace IsekaiMod.Content.Dialogue
 				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
 				if (proficiencyFact != null)
 				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue blueprintCue)
+					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
 					{
-						blueprintCue.SetText(Main.IsekaiContext, cueText);
+						bp.SetText(Main.IsekaiContext, cueText);
 						if (irabethUnit != null)
 						{
-							blueprintCue.Speaker = new DialogSpeaker
+							bp.Speaker = new DialogSpeaker
 							{
 								m_Blueprint = irabethUnit.ToReference<BlueprintUnitReference>(),
 								MoveCamera = true
 							};
 						}
-						blueprintCue.Answers = answersList.Answers;
+						bp.SetAnswersList(answersList);
 					});
-					BlueprintAnswer bp = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer blueprintAnswer)
+					BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
 					{
-						blueprintAnswer.SetText(Main.IsekaiContext, text);
-						blueprintAnswer.NextCue = new CueSelection
+						bp.SetText(Main.IsekaiContext, text);
+						bp.NextCue = new CueSelection
 						{
 							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
 							Strategy = Strategy.First
 						};
-						blueprintAnswer.ShowOnce = true;
-						blueprintAnswer.ShowConditions.Conditions = blueprintAnswer.ShowConditions.Conditions.AppendToArray(new HasFact
+						bp.ShowOnce = true;
+						bp.AddShowCondition(delegate(HasFact c)
 						{
-							Unit = new PlayerCharacter(),
-							m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>()
+							c.Unit = new PlayerCharacter();
+							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
 						});
 					});
-					answersList.Answers.Insert(0, bp.ToReference<BlueprintAnswerBaseReference>());
+					answersList.InsertAnswer(answer);
 				}
 			}
 		}
 
 		private static void AddWelcomeDialogueReactions()
 		{
-			BlueprintAnswersList answersList = BlueprintTools.GetBlueprint<BlueprintAnswersList>("87997a477e6a58d4aae46e26a3712825");
-			// Cue_0017: the unconditional line every vanilla answer here leads to. The previous target (Cue_0002) is the
-			// Dahak-worshipper branch and has a HasFact condition, so for anyone else the dialogue simply ended.
-			BlueprintCue continueCue = BlueprintTools.GetBlueprint<BlueprintCue>("76c6a0e7880db144c9138c6b39d386d9");
+			BlueprintAnswersList stretcherAnswersList = BlueprintTools.GetBlueprint<BlueprintAnswersList>("87997a477e6a58d4aae46e26a3712825");
+			BlueprintCue waterCue = BlueprintTools.GetBlueprint<BlueprintCue>("9ac3764dd79c3854e88d601e6162bfd1");
+			if (stretcherAnswersList != null && waterCue != null)
+			{
+				AddStretcherAnswer("IsekaiStretcherGeneral", "(Isekai Protagonist) \"Status Window... Open! Wait, where is my HUD? Where are my cheat skills?! Ugh, my chest hurts...\"", "{n}The lady in white leans over you with gentle concern, placing a cool flask of water to your lips.{/n} \"Hush now, traveler. Do not strain yourself speaking strange words from your homeland. Drink this water, and let me tend to your wounds.\"", "IsekaiProficiencies");
+				AddStretcherAnswer("IsekaiStretcherSlime", "(Slime) \"I'm not water... I'm a slime! ...Wait, my human hands are still here? Whew. But my throat is completely parched...\"", "{n}The noblewoman in white robes tilts her head with a faint, bemused smile, offering a flask of cool spring water.{/n} \"A slime? That blow to your chest has left you feverish, friend. Drink, and let divine grace mend your body.\"", "DevourerProficiencies");
+				AddStretcherAnswer("IsekaiStretcherOverlord", "(Overlord) \"Ugh... did the server shut down? Where are the Floor Guardians?! What is this fragile mortal body?!\"", "{n}The silver-haired lady softly places a soothing hand upon your brow.{/n} \"Rest easy, traveler. Your mind wanders in the grip of lethal poison. Drink this water while holy light restores your strength.\"", "OverlordProficiencies");
+				AddStretcherAnswer("IsekaiStretcherShadowMonarch", "(Shadow Monarch) \"The system... reawakened me here? What is this burning laceration across my chest...?\"", "{n}The healer in white robes offers a gentle, reassuring smile as she tilts a flask to your lips.{/n} \"Save your strength. Whatever darkness touched your heart, the dawn is near. Drink.\"", "ShadowMonarchProficiencies");
+			}
+			BlueprintAnswersList answersList = BlueprintTools.GetBlueprint<BlueprintAnswersList>("0f7dddeb3f77a4f408e7dc843b9c66fb");
+			BlueprintCue continueCue = BlueprintTools.GetBlueprint<BlueprintCue>("70cd3ebac6e5daa41b949c0347b6ba57");
 			if (answersList != null && continueCue != null)
 			{
-				BlueprintCue dejaVuReply = TTCoreExtensions.CreateCue("IsekaiWelcomeDejaVuReply", delegate(BlueprintCue blueprintCue)
+				BlueprintCue dejaVuReply = TTCoreExtensions.CreateCue("IsekaiWelcomeDejaVuReply", delegate(BlueprintCue bp)
 				{
-					blueprintCue.SetText(Main.IsekaiContext, "{n}The silver-haired noblewoman pauses, her eyes widening slightly in curious contemplation before she offers a serene, enigmatic smile.{/n} \"A sensation of having lived this moment before? Time flows in mysterious currents, stranger. Perhaps your destiny here was written long before today. Stand tall, for whatever cycle you have traversed, your journey in Kenabres begins anew.\"");
-					blueprintCue.Continue = new CueSelection
+					bp.SetText(Main.IsekaiContext, "{n}The silver-haired noblewoman pauses, her eyes widening slightly in curious contemplation before she offers a serene, enigmatic smile.{/n} \"A sensation of having lived this moment before? Time flows in mysterious currents, stranger. Perhaps your destiny here was written long before today. Stand tall, for whatever cycle you have traversed, your journey in Kenabres begins anew.\"");
+					bp.Continue = new CueSelection
 					{
 						Cues = new List<BlueprintCueBaseReference> { continueCue.ToReference<BlueprintCueBaseReference>() },
 						Strategy = Strategy.First
 					};
 				});
-				BlueprintAnswer bp = TTCoreExtensions.CreateAnswer("IsekaiWelcomeDejaVu", delegate(BlueprintAnswer blueprintAnswer)
+				BlueprintAnswer answer = TTCoreExtensions.CreateAnswer("IsekaiWelcomeDejaVu", delegate(BlueprintAnswer bp)
 				{
-					blueprintAnswer.SetText(Main.IsekaiContext, "[Deja Vu: Memory of Past Cycles] \"Wait... this square, the festival banner, your gentle touch... I remember this waking moment. I have walked this crusade before in another cycle. Am I trapped in an eternal loop?\"");
-					blueprintAnswer.NextCue = new CueSelection
+					bp.SetText(Main.IsekaiContext, "[Deja Vu: Memory of Past Cycles] \"Wait... this square, the festival banner, your gentle touch... I remember this waking moment. I have walked this crusade before in another cycle. Am I trapped in an eternal loop?\"");
+					bp.NextCue = new CueSelection
 					{
 						Cues = new List<BlueprintCueBaseReference> { dejaVuReply.ToReference<BlueprintCueBaseReference>() },
 						Strategy = Strategy.First
 					};
-					blueprintAnswer.ShowOnce = true;
-					blueprintAnswer.ShowConditions.Conditions = blueprintAnswer.ShowConditions.Conditions.AppendToArray(new ConditionHasPastCycles());
-					blueprintAnswer.OnSelect = ActionFlow.DoSingle<ContextActionPastCycleReflectionBanter>();
+					bp.ShowOnce = true;
+					bp.AddShowCondition<ConditionHasPastCycles>();
+					bp.OnSelect = ActionFlow.DoSingle<ContextActionPastCycleReflectionBanter>();
 				});
-				answersList.Answers.Insert(0, bp.ToReference<BlueprintAnswerBaseReference>());
+				answersList.InsertAnswer(answer);
 				AddWelcomeAnswer("IsekaiWelcomeGeneral", "(Isekai Protagonist) \"I'm alive...? I don't know what kind of miraculous field medicine you just used, my lady, but a moment ago I was coughing blood. Thank you. I owe you my life.\"", "{n}The silver-haired noblewoman in white robes smiles with serene warmth, her touch radiating a calming, gentle glow.{/n} \"You owe me nothing. In Kenabres, no one is left behind while hope still endures. Save your strength; the festival is just beginning.\"", "IsekaiProficiencies");
 				AddWelcomeAnswer("IsekaiWelcomeDevourer", "(Slime) \"Whoa... the burning agony in my stomach is completely gone. That soothing healing aura... you're a remarkably kind doctor, miss. Thank you for patching me up!\"", "{n}The lady in white smiles gently at your earnest relief, an amused twinkle in her pale eyes.{/n} \"A doctor? A flattering title. Rest easy, friend. Your vitality is remarkably resilient; whatever poison touched your chest has dissolved into nothing.\"", "DevourerProficiencies");
 				AddWelcomeAnswer("IsekaiWelcomeShadowMonarch", "(Shadow Monarch) \"The cold grip of death in my chest... lifted. Your restorative power was swift and absolute, my lady. I will remember this debt.\"", "{n}The noblewoman in white robes nods gently, her silver gaze holding ancient depth and compassion.{/n} \"Do not speak of debts, traveler. Kenabres stands united under the heavens. Stand tall and celebrate your recovery with our people.\"", "ShadowMonarchProficiencies");
@@ -240,36 +248,68 @@ namespace IsekaiMod.Content.Dialogue
 				AddWelcomeAnswer("IsekaiWelcomeGodEmperor", "(God Emperor) \"A magnificent restoration. You possess hands blessed by true celestial grace, noble healer. When my sovereign dominion is established, your benevolence shall not be forgotten.\"", "{n}The lady in white arches an eyebrow with dignified amusement.{/n} \"A regal demeanor even with the dust of the road on your tunic! May your high ambitions serve peace and justice, young traveler.\"", "GodEmperorProficiencies");
 				AddWelcomeAnswer("IsekaiWelcomeOverlord", "(Overlord) \"To reverse fatal trauma with a mere touch... admirable proficiency, healer. You have preserved a vessel destined for supreme dominion.\"", "{n}She offers a calm, knowing smile, unfazed by your dark demeanor.{/n} \"Every life holds supreme destiny in the grand tapestry of fate. Go forth and use this second chance well.\"", "OverlordProficiencies");
 			}
+			void AddStretcherAnswer(string name, string text, string cueText, string proficiencyFactName)
+			{
+				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
+				if (proficiencyFact != null)
+				{
+					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
+					{
+						bp.SetText(Main.IsekaiContext, cueText);
+						bp.Continue = new CueSelection
+						{
+							Cues = new List<BlueprintCueBaseReference> { waterCue.ToReference<BlueprintCueBaseReference>() },
+							Strategy = Strategy.First
+						};
+					});
+					BlueprintAnswer answer2 = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
+					{
+						bp.SetText(Main.IsekaiContext, text);
+						bp.NextCue = new CueSelection
+						{
+							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
+							Strategy = Strategy.First
+						};
+						bp.ShowOnce = true;
+						bp.AddShowCondition(delegate(HasFact c)
+						{
+							c.Unit = new PlayerCharacter();
+							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
+						});
+					});
+					stretcherAnswersList.InsertAnswer(answer2);
+				}
+			}
 			void AddWelcomeAnswer(string name, string text, string cueText, string proficiencyFactName)
 			{
 				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
 				if (proficiencyFact != null)
 				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue blueprintCue)
+					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
 					{
-						blueprintCue.SetText(Main.IsekaiContext, cueText);
-						blueprintCue.Continue = new CueSelection
+						bp.SetText(Main.IsekaiContext, cueText);
+						bp.Continue = new CueSelection
 						{
 							Cues = new List<BlueprintCueBaseReference> { continueCue.ToReference<BlueprintCueBaseReference>() },
 							Strategy = Strategy.First
 						};
 					});
-					BlueprintAnswer bp2 = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer blueprintAnswer)
+					BlueprintAnswer answer2 = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
 					{
-						blueprintAnswer.SetText(Main.IsekaiContext, text);
-						blueprintAnswer.NextCue = new CueSelection
+						bp.SetText(Main.IsekaiContext, text);
+						bp.NextCue = new CueSelection
 						{
 							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
 							Strategy = Strategy.First
 						};
-						blueprintAnswer.ShowOnce = true;
-						blueprintAnswer.ShowConditions.Conditions = blueprintAnswer.ShowConditions.Conditions.AppendToArray(new HasFact
+						bp.ShowOnce = true;
+						bp.AddShowCondition(delegate(HasFact c)
 						{
-							Unit = new PlayerCharacter(),
-							m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>()
+							c.Unit = new PlayerCharacter();
+							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
 						});
 					});
-					answersList.Answers.Insert(0, bp2.ToReference<BlueprintAnswerBaseReference>());
+					answersList.InsertAnswer(answer2);
 				}
 			}
 		}
@@ -277,11 +317,10 @@ namespace IsekaiMod.Content.Dialogue
 		private static void AddMeetCameliaReactions()
 		{
 			BlueprintAnswersList answersList = BlueprintTools.GetBlueprint<BlueprintAnswersList>("1ca6cf08fceeac141a0df689cecc784a");
-			// Cue_0023: Camellia's closing line that all vanilla answers converge on. The previous target (Cue_0007) was
-			// Seelah's earlier introduction, which replayed out of order.
-			BlueprintCue continueCue = BlueprintTools.GetBlueprint<BlueprintCue>("6c60c319a85446f4dbfe60aeffb65080");
-			if (answersList != null && continueCue != null)
+			BlueprintUnitReference camelliaRef;
+			if (answersList != null)
 			{
+				camelliaRef = BlueprintTools.GetBlueprint<BlueprintUnit>("397b090721c41044ea3220445300e1b8")?.ToReference<BlueprintUnitReference>();
 				AddMeetCameliaAnswer("IsekaiCameliaGeneral", "(Isekai Protagonist) \"Did... did you see that giant silver dragon up there?! In my world, dragons are myths and fantasy legends! That thing was REAL! And that demon with the giant scythe... holy crap, are you alright?!\"", "{n}Camellia wipes a smudge of dirt from her pale cheek, giving you a cool, calculating look.{/n} \"Of course Terendelev was real. She was the ancient protector of Kenabres. But dwelling on her fall won't pull us out of this pit. Stand up; panicking like a startled peasant will get us killed down here.\"", "IsekaiProficiencies");
 				AddMeetCameliaAnswer("IsekaiCameliaDevourer", "(Slime) \"The ground collapsed... but more importantly, that giant demon lord just executed the nice lady who was also a dragon?! What kind of insane death world have I reincarnated into?!\"", "{n}Camellia shivers slightly, eyeing you with restrained disdain and curiosity.{/n} \"Reincarnated? You hit your head quite hard, didn't you? Get your bearings. We need to find a way back to the surface before whatever lurks down here smells our blood.\"", "DevourerProficiencies");
 				AddMeetCameliaAnswer("IsekaiCameliaShadowMonarch", "(Shadow Monarch) \"A mythical silver dragon slaughtered in seconds. The power scale in this realm is monstrous... but panic changes nothing. Are you able to walk?\"", "{n}Camellia arches an eyebrow, surprised by your sudden, chilling calm.{/n} \"A remarkably quick recovery from terror. Yes, I can walk. Follow me, and let us hope the rubble hasn't sealed every exit.\"", "ShadowMonarchProficiencies");
@@ -293,31 +332,35 @@ namespace IsekaiMod.Content.Dialogue
 				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
 				if (proficiencyFact != null)
 				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue blueprintCue)
+					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
 					{
-						blueprintCue.SetText(Main.IsekaiContext, cueText);
-						blueprintCue.Continue = new CueSelection
+						if (camelliaRef != null)
 						{
-							Cues = new List<BlueprintCueBaseReference> { continueCue.ToReference<BlueprintCueBaseReference>() },
-							Strategy = Strategy.First
-						};
+							bp.Speaker = new DialogSpeaker
+							{
+								m_Blueprint = camelliaRef,
+								MoveCamera = true
+							};
+						}
+						bp.SetText(Main.IsekaiContext, cueText);
+						bp.SetAnswersList(answersList);
 					});
-					BlueprintAnswer bp = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer blueprintAnswer)
+					BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
 					{
-						blueprintAnswer.SetText(Main.IsekaiContext, text);
-						blueprintAnswer.NextCue = new CueSelection
+						bp.SetText(Main.IsekaiContext, text);
+						bp.NextCue = new CueSelection
 						{
 							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
 							Strategy = Strategy.First
 						};
-						blueprintAnswer.ShowOnce = true;
-						blueprintAnswer.ShowConditions.Conditions = blueprintAnswer.ShowConditions.Conditions.AppendToArray(new HasFact
+						bp.ShowOnce = true;
+						bp.AddShowCondition(delegate(HasFact c)
 						{
-							Unit = new PlayerCharacter(),
-							m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>()
+							c.Unit = new PlayerCharacter();
+							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
 						});
 					});
-					answersList.Answers.Insert(0, bp.ToReference<BlueprintAnswerBaseReference>());
+					answersList.InsertAnswer(answer);
 				}
 			}
 		}
@@ -325,131 +368,189 @@ namespace IsekaiMod.Content.Dialogue
 		private static void AddMeetSeelahAneviaReactions()
 		{
 			BlueprintAnswersList answersList = BlueprintTools.GetBlueprint<BlueprintAnswersList>("a55fc20c6f0ff56439b40d6ba53cb8d7");
-			BlueprintCue continueCue = BlueprintTools.GetBlueprint<BlueprintCue>("159c4442a8672334c9394d9579cfd8f9");
-			if (answersList == null || continueCue == null)
+			BlueprintCue cue0012 = BlueprintTools.GetBlueprint<BlueprintCue>("36cac4b77d7e15e4e8c69a4340717cad");
+			if (answersList == null || cue0012 == null)
 			{
 				return;
 			}
-			AddMeetSeelahAnswer("IsekaiSeelahGeneral", "(Isekai Protagonist) \"Hold on, let me help you lift that rock! But please tell me I didn't hallucinate that... the kind lady who healed me earlier was a literal SILVER DRAGON?! Dragons actually exist here?!\"", "{n}Seelah grunts as she heaves against the stone, her eyes brimming with grief.{/n} \"Terendelev was our guardian... the shining soul of Kenabres. Seeing Deskari strike her down tore the heart out of every crusader in that square. But we can't let her sacrifice be in vain! On three... HEAVE!\"", "IsekaiProficiencies");
-			AddMeetSeelahAnswer("IsekaiSeelahMastermind", "(Mastermind) \"A silver dragon bisected by a demon lord of the outer rifts. The geopolitical balance of Kenabres collapsed in under forty seconds. We must extract the injured immediately to preserve tactical viability.\"", "{n}Seelah stares at you in complete disbelief.{/n} \"'Tactical viability'?! Anevia's leg is crushed and Terendelev is dead, you clinical weirdo! Help me lift this damn rock already!\"", "MastermindProficiencies");
-			BlueprintCue talkBackReply = TTCoreExtensions.CreateCue("IsekaiTalkBackStarsReply", delegate(BlueprintCue blueprintCue)
+			BlueprintUnitReference seelahRef = BlueprintTools.GetBlueprint<BlueprintUnit>("54be53f0b35bf3c4592a97ae335fe765")?.ToReference<BlueprintUnitReference>();
+			BlueprintFeature generalProficiency = GetRequiredDialogueFact("IsekaiProficiencies");
+			if (generalProficiency != null)
 			{
-				blueprintCue.SetText(Main.IsekaiContext, "{n}Seelah glances up at the jagged cavern ceiling, then reaches out to touch your forehead with genuine concern.{/n} \"Whoa... hey, easy! You took a nasty blow to the skull when the square collapsed. There's nobody up there but limestone and dripping water. Stay with me, alright? Don't lose your mind now.\"\n\n{n}Camellia takes half a step back, her hand subtly resting near her rapier.{/n} \"Raving at unseen voices in the ceiling? How utterly unhinged... I had hoped for a competent guide, not a lunatic suffering from cranial fractures.\"\n\n{n}Anevia winces through her broken leg, offering a dry grimace.{/n} \"Voices in the sky betting on us? Honestly, kid, after seeing Deskari chop a dragon in half today, gods gambling on our corpses wouldn't even be in my top five weirdest crusader stories. Just help Seelah lift this rock.\"");
-				blueprintCue.Continue = new CueSelection
+				BlueprintCue generalReply = TTCoreExtensions.CreateCue("IsekaiSeelahGeneralReply", delegate(BlueprintCue bp)
 				{
-					Cues = new List<BlueprintCueBaseReference> { continueCue.ToReference<BlueprintCueBaseReference>() },
-					Strategy = Strategy.First
-				};
-			});
-			BlueprintAnswer bp = TTCoreExtensions.CreateAnswer("IsekaiTalkBackStarsAnswer", delegate(BlueprintAnswer blueprintAnswer)
+					if (seelahRef != null)
+					{
+						bp.Speaker = new DialogSpeaker
+						{
+							m_Blueprint = seelahRef,
+							MoveCamera = true
+						};
+					}
+					bp.SetText(Main.IsekaiContext, "{n}Seelah grunts as she heaves against the stone, her eyes brimming with grief.{/n} \"Terendelev was our guardian... the shining soul of Kenabres. Seeing Deskari strike her down tore the heart out of every crusader in that square. But we can't let her sacrifice be in vain! On three... HEAVE!\"");
+					bp.Continue = new CueSelection
+					{
+						Cues = new List<BlueprintCueBaseReference> { cue0012.ToReference<BlueprintCueBaseReference>() },
+						Strategy = Strategy.First
+					};
+				});
+				BlueprintAnswer answer = TTCoreExtensions.CreateAnswer("IsekaiSeelahGeneral", delegate(BlueprintAnswer bp)
+				{
+					bp.SetText(Main.IsekaiContext, "(Isekai Protagonist) \"Hold on, let me help you lift that rock! But please tell me I didn't hallucinate that... the kind lady who healed me earlier was a literal SILVER DRAGON?! Dragons actually exist here?!\"");
+					bp.NextCue = new CueSelection
+					{
+						Cues = new List<BlueprintCueBaseReference> { generalReply.ToReference<BlueprintCueBaseReference>() },
+						Strategy = Strategy.First
+					};
+					bp.ShowOnce = true;
+					bp.AddShowCondition(delegate(HasFact c)
+					{
+						c.Unit = new PlayerCharacter();
+						c.m_Fact = generalProficiency.ToReference<BlueprintUnitFactReference>();
+					});
+				});
+				answersList.InsertAnswer(answer);
+			}
+			BlueprintFeature mastermindProficiency = GetRequiredDialogueFact("MastermindProficiencies");
+			if (mastermindProficiency != null)
 			{
-				blueprintAnswer.SetText(Main.IsekaiContext, "[Look Upward] \"Shut up, all of you! Stop betting coins on my survival like I'm a gladiator in your cosmic circus! I can hear you mocking me from the clouds!\"");
-				blueprintAnswer.NextCue = new CueSelection
+				BlueprintCue mastermindReply = TTCoreExtensions.CreateCue("IsekaiSeelahMastermindReply", delegate(BlueprintCue bp)
+				{
+					if (seelahRef != null)
+					{
+						bp.Speaker = new DialogSpeaker
+						{
+							m_Blueprint = seelahRef,
+							MoveCamera = true
+						};
+					}
+					bp.SetText(Main.IsekaiContext, "{n}Seelah stares at you in complete disbelief.{/n} \"'Tactical viability'?! Anevia's leg is crushed and Terendelev is dead, you clinical weirdo! Help me lift this damn rock already!\"");
+					bp.SetAnswersList(answersList);
+				});
+				BlueprintAnswer answer2 = TTCoreExtensions.CreateAnswer("IsekaiSeelahMastermind", delegate(BlueprintAnswer bp)
+				{
+					bp.SetText(Main.IsekaiContext, "(Mastermind) \"A silver dragon bisected by a demon lord of the outer rifts. The geopolitical balance of Kenabres collapsed in under forty seconds. We must extract the injured immediately to preserve tactical viability.\"");
+					bp.NextCue = new CueSelection
+					{
+						Cues = new List<BlueprintCueBaseReference> { mastermindReply.ToReference<BlueprintCueBaseReference>() },
+						Strategy = Strategy.First
+					};
+					bp.ShowOnce = true;
+					bp.AddShowCondition(delegate(HasFact c)
+					{
+						c.Unit = new PlayerCharacter();
+						c.m_Fact = mastermindProficiency.ToReference<BlueprintUnitFactReference>();
+					});
+				});
+				answersList.InsertAnswer(answer2);
+			}
+			BlueprintCue talkBackReply = TTCoreExtensions.CreateCue("IsekaiTalkBackStarsReply", delegate(BlueprintCue bp)
+			{
+				if (seelahRef != null)
+				{
+					bp.Speaker = new DialogSpeaker
+					{
+						m_Blueprint = seelahRef,
+						MoveCamera = true
+					};
+				}
+				bp.SetText(Main.IsekaiContext, "{n}Seelah glances up at the jagged cavern ceiling, then reaches out to touch your forehead with genuine concern.{/n} \"Whoa... hey, easy! You took a nasty blow to the skull when the square collapsed. There's nobody up there but limestone and dripping water. Stay with me, alright? Don't lose your mind now.\"\n\n{n}Camellia takes half a step back, her hand subtly resting near her rapier.{/n} \"Raving at unseen voices in the ceiling? How utterly unhinged... I had hoped for a competent guide, not a lunatic suffering from cranial fractures.\"\n\n{n}Anevia winces through her broken leg, offering a dry grimace.{/n} \"Voices in the sky betting on us? Honestly, kid, after seeing Deskari chop a dragon in half today, gods gambling on our corpses wouldn't even be in my top five weirdest crusader stories. Just help Seelah lift this rock.\"");
+				bp.SetAnswersList(answersList);
+			});
+			BlueprintAnswer answer3 = TTCoreExtensions.CreateAnswer("IsekaiTalkBackStarsAnswer", delegate(BlueprintAnswer bp)
+			{
+				bp.SetText(Main.IsekaiContext, "[Look Upward] \"Shut up, all of you! Stop betting coins on my survival like I'm a gladiator in your cosmic circus! I can hear you mocking me from the clouds!\"");
+				bp.NextCue = new CueSelection
 				{
 					Cues = new List<BlueprintCueBaseReference> { talkBackReply.ToReference<BlueprintCueBaseReference>() },
 					Strategy = Strategy.First
 				};
-				blueprintAnswer.ShowOnce = true;
-				blueprintAnswer.OnSelect = ActionFlow.DoSingle(delegate(ContextActionAwardCosmicCoins a)
+				bp.ShowOnce = true;
+				bp.OnSelect = ActionFlow.DoSingle(delegate(ContextActionAwardCosmicCoins a)
 				{
 					a.Amount = 250;
 					a.Sponsor = "The Laughing King";
 				});
-				blueprintAnswer.RequirePlotArmor();
+				bp.RequirePlotArmor();
 			});
-			answersList.Answers.Insert(0, bp.ToReference<BlueprintAnswerBaseReference>());
-			BlueprintCue slimeReply = TTCoreExtensions.CreateCue("IsekaiSeelahDevourerReply", delegate(BlueprintCue blueprintCue)
+			answersList.InsertAnswer(answer3);
+			BlueprintCue slimeReply = TTCoreExtensions.CreateCue("IsekaiSeelahDevourerReply", delegate(BlueprintCue bp)
 			{
-				blueprintCue.SetText(Main.IsekaiContext, "{n}Seelah stumbles backward, her mouth falling open in utter disbelief as your arm snaps instantly back into solid human skin.{/n} \"By Iomedae's shield... did your arm just melt into blue jelly?! What kind of creature are you?! You're not secretly some subterranean demon parasite, are you?!\"\n\n{n}Anevia drags her broken leg free from the gap, laughing weakly through her pain.{/n} \"Seelah, stand down. If a friendly puddle of blue ooze wants to lift a ton of limestone off my crushed leg, I'm not going to complain about its pedigree. Thanks, kid. That was either the weirdest spell I've ever seen or Kenabres just recruited the world's strangest crusader.\"");
-				blueprintCue.Continue = new CueSelection
+				if (seelahRef != null)
 				{
-					Cues = new List<BlueprintCueBaseReference> { continueCue.ToReference<BlueprintCueBaseReference>() },
+					bp.Speaker = new DialogSpeaker
+					{
+						m_Blueprint = seelahRef,
+						MoveCamera = true
+					};
+				}
+				bp.SetText(Main.IsekaiContext, "{n}Seelah stumbles backward, her mouth falling open in utter disbelief as your arm briefly turns into a fluid ribbon of green slime, slipping beneath the boulder with effortless hydraulic power.{/n} \"By Iomedae's shield... did your arm just melt into emerald jelly?! What kind of creature are you?! You're not secretly some subterranean demon parasite, are you?! Stand back, let me help you lift! On three... HEAVE!\"");
+				bp.Continue = new CueSelection
+				{
+					Cues = new List<BlueprintCueBaseReference> { cue0012.ToReference<BlueprintCueBaseReference>() },
 					Strategy = Strategy.First
 				};
 			});
-			BlueprintAnswer bp2 = TTCoreExtensions.CreateAnswer("IsekaiSeelahDevourer", delegate(BlueprintAnswer blueprintAnswer)
+			BlueprintAnswer answer4 = TTCoreExtensions.CreateAnswer("IsekaiSeelahDevourer", delegate(BlueprintAnswer bp)
 			{
-				blueprintAnswer.SetText(Main.IsekaiContext, "(Slime) \"Stand back, let me handle this. [Your arm briefly dissolves into a fluid ribbon of blue slime, slipping under the boulder and heaving it upward with effortless hydraulic pressure.]\"");
-				blueprintAnswer.NextCue = new CueSelection
+				bp.SetText(Main.IsekaiContext, "(Slime) \"Stand back, let me handle this. [Your arm briefly dissolves into a fluid ribbon of green slime, slipping under the boulder and heaving it upward with effortless hydraulic pressure.]\"");
+				bp.NextCue = new CueSelection
 				{
 					Cues = new List<BlueprintCueBaseReference> { slimeReply.ToReference<BlueprintCueBaseReference>() },
 					Strategy = Strategy.First
 				};
-				blueprintAnswer.ShowOnce = true;
-				blueprintAnswer.ShowConditions.Conditions = blueprintAnswer.ShowConditions.Conditions.AppendToArray(new HasFact
+				bp.ShowOnce = true;
+				bp.AddShowCondition(delegate(HasFact c)
 				{
-					Unit = new PlayerCharacter(),
-					m_Fact = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "DevourerProficiencies").ToReference<BlueprintUnitFactReference>()
+					c.Unit = new PlayerCharacter();
+					c.m_Fact = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "DevourerProficiencies")?.ToReference<BlueprintUnitFactReference>();
 				});
-				blueprintAnswer.OnSelect = ActionFlow.DoSingle<ContextActionSlimeRevealBanter>();
+				bp.OnSelect = ActionFlow.DoSingle<ContextActionSlimeRevealBanter>();
 			});
-			answersList.Answers.Insert(0, bp2.ToReference<BlueprintAnswerBaseReference>());
-			BlueprintCue overlordReply = TTCoreExtensions.CreateCue("IsekaiSeelahOverlordReply", delegate(BlueprintCue blueprintCue)
+			answersList.InsertAnswer(answer4);
+			BlueprintCue overlordReply = TTCoreExtensions.CreateCue("IsekaiSeelahOverlordReply", delegate(BlueprintCue bp)
 			{
-				blueprintCue.SetText(Main.IsekaiContext, "{n}Seelah violently flinches back, her hand instantly flying to the pommel of her holy sword with wide, terrified eyes.{/n} \"Your hands... your face! For a second you looked like... an undead skeleton! A walking corpse! What are you?!\"\n\n{n}Anevia groans as she drags her injured limb clear, waving her hand frantically.{/n} \"Seelah, sheath your steel! Look at them, they're flesh and blood again. An illusion, or some bizarre planar dust from the Worldwound... Either way, the dead usually try to chop off our heads, not heave boulders off our legs. Let's get out of these dark tunnels alive before we start a religious tribunal.\"");
-				blueprintCue.Continue = new CueSelection
+				if (seelahRef != null)
 				{
-					Cues = new List<BlueprintCueBaseReference> { continueCue.ToReference<BlueprintCueBaseReference>() },
+					bp.Speaker = new DialogSpeaker
+					{
+						m_Blueprint = seelahRef,
+						MoveCamera = true
+					};
+				}
+				bp.SetText(Main.IsekaiContext, "{n}Seelah violently flinches back, her hand instantly flying to the pommel of her holy sword with wide, terrified eyes as skeletal ivory hands grip the underside of the boulder.{/n} \"Your hands... your face! For a second you looked like... a walking skeleton! What kind of dark sorcery is this?! Stand back before... wait, you're heaving the entire rock off her! On three... HEAVE!\"");
+				bp.Continue = new CueSelection
+				{
+					Cues = new List<BlueprintCueBaseReference> { cue0012.ToReference<BlueprintCueBaseReference>() },
 					Strategy = Strategy.First
 				};
 			});
-			BlueprintAnswer bp3 = TTCoreExtensions.CreateAnswer("IsekaiSeelahOverlord", delegate(BlueprintAnswer blueprintAnswer)
+			BlueprintAnswer answer5 = TTCoreExtensions.CreateAnswer("IsekaiSeelahOverlord", delegate(BlueprintAnswer bp)
 			{
-				blueprintAnswer.SetText(Main.IsekaiContext, "(Overlord) \"Step aside, crusader. Your mortal straining is inefficient. Allow true necromantic might to handle this. [You grip the stone. For a split second, your mortal disguise flickers, revealing cold ivory bones and burning red eye sockets heaving the rock aside.]\"");
-				blueprintAnswer.NextCue = new CueSelection
+				bp.SetText(Main.IsekaiContext, "(Overlord) \"Step aside, crusader. Your mortal straining is inefficient. Allow true necromantic might to handle this. [You grip the stone. For a split second, your mortal disguise flickers, revealing cold ivory bones and burning red eye sockets heaving the rock aside.]\"");
+				bp.NextCue = new CueSelection
 				{
 					Cues = new List<BlueprintCueBaseReference> { overlordReply.ToReference<BlueprintCueBaseReference>() },
 					Strategy = Strategy.First
 				};
-				blueprintAnswer.ShowOnce = true;
-				blueprintAnswer.ShowConditions.Conditions = blueprintAnswer.ShowConditions.Conditions.AppendToArray(new HasFact
+				bp.ShowOnce = true;
+				bp.AddShowCondition(delegate(HasFact c)
 				{
-					Unit = new PlayerCharacter(),
-					m_Fact = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "OverlordProficiencies").ToReference<BlueprintUnitFactReference>()
+					c.Unit = new PlayerCharacter();
+					c.m_Fact = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "OverlordProficiencies")?.ToReference<BlueprintUnitFactReference>();
 				});
-				blueprintAnswer.OnSelect = ActionFlow.DoSingle<ContextActionOverlordRevealBanter>();
+				bp.OnSelect = ActionFlow.DoSingle<ContextActionOverlordRevealBanter>();
 			});
-			answersList.Answers.Insert(0, bp3.ToReference<BlueprintAnswerBaseReference>());
-			void AddMeetSeelahAnswer(string name, string text, string cueText, string proficiencyFactName)
-			{
-				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
-				if (proficiencyFact != null)
-				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue blueprintCue)
-					{
-						blueprintCue.SetText(Main.IsekaiContext, cueText);
-						blueprintCue.Continue = new CueSelection
-						{
-							Cues = new List<BlueprintCueBaseReference> { continueCue.ToReference<BlueprintCueBaseReference>() },
-							Strategy = Strategy.First
-						};
-					});
-					BlueprintAnswer bp4 = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer blueprintAnswer)
-					{
-						blueprintAnswer.SetText(Main.IsekaiContext, text);
-						blueprintAnswer.NextCue = new CueSelection
-						{
-							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
-							Strategy = Strategy.First
-						};
-						blueprintAnswer.ShowOnce = true;
-						blueprintAnswer.ShowConditions.Conditions = blueprintAnswer.ShowConditions.Conditions.AppendToArray(new HasFact
-						{
-							Unit = new PlayerCharacter(),
-							m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>()
-						});
-					});
-					answersList.Answers.Insert(0, bp4.ToReference<BlueprintAnswerBaseReference>());
-				}
-			}
+			answersList.InsertAnswer(answer5);
 		}
 
 		private static void AddMeetLannReactions()
 		{
 			BlueprintAnswersList answersList = BlueprintTools.GetBlueprint<BlueprintAnswersList>("61ba231b3ad6b144a918c88ca49cb92a");
-			BlueprintCue continueCue = BlueprintTools.GetBlueprint<BlueprintCue>("77c76af965603f54085b55ca183bc7ae");
-			if (answersList != null && continueCue != null)
+			BlueprintUnitReference lannRef;
+			if (answersList != null)
 			{
+				lannRef = BlueprintTools.GetBlueprint<BlueprintUnit>("cb29621d99b902e4da6f5d232352fbda")?.ToReference<BlueprintUnitReference>();
 				AddMeetLannAnswer("IsekaiLannGeneral", "(Isekai Protagonist) \"Lizard scales, feathers, and horns... honestly, after falling a mile into the earth and watching a dragon fight, beastfolk scouts don't even phase me. Greetings from the surface.\"", "{n}Lann blinks his reptilian eye in surprise, then grins lopsidedly.{/n} \"Well, that's refreshing! Usually surface dwellers scream, pray to Iomedae, or try to stab us. I'm Lann, by the way.\"", "IsekaiProficiencies");
 				AddMeetLannAnswer("IsekaiLannDevourer", "(Slime) \"Whoa, chimera-like anatomy! Are those scales adapted for subterranean dampness? Fascinating biology!\"", "{n}Lann scratches his scaled cheek, chuckling.{/n} \"'Fascinating biology'? First time anyone's called our cursed mongrel hides a scientific marvel! You're a weird one, surface-dweller.\"", "DevourerProficiencies");
 			}
@@ -458,29 +559,35 @@ namespace IsekaiMod.Content.Dialogue
 				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
 				if (proficiencyFact != null)
 				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue blueprintCue)
+					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
 					{
-						blueprintCue.SetText(Main.IsekaiContext, cueText);
-						// This conversation is a question hub; Cue_0003 ("Lann nods silently") is its exit line, so
-						// continuing there closed the dialogue before Lann could be recruited. Return to the hub instead.
-						blueprintCue.Answers = answersList.Answers;
+						if (lannRef != null)
+						{
+							bp.Speaker = new DialogSpeaker
+							{
+								m_Blueprint = lannRef,
+								MoveCamera = true
+							};
+						}
+						bp.SetText(Main.IsekaiContext, cueText);
+						bp.SetAnswersList(answersList);
 					});
-					BlueprintAnswer bp = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer blueprintAnswer)
+					BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
 					{
-						blueprintAnswer.SetText(Main.IsekaiContext, text);
-						blueprintAnswer.NextCue = new CueSelection
+						bp.SetText(Main.IsekaiContext, text);
+						bp.NextCue = new CueSelection
 						{
 							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
 							Strategy = Strategy.First
 						};
-						blueprintAnswer.ShowOnce = true;
-						blueprintAnswer.ShowConditions.Conditions = blueprintAnswer.ShowConditions.Conditions.AppendToArray(new HasFact
+						bp.ShowOnce = true;
+						bp.AddShowCondition(delegate(HasFact c)
 						{
-							Unit = new PlayerCharacter(),
-							m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>()
+							c.Unit = new PlayerCharacter();
+							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
 						});
 					});
-					answersList.Answers.Insert(0, bp.ToReference<BlueprintAnswerBaseReference>());
+					answersList.InsertAnswer(answer);
 				}
 			}
 		}
@@ -504,32 +611,32 @@ namespace IsekaiMod.Content.Dialogue
 				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
 				if (proficiencyFact != null)
 				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue blueprintCue)
+					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
 					{
-						blueprintCue.SetText(Main.IsekaiContext, cueText);
-						blueprintCue.Continue = new CueSelection
+						bp.SetText(Main.IsekaiContext, cueText);
+						bp.Continue = new CueSelection
 						{
 							Cues = new List<BlueprintCueBaseReference> { continueCue.ToReference<BlueprintCueBaseReference>() },
 							Strategy = Strategy.First
 						};
 					});
-					BlueprintAnswer bp = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer blueprintAnswer)
+					BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
 					{
-						blueprintAnswer.SetText(Main.IsekaiContext, text);
-						blueprintAnswer.NextCue = new CueSelection
+						bp.SetText(Main.IsekaiContext, text);
+						bp.NextCue = new CueSelection
 						{
 							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
 							Strategy = Strategy.First
 						};
-						blueprintAnswer.ShowOnce = true;
-						blueprintAnswer.ShowConditions.Conditions = blueprintAnswer.ShowConditions.Conditions.AppendToArray(new HasFact
+						bp.ShowOnce = true;
+						bp.AddShowCondition(delegate(HasFact c)
 						{
-							Unit = new PlayerCharacter(),
-							m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>()
+							c.Unit = new PlayerCharacter();
+							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
 						});
-						blueprintAnswer.OnSelect = ActionFlow.DoSingle<ContextActionWardstoneMythicAwakening>();
+						bp.OnSelect = ActionFlow.DoSingle<ContextActionWardstoneMythicAwakening>();
 					});
-					answersList.Answers.Insert(0, bp.ToReference<BlueprintAnswerBaseReference>());
+					answersList.InsertAnswer(answer);
 				}
 			}
 		}
@@ -549,31 +656,31 @@ namespace IsekaiMod.Content.Dialogue
 				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
 				if (proficiencyFact != null)
 				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue blueprintCue)
+					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
 					{
-						blueprintCue.SetText(Main.IsekaiContext, cueText);
-						blueprintCue.Answers = answersList.Answers;
+						bp.SetText(Main.IsekaiContext, cueText);
+						bp.SetAnswersList(answersList);
 					});
-					BlueprintAnswer bp = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer blueprintAnswer)
+					BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
 					{
-						blueprintAnswer.SetText(Main.IsekaiContext, text);
-						blueprintAnswer.NextCue = new CueSelection
+						bp.SetText(Main.IsekaiContext, text);
+						bp.NextCue = new CueSelection
 						{
 							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
 							Strategy = Strategy.First
 						};
-						blueprintAnswer.ShowOnce = true;
-						blueprintAnswer.ShowConditions.Conditions = blueprintAnswer.ShowConditions.Conditions.AppendToArray(new HasFact
+						bp.ShowOnce = true;
+						bp.AddShowCondition(delegate(HasFact c)
 						{
-							Unit = new PlayerCharacter(),
-							m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>()
+							c.Unit = new PlayerCharacter();
+							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
 						});
 						if (onSelect != null)
 						{
-							blueprintAnswer.OnSelect = Helpers.CreateActionList(onSelect);
+							bp.OnSelect = Helpers.CreateActionList(onSelect);
 						}
 					});
-					answersList.Answers.Insert(0, bp.ToReference<BlueprintAnswerBaseReference>());
+					answersList.InsertAnswer(answer);
 				}
 			}
 		}
@@ -626,39 +733,39 @@ namespace IsekaiMod.Content.Dialogue
 				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
 				if (proficiencyFact != null)
 				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue blueprintCue)
+					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
 					{
-						blueprintCue.SetText(Main.IsekaiContext, cueText);
+						bp.SetText(Main.IsekaiContext, cueText);
 						if (galfreyUnit != null)
 						{
-							blueprintCue.Speaker = new DialogSpeaker
+							bp.Speaker = new DialogSpeaker
 							{
 								m_Blueprint = galfreyUnit.ToReference<BlueprintUnitReference>(),
 								MoveCamera = true
 							};
 						}
-						blueprintCue.Answers = answersList.Answers;
+						bp.SetAnswersList(answersList);
 					});
-					BlueprintAnswer bp = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer blueprintAnswer)
+					BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
 					{
-						blueprintAnswer.SetText(Main.IsekaiContext, text);
-						blueprintAnswer.NextCue = new CueSelection
+						bp.SetText(Main.IsekaiContext, text);
+						bp.NextCue = new CueSelection
 						{
 							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
 							Strategy = Strategy.First
 						};
-						blueprintAnswer.ShowOnce = true;
-						blueprintAnswer.ShowConditions.Conditions = blueprintAnswer.ShowConditions.Conditions.AppendToArray(new HasFact
+						bp.ShowOnce = true;
+						bp.AddShowCondition(delegate(HasFact c)
 						{
-							Unit = new PlayerCharacter(),
-							m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>()
+							c.Unit = new PlayerCharacter();
+							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
 						});
 						if (mobilizeAction != null)
 						{
-							blueprintAnswer.OnSelect = Helpers.CreateActionList(mobilizeAction);
+							bp.OnSelect = Helpers.CreateActionList(mobilizeAction);
 						}
 					});
-					answersList.Answers.Insert(0, bp.ToReference<BlueprintAnswerBaseReference>());
+					answersList.InsertAnswer(answer);
 				}
 			}
 		}
@@ -680,35 +787,35 @@ namespace IsekaiMod.Content.Dialogue
 				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
 				if (proficiencyFact != null)
 				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue blueprintCue)
+					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
 					{
-						blueprintCue.SetText(Main.IsekaiContext, cueText);
+						bp.SetText(Main.IsekaiContext, cueText);
 						if (regillUnit != null)
 						{
-							blueprintCue.Speaker = new DialogSpeaker
+							bp.Speaker = new DialogSpeaker
 							{
 								m_Blueprint = regillUnit.ToReference<BlueprintUnitReference>(),
 								MoveCamera = true
 							};
 						}
-						blueprintCue.Answers = answersList.Answers;
+						bp.SetAnswersList(answersList);
 					});
-					BlueprintAnswer bp = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer blueprintAnswer)
+					BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
 					{
-						blueprintAnswer.SetText(Main.IsekaiContext, text);
-						blueprintAnswer.NextCue = new CueSelection
+						bp.SetText(Main.IsekaiContext, text);
+						bp.NextCue = new CueSelection
 						{
 							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
 							Strategy = Strategy.First
 						};
-						blueprintAnswer.ShowOnce = true;
-						blueprintAnswer.ShowConditions.Conditions = blueprintAnswer.ShowConditions.Conditions.AppendToArray(new HasFact
+						bp.ShowOnce = true;
+						bp.AddShowCondition(delegate(HasFact c)
 						{
-							Unit = new PlayerCharacter(),
-							m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>()
+							c.Unit = new PlayerCharacter();
+							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
 						});
 					});
-					answersList.Answers.Insert(0, bp.ToReference<BlueprintAnswerBaseReference>());
+					answersList.InsertAnswer(answer);
 				}
 			}
 		}
@@ -729,35 +836,35 @@ namespace IsekaiMod.Content.Dialogue
 				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
 				if (proficiencyFact != null)
 				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue blueprintCue)
+					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
 					{
-						blueprintCue.SetText(Main.IsekaiContext, cueText);
+						bp.SetText(Main.IsekaiContext, cueText);
 						if (zachariusUnit != null)
 						{
-							blueprintCue.Speaker = new DialogSpeaker
+							bp.Speaker = new DialogSpeaker
 							{
 								m_Blueprint = zachariusUnit.ToReference<BlueprintUnitReference>(),
 								MoveCamera = true
 							};
 						}
-						blueprintCue.Answers = answersList.Answers;
+						bp.SetAnswersList(answersList);
 					});
-					BlueprintAnswer bp = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer blueprintAnswer)
+					BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
 					{
-						blueprintAnswer.SetText(Main.IsekaiContext, text);
-						blueprintAnswer.NextCue = new CueSelection
+						bp.SetText(Main.IsekaiContext, text);
+						bp.NextCue = new CueSelection
 						{
 							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
 							Strategy = Strategy.First
 						};
-						blueprintAnswer.ShowOnce = true;
-						blueprintAnswer.ShowConditions.Conditions = blueprintAnswer.ShowConditions.Conditions.AppendToArray(new HasFact
+						bp.ShowOnce = true;
+						bp.AddShowCondition(delegate(HasFact c)
 						{
-							Unit = new PlayerCharacter(),
-							m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>()
+							c.Unit = new PlayerCharacter();
+							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
 						});
 					});
-					answersList.Answers.Insert(0, bp.ToReference<BlueprintAnswerBaseReference>());
+					answersList.InsertAnswer(answer);
 				}
 			}
 		}
@@ -781,35 +888,35 @@ namespace IsekaiMod.Content.Dialogue
 				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
 				if (proficiencyFact != null)
 				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue blueprintCue)
+					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
 					{
-						blueprintCue.SetText(Main.IsekaiContext, cueText);
+						bp.SetText(Main.IsekaiContext, cueText);
 						if (galfreyUnit != null)
 						{
-							blueprintCue.Speaker = new DialogSpeaker
+							bp.Speaker = new DialogSpeaker
 							{
 								m_Blueprint = galfreyUnit.ToReference<BlueprintUnitReference>(),
 								MoveCamera = true
 							};
 						}
-						blueprintCue.Answers = answersList.Answers;
+						bp.SetAnswersList(answersList);
 					});
-					BlueprintAnswer bp = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer blueprintAnswer)
+					BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
 					{
-						blueprintAnswer.SetText(Main.IsekaiContext, text);
-						blueprintAnswer.NextCue = new CueSelection
+						bp.SetText(Main.IsekaiContext, text);
+						bp.NextCue = new CueSelection
 						{
 							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
 							Strategy = Strategy.First
 						};
-						blueprintAnswer.ShowOnce = true;
-						blueprintAnswer.ShowConditions.Conditions = blueprintAnswer.ShowConditions.Conditions.AppendToArray(new HasFact
+						bp.ShowOnce = true;
+						bp.AddShowCondition(delegate(HasFact c)
 						{
-							Unit = new PlayerCharacter(),
-							m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>()
+							c.Unit = new PlayerCharacter();
+							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
 						});
 					});
-					answersList.Answers.Insert(0, bp.ToReference<BlueprintAnswerBaseReference>());
+					answersList.InsertAnswer(answer);
 				}
 			}
 		}
@@ -821,50 +928,50 @@ namespace IsekaiMod.Content.Dialogue
 			if (answersList != null)
 			{
 				AddLabTruthAnswer("IsekaiAreeluLabTruthGeneral", "(Isekai Protagonist) [Confront the Cosmic Glitch] \"Your ritual didn't pull your child's soul, Areelu. It cracked open reality just wide enough for Yog-Sothoth's temporal loop to siphon me in from another world! This entire crusade is an otherworldly replay loop, broadcast to cosmic entities!\"", "{n}Areelu Vorlesh's spectral projection halts. Her analytical gaze widens with profound, disturbing shock as she calculates the metaphysical equations.{/n} \"An anomaly from beyond... Yog-Sothoth's causal loop? {n}Her fingers twitch against her staff as runes spiral around her{/n} ...I felt the dimensional drag during the rift ritual, but I assumed... no. The Akashic signature is completely alien to Golarion! You are telling the truth. My child's soul was not the payload... an entire otherworldly protagonist was caught in the tear!\"", "IsekaiProficiencies", new ContextActionAreeluLoopTruthBanter());
-				AddLabTruthAnswer("IsekaiAreeluLabTruthDevourer", "(Slime) [Digest the Planar Glitch] \"Your summoning ritual was basically a giant dimensional vacuum cleaner! Instead of your kid, you sucked in an otherworldly slime with cheat digestion skills. And now Yog-Sothoth's loop has us all on playback!\"", "{n}Areelu stares at you in complete disbelief and horror.{/n} \"A slime... an otherworldly, morphic digestive organism with impossible cellular density. The ritual pulled a conceptual predator through the void instead of my child... {n}she touches her forehead, trembling{/n} The cosmic irony is suffocating. Yet your growth exceeds even my wildest laboratory models...\"", "DevourerProficiencies");
-				AddLabTruthAnswer("IsekaiAreeluLabTruthOverlord", "(Overlord) [Dissect the Flawed Incantation] \"A pathetic miscalculation, witch. Your amateurish rift failed to tether your offspring. Instead, your dimensional tear snagged an Overlord from beyond reality into Yog-Sothoth's recurring cycle. Bow before your superior.\"", "{n}Areelu Vorlesh staggers back as an aura of supreme tier authority presses against her laboratory projection.{/n} \"Amateurish?! I spent decades... {n}she stops, her breath catching as she senses the unfathomable depth of your soul matrix{/n} ...By the Abyss. The soul anchored in this flesh belongs to no mortal offspring. You are a supreme sovereign entity ensnared by the cosmic loop. What have I unleashed upon the planes...?\"", "OverlordProficiencies");
-				AddLabTruthAnswer("IsekaiAreeluLabTruthShadowMonarch", "(Shadow Monarch) [Reveal the Sovereign Truth] \"The void you opened reached far beyond the Worldwound. It pulled the sovereign of shadows into Yog-Sothoth's playback loop. Your child is not here; only the monarch remains.\"", "{n}The shadows in the laboratory coil and bow before you as Areelu looks on in silent terror.{/n} \"The primordial void... not death, but the ancient monarch of darkness. The rift didn't retrieve my child; it tore open the gates to the Netherworld and siphoned its king. The calculations were doomed from the start.\"", "ShadowMonarchProficiencies");
-				AddLabTruthAnswer("IsekaiAreeluLabTruthMastermind", "(Mastermind) [Expose the Infinite Playback Algorithm] \"I reverse-engineered your ritual matrices, Vorlesh. The probability of your child's soul traversing the rift was zero. Yog-Sothoth intercepted your dimensional breach to feed an infinite spectator broadcast for cosmic entities.\"", "{n}Areelu's eyes narrow as she watches you mentally dismantle her life's work.{/n} \"Zero probability... an intercepted broadcast? {n}She lets out a dry, bitter laugh that echoes through the laboratory{/n} All my suffering, all my meticulous sacrifices... hijacked by an Outer God to produce cosmic entertainment for the stars. And you... you see the entire board, don't you, Commander?\"", "MastermindProficiencies");
-				AddLabTruthAnswer("IsekaiAreeluLabTruthHero", "(Hero) [Declare Moral Rejection of the Loop] \"Your grief opened a wound that swallowed an innocent soul from another world. But I won't let Yog-Sothoth's loop or your obsession destroy Golarion. I will protect these people, and I will break this cycle!\"", "{n}Areelu smiles faintly, a bittersweet sadness softening her demonic features.{/n} \"Such unwavering, stubborn courage... even when knowing you were plucked from your home to dance on a celestial stage. Perhaps that unyielding spirit is why the rift chose you. Break the loop if you can, hero. I will be watching.\"", "HeroProficiencies");
+				AddLabTruthAnswer("IsekaiAreeluLabTruthDevourer", "(Slime) [Digest the Planar Glitch] \"Your summoning ritual was basically a giant dimensional vacuum cleaner! Instead of your kid, you sucked in an otherworldly slime with cheat digestion skills. And now Yog-Sothoth's loop has us all on playback!\"", "{n}Areelu stares at you in complete disbelief and horror.{/n} \"A slime... an otherworldly, morphic digestive organism with impossible cellular density. The ritual pulled a conceptual predator through the void instead of my child... {n}she touches her forehead, trembling{/n} The cosmic irony is suffocating. Yet your growth exceeds even my wildest laboratory models...\"", "DevourerProficiencies", new ContextActionAreeluLoopTruthBanter());
+				AddLabTruthAnswer("IsekaiAreeluLabTruthOverlord", "(Overlord) [Dissect the Flawed Incantation] \"A pathetic miscalculation, witch. Your amateurish rift failed to tether your offspring. Instead, your dimensional tear snagged an Overlord from beyond reality into Yog-Sothoth's recurring cycle. Bow before your superior.\"", "{n}Areelu Vorlesh staggers back as an aura of supreme tier authority presses against her laboratory projection.{/n} \"Amateurish?! I spent decades... {n}she stops, her breath catching as she senses the unfathomable depth of your soul matrix{/n} ...By the Abyss. The soul anchored in this flesh belongs to no mortal offspring. You are a supreme sovereign entity ensnared by the cosmic loop. What have I unleashed upon the planes...?\"", "OverlordProficiencies", new ContextActionAreeluLoopTruthBanter());
+				AddLabTruthAnswer("IsekaiAreeluLabTruthShadowMonarch", "(Shadow Monarch) [Reveal the Sovereign Truth] \"The void you opened reached far beyond the Worldwound. It pulled the sovereign of shadows into Yog-Sothoth's playback loop. Your child is not here; only the monarch remains.\"", "{n}The shadows in the laboratory coil and bow before you as Areelu looks on in silent terror.{/n} \"The primordial void... not death, but the ancient monarch of darkness. The rift didn't retrieve my child; it tore open the gates to the Netherworld and siphoned its king. The calculations were doomed from the start.\"", "ShadowMonarchProficiencies", new ContextActionAreeluLoopTruthBanter());
+				AddLabTruthAnswer("IsekaiAreeluLabTruthMastermind", "(Mastermind) [Expose the Infinite Playback Algorithm] \"I reverse-engineered your ritual matrices, Vorlesh. The probability of your child's soul traversing the rift was zero. Yog-Sothoth intercepted your dimensional breach to feed an infinite spectator broadcast for cosmic entities.\"", "{n}Areelu's eyes narrow as she watches you mentally dismantle her life's work.{/n} \"Zero probability... an intercepted broadcast? {n}She lets out a dry, bitter laugh that echoes through the laboratory{/n} All my suffering, all my meticulous sacrifices... hijacked by an Outer God to produce cosmic entertainment for the stars. And you... you see the entire board, don't you, Commander?\"", "MastermindProficiencies", new ContextActionAreeluLoopTruthBanter());
+				AddLabTruthAnswer("IsekaiAreeluLabTruthHero", "(Hero) [Declare Moral Rejection of the Loop] \"Your grief opened a wound that swallowed an innocent soul from another world. But I won't let Yog-Sothoth's loop or your obsession destroy Golarion. I will protect these people, and I will break this cycle!\"", "{n}Areelu smiles faintly, a bittersweet sadness softening her demonic features.{/n} \"Such unwavering, stubborn courage... even when knowing you were plucked from your home to dance on a celestial stage. Perhaps that unyielding spirit is why the rift chose you. Break the loop if you can, hero. I will be watching.\"", "HeroProficiencies", new ContextActionAreeluLoopTruthBanter());
 			}
 			void AddLabTruthAnswer(string name, string text, string cueText, string proficiencyFactName, ContextAction extraAction = null)
 			{
 				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
 				if (proficiencyFact != null)
 				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue blueprintCue)
+					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
 					{
-						blueprintCue.SetText(Main.IsekaiContext, cueText);
+						bp.SetText(Main.IsekaiContext, cueText);
 						if (areeluUnit != null)
 						{
-							blueprintCue.Speaker = new DialogSpeaker
+							bp.Speaker = new DialogSpeaker
 							{
 								m_Blueprint = areeluUnit.ToReference<BlueprintUnitReference>(),
 								MoveCamera = true
 							};
 						}
-						blueprintCue.Answers = answersList.Answers;
+						bp.SetAnswersList(answersList);
 					});
-					BlueprintAnswer bp = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer blueprintAnswer)
+					BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
 					{
-						blueprintAnswer.SetText(Main.IsekaiContext, text);
-						blueprintAnswer.NextCue = new CueSelection
+						bp.SetText(Main.IsekaiContext, text);
+						bp.NextCue = new CueSelection
 						{
 							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
 							Strategy = Strategy.First
 						};
-						blueprintAnswer.ShowOnce = true;
-						blueprintAnswer.ShowConditions.Conditions = blueprintAnswer.ShowConditions.Conditions.AppendToArray(new HasFact
+						bp.ShowOnce = true;
+						bp.AddShowCondition(delegate(HasFact c)
 						{
-							Unit = new PlayerCharacter(),
-							m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>()
+							c.Unit = new PlayerCharacter();
+							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
 						});
 						if (extraAction != null)
 						{
-							blueprintAnswer.OnSelect = Helpers.CreateActionList(extraAction);
+							bp.OnSelect = Helpers.CreateActionList(extraAction);
 						}
 					});
-					answersList.Answers.Insert(0, bp.ToReference<BlueprintAnswerBaseReference>());
+					answersList.InsertAnswer(answer);
 				}
 			}
 		}
@@ -877,49 +984,49 @@ namespace IsekaiMod.Content.Dialogue
 			{
 				AddBaphometAnswer("IsekaiBaphometOverlord", "(Overlord) [Mock the Lord of the Labyrinth] \"You swagger into this mine bellowing like a slaughterhouse bull, Baphomet. In the Great Tomb, cattle know their place. Kneel before supreme tier magic, or I shall turn your horns into drinking goblets.\"", "{n}Baphomet's massive nostrils flare with blistering hellfire as he clutches his glaive in furious shock.{/n} \"Cattle?! Drinking goblets?! Incomprehensible worm! You stand before the Lord of Minotaurs, master of the Ivory Labyrinth! I shall tear your flesh and grind your arrogant bones into dust!\"", "OverlordProficiencies", new ContextActionBaphometDefianceBanter());
 				AddBaphometAnswer("IsekaiBaphometDevourer", "(Slime) [Inspect Demon Lord Caloric Density] \"Whoa, fresh beef! I've eaten dretches, minotaurs, and balors, but a full Demon Lord? You must have enough magical calories to evolve my entire federation! Come here!\"", "{n}Baphomet reels back, staring in profound revulsion at your quivering, hungry form.{/n} \"Fresh beef?! Caloric density?! You gelatinous abomination, I am a Demon Lord of the Abyss, not livestock for your gluttony! I shall scorch your vile ooze into dry ash!\"", "DevourerProficiencies", new ContextActionBaphometDefianceBanter());
-				AddBaphometAnswer("IsekaiBaphometShadowMonarch", "(Shadow Monarch) [Claim the Ivory Horns] \"Your labyrinth is just a maze of shadows, Baphomet. And in the dark, every shadow answers to me. Even the shadows of demon lords.\"", "{n}Baphomet grunts in fury as the darkness at his hooves twists and resists his commands.{/n} \"Shadows answering to a mortal?! Insolent wretch! My labyrinth is eternal, and your soul shall wander its twisting corridors screaming forever!\"", "ShadowMonarchProficiencies");
-				AddBaphometAnswer("IsekaiBaphometGodEmperor", "(God Emperor) [Issue Imperial Extinction Decree] \"Baphomet, by decree of the Radiant Imperium, your reign of deceit is terminated. The light of the solar throne shall bleach your labyrinth to ash.\"", "{n}Baphomet roars, the cavern shaking as brimstone explodes from his cloven hooves.{/n} \"An emperor?! In my mines?! Your pathetic solar light will be swallowed by the eternal darkness of the Abyss! Die!\"", "GodEmperorProficiencies");
-				AddBaphometAnswer("IsekaiBaphometMastermind", "(Mastermind) [Deconstruct Baphomet's Strategy] \"You sacrificed your own daughter to test my defenses, Lord of the Labyrinth. A remarkably pedestrian gambit. Your tactical failure rate in this encounter is already 100%.\"", "{n}Baphomet barks with guttural rage, his crimson eyes bulging with murderous fury.{/n} \"Pedestrian gambit?! Hepzamirah served her purpose! And your purpose is to die here at the bottom of the world, arrogant strategist!\"", "MastermindProficiencies");
-				AddBaphometAnswer("IsekaiBaphometHero", "(Hero) [Stand Resolute Against the Fiend] \"You betrayed your own blood and sacrificed countless lives for your labyrinth. Today, your cruelty ends, Baphomet. We aren't afraid of you!\"", "{n}Baphomet sneers with cruel, jagged teeth.{/n} \"Not afraid? You will learn terror when my glaive pins your heart to these caverns, righteous fool!\"", "HeroProficiencies");
+				AddBaphometAnswer("IsekaiBaphometShadowMonarch", "(Shadow Monarch) [Claim the Ivory Horns] \"Your labyrinth is just a maze of shadows, Baphomet. And in the dark, every shadow answers to me. Even the shadows of demon lords.\"", "{n}Baphomet grunts in fury as the darkness at his hooves twists and resists his commands.{/n} \"Shadows answering to a mortal?! Insolent wretch! My labyrinth is eternal, and your soul shall wander its twisting corridors screaming forever!\"", "ShadowMonarchProficiencies", new ContextActionBaphometDefianceBanter());
+				AddBaphometAnswer("IsekaiBaphometGodEmperor", "(God Emperor) [Issue Imperial Extinction Decree] \"Baphomet, by decree of the Radiant Imperium, your reign of deceit is terminated. The light of the solar throne shall bleach your labyrinth to ash.\"", "{n}Baphomet roars, the cavern shaking as brimstone explodes from his cloven hooves.{/n} \"An emperor?! In my mines?! Your pathetic solar light will be swallowed by the eternal darkness of the Abyss! Die!\"", "GodEmperorProficiencies", new ContextActionBaphometDefianceBanter());
+				AddBaphometAnswer("IsekaiBaphometMastermind", "(Mastermind) [Deconstruct Baphomet's Strategy] \"You sacrificed your own daughter to test my defenses, Lord of the Labyrinth. A remarkably pedestrian gambit. Your tactical failure rate in this encounter is already 100%.\"", "{n}Baphomet barks with guttural rage, his crimson eyes bulging with murderous fury.{/n} \"Pedestrian gambit?! Hepzamirah served her purpose! And your purpose is to die here at the bottom of the world, arrogant strategist!\"", "MastermindProficiencies", new ContextActionBaphometDefianceBanter());
+				AddBaphometAnswer("IsekaiBaphometHero", "(Hero) [Stand Resolute Against the Fiend] \"You betrayed your own blood and sacrificed countless lives for your labyrinth. Today, your cruelty ends, Baphomet. We aren't afraid of you!\"", "{n}Baphomet sneers with cruel, jagged teeth.{/n} \"Not afraid? You will learn terror when my glaive pins your heart to these caverns, righteous fool!\"", "HeroProficiencies", new ContextActionBaphometDefianceBanter());
 			}
 			void AddBaphometAnswer(string name, string text, string cueText, string proficiencyFactName, ContextAction extraAction = null)
 			{
 				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
 				if (proficiencyFact != null)
 				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue blueprintCue)
+					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
 					{
-						blueprintCue.SetText(Main.IsekaiContext, cueText);
+						bp.SetText(Main.IsekaiContext, cueText);
 						if (baphometUnit != null)
 						{
-							blueprintCue.Speaker = new DialogSpeaker
+							bp.Speaker = new DialogSpeaker
 							{
 								m_Blueprint = baphometUnit.ToReference<BlueprintUnitReference>(),
 								MoveCamera = true
 							};
 						}
-						blueprintCue.Answers = answersList.Answers;
+						bp.SetAnswersList(answersList);
 					});
-					BlueprintAnswer bp = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer blueprintAnswer)
+					BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
 					{
-						blueprintAnswer.SetText(Main.IsekaiContext, text);
-						blueprintAnswer.NextCue = new CueSelection
+						bp.SetText(Main.IsekaiContext, text);
+						bp.NextCue = new CueSelection
 						{
 							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
 							Strategy = Strategy.First
 						};
-						blueprintAnswer.ShowOnce = true;
-						blueprintAnswer.ShowConditions.Conditions = blueprintAnswer.ShowConditions.Conditions.AppendToArray(new HasFact
+						bp.ShowOnce = true;
+						bp.AddShowCondition(delegate(HasFact c)
 						{
-							Unit = new PlayerCharacter(),
-							m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>()
+							c.Unit = new PlayerCharacter();
+							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
 						});
 						if (extraAction != null)
 						{
-							blueprintAnswer.OnSelect = Helpers.CreateActionList(extraAction);
+							bp.OnSelect = Helpers.CreateActionList(extraAction);
 						}
 					});
-					answersList.Answers.Insert(0, bp.ToReference<BlueprintAnswerBaseReference>());
+					answersList.InsertAnswer(answer);
 				}
 			}
 		}
@@ -941,35 +1048,35 @@ namespace IsekaiMod.Content.Dialogue
 				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
 				if (proficiencyFact != null)
 				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue blueprintCue)
+					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
 					{
-						blueprintCue.SetText(Main.IsekaiContext, cueText);
+						bp.SetText(Main.IsekaiContext, cueText);
 						if (nocticulaUnit != null)
 						{
-							blueprintCue.Speaker = new DialogSpeaker
+							bp.Speaker = new DialogSpeaker
 							{
 								m_Blueprint = nocticulaUnit.ToReference<BlueprintUnitReference>(),
 								MoveCamera = true
 							};
 						}
-						blueprintCue.Answers = answersList.Answers;
+						bp.SetAnswersList(answersList);
 					});
-					BlueprintAnswer bp = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer blueprintAnswer)
+					BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
 					{
-						blueprintAnswer.SetText(Main.IsekaiContext, text);
-						blueprintAnswer.NextCue = new CueSelection
+						bp.SetText(Main.IsekaiContext, text);
+						bp.NextCue = new CueSelection
 						{
 							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
 							Strategy = Strategy.First
 						};
-						blueprintAnswer.ShowOnce = true;
-						blueprintAnswer.ShowConditions.Conditions = blueprintAnswer.ShowConditions.Conditions.AppendToArray(new HasFact
+						bp.ShowOnce = true;
+						bp.AddShowCondition(delegate(HasFact c)
 						{
-							Unit = new PlayerCharacter(),
-							m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>()
+							c.Unit = new PlayerCharacter();
+							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
 						});
 					});
-					answersList.Answers.Insert(0, bp.ToReference<BlueprintAnswerBaseReference>());
+					answersList.InsertAnswer(answer);
 				}
 			}
 		}
@@ -981,51 +1088,51 @@ namespace IsekaiMod.Content.Dialogue
 			if (answersList != null)
 			{
 				AddSummitAnswer("IsekaiGoddessesSummitLoopBreaker", "(Isekai Protagonist) [Reject Divine Scripts for Mortal Freedom] \"Iomedae demands blind faith, and Nocticula offers abyssal chains. Neither of you understands: this power was forged by my own choices, my companions, and mortal will! I reject both your scripts. Golarion's future belongs to mortals, and I will shatter this causal loop with my own hands!\"", "{n}Iomedae stares at you in solemn, awe-struck sorrow, while Nocticula watches with breathless admiration.{/n} {b}Iomedae:{/b} \"To reject both Heaven and the Abyss... to cast aside the divine design in the name of unguided mortal will. It is a path of terrifying peril, Commander. Yet... the purity of your conviction rivals that of the greatest martyrs of old. May your mortal spirit withstand the storm to come.\"", "IsekaiProficiencies", new ContextActionLoopBreakerInsight());
-				AddSummitAnswer("IsekaiGoddessesSummitTrickster", "(Isekai Protagonist) [Check the Live Chat Banter] \"Hold on, wait a second! The Constellations in live chat are going wild! 40% are voting for Iomedae's speech, 50% are rooting for Nocticula's horns, and 10% are betting 500 Cosmic Coins that I just flip both of you off! Let's give the audience a real show!\"", "{n}Both deities pause in sheer, profound bewilderment as holographic reaction emojis and coin donations flash across the air.{/n} {b}Iomedae:{/b} \"Live chat? Constellation betting pools? What manner of alien madness is this?!\" {b}Nocticula:{/b} {n}smirking with wicked delight{/n} \"I don't know what a live chat is, Commander, but I adore being the crowd favorite. Keep entertaining the cosmos!\"", "IsekaiProficiencies", new ContextActionGoddessesChatBanter());
-				AddSummitAnswer("IsekaiGoddessesSummitOverlord", "(Overlord) [Castigate Both Goddesses] \"An insolent goddess preaching submission and a demon queen whispering seduction. Neither of you commands a Supreme Being. The Great Tomb bows to no deity. The Worldwound shall be sealed by my sovereign decree alone.\"", "{n}Iomedae's radiant sword blazes with righteous indignation, while Nocticula chuckles softly into her sleeve.{/n} {b}Iomedae:{/b} \"Supreme Being? Your pride borders on the greatest heresies of the ancient world!\" {b}Nocticula:{/b} \"Let him speak, Inheritor! A tyrant who looks down on both heaven and hell is far more amusing than your pious sermons.\"", "OverlordProficiencies");
-				AddSummitAnswer("IsekaiGoddessesSummitDevourer", "(Slime) [Proclaim the Tempest Way] \"Why does everything have to be an ultimatum? In the Tempest Federation, we don't force people to throw away their strength or become monsters. We protect our friends, build cozy homes, and eat good food. Keep your dogmas; we're fixing this our way!\"", "{n}Iomedae blinks, momentarily disarmed by your earnest, cheerful declaration.{/n} {b}Iomedae:{/b} \"A cozy home... and good food? You speak of simple mortal peace in the face of planar destruction. If your strange federation can truly restore peace to these tortured lands, then prove it at Threshold, Commander.\"", "DevourerProficiencies");
-				AddSummitAnswer("IsekaiGoddessesSummitGodEmperor", "(God Emperor) [Declare Sovereign Autarchy] \"The era of foreign gods deciding mortal destinies ends today. The Golden Throne of Sarkoris shall not kneel to Heaven nor Hell. My imperial reign is absolute.\"", "{n}Iomedae looks upon you with solemn gravity.{/n} {b}Iomedae:{/b} \"Many mortal kings have proclaimed absolute autarchy, only to fall to hubris. If you claim the throne of Sarkoris, rule with righteousness, not tyranny.\"", "GodEmperorProficiencies");
-				AddSummitAnswer("IsekaiGoddessesSummitMastermind", "(Mastermind) [Expose the Binary False Choice] \"A classic false dichotomy. Iomedae offers sacrificial obsolescence; Nocticula offers parasitic dependency. Both algorithms lead to systemic failure. I select Option Three: mortal transcendence.\"", "{n}Nocticula laughs with sharp, appreciative brilliance.{/n} {b}Nocticula:{/b} \"Parasitic dependency? Oh, you wound me, Commander! But I cannot fault a mind so delightfully immune to divine coercion. Show us your Option Three, then!\"", "MastermindProficiencies");
-				AddSummitAnswer("IsekaiGoddessesSummitShadowMonarch", "(Shadow Monarch) [Embrace the Sovereign Eclipse] \"Light and lust are equally fleeting. When the battle for Threshold begins, neither Heaven nor Alushinyrra will hold the line. My legion of shadows shall swallow the Abyss whole.\"", "{n}Iomedae tightens her grip on her holy blade as shadows swallow the stones of the summit.{/n} {b}Iomedae:{/b} \"The dark power you harbor is perilous beyond measure, Commander. Do not let the shadows you command become your own tomb.\"", "ShadowMonarchProficiencies");
+				AddSummitAnswer("IsekaiGoddessesSummitTrickster", "(Isekai Protagonist) [Mock Both Pantheons] \"Hold on, wait a moment! Look at the two of you posing like rival divas on opening night! Half the watching gods in the celestial sphere want Iomedae's righteousness, the other half want Nocticula's wicked charm, and I'm just here enjoying the greatest celestial spectacle in planar history! Why choose when we can keep everyone guessing?\"", "{n}Both deities pause in sheer, disarmed bewilderment as starlight ripples across the air in amused celestial harmony.{/n} {b}Iomedae:{/b} \"Rival divas?! Opening night?! You treat the fate of mortal souls like an evening tavern play!\" {b}Nocticula:{/b} {n}smirking with wicked delight{/n} \"A theatrical spectacle... oh, Commander, your insolence is positively intoxicating. Let the celestial gallery watch!\"", "IsekaiProficiencies", new ContextActionGoddessesChatBanter());
+				AddSummitAnswer("IsekaiGoddessesSummitOverlord", "(Overlord) [Castigate Both Goddesses] \"An insolent goddess preaching submission and a demon queen whispering seduction. Neither of you commands a Supreme Being. The Great Tomb bows to no deity. The Worldwound shall be sealed by my sovereign decree alone.\"", "{n}Iomedae's radiant sword blazes with righteous indignation, while Nocticula chuckles softly into her sleeve.{/n} {b}Iomedae:{/b} \"Supreme Being? Your pride borders on the greatest heresies of the ancient world!\" {b}Nocticula:{/b} \"Let him speak, Inheritor! A tyrant who looks down on both heaven and hell is far more amusing than your pious sermons.\"", "OverlordProficiencies", new ContextActionGoddessesChatBanter());
+				AddSummitAnswer("IsekaiGoddessesSummitDevourer", "(Slime) [Proclaim the Tempest Way] \"Why does everything have to be an ultimatum? In the Tempest Federation, we don't force people to throw away their strength or become monsters. We protect our friends, build cozy homes, and eat good food. Keep your dogmas; we're fixing this our way!\"", "{n}Iomedae blinks, momentarily disarmed by your earnest, cheerful declaration.{/n} {b}Iomedae:{/b} \"A cozy home... and good food? You speak of simple mortal peace in the face of planar destruction. If your strange federation can truly restore peace to these tortured lands, then prove it at Threshold, Commander.\"", "DevourerProficiencies", new ContextActionGoddessesChatBanter());
+				AddSummitAnswer("IsekaiGoddessesSummitGodEmperor", "(God Emperor) [Declare Sovereign Autarchy] \"The era of foreign gods deciding mortal destinies ends today. The Golden Throne of Sarkoris shall not kneel to Heaven nor Hell. My imperial reign is absolute.\"", "{n}Iomedae looks upon you with solemn gravity.{/n} {b}Iomedae:{/b} \"Many mortal kings have proclaimed absolute autarchy, only to fall to hubris. If you claim the throne of Sarkoris, rule with righteousness, not tyranny.\"", "GodEmperorProficiencies", new ContextActionGoddessesChatBanter());
+				AddSummitAnswer("IsekaiGoddessesSummitMastermind", "(Mastermind) [Expose the Binary False Choice] \"A classic false dichotomy. Iomedae offers sacrificial obsolescence; Nocticula offers parasitic dependency. Both algorithms lead to systemic failure. I select Option Three: mortal transcendence.\"", "{n}Nocticula laughs with sharp, appreciative brilliance.{/n} {b}Nocticula:{/b} \"Parasitic dependency? Oh, you wound me, Commander! But I cannot fault a mind so delightfully immune to divine coercion. Show us your Option Three, then!\"", "MastermindProficiencies", new ContextActionGoddessesChatBanter());
+				AddSummitAnswer("IsekaiGoddessesSummitShadowMonarch", "(Shadow Monarch) [Embrace the Sovereign Eclipse] \"Light and lust are equally fleeting. When the battle for Threshold begins, neither Heaven nor Alushinyrra will hold the line. My legion of shadows shall swallow the Abyss whole.\"", "{n}Iomedae tightens her grip on her holy blade as shadows swallow the stones of the summit.{/n} {b}Iomedae:{/b} \"The dark power you harbor is perilous beyond measure, Commander. Do not let the shadows you command become your own tomb.\"", "ShadowMonarchProficiencies", new ContextActionGoddessesChatBanter());
 			}
 			void AddSummitAnswer(string name, string text, string cueText, string proficiencyFactName, ContextAction extraAction = null)
 			{
 				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
 				if (proficiencyFact != null)
 				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue blueprintCue)
+					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
 					{
-						blueprintCue.SetText(Main.IsekaiContext, cueText);
+						bp.SetText(Main.IsekaiContext, cueText);
 						if (iomedaeUnit != null)
 						{
-							blueprintCue.Speaker = new DialogSpeaker
+							bp.Speaker = new DialogSpeaker
 							{
 								m_Blueprint = iomedaeUnit.ToReference<BlueprintUnitReference>(),
 								MoveCamera = true
 							};
 						}
-						blueprintCue.Answers = answersList.Answers;
+						bp.SetAnswersList(answersList);
 					});
-					BlueprintAnswer bp = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer blueprintAnswer)
+					BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
 					{
-						blueprintAnswer.SetText(Main.IsekaiContext, text);
-						blueprintAnswer.NextCue = new CueSelection
+						bp.SetText(Main.IsekaiContext, text);
+						bp.NextCue = new CueSelection
 						{
 							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
 							Strategy = Strategy.First
 						};
-						blueprintAnswer.ShowOnce = true;
-						blueprintAnswer.ShowConditions.Conditions = blueprintAnswer.ShowConditions.Conditions.AppendToArray(new HasFact
+						bp.ShowOnce = true;
+						bp.AddShowCondition(delegate(HasFact c)
 						{
-							Unit = new PlayerCharacter(),
-							m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>()
+							c.Unit = new PlayerCharacter();
+							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
 						});
 						if (extraAction != null)
 						{
-							blueprintAnswer.OnSelect = Helpers.CreateActionList(extraAction);
+							bp.OnSelect = Helpers.CreateActionList(extraAction);
 						}
 					});
-					answersList.Answers.Insert(0, bp.ToReference<BlueprintAnswerBaseReference>());
+					answersList.InsertAnswer(answer);
 				}
 			}
 		}
@@ -1066,33 +1173,33 @@ namespace IsekaiMod.Content.Dialogue
 				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
 				if (proficiencyFact != null)
 				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue blueprintCue)
+					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
 					{
-						blueprintCue.SetText(Main.IsekaiContext, cueText);
+						bp.SetText(Main.IsekaiContext, cueText);
 						if (continueCue != null)
 						{
-							blueprintCue.Continue = new CueSelection
+							bp.Continue = new CueSelection
 							{
 								Cues = new List<BlueprintCueBaseReference> { continueCue.ToReference<BlueprintCueBaseReference>() },
 								Strategy = Strategy.First
 							};
 						}
 					});
-					BlueprintAnswer bp = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer blueprintAnswer)
+					BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
 					{
-						blueprintAnswer.SetText(Main.IsekaiContext, text);
-						blueprintAnswer.NextCue = new CueSelection
+						bp.SetText(Main.IsekaiContext, text);
+						bp.NextCue = new CueSelection
 						{
 							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
 							Strategy = Strategy.First
 						};
-						blueprintAnswer.ShowOnce = true;
-						blueprintAnswer.ShowConditions.Conditions = blueprintAnswer.ShowConditions.Conditions.AppendToArray(new HasFact
+						bp.ShowOnce = true;
+						bp.AddShowCondition(delegate(HasFact c)
 						{
-							Unit = new PlayerCharacter(),
-							m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>()
+							c.Unit = new PlayerCharacter();
+							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
 						});
-						blueprintAnswer.OnSelect = Helpers.CreateActionList(new ContextActionTriggerIsekaiEnding
+						bp.OnSelect = Helpers.CreateActionList(new ContextActionTriggerIsekaiEnding
 						{
 							EndingId = endingId,
 							EndingTitle = endingTitle,
@@ -1100,7 +1207,7 @@ namespace IsekaiMod.Content.Dialogue
 							ForceLoopShatter = forceShatter
 						});
 					});
-					answersList.Answers.Insert(0, bp.ToReference<BlueprintAnswerBaseReference>());
+					answersList.InsertAnswer(answer);
 				}
 			}
 		}

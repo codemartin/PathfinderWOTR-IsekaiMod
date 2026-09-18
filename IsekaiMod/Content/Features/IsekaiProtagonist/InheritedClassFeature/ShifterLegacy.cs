@@ -104,14 +104,6 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature
 					c.m_Feature = stingerLeg.ToReference<BlueprintFeatureReference>();
 				});
 			}
-			BlueprintProgression druidLeg = DruidBaseLegacy.Get();
-			if (druidLeg != null)
-			{
-				prog.AddPrerequisite(delegate(PrerequisiteNoFeature c)
-				{
-					c.m_Feature = druidLeg.ToReference<BlueprintFeatureReference>();
-				});
-			}
 		}
 
 		public static BlueprintProgression Get()

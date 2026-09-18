@@ -27,6 +27,10 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist
 			{
 				return _companionProgression;
 			}
+			if (AnimalCompanionRank != null && AnimalCompanionRank.Ranks < 40)
+			{
+				AnimalCompanionRank.Ranks = 40;
+			}
 			_companionProgression = Helpers.CreateBlueprint(Main.IsekaiContext, "DeathsnatcherCompanionProgression", delegate(BlueprintProgression bp)
 			{
 				bp.SetName(StaticReferences.Strings.Null);
@@ -42,7 +46,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist
 						AdditionalLevel = 0
 					}
 				};
-				bp.LevelEntries = (from i in Enumerable.Range(2, 19)
+				bp.LevelEntries = (from i in Enumerable.Range(2, 39)
 					select new LevelEntry
 					{
 						Level = i,

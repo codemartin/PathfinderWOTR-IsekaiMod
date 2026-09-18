@@ -47,7 +47,7 @@ namespace IsekaiMod.Content.Arenas
 			BlueprintAbility BossAct1Ability = Helpers.CreateBlueprint(Main.IsekaiContext, "SummonBarrenBossAct1Ability", delegate(BlueprintAbility bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Barren Anomaly: The Outer World Stray (Act 1)");
-				bp.SetDescription(Main.IsekaiContext, "Summons an otherworldly stray who transmigrated into Kenabres with unfamiliar firearm sorcery. Defeating them awards 300 Cosmic Coins.");
+				bp.SetDescription(Main.IsekaiContext, "Summons an otherworldly stray who reincarnated into Kenabres with unfamiliar firearm sorcery. Defeating them awards 300 Cosmic Coins.");
 				((BlueprintUnitFact)bp).m_Icon = Icon_Boss;
 				bp.Type = AbilityType.Special;
 				bp.Range = AbilityRange.Personal;
@@ -119,7 +119,7 @@ namespace IsekaiMod.Content.Arenas
 			BlueprintAbility BossAct5Ability = Helpers.CreateBlueprint(Main.IsekaiContext, "SummonBarrenBossAct5Ability", delegate(BlueprintAbility bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Barren Anomaly: Cosmic Arbiter of Ruin (Act 5)");
-				bp.SetDescription(Main.IsekaiContext, "Summons the ultimate multiversal arbiter arriving to pass judgment upon your transmigrated soul. Defeating them awards 2,500 Cosmic Coins.");
+				bp.SetDescription(Main.IsekaiContext, "Summons the ultimate multiversal arbiter arriving to pass judgment upon your reincarnated soul. Defeating them awards 2,500 Cosmic Coins.");
 				((BlueprintUnitFact)bp).m_Icon = Icon_Boss;
 				bp.Type = AbilityType.Special;
 				bp.Range = AbilityRange.Personal;

@@ -1,7 +1,6 @@
 ﻿using Kingmaker.Blueprints;
 using Kingmaker.DLC;
 using Kingmaker.Designers.EventConditionActionSystem.Conditions;
-using TabletopTweaks.Core.Utilities;
 
 namespace IsekaiMod.Utilities
 {
@@ -37,9 +36,13 @@ namespace IsekaiMod.Utilities
 
 		public static bool IsDlcAvailable(string dlcGuid)
 		{
+			if (string.IsNullOrEmpty(dlcGuid))
+			{
+				return false;
+			}
 			try
 			{
-				return BlueprintTools.GetBlueprint<BlueprintDlc>(dlcGuid)?.IsAvailable ?? false;
+				return BlueprintSafetyExtensions.SafeGetBlueprint<BlueprintDlc>(dlcGuid)?.IsAvailable ?? false;
 			}
 			catch
 			{
@@ -49,9 +52,13 @@ namespace IsekaiMod.Utilities
 
 		public static bool IsRewardAvailable(string rewardGuid)
 		{
+			if (string.IsNullOrEmpty(rewardGuid))
+			{
+				return false;
+			}
 			try
 			{
-				return BlueprintTools.GetBlueprint<BlueprintDlcReward>(rewardGuid)?.IsAvailable ?? false;
+				return BlueprintSafetyExtensions.SafeGetBlueprint<BlueprintDlcReward>(rewardGuid)?.IsAvailable ?? false;
 			}
 			catch
 			{
@@ -91,10 +98,14 @@ namespace IsekaiMod.Utilities
 
 		public static IsDLCEnabled CreateDlcCondition(string rewardGuid)
 		{
-			BlueprintDlcReward blueprint = BlueprintTools.GetBlueprint<BlueprintDlcReward>(rewardGuid);
+			if (string.IsNullOrEmpty(rewardGuid))
+			{
+				return new IsDLCEnabled();
+			}
+			BlueprintDlcReward blueprintDlcReward = BlueprintSafetyExtensions.SafeGetBlueprint<BlueprintDlcReward>(rewardGuid);
 			return new IsDLCEnabled
 			{
-				m_BlueprintDlcReward = blueprint?.ToReference<BlueprintDlcRewardReference>()
+				m_BlueprintDlcReward = blueprintDlcReward?.ToReference<BlueprintDlcRewardReference>()
 			};
 		}
 	}

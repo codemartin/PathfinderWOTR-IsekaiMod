@@ -4,20 +4,18 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Spells;
 using Kingmaker.Blueprints.Facts;
-using Kingmaker.Designers.EventConditionActionSystem.Actions;
-using Kingmaker.ElementsSystem;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.Enums;
 using Kingmaker.Enums.Damage;
+using Kingmaker.ResourceLinks;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.ActivatableAbilities;
+using Kingmaker.UnitLogic.Buffs;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.FactLogic;
-using Kingmaker.UnitLogic.Mechanics.Actions;
 using Kingmaker.UnitLogic.Mechanics.Components;
-using Kingmaker.UnitLogic.Mechanics.Conditions;
 using Kingmaker.Visual.Animation.Kingmaker.Actions;
 using TabletopTweaks.Core.Utilities;
 using UnityEngine;
@@ -32,7 +30,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Devourer
 
 		private static readonly Sprite Icon_Gelatinous = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintFeature>("4e83f1e0e52b4613982b14ee2796928f"))?.m_Icon;
 
-		private static readonly BlueprintBuff MimicOozeBuff = BlueprintTools.GetBlueprint<BlueprintBuff>("46d4867d7d76c7d4583bdd6636a983ef") ?? BlueprintTools.GetBlueprint<BlueprintBuff>("b1eb553893a2a874891e8685657b9be7");
+		private static readonly BlueprintBuff MimicOozeMediumPolymorphBuff = BlueprintTools.GetBlueprint<BlueprintBuff>("46d4867d7d76c7d4583bdd6636a983ef");
 
 		public static void Add()
 		{
@@ -47,14 +45,25 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Devourer
 				bp.SetDescription(Main.IsekaiContext, "In your true amorphous slime state, your fluid body lacks internal organs or fixed anatomy. You gain immunity to critical hits, precision damage, flanking, paralysis, sleep, poison, and disease. Your gelatinous composition provides a +4 dodge bonus to AC, acid immunity, and damage resistance.");
 				((BlueprintUnitFact)bp).m_Icon = Icon_Gelatinous;
 				bp.IsClassFeature = true;
-				bp.m_Flags = BlueprintBuff.Flags.StayOnDeath;
-				if (MimicOozeBuff != null)
+				bp.AddComponent(delegate(Polymorph c)
 				{
-					bp.AddComponent(delegate(AddFacts c)
+					c.m_Prefab = new UnitViewLink
 					{
-						c.m_Facts = new BlueprintUnitFactReference[1] { MimicOozeBuff.ToReference<BlueprintUnitFactReference>() };
-					});
-				}
+						AssetId = "230a6b88cd620d04d811f0b8cefc4e42"
+					};
+					c.m_PrefabFemale = c.m_Prefab;
+					c.Size = Size.Small;
+					c.m_SilentCaster = true;
+					c.m_KeepSlots = true;
+					c.NaturalArmor = 0;
+					c.StrengthBonus = 0;
+					c.DexterityBonus = 0;
+					c.ConstitutionBonus = 0;
+				});
+				bp.FxOnStart = new PrefabLink
+				{
+					AssetId = "4828572a4d3cd3547bf5ff2e9e62ee1d"
+				};
 				bp.AddComponent<AddImmunityToCriticalHits>();
 				bp.AddComponent<AddImmunityToPrecisionDamage>();
 				bp.AddComponent(delegate(BuffDescriptorImmunity c)
@@ -109,6 +118,18 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Devourer
 					};
 				});
 			});
+			BlueprintActivatableAbility SlimeFormAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "SlimeFormAbility", delegate(BlueprintActivatableAbility bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Shift Form: Slime / Humanoid");
+				bp.SetDescription(Main.IsekaiContext, "Continuously maintain your true amorphous slime body. In Slime Form, you gain complete immunity to critical hits, precision damage, flanking, paralysis, sleep, poison, and disease, plus a +4 dodge bonus to AC, acid immunity, and damage resistance scaling from DR 5/- up to DR 15/-.\nToggle off to instantly return to your humanoid shape.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_Gelatinous;
+				bp.m_Buff = SlimeFormBuff.ToReference<BlueprintBuffReference>();
+				bp.Group = ActivatableAbilityGroup.None;
+				bp.WeightInGroup = 1;
+				bp.IsOnByDefault = false;
+				bp.DeactivateImmediately = true;
+				bp.ActivationType = AbilityActivationType.Immediately;
+			});
 			BlueprintAbility SlimeFormToggleAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "SlimeFormToggleAbility", delegate(BlueprintAbility bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Shift Form: Slime / Humanoid");
@@ -117,47 +138,21 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Devourer
 				bp.Type = AbilityType.Supernatural;
 				bp.Range = AbilityRange.Personal;
 				bp.CanTargetSelf = true;
+				bp.CanTargetFriends = true;
+				bp.CanTargetPoint = false;
+				bp.CanTargetEnemies = false;
+				bp.EffectOnAlly = AbilityEffectOnUnit.Helpful;
+				bp.EffectOnEnemy = AbilityEffectOnUnit.None;
 				bp.ActionType = UnitCommand.CommandType.Free;
-				bp.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Omni;
+				bp.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.SelfTouch;
 				bp.AddComponent(delegate(AbilityEffectRunAction c)
 				{
-					c.Actions = Helpers.CreateActionList(new Conditional
+					c.Actions = Helpers.CreateActionList(new ContextActionToggleSlimeForm
 					{
-						ConditionsChecker = new ConditionsChecker
-						{
-							Conditions = new Condition[1]
-							{
-								new ContextConditionHasBuff
-								{
-									m_Buff = SlimeFormBuff.ToReference<BlueprintBuffReference>()
-								}
-							}
-						},
-						IfTrue = Helpers.CreateActionList(new ContextActionRemoveBuff
-						{
-							m_Buff = SlimeFormBuff.ToReference<BlueprintBuffReference>()
-						}),
-						IfFalse = Helpers.CreateActionList(new ContextActionApplyBuff
-						{
-							m_Buff = SlimeFormBuff.ToReference<BlueprintBuffReference>(),
-							Permanent = true,
-							DurationValue = Values.Duration.Zero,
-							AsChild = false
-						})
+						m_SlimeBuff = SlimeFormBuff.ToReference<BlueprintBuffReference>(),
+						m_SlimeAbility = SlimeFormAbility.ToReference<BlueprintActivatableAbilityReference>()
 					});
 				});
-			});
-			BlueprintActivatableAbility SlimeFormAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "SlimeFormAbility", delegate(BlueprintActivatableAbility bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Slime Form (Auto-Maintain)");
-				bp.SetDescription(Main.IsekaiContext, "Continuously maintain your true amorphous slime body. In Slime Form, you gain complete immunity to critical hits, precision damage, flanking, paralysis, sleep, poison, and disease, plus a +4 dodge bonus to AC, acid immunity, and damage resistance scaling from DR 5/- up to DR 15/-.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Gelatinous;
-				bp.m_Buff = SlimeFormBuff.ToReference<BlueprintBuffReference>();
-				bp.Group = ActivatableAbilityGroup.None;
-				bp.WeightInGroup = 1;
-				bp.IsOnByDefault = false;
-				bp.DeactivateImmediately = true;
-				bp.ActivationType = AbilityActivationType.Immediately;
 			});
 			ClassFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "SlimeFormFeature", delegate(BlueprintFeature bp)
 			{

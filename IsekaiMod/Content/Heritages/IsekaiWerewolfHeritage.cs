@@ -1,5 +1,5 @@
-﻿using IsekaiMod.Content.Classes.IsekaiProtagonist;
-using IsekaiMod.Utilities;
+﻿using IsekaiMod.Utilities;
+using Kingmaker.Assets.UnitLogic.Mechanics.Properties;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Selection;
@@ -18,6 +18,7 @@ using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Mechanics.Actions;
 using Kingmaker.UnitLogic.Mechanics.Components;
+using Kingmaker.UnitLogic.Mechanics.Properties;
 using Kingmaker.Utility;
 using Kingmaker.Visual.Animation.Kingmaker.Actions;
 using TabletopTweaks.Core.Utilities;
@@ -40,6 +41,23 @@ namespace IsekaiMod.Content.Heritages
 					IncreasedByLevel = false,
 					IncreasedByStat = false
 				};
+			});
+			BlueprintUnitProperty HowlOfFenrirUnitProperty = Helpers.CreateBlueprint(Main.IsekaiContext, "HowlOfFenrirUnitProperty", delegate(BlueprintUnitProperty bp)
+			{
+				bp.name = "HowlOfFenrirUnitProperty";
+				bp.AddComponent(delegate(ComplexPropertyGetter c)
+				{
+					c.Property = UnitProperty.Level;
+					c.Denominator = 2;
+					c.Multiplier = 1;
+					c.Bonus = 0;
+				});
+				bp.AddComponent(delegate(SimplePropertyGetter c)
+				{
+					c.Property = UnitProperty.StatBonusCharisma;
+				});
+				bp.BaseValue = 10;
+				bp.OperationOnComponents = BlueprintUnitProperty.MathOperation.Sum;
 			});
 			BlueprintAbility HowlOfFenrirAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "HowlOfFenrirAbility", delegate(BlueprintAbility bp)
 			{
@@ -79,10 +97,9 @@ namespace IsekaiMod.Content.Heritages
 						})
 					});
 				});
-				bp.AddComponent(delegate(ContextCalculateAbilityParamsBasedOnClass c)
+				bp.AddComponent(delegate(ContextSetAbilityParams c)
 				{
-					c.StatType = StatType.Charisma;
-					c.m_CharacterClass = IsekaiProtagonistClass.GetReference();
+					c.DC = Values.CreateContextCasterCustomPropertyValue(HowlOfFenrirUnitProperty);
 				});
 				bp.AddComponent(delegate(AbilityResourceLogic c)
 				{

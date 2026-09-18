@@ -1,6 +1,8 @@
 ﻿using IsekaiMod.Utilities;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Spells;
+using Kingmaker.Designers.Mechanics.Buffs;
 using Kingmaker.Designers.Mechanics.Facts;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.Enums;
@@ -12,6 +14,8 @@ namespace IsekaiMod.Content.Heritages
 {
 	internal class GnomeOfTheFirstWorld
 	{
+		private static readonly BlueprintFeature DestinyBeyondBirthMythicFeat = BlueprintTools.GetBlueprint<BlueprintFeature>("325f078c584318849bfe3da9ea245b9d");
+
 		public static void Add()
 		{
 			BlueprintFeature feature = Helpers.CreateBlueprint(Main.IsekaiContext, "GnomeOfTheFirstWorldHeritage", delegate(BlueprintFeature bp)
@@ -30,11 +34,13 @@ namespace IsekaiMod.Content.Heritages
 					c.Stat = StatType.Charisma;
 					c.Value = 2;
 				});
-				bp.AddComponent(delegate(AddStatBonus c)
+				bp.AddComponent(delegate(AddStatBonusIfHasFact c)
 				{
-					c.Descriptor = ModifierDescriptor.Penalty;
+					c.Descriptor = ModifierDescriptor.Racial;
 					c.Stat = StatType.Strength;
 					c.Value = -2;
+					c.InvertCondition = true;
+					c.m_CheckedFacts = new BlueprintUnitFactReference[1] { DestinyBeyondBirthMythicFeat.ToReference<BlueprintUnitFactReference>() };
 				});
 				bp.AddComponent(delegate(AddStatBonus c)
 				{

@@ -22,7 +22,7 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist
 
 		private static readonly LocalizedString Description = Helpers.CreateString(Main.IsekaiContext, "IsekaiProtagonistClass.Description", "Isekai protagonists arrive in Golarion from beyond the veil of worlds, endowed with extraordinary cheat powers, transcendent talent, and reality-bending potential. Shielded by uncanny plot armor and an insatiable drive to master their new reality, they carve their own destiny through the Worldwound, commanding celestial favor and shattering cosmic expectations.");
 
-		private static readonly LocalizedString DescriptionShort = Helpers.CreateString(Main.IsekaiContext, "IsekaiProtagonistClass.DescriptionShort", "Reincarnated or transmigrated travelers from another world, Isekai protagonists possess extraordinary cheat powers, uncanny plot armor, and an ever-expanding repertoire of legendary abilities.");
+		private static readonly LocalizedString DescriptionShort = Helpers.CreateString(Main.IsekaiContext, "IsekaiProtagonistClass.DescriptionShort", "Reincarnated travelers from another world, Isekai protagonists possess extraordinary cheat powers, uncanny plot armor, and an ever-expanding repertoire of legendary abilities.");
 
 		private static BlueprintCharacterClass isekaiProtagonistClass;
 

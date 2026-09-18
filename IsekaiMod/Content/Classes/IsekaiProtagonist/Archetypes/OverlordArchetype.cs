@@ -44,7 +44,11 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist.Archetypes
 				bp.IsDivineCaster = true;
 				BlueprintFeature modBlueprint = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "ChronicleOtherworldFeature");
 				BlueprintFeature modBlueprint2 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "TombAnnalsFeature");
-				bp.RemoveFeatures = new LevelEntry[9]
+				BlueprintFeature modBlueprint3 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "TranscendentProtagonistFeature");
+				BlueprintFeature modBlueprint4 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "AnimeFinalFormFeature");
+				BlueprintFeature modBlueprint5 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "OverlordSupremeRuler");
+				BlueprintFeature modBlueprint6 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "OverlordTrueDominion");
+				bp.RemoveFeatures = new LevelEntry[19]
 				{
 					Helpers.CreateLevelEntry(1, IsekaiProficiencies, Gifted, LegacySelection.GetClassFeature(), modBlueprint),
 					Helpers.CreateLevelEntry(3, ReleaseEnergy),
@@ -54,28 +58,44 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist.Archetypes
 					Helpers.CreateLevelEntry(11, SpecialPowerSelection),
 					Helpers.CreateLevelEntry(12, TrainingEpisodeBonusSelection),
 					Helpers.CreateLevelEntry(15, SecondReincarnation),
-					Helpers.CreateLevelEntry(20, HaxSelection)
+					Helpers.CreateLevelEntry(20, HaxSelection),
+					Helpers.CreateLevelEntry(21, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(23, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(27, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(29, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(30, SecretPowerSelection, modBlueprint3),
+					Helpers.CreateLevelEntry(31, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(33, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(37, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(39, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(40, HaxSelection, modBlueprint4)
 				};
-				BlueprintFeature modBlueprint3 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "GraspHeartFeature");
-				BlueprintFeature modBlueprint4 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "DespairAuraFeature");
-				BlueprintFeature modBlueprint5 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "CreateDeathKnightFeature");
-				BlueprintFeature modBlueprint6 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "SupremeBuffRoutineFeature");
-				BlueprintFeature modBlueprint7 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "TheGoalOfAllLifeIsDeathFeature");
-				BlueprintFeature modBlueprint8 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "SuperTierMagicFeature");
+				BlueprintFeature modBlueprint7 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "GraspHeartFeature");
+				BlueprintFeature modBlueprint8 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "DespairAuraFeature");
+				BlueprintFeature modBlueprint9 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "CreateDeathKnightFeature");
+				BlueprintFeature modBlueprint10 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "SupremeBuffRoutineFeature");
+				BlueprintFeature modBlueprint11 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "TheGoalOfAllLifeIsDeathFeature");
+				BlueprintFeature modBlueprint12 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "SuperTierMagicFeature");
 				BlueprintFeature blueprintFeature = SkeletalOverlordForm.Get();
 				BlueprintFeature blueprintFeature2 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "OverlordChannelEnergyFeature") ?? IsekaiChannelNegativeEnergyFeature;
-				BlueprintFeature modBlueprint9 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "AuraOfRighteousMajestyFeature");
-				bp.AddFeatures = new LevelEntry[9]
+				BlueprintFeature modBlueprint13 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "AuraOfRighteousMajestyFeature");
+				bp.AddFeatures = new LevelEntry[15]
 				{
-					Helpers.CreateLevelEntry(1, OverlordProficiencies, modBlueprint3, modBlueprint4, blueprintFeature, modBlueprint2, OverlordLegacySelection.getClassFeature()),
-					Helpers.CreateLevelEntry(3, modBlueprint5, blueprintFeature2),
+					Helpers.CreateLevelEntry(1, OverlordProficiencies, modBlueprint7, modBlueprint8, blueprintFeature, modBlueprint2, OverlordLegacySelection.getClassFeature()),
+					Helpers.CreateLevelEntry(3, modBlueprint9, blueprintFeature2),
 					Helpers.CreateLevelEntry(5, OverpoweredAbilitySelectionOverlord),
-					Helpers.CreateLevelEntry(7, modBlueprint6, CorruptAuraFeature, modBlueprint9),
+					Helpers.CreateLevelEntry(7, modBlueprint10, CorruptAuraFeature, modBlueprint13),
 					Helpers.CreateLevelEntry(10, DarkAuraFeature),
 					Helpers.CreateLevelEntry(11, SiphoningAuraFeature),
-					Helpers.CreateLevelEntry(12, modBlueprint7),
+					Helpers.CreateLevelEntry(12, modBlueprint11),
 					Helpers.CreateLevelEntry(15, OverpoweredAbilitySelectionOverlord),
-					Helpers.CreateLevelEntry(20, modBlueprint8, SecondPhaseFeature)
+					Helpers.CreateLevelEntry(20, modBlueprint12, SecondPhaseFeature),
+					Helpers.CreateLevelEntry(23, OverpoweredAbilitySelectionOverlord),
+					Helpers.CreateLevelEntry(25, modBlueprint9),
+					Helpers.CreateLevelEntry(28, OverpoweredAbilitySelectionOverlord),
+					Helpers.CreateLevelEntry(30, modBlueprint5),
+					Helpers.CreateLevelEntry(35, modBlueprint12),
+					Helpers.CreateLevelEntry(40, modBlueprint6)
 				};
 				BlueprintFeature VampireHeritage = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "IsekaiVampireHeritage");
 				BlueprintFeature DragonHeritage = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "IsekaiDragonLordHeritage");
@@ -112,6 +132,7 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist.Archetypes
 				bp.AddComponent(delegate(PrerequisiteCycleOriginLock c)
 				{
 					c.AllowedOrigin = "Overlord";
+					c.HideInUI = true;
 				});
 				bp.m_ReplaceSpellbook = OverlordSpellbook.GetReference();
 				bp.RemoveSpellbook = Main.IsekaiContext.AddedContent.DisableSpellbookOverlord;

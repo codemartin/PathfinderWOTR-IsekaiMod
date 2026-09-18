@@ -6,8 +6,6 @@ using Kingmaker.EntitySystem.Stats;
 using Kingmaker.Enums;
 using Kingmaker.PubSubSystem;
 using Kingmaker.UnitLogic;
-using Kingmaker.UnitLogic.Buffs.Blueprints;
-using Kingmaker.UnitLogic.Buffs.Components;
 using Kingmaker.UnitLogic.Mechanics;
 using UnityEngine;
 
@@ -15,9 +13,9 @@ namespace IsekaiMod.Components
 {
 	[TypeId("ef3cfeb920ad4483a7ab34d00f006bf4")]
 	[ComponentName("Add stat bonus if owner does not have any Facts")]
-	[AllowedOn(typeof(BlueprintBuff), false)]
+	[AllowedOn(typeof(BlueprintUnitFact), false)]
 	[AllowMultipleComponents]
-	public class AddStatBonusIfNotHasFact : UnitBuffComponentDelegate, IUnitGainFactHandler, ISubscriber, IUnitSubscriber, IUnitLostFactHandler
+	public class AddStatBonusIfNotHasFact : UnitFactComponentDelegate, IUnitGainFactHandler, ISubscriber, IUnitSubscriber, IUnitLostFactHandler
 	{
 		public ModifierDescriptor Descriptor;
 
@@ -42,9 +40,13 @@ namespace IsekaiMod.Components
 
 		public bool ShouldApplyBonus()
 		{
+			if (m_CheckedFacts == null || base.Owner == null)
+			{
+				return true;
+			}
 			foreach (BlueprintUnitFact checkedFact in CheckedFacts)
 			{
-				if (base.Owner.HasFact(checkedFact))
+				if (checkedFact != null && base.Owner.HasFact(checkedFact))
 				{
 					return false;
 				}
@@ -72,7 +74,7 @@ namespace IsekaiMod.Components
 
 		public void HandleUnitGainFact(EntityFact fact)
 		{
-			if (fact.Owner == base.Owner && fact.Blueprint is BlueprintUnitFact bp && CheckedFacts.HasReference(bp))
+			if (fact != null && fact.Owner == base.Owner && fact.Blueprint is BlueprintUnitFact bp && m_CheckedFacts != null && CheckedFacts.HasReference(bp))
 			{
 				Update();
 			}
@@ -80,7 +82,7 @@ namespace IsekaiMod.Components
 
 		public void HandleUnitLostFact(EntityFact fact)
 		{
-			if (fact.Owner == base.Owner && fact.Blueprint is BlueprintUnitFact bp && CheckedFacts.HasReference(bp))
+			if (fact != null && fact.Owner == base.Owner && fact.Blueprint is BlueprintUnitFact bp && m_CheckedFacts != null && CheckedFacts.HasReference(bp))
 			{
 				Update();
 			}

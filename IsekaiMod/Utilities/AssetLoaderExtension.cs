@@ -52,7 +52,8 @@ namespace IsekaiMod.Utilities
 
 		private static CustomPortraitHandle CreateCustomPortraitHandle(string path, PortraitType type, Vector2Int size)
 		{
-			return new CustomPortraitHandle(path, type, CustomPortraitsManager.Instance.Storage)
+			ResourceStorage<Sprite> storage = ((CustomPortraitsManager.Instance != null) ? CustomPortraitsManager.Instance.Storage : null);
+			return new CustomPortraitHandle(path, type, storage)
 			{
 				Request = new SpriteLoadingRequest(path)
 				{

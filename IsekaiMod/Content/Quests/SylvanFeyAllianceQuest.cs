@@ -117,32 +117,33 @@ namespace IsekaiMod.Content.Quests
 				{
 					c.SetText(Main.IsekaiContext, "{n}You push through dense briars that have erupted from the cracked, abyssal basalt. Giant phosphorescent flowers exhale luminous fey pollen, painting the grim gray sky in swirling shades of violet and emerald. Littered around the glade lie the carcasses of an entire demonic vanguard, slain not with crusader steel, but pierced by crystalline arrows and shredded by thornwood claws.{/n}\n\nA royal sigil stamped into a silver spear shaft catches your eye, bearing the insignia of the River Kingdoms realm ruled by <b>" + ruler + "</b>. Before you stands a swirling vortex of emerald mist: a living Bloom Portal connecting the Worldwound to the First World border.");
 				});
+				BlueprintCue cueNature = TTCoreExtensions.CreateCue("SylvanBloom_CueNature", delegate(BlueprintCue c)
+				{
+					c.SetText(Main.IsekaiContext, "{n}You recognize the telltale signs of a planar bloom. The fabric of reality here is unusually thin. The First World is not merely invading: it is retaliating against the demonic corruption bleeding through the Worldwound's western frontier.{/n}");
+				});
 				BlueprintAnswer answerInvestigate = TTCoreExtensions.CreateAnswer("SylvanBloom_AnsInvestigate", delegate(BlueprintAnswer a)
 				{
 					a.SetText(Main.IsekaiContext, "[Lore: Nature] Analyze the bloom spores and read the residual First World magic.");
-					BlueprintCue bp3 = TTCoreExtensions.CreateCue("SylvanBloom_CueNature", delegate(BlueprintCue c)
-					{
-						c.SetText(Main.IsekaiContext, "{n}You recognize the telltale signs of a planar bloom. The fabric of reality here is unusually thin. The First World is not merely invading: it is retaliating against the demonic corruption bleeding through the Worldwound's western frontier.{/n}");
-					});
+					a.ShowOnce = true;
 					a.NextCue = new CueSelection
 					{
-						Cues = new List<BlueprintCueBaseReference> { bp3.ToReference<BlueprintCueBaseReference>() }
+						Cues = new List<BlueprintCueBaseReference> { cueNature.ToReference<BlueprintCueBaseReference>() }
 					};
 				});
 				BlueprintAnswer answerEnter = TTCoreExtensions.CreateAnswer("SylvanBloom_AnsEnter", delegate(BlueprintAnswer a)
 				{
 					a.SetText(Main.IsekaiContext, "Draw your weapons and step through the Bloom Portal to meet whoever commands this incursion.");
-					BlueprintCue bp3 = TTCoreExtensions.CreateCue("SylvanBloom_CueEnter", delegate(BlueprintCue c)
+					BlueprintCue bp2 = TTCoreExtensions.CreateCue("SylvanBloom_CueEnter", delegate(BlueprintCue c)
 					{
 						c.SetText(Main.IsekaiContext, "{n}The world twists into a blur of blinding green and autumn gold. The suffocating sulfur of the Worldwound vanishes, replaced by the scent of damp earth, crushed pine needles, and ozone. Standing atop a towering mossy hillock is a towering figure crowned in stag antlers: the <b>Wild Hunt Monarch</b>.{/n}\n\n\"Mortal Commander...\" his voice rumbles like distant thunder. \"The rot of the Abyss encroaches upon our ancient preserves. The rulers of the Stolen Lands spoke of a champion beyond worlds. Show us if your blade matches your legend!\"");
 						c.OnStop = Helpers.CreateActionList(new ActionTriggerSylvanWildHunt());
 					});
 					a.NextCue = new CueSelection
 					{
-						Cues = new List<BlueprintCueBaseReference> { bp3.ToReference<BlueprintCueBaseReference>() }
+						Cues = new List<BlueprintCueBaseReference> { bp2.ToReference<BlueprintCueBaseReference>() }
 					};
 				});
-				BlueprintAnswersList bp2 = Helpers.CreateBlueprint(Main.IsekaiContext, "SylvanBloom_AnswersList", delegate(BlueprintAnswersList al)
+				BlueprintAnswersList blueprintAnswersList = Helpers.CreateBlueprint(Main.IsekaiContext, "SylvanBloom_AnswersList", delegate(BlueprintAnswersList al)
 				{
 					al.Answers = new List<BlueprintAnswerBaseReference>
 					{
@@ -150,7 +151,8 @@ namespace IsekaiMod.Content.Quests
 						answerEnter.ToReference<BlueprintAnswerBaseReference>()
 					};
 				});
-				blueprintCue.Answers = new List<BlueprintAnswerBaseReference> { bp2.ToReference<BlueprintAnswerBaseReference>() };
+				cueNature.SetAnswersList(blueprintAnswersList);
+				blueprintCue.Answers = new List<BlueprintAnswerBaseReference> { blueprintAnswersList.ToReference<BlueprintAnswerBaseReference>() };
 				bp.FirstCue = new CueSelection
 				{
 					Cues = new List<BlueprintCueBaseReference> { blueprintCue.ToReference<BlueprintCueBaseReference>() }

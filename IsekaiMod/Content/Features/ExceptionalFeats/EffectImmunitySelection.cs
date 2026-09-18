@@ -4,21 +4,27 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Selection;
 using Kingmaker.Blueprints.Classes.Spells;
+using Kingmaker.Blueprints.Facts;
+using Kingmaker.Designers.Mechanics.Facts;
 using Kingmaker.Localization;
+using Kingmaker.RuleSystem.Rules;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.FactLogic;
 using TabletopTweaks.Core.Utilities;
+using UnityEngine;
 
 namespace IsekaiMod.Content.Features.ExceptionalFeats
 {
 	internal class EffectImmunitySelection
 	{
+		private static readonly Sprite Icon_ExceptionalFeat = AssetLoader.LoadInternal(Main.IsekaiContext, "Features", "ICON_EXCEPTIONAL_FEAT.png");
+
 		public static void Add()
 		{
-			Helpers.CreateBlueprint(Main.IsekaiContext, "StatDamageNegativeLevelImmunity", delegate(BlueprintFeature bp)
+			BlueprintFeature blueprintFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "StatDamageNegativeLevelImmunity", delegate(BlueprintFeature bp)
 			{
-				bp.SetName(Main.IsekaiContext, "Energy Drain and Negative level Immunity");
-				bp.SetDescription(Main.IsekaiContext, "You gain immunity to ability score damage and negative levels.");
+				bp.SetName(Main.IsekaiContext, "Stat Damage and Negative Level Immunity");
+				bp.SetDescription(Main.IsekaiContext, "You gain immunity to ability score damage, ability score drain, energy drain, and negative levels.");
 				bp.AddComponent(delegate(BuffDescriptorImmunity c)
 				{
 					c.Descriptor = SpellDescriptor.StatDebuff | SpellDescriptor.NegativeLevel;
@@ -29,23 +35,38 @@ namespace IsekaiMod.Content.Features.ExceptionalFeats
 				});
 				bp.AddComponent(delegate(AddImmunityToAbilityScoreDamage c)
 				{
+					c.Drain = false;
+				});
+				bp.AddComponent(delegate(AddImmunityToAbilityScoreDamage c)
+				{
 					c.Drain = true;
 				});
 				bp.AddComponent<AddImmunityToEnergyDrain>();
 			});
-			BlueprintFeature blueprintFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "SneakAttackImmunity", delegate(BlueprintFeature bp)
+			BlueprintFeature blueprintFeature2 = Helpers.CreateBlueprint(Main.IsekaiContext, "SneakAttackImmunity", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Sneak attack Immunity");
 				bp.SetDescription(Main.IsekaiContext, "You gain immunity to sneak attacks.");
 				bp.AddComponent<AddImmunityToPrecisionDamage>();
 			});
-			BlueprintFeature blueprintFeature2 = Helpers.CreateBlueprint(Main.IsekaiContext, "CriticalHitImmunity", delegate(BlueprintFeature bp)
+			BlueprintFeature blueprintFeature3 = Helpers.CreateBlueprint(Main.IsekaiContext, "CriticalHitImmunity", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Critical hit Immunity");
 				bp.SetDescription(Main.IsekaiContext, "You gain immunity to critical hits.");
 				bp.AddComponent<AddImmunityToCriticalHits>();
 			});
-			BlueprintFeature[] source = new BlueprintFeature[31]
+			BlueprintFeature blueprintFeature4 = CreateImmunity("ProneImmunity", "You gain immunity to being tripped and falling prone.", delegate(BlueprintFeature bp)
+			{
+				bp.AddComponent(delegate(AddConditionImmunity c)
+				{
+					c.Condition = UnitCondition.Prone;
+				});
+				bp.AddComponent(delegate(ManeuverImmunity c)
+				{
+					c.Type = CombatManeuver.Trip;
+				});
+			});
+			BlueprintFeature[] source = new BlueprintFeature[33]
 			{
 				CreateImmunity("BlindImmunity", "You gain immunity to blindness.", UnitCondition.Blindness, SpellDescriptor.Blindness),
 				CreateImmunity("NauseatedImmunity", "You gain immunity to the nauseated condition.", UnitCondition.Nauseated, SpellDescriptor.Nauseated),
@@ -76,8 +97,10 @@ namespace IsekaiMod.Content.Features.ExceptionalFeats
 				CreateImmunity("DeathImmunity", "You gain immunity to death effects.", SpellDescriptor.Death),
 				CreateImmunity("BleedImmunity", "You gain immunity to bleed.", SpellDescriptor.Bleed),
 				CreateImmunity("HexImmunity", "You gain immunity to hexes.", SpellDescriptor.Hex),
+				blueprintFeature4,
 				blueprintFeature,
-				blueprintFeature2
+				blueprintFeature2,
+				blueprintFeature3
 			};
 			BlueprintFeatureReference[] EffectImmunityList = source.Select((BlueprintFeature bp) => bp.ToReference<BlueprintFeatureReference>()).ToArray();
 			LocalizedString EffectImmunitySelectionDesc = Helpers.CreateString(Main.IsekaiContext, "EffectImmunitySelection.Description", "You gain immunity to a specific condition or effect.");
@@ -85,7 +108,8 @@ namespace IsekaiMod.Content.Features.ExceptionalFeats
 			{
 				bp.SetName(Main.IsekaiContext, "Effect Immunity");
 				bp.SetDescription(EffectImmunitySelectionDesc);
-				bp.Ranks = 1;
+				((BlueprintUnitFact)bp).m_Icon = Icon_ExceptionalFeat;
+				bp.Ranks = 33;
 				bp.IsClassFeature = true;
 				bp.m_Features = EffectImmunityList;
 				bp.m_AllFeatures = EffectImmunityList;
@@ -94,7 +118,8 @@ namespace IsekaiMod.Content.Features.ExceptionalFeats
 			{
 				bp.SetName(Main.IsekaiContext, "Effect Immunity");
 				bp.SetDescription(EffectImmunitySelectionDesc);
-				bp.Ranks = 1;
+				((BlueprintUnitFact)bp).m_Icon = Icon_ExceptionalFeat;
+				bp.Ranks = 33;
 				bp.IsClassFeature = true;
 				bp.m_Features = EffectImmunityList;
 				bp.m_AllFeatures = EffectImmunityList;
@@ -110,6 +135,13 @@ namespace IsekaiMod.Content.Features.ExceptionalFeats
 				{
 					c.Condition = condition;
 				});
+				if (condition == UnitCondition.MovementBan)
+				{
+					bp.AddComponent(delegate(AddConditionImmunity c)
+					{
+						c.Condition = UnitCondition.CantMove;
+					});
+				}
 				bp.AddComponent(delegate(BuffDescriptorImmunity c)
 				{
 					c.Descriptor = descriptor;

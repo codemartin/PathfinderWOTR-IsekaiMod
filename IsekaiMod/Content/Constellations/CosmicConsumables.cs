@@ -70,7 +70,9 @@ namespace IsekaiMod.Content.Constellations
 
 		public static void Add()
 		{
-			Sprite iconCoin = AssetLoader.LoadInternal(Main.IsekaiContext, "Features", "ICON_COSMIC_COIN.png");
+			Sprite sprite = AssetLoader.LoadInternal(Main.IsekaiContext, "Features", "ICON_COSMIC_COIN.png");
+			Sprite iconPotion = ((BlueprintItem)BlueprintTools.GetBlueprint<BlueprintItemEquipmentUsable>("5219d5846529ae949b88c87858c1bb9e"))?.m_Icon ?? sprite;
+			Sprite iconGem = BlueprintTools.GetBlueprint<BlueprintItem>("6a7cdeb14fc6ef44580cf639c5cdc113")?.m_Icon ?? sprite;
 			ItemPrimordialAmbrosiaMight = CreateStatAmbrosia("ItemPrimordialAmbrosiaMight", "Might", StatType.Strength);
 			ItemPrimordialAmbrosiaGrace = CreateStatAmbrosia("ItemPrimordialAmbrosiaGrace", "Grace", StatType.Dexterity);
 			ItemPrimordialAmbrosiaEndurance = CreateStatAmbrosia("ItemPrimordialAmbrosiaEndurance", "Endurance", StatType.Constitution);
@@ -81,7 +83,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Primordial Ambrosia: Celerity");
 				bp.SetDescription(Main.IsekaiContext, "Infused with primordial swiftness. Each bottle consumed permanently grants a +10 ft Untyped Stackable bonus to base movement speed.");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconPotion;
 				bp.Ranks = 999;
 				bp.AddComponent(delegate(AddContextStatBonus c)
 				{
@@ -105,7 +107,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Drink Primordial Ambrosia of Celerity");
 				bp.SetDescription(Main.IsekaiContext, "Drink or administer this quicksilver nectar. Permanently increases base movement speed by +10 ft (Untyped Stackable). Stacks with Haste, Boots of Speed, and class abilities!");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconPotion;
 				bp.Type = AbilityType.Special;
 				bp.Range = AbilityRange.Touch;
 				bp.CanTargetSelf = true;
@@ -127,7 +129,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Primordial Ambrosia of Celerity");
 				bp.SetDescription(Main.IsekaiContext, "Quicksilver nectar distilled from shooting stars. Permanently grants +10 ft base movement speed per bottle. Untyped and infinitely stackable!");
-				((BlueprintItem)bp).m_Icon = iconCoin;
+				((BlueprintItem)bp).m_Icon = iconPotion;
 				((BlueprintItem)bp).m_Cost = 3000;
 				((BlueprintItem)bp).m_Weight = 0.5f;
 				bp.Type = UsableItemType.Potion;
@@ -140,7 +142,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Primordial Ambrosia: Eternal Renewal");
 				bp.SetDescription(Main.IsekaiContext, "Infused with immortal phoenix fire. Each bottle consumed permanently grants Fast Healing 5 (Untyped Stackable). Stacks infinitely with itself!");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconPotion;
 				bp.Ranks = 999;
 				bp.AddComponent(delegate(AddEffectFastHealing c)
 				{
@@ -164,7 +166,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Drink Primordial Ambrosia of Eternal Renewal");
 				bp.SetDescription(Main.IsekaiContext, "Permanently grants Fast Healing 5 (Untyped Stackable). Stacks infinitely with itself (drink 2 = FH 10, drink 4 = FH 20, drink 10 = FH 50 every round)!");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconPotion;
 				bp.Type = AbilityType.Special;
 				bp.Range = AbilityRange.Touch;
 				bp.CanTargetSelf = true;
@@ -186,7 +188,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Primordial Ambrosia of Eternal Renewal");
 				bp.SetDescription(Main.IsekaiContext, "The apex elixir of godly immortality. Permanently grants Fast Healing 5 per bottle consumed. Untyped, uncapped, and stacks with itself infinitely. The ultimate high-roller prestige trophy!");
-				((BlueprintItem)bp).m_Icon = iconCoin;
+				((BlueprintItem)bp).m_Icon = iconPotion;
 				((BlueprintItem)bp).m_Cost = 10000;
 				((BlueprintItem)bp).m_Weight = 0.5f;
 				bp.Type = UsableItemType.Potion;
@@ -199,7 +201,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Nectar: Endless Life");
 				bp.SetDescription(Main.IsekaiContext, "Permanently grants +25 Maximum Hit Points per bottle consumed (Untyped Stackable).");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconPotion;
 				bp.Ranks = 999;
 				bp.AddComponent(delegate(AddContextStatBonus c)
 				{
@@ -223,7 +225,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Drink Nectar of Endless Life");
 				bp.SetDescription(Main.IsekaiContext, "Permanently increases Maximum Hit Points by +25 (Untyped Stackable).");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconPotion;
 				bp.Type = AbilityType.Special;
 				bp.Range = AbilityRange.Touch;
 				bp.CanTargetSelf = true;
@@ -245,7 +247,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Nectar of Endless Life");
 				bp.SetDescription(Main.IsekaiContext, "Golden nectar teeming with primal vitality. Permanently grants +25 Max Hit Points per bottle. Untyped and infinitely stackable!");
-				((BlueprintItem)bp).m_Icon = iconCoin;
+				((BlueprintItem)bp).m_Icon = iconPotion;
 				((BlueprintItem)bp).m_Cost = 1500;
 				((BlueprintItem)bp).m_Weight = 0.5f;
 				bp.Type = UsableItemType.Potion;
@@ -258,7 +260,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Nectar: Void Stalker");
 				bp.SetDescription(Main.IsekaiContext, "Permanently increases Spell DC by +1 and Spell Penetration by +2 per bottle consumed (Untyped Stackable).");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconPotion;
 				bp.Ranks = 999;
 				bp.AddComponent(delegate(IncreaseAllSpellsDC c)
 				{
@@ -275,7 +277,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Drink Nectar of the Void Stalker");
 				bp.SetDescription(Main.IsekaiContext, "Permanently increases Spell DC by +1 and Spell Penetration by +2 (Untyped Stackable).");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconPotion;
 				bp.Type = AbilityType.Special;
 				bp.Range = AbilityRange.Touch;
 				bp.CanTargetSelf = true;
@@ -297,7 +299,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Nectar of the Void Stalker");
 				bp.SetDescription(Main.IsekaiContext, "Deep violet nectar that attunes your soul to the void. Permanently grants +1 Spell DC and +2 Spell Penetration per bottle. Untyped and infinitely stackable!");
-				((BlueprintItem)bp).m_Icon = iconCoin;
+				((BlueprintItem)bp).m_Icon = iconPotion;
 				((BlueprintItem)bp).m_Cost = 4000;
 				((BlueprintItem)bp).m_Weight = 0.5f;
 				bp.Type = UsableItemType.Potion;
@@ -310,7 +312,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Nectar: World Breaker");
 				bp.SetDescription(Main.IsekaiContext, "Permanently increases Attack Bonus by +2 and Weapon Damage by +2 per bottle consumed (Untyped Stackable).");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconPotion;
 				bp.Ranks = 999;
 				bp.AddComponent(delegate(AddContextStatBonus c)
 				{
@@ -345,7 +347,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Drink Nectar of the World Breaker");
 				bp.SetDescription(Main.IsekaiContext, "Permanently increases Attack Bonus by +2 and Weapon Damage by +2 (Untyped Stackable).");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconPotion;
 				bp.Type = AbilityType.Special;
 				bp.Range = AbilityRange.Touch;
 				bp.CanTargetSelf = true;
@@ -367,7 +369,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Nectar of the World Breaker");
 				bp.SetDescription(Main.IsekaiContext, "Crimson nectar brimming with tectonic wrath. Permanently grants +2 Attack Bonus and +2 Weapon Damage per bottle. Untyped and infinitely stackable!");
-				((BlueprintItem)bp).m_Icon = iconCoin;
+				((BlueprintItem)bp).m_Icon = iconPotion;
 				((BlueprintItem)bp).m_Cost = 4000;
 				((BlueprintItem)bp).m_Weight = 0.5f;
 				bp.Type = UsableItemType.Potion;
@@ -380,7 +382,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Nectar: Diamond Soul");
 				bp.SetDescription(Main.IsekaiContext, "Permanently grants a +2 Untyped Stackable bonus to all Saving Throws (Fortitude, Reflex, Will) per bottle consumed.");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconPotion;
 				bp.Ranks = 999;
 				bp.AddComponent(delegate(AddContextStatBonus c)
 				{
@@ -426,7 +428,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Drink Nectar of the Diamond Soul");
 				bp.SetDescription(Main.IsekaiContext, "Permanently increases all Saving Throws by +2 (Untyped Stackable).");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconPotion;
 				bp.Type = AbilityType.Special;
 				bp.Range = AbilityRange.Touch;
 				bp.CanTargetSelf = true;
@@ -448,7 +450,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Nectar of the Diamond Soul");
 				bp.SetDescription(Main.IsekaiContext, "Pristine crystalline nectar that hardens the spirit into unbreakable diamond. Permanently grants +2 to all Saving Throws per bottle. Untyped and infinitely stackable!");
-				((BlueprintItem)bp).m_Icon = iconCoin;
+				((BlueprintItem)bp).m_Icon = iconPotion;
 				((BlueprintItem)bp).m_Cost = 3500;
 				((BlueprintItem)bp).m_Weight = 0.5f;
 				bp.Type = UsableItemType.Potion;
@@ -461,7 +463,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Nectar: Unbroken Aegis");
 				bp.SetDescription(Main.IsekaiContext, "Permanently grants a +1 Untyped Stackable bonus to Armor Class per bottle consumed.");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconPotion;
 				bp.Ranks = 999;
 				bp.AddComponent(delegate(AddContextStatBonus c)
 				{
@@ -485,7 +487,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Drink Nectar of the Unbroken Aegis");
 				bp.SetDescription(Main.IsekaiContext, "Permanently increases Armor Class by +1 (Untyped Stackable).");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconPotion;
 				bp.Type = AbilityType.Special;
 				bp.Range = AbilityRange.Touch;
 				bp.CanTargetSelf = true;
@@ -507,7 +509,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Nectar of the Unbroken Aegis");
 				bp.SetDescription(Main.IsekaiContext, "Dense platinum nectar that crystallizes across your skin. Permanently grants +1 Armor Class per bottle. Untyped and infinitely stackable!");
-				((BlueprintItem)bp).m_Icon = iconCoin;
+				((BlueprintItem)bp).m_Icon = iconPotion;
 				((BlueprintItem)bp).m_Cost = 3500;
 				((BlueprintItem)bp).m_Weight = 0.5f;
 				bp.Type = UsableItemType.Potion;
@@ -520,7 +522,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Draught of Cosmic Velocity");
 				bp.SetDescription(Main.IsekaiContext, "Grants a +20 ft Untyped Stackable bonus to movement speed and +1 extra attack on a full attack. Stacks with Haste and all equipment.");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconPotion;
 				bp.m_Flags = BlueprintBuff.Flags.StayOnDeath;
 				bp.AddComponent(delegate(AddStatBonus c)
 				{
@@ -538,7 +540,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Drink Draught of Cosmic Velocity");
 				bp.SetDescription(Main.IsekaiContext, "Grants +20 ft movement speed and +1 extra attack on full attack for 24 hours (Untyped Stackable).");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconPotion;
 				bp.Type = AbilityType.Special;
 				bp.Range = AbilityRange.Touch;
 				bp.CanTargetSelf = true;
@@ -568,7 +570,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Draught of Cosmic Velocity");
 				bp.SetDescription(Main.IsekaiContext, "A potent 24-hour combat stimulant. Grants an untyped +20 ft speed and +1 extra attack on full attack for 24 hours. Stacks directly with Haste!");
-				((BlueprintItem)bp).m_Icon = iconCoin;
+				((BlueprintItem)bp).m_Icon = iconPotion;
 				((BlueprintItem)bp).m_Cost = 2500;
 				((BlueprintItem)bp).m_Weight = 0.5f;
 				bp.Type = UsableItemType.Potion;
@@ -581,7 +583,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Draught of the Immortal Titan");
 				bp.SetDescription(Main.IsekaiContext, "Grants +150 Temporary Hit Points, DR 10/--, and Fast Healing 10 for 24 hours.");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconPotion;
 				bp.m_Flags = BlueprintBuff.Flags.StayOnDeath;
 				bp.AddComponent(delegate(TemporaryHitPointsFromAbilityValue c)
 				{
@@ -601,7 +603,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Drink Draught of the Immortal Titan");
 				bp.SetDescription(Main.IsekaiContext, "Grants +150 Temporary Hit Points, DR 10/--, and Fast Healing 10 for 24 hours.");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconPotion;
 				bp.Type = AbilityType.Special;
 				bp.Range = AbilityRange.Touch;
 				bp.CanTargetSelf = true;
@@ -631,7 +633,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Draught of the Immortal Titan");
 				bp.SetDescription(Main.IsekaiContext, "Titan blood infused with adamant wards. Grants +150 Temp HP, DR 10/--, and Fast Healing 10 for 24 hours.");
-				((BlueprintItem)bp).m_Icon = iconCoin;
+				((BlueprintItem)bp).m_Icon = iconPotion;
 				((BlueprintItem)bp).m_Cost = 2500;
 				((BlueprintItem)bp).m_Weight = 0.5f;
 				bp.Type = UsableItemType.Potion;
@@ -644,7 +646,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Draught of Arcane Omniscience");
 				bp.SetDescription(Main.IsekaiContext, "Grants a +4 bonus to Caster Level, and all spells are automatically cast as though affected by Extend Spell and Empower Spell without raising spell level.");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconPotion;
 				bp.m_Flags = BlueprintBuff.Flags.StayOnDeath;
 				bp.AddComponent(delegate(SpellPenetrationBonus c)
 				{
@@ -661,7 +663,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Drink Draught of Arcane Omniscience");
 				bp.SetDescription(Main.IsekaiContext, "Grants +4 Caster Level check bonus and automatically extends and empowers all spells for 24 hours.");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconPotion;
 				bp.Type = AbilityType.Special;
 				bp.Range = AbilityRange.Touch;
 				bp.CanTargetSelf = true;
@@ -691,7 +693,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Draught of Arcane Omniscience");
 				bp.SetDescription(Main.IsekaiContext, "Liquid ley-line mana. Grants +4 Spell Penetration/CL bonus and auto-extends and auto-empowers all cast spells for 24 hours.");
-				((BlueprintItem)bp).m_Icon = iconCoin;
+				((BlueprintItem)bp).m_Icon = iconPotion;
 				((BlueprintItem)bp).m_Cost = 3000;
 				((BlueprintItem)bp).m_Weight = 0.5f;
 				bp.Type = UsableItemType.Potion;
@@ -704,7 +706,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Draught of the Apex Predator");
 				bp.SetDescription(Main.IsekaiContext, "Increases critical multiplier by +1 and causes all weapon attacks to completely bypass Damage Reduction and Concealment for 24 hours.");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconPotion;
 				bp.m_Flags = BlueprintBuff.Flags.StayOnDeath;
 				bp.AddComponent(delegate(CriticalConfirmationBonus c)
 				{
@@ -717,7 +719,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Drink Draught of the Apex Predator");
 				bp.SetDescription(Main.IsekaiContext, "Grants +6 critical confirmation, bypasses all Damage Reduction, and ignores concealment for 24 hours.");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconPotion;
 				bp.Type = AbilityType.Special;
 				bp.Range = AbilityRange.Touch;
 				bp.CanTargetSelf = true;
@@ -747,7 +749,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Draught of the Apex Predator");
 				bp.SetDescription(Main.IsekaiContext, "Primal predator adrenaline. Enhances critical confirmations by +6 and bypasses all DR and concealment for 24 hours.");
-				((BlueprintItem)bp).m_Icon = iconCoin;
+				((BlueprintItem)bp).m_Icon = iconPotion;
 				((BlueprintItem)bp).m_Cost = 3000;
 				((BlueprintItem)bp).m_Weight = 0.5f;
 				bp.Type = UsableItemType.Potion;
@@ -761,7 +763,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Drink Draught of Absolute Soul Anchor");
 				bp.SetDescription(Main.IsekaiContext, "Immunity to death effects, negative levels, energy drain, and compulsion for 24 hours.");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconPotion;
 				bp.Type = AbilityType.Special;
 				bp.Range = AbilityRange.Touch;
 				bp.CanTargetSelf = true;
@@ -794,7 +796,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Draught of Absolute Soul Anchor");
 				bp.SetDescription(Main.IsekaiContext, "Anchors your soul to the outer cosmos. Grants complete immunity to death effects, negative levels, and mental compulsion for 24 hours.");
-				((BlueprintItem)bp).m_Icon = iconCoin;
+				((BlueprintItem)bp).m_Icon = iconPotion;
 				((BlueprintItem)bp).m_Cost = 500;
 				((BlueprintItem)bp).m_Weight = 0.5f;
 				bp.Type = UsableItemType.Potion;
@@ -807,7 +809,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Wishstone: Miracle of Restoration");
 				bp.SetDescription(Main.IsekaiContext, "True Resurrection on all fallen party members at 100% HP, restores all spell slots and class resources to maximum, and cleanses all conditions and Abyssal Corruption.");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconGem;
 				bp.Type = AbilityType.Special;
 				bp.Range = AbilityRange.Personal;
 				bp.CanTargetSelf = true;
@@ -822,7 +824,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Miracle of Absolute Fate");
 				bp.SetDescription(Main.IsekaiContext, "All attack rolls, saving throws, and skill checks automatically result in Natural 20s for 3 rounds!");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconGem;
 				bp.m_Flags = BlueprintBuff.Flags.StayOnDeath;
 				bp.AddComponent(delegate(ModifyD20 c)
 				{
@@ -839,7 +841,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Wishstone: Miracle of Absolute Fate");
 				bp.SetDescription(Main.IsekaiContext, "Warp causality itself: all party members roll automatic Natural 20s on every d20 roll for 3 rounds!");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconGem;
 				bp.Type = AbilityType.Special;
 				bp.Range = AbilityRange.Personal;
 				bp.CanTargetSelf = true;
@@ -868,7 +870,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Wishstone: Miracle of Ruin");
 				bp.SetDescription(Main.IsekaiContext, "Unleashes 350 unresistable divine force damage to all enemies in a 60-ft radius and dispels all enemy buffs with no saving throw or spell resistance.");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconGem;
 				bp.Type = AbilityType.Special;
 				bp.Range = AbilityRange.Personal;
 				bp.CanTargetSelf = true;
@@ -912,7 +914,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Wishstone: Miracle of Wealth");
 				bp.SetDescription(Main.IsekaiContext, "Manifests 500,000 Gold directly into your party treasury.");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconGem;
 				bp.Type = AbilityType.Special;
 				bp.Range = AbilityRange.Personal;
 				bp.CanTargetSelf = true;
@@ -927,7 +929,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Wishstone: Miracle of Akashic Duplication");
 				bp.SetDescription(Main.IsekaiContext, "Manifests scrolls of Mass Heal, Heroic Invocation, Overwhelming Presence, Tsunami, Weird, and Foresight directly into your pack.");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconGem;
 				bp.Type = AbilityType.Special;
 				bp.Range = AbilityRange.Personal;
 				bp.CanTargetSelf = true;
@@ -942,7 +944,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Invoke Bottled Djinn Wishstone");
 				bp.SetDescription(Main.IsekaiContext, "Crush the bottled djinn wishstone to rewrite reality. Offers a choice of five miracles: Restoration, Absolute Fate (Nat 20s), Ruin (350 AOE Nuke), Wealth (500,000 Gold), or Akashic Duplication (9th-level Scrolls).");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconGem;
 				bp.Type = AbilityType.Special;
 				bp.Range = AbilityRange.Personal;
 				bp.CanTargetSelf = true;
@@ -964,7 +966,7 @@ namespace IsekaiMod.Content.Constellations
 			{
 				bp.SetName(Main.IsekaiContext, "Bottled Djinn Wishstone");
 				bp.SetDescription(Main.IsekaiContext, "An ancient crystalline vessel sealing a multiversal djinn of absolute cosmic authority. Can be equipped in quickslot by any party member. When activated, offers 5 reality-warping miracles: Full Team Restoration, 3 rounds of Natural 20s, 350 Divine Force AOE Nuke, 500,000 Gold, or 9th-level Scroll Duplication!");
-				((BlueprintItem)bp).m_Icon = iconCoin;
+				((BlueprintItem)bp).m_Icon = iconGem;
 				((BlueprintItem)bp).m_Cost = 4000;
 				((BlueprintItem)bp).m_Weight = 1f;
 				bp.Type = UsableItemType.Other;
@@ -979,7 +981,7 @@ namespace IsekaiMod.Content.Constellations
 				{
 					bp.SetName(Main.IsekaiContext, "Primordial Ambrosia: " + statName);
 					bp.SetDescription(Main.IsekaiContext, "Infused with untyped primordial divine essence. Each bottle consumed permanently grants a +2 Untyped Stackable bonus to " + statName + ".");
-					((BlueprintUnitFact)bp).m_Icon = iconCoin;
+					((BlueprintUnitFact)bp).m_Icon = iconPotion;
 					bp.Ranks = 999;
 					bp.AddComponent(delegate(AddContextStatBonus c)
 					{
@@ -1003,7 +1005,7 @@ namespace IsekaiMod.Content.Constellations
 				{
 					bp.SetName(Main.IsekaiContext, "Drink Primordial Ambrosia of " + statName);
 					bp.SetDescription(Main.IsekaiContext, "Drink or administer this shimmering nectar. Permanently increases " + statName + " by +2 (Untyped Stackable). Stacks infinitely with itself, gear, and all other bonuses!");
-					((BlueprintUnitFact)bp).m_Icon = iconCoin;
+					((BlueprintUnitFact)bp).m_Icon = iconPotion;
 					bp.Type = AbilityType.Special;
 					bp.Range = AbilityRange.Touch;
 					bp.CanTargetSelf = true;
@@ -1025,7 +1027,7 @@ namespace IsekaiMod.Content.Constellations
 				{
 					bp.SetName(Main.IsekaiContext, "Primordial Ambrosia of " + statName);
 					bp.SetDescription(Main.IsekaiContext, "A crystallized vial of starlight nectar brewed from the tears of the Outer Gods. Permanently increases " + statName + " by +2. It is an untyped bonus with no upper limit--the only limit is how many coins you spend!");
-					((BlueprintItem)bp).m_Icon = iconCoin;
+					((BlueprintItem)bp).m_Icon = iconPotion;
 					((BlueprintItem)bp).m_Cost = cost;
 					((BlueprintItem)bp).m_Weight = 0.5f;
 					bp.Type = UsableItemType.Potion;

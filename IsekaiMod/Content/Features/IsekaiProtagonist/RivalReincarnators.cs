@@ -42,7 +42,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist
 			_rivalBuff = TTCoreExtensions.CreateBuff("RivalReincarnatorBuff", delegate(BlueprintBuff bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Rival Reincarnator");
-				bp.SetDescription(Main.IsekaiContext, "A rival transmigrated soul from beyond the astral plane. Equipped with cheat abilities and anomalous plot resistance, they drop 250 Cosmic Coins upon defeat.");
+				bp.SetDescription(Main.IsekaiContext, "A rival reincarnated soul from beyond the astral plane. Equipped with cheat abilities and anomalous plot resistance, they drop 250 Cosmic Coins upon defeat.");
 				((BlueprintUnitFact)bp).m_Icon = Icon_Rival;
 				bp.m_Flags = BlueprintBuff.Flags.StayOnDeath;
 				bp.AddComponent(delegate(AddStatBonus c)

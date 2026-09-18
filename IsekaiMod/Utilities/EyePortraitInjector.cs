@@ -12,8 +12,9 @@ namespace IsekaiMod.Utilities
 
 		public static bool Prefix(PortraitData __instance, ref Sprite __result)
 		{
-			if (__instance != null && Replacements.TryGetValue(__instance, out __result))
+			if (__instance != null && Replacements.TryGetValue(__instance, out var value) && value != null)
 			{
+				__result = value;
 				return false;
 			}
 			return true;

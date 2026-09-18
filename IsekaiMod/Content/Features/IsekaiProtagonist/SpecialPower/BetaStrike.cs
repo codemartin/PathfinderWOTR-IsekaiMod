@@ -14,7 +14,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 
 		public static void Add()
 		{
-			SpecialPowerSelection.AddToSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "BetaStrike", delegate(BlueprintFeature bp)
+			SpecialPowerSelection.AddToMartialSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "BetaStrike", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Beta Strike");
 				bp.SetDescription(Main.IsekaiContext, "You get an additional {g|Encyclopedia:Attack}attack{/g} per {g|Encyclopedia:Combat_Round}round{/g}.");

@@ -83,6 +83,15 @@ namespace IsekaiMod.Utilities
 			};
 		}
 
+		public static ContextValue CreateContextSimpleValue(int value = 0)
+		{
+			return new ContextValue
+			{
+				ValueType = ContextValueType.Simple,
+				Value = value
+			};
+		}
+
 		public static ContextValue CreateContextRankValue(AbilityRankType rankType, int value = 0)
 		{
 			return new ContextValue
@@ -116,7 +125,7 @@ namespace IsekaiMod.Utilities
 			return new ContextValue
 			{
 				ValueType = ContextValueType.CasterCustomProperty,
-				m_CustomProperty = unitProperty.ToReference<BlueprintUnitPropertyReference>()
+				m_CustomProperty = unitProperty?.ToReference<BlueprintUnitPropertyReference>()
 			};
 		}
 	}

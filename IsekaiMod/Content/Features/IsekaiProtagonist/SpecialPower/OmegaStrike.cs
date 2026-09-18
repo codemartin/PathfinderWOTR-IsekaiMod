@@ -14,7 +14,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 
 		public static void Add()
 		{
-			SpecialPowerSelection.AddToSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "OmegaStrike", delegate(BlueprintFeature bp)
+			SpecialPowerSelection.AddToMartialSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "OmegaStrike", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Omega Strike");
 				bp.SetDescription(Main.IsekaiContext, "Any {g|Encyclopedia:Attack}attacks{/g} you make have their {g|Encyclopedia:Damage}damage{/g} multiplier increased by 1 (×2 becomes ×3, for example).");
@@ -36,7 +36,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 				});
 				bp.AddComponent(delegate(PrerequisiteCharacterLevel c)
 				{
-					c.Level = 7;
+					c.Level = 13;
 				});
 			}));
 		}

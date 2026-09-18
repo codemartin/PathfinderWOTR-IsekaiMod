@@ -3,11 +3,15 @@ using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Spells;
 using Kingmaker.Blueprints.Facts;
+using Kingmaker.Designers.EventConditionActionSystem.Actions;
+using Kingmaker.Designers.EventConditionActionSystem.Evaluators;
+using Kingmaker.Designers.Mechanics.Facts;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.Enums;
 using Kingmaker.Enums.Damage;
 using Kingmaker.RuleSystem;
 using Kingmaker.RuleSystem.Rules.Damage;
+using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
@@ -29,6 +33,15 @@ namespace IsekaiMod.Content.Heritages
 		{
 			Sprite Icon_Vampire = AssetLoader.LoadInternal(Main.IsekaiContext, "Heritages", "ICON_VAMPIRE.png");
 			Sprite Icon_Mist = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintAbility>("486eaff58293f6441a5c2759c4872f98")).m_Icon;
+			BlueprintAbilityResource VampiricMistResource = Helpers.CreateBlueprint(Main.IsekaiContext, "VampiricMistResource", delegate(BlueprintAbilityResource bp)
+			{
+				bp.m_MaxAmount = new BlueprintAbilityResource.Amount
+				{
+					BaseValue = 3,
+					IncreasedByLevel = false,
+					IncreasedByStat = false
+				};
+			});
 			BlueprintBuff VampiricMistBuff = TTCoreExtensions.CreateBuff("VampiricMistBuff", delegate(BlueprintBuff bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Vampiric Mist Form");
@@ -45,6 +58,10 @@ namespace IsekaiMod.Content.Heritages
 					c.Value = 30;
 				});
 				bp.AddComponent<ForbidSpellCasting>();
+				bp.AddComponent(delegate(AddCondition c)
+				{
+					c.Condition = UnitCondition.CanNotAttack;
+				});
 			});
 			BlueprintAbility VampiricMistAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "VampiricMistAbility", delegate(BlueprintAbility bp)
 			{
@@ -73,6 +90,22 @@ namespace IsekaiMod.Content.Heritages
 						};
 					});
 				});
+				bp.AddComponent(delegate(AbilityResourceLogic c)
+				{
+					c.m_RequiredResource = VampiricMistResource.ToReference<BlueprintAbilityResourceReference>();
+					c.m_IsSpendResource = true;
+					c.Amount = 1;
+				});
+			});
+			BlueprintAbilityResource BloodDrainResource = Helpers.CreateBlueprint(Main.IsekaiContext, "BloodDrainResource", delegate(BlueprintAbilityResource bp)
+			{
+				bp.m_MaxAmount = new BlueprintAbilityResource.Amount
+				{
+					BaseValue = 3,
+					IncreasedByLevel = false,
+					IncreasedByStat = true,
+					ResourceBonusStat = StatType.Constitution
+				};
 			});
 			BlueprintAbility BloodDrainBiteAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "BloodDrainBiteAbility", delegate(BlueprintAbility bp)
 			{
@@ -99,6 +132,13 @@ namespace IsekaiMod.Content.Heritages
 							DiceCountValue = 2,
 							BonusValue = 0
 						}
+					}, new DealStatDamage
+					{
+						Stat = StatType.Constitution,
+						IsDrain = true,
+						DamageBonus = 2,
+						DamageDice = new DiceFormula(0, DiceType.Zero),
+						Target = new ContextTargetUnit()
 					}, new ContextActionOnContextCaster
 					{
 						Actions = Helpers.CreateActionList(new ContextActionHealTarget
@@ -111,6 +151,12 @@ namespace IsekaiMod.Content.Heritages
 							}
 						})
 					});
+				});
+				bp.AddComponent(delegate(AbilityResourceLogic c)
+				{
+					c.m_RequiredResource = BloodDrainResource.ToReference<BlueprintAbilityResourceReference>();
+					c.m_IsSpendResource = true;
+					c.Amount = 1;
 				});
 			});
 			BlueprintFeature feature = Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiVampireHeritage", delegate(BlueprintFeature bp)
@@ -198,6 +244,16 @@ namespace IsekaiMod.Content.Heritages
 						VampiricMistAbility.ToReference<BlueprintUnitFactReference>(),
 						BloodDrainBiteAbility.ToReference<BlueprintUnitFactReference>()
 					};
+				});
+				bp.AddComponent(delegate(AddAbilityResources c)
+				{
+					c.m_Resource = VampiricMistResource.ToReference<BlueprintAbilityResourceReference>();
+					c.RestoreAmount = true;
+				});
+				bp.AddComponent(delegate(AddAbilityResources c)
+				{
+					c.m_Resource = BloodDrainResource.ToReference<BlueprintAbilityResourceReference>();
+					c.RestoreAmount = true;
 				});
 				bp.Groups = new FeatureGroup[2]
 				{

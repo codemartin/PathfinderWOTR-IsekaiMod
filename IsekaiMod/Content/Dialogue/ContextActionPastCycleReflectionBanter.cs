@@ -1,5 +1,5 @@
-﻿using IsekaiMod.Content.Constellations;
-using Kingmaker.PubSubSystem;
+﻿using System.Collections.Generic;
+using IsekaiMod.Content.Constellations;
 using Kingmaker.UnitLogic.Mechanics.Actions;
 
 namespace IsekaiMod.Content.Dialogue
@@ -14,12 +14,14 @@ namespace IsekaiMod.Content.Dialogue
 		public override void RunAction()
 		{
 			DivineTokens.AddCoins(250, "The Key and the Gate");
-			foreach (string line in ConstellationDialogueBanter.GetPastCycleRecognitionBanter())
+			List<string> pastCycleRecognitionBanter = ConstellationDialogueBanter.GetPastCycleRecognitionBanter();
+			if (pastCycleRecognitionBanter == null)
 			{
-				EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
-				{
-					h.HandleLogMessage(line);
-				});
+				return;
+			}
+			foreach (string item in pastCycleRecognitionBanter)
+			{
+				ConstellationChatManager.PostLog(item, "The Key and the Gate", ConstellationCategory.MetaLoop, 0, "Past Cycle Reflection");
 			}
 		}
 	}

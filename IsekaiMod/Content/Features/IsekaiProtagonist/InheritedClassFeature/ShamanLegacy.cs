@@ -77,10 +77,6 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature
 			PatchTools.PatchClassIntoFeatureOfReferenceClass(shamanSpirit, reference, referenceClass);
 			PatchTools.PatchClassIntoFeatureOfReferenceClass(shamanHex, reference, referenceClass);
 			ShamanSelection.GetSpirit().m_AllFeatures = shamanSpirit.m_AllFeatures;
-			prog.AddPrerequisite(delegate(PrerequisiteNoFeature c)
-			{
-				c.m_Feature = WitchBaseLegacy.Get().ToReference<BlueprintFeatureReference>();
-			});
 			prog.AddPrerequisite(delegate(PrerequisiteNoClassLevel c)
 			{
 				c.m_CharacterClass = ClassTools.Classes.ShamanClass.ToReference<BlueprintCharacterClassReference>();

@@ -17,7 +17,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 
 		public static void Add()
 		{
-			SpecialPowerSelection.AddToSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "ManaShield", delegate(BlueprintFeature bp)
+			SpecialPowerSelection.AddToDefenseSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "ManaShield", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Special Power - Mana Shield");
 				bp.SetDescription(Main.IsekaiContext, "Your spiritual mana weaves an invisible protective envelope around your body. \nBenefit: You gain DR 10/- against all physical damage, spell resistance equal to 12 + your character level, and a +4 shield bonus to AC.\nRequires character level 7.");
@@ -45,7 +45,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 				});
 				bp.AddComponent(delegate(PrerequisiteCharacterLevel c)
 				{
-					c.Level = 7;
+					c.Level = 13;
 				});
 				bp.ReapplyOnLevelUp = true;
 			}));

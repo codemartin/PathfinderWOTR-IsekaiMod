@@ -29,6 +29,7 @@ using IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower;
 using IsekaiMod.Content.Features.IsekaiProtagonist.TrainingEpisode;
 using IsekaiMod.Content.Guardians;
 using IsekaiMod.Content.Heritages;
+using IsekaiMod.Content.Narrative;
 using IsekaiMod.Content.Quests;
 using Kingmaker.Blueprints.Classes.Prerequisites;
 using Kingmaker.Blueprints.JsonSystem;
@@ -236,6 +237,7 @@ namespace IsekaiMod.Content
 				ProtagonistsSpotlight.Add();
 				ParadoxSovereign.Add();
 				ParallelProcessing.Add();
+				ParallelMetamagicResonance.Add();
 				if (Other.IsEnabled("Mythic Class Feature"))
 				{
 					BlessingOfTheMythic.Configure();
@@ -270,6 +272,8 @@ namespace IsekaiMod.Content
 				Appraisal.Add();
 				AnimeStoryMilestones.Add();
 				EpicFeats.Add();
+				EpicPrestigeClasses.AddCapstones();
+				EpicArchetypeFeatures.Add();
 				GodEmperorSpellbook.Add();
 				GodEmperorProficiencies.Add();
 				GodEmperorQuickFooted.Add();
@@ -385,6 +389,8 @@ namespace IsekaiMod.Content
 				IsekaiNenioStatue.Add();
 				CompanionRetinueDialogue.Add();
 				IsekaiCampaignExpansions.Add();
+				NarrativeEngine.RegisterAllDefaultScenes();
+				NarrativeEngine.CompileAll();
 			}
 
 			public static void AddIsekaiHeritages()
@@ -461,7 +467,7 @@ namespace IsekaiMod.Content
 
 			public static void RestrictExceptionalFeats()
 			{
-				ExceptionalFeatSelection.Get().AddPrerequisite(delegate(PrerequisiteClassLevel c)
+				ExceptionalFeatSelection.Get()?.AddPrerequisite(delegate(PrerequisiteClassLevel c)
 				{
 					c.m_CharacterClass = IsekaiProtagonistClass.GetReference();
 					c.Level = 1;

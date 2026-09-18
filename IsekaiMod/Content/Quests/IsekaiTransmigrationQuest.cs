@@ -19,6 +19,8 @@ namespace IsekaiMod.Content.Quests
 	{
 		public static BlueprintQuest TransmigrationQuest;
 
+		public static BlueprintQuestObjective ObjectivePrologue;
+
 		public static BlueprintQuestObjective ObjectiveAct1;
 
 		public static BlueprintQuestObjective ObjectiveAct2;
@@ -89,12 +91,13 @@ namespace IsekaiMod.Content.Quests
 				bp.m_Type = QuestType.Normal;
 				bp.m_LastChapter = 5;
 			});
+			ObjectivePrologue = CreateObjective("IsekaiQuestObjective_Prologue", "Another World, Another Life: The Celestial Broadcast", "You have awakened in the crusader city of Kenabres beneath an unfamiliar sky, hearing the banter of unseen cosmic entities observing you like a theater audience. Gather your bearings, survive the festival attack, and escape the underground ruins.");
 			ObjectiveAct1 = CreateObjective("IsekaiQuestObjective_Act1", "A Flaw in the Script: Investigate the Kenabres Rift Anomaly", "A dimensional rift has cracked open reality near Kenabres. Confront the entity emerging from the void. Noticeably, the observing deities talk as if they've seen this play out before.");
 			ObjectiveAct2 = CreateObjective("IsekaiQuestObjective_Act2", "The Discarded Iteration: Confront Kenji the Exiled Ronin", "Another reincarnated warrior, Kenji, a masterless swordsman from an eastern realm, has crossed into the Worldwound. Defeat him to uncover his echo journal detailing previous forgotten crusades.");
 			ObjectiveAct3 = CreateObjective("IsekaiQuestObjective_Act3", "Behind the Velvet Curtain: The Truth in Areelu's Lab", "A shadowy planar horror named Malakor is drawing power from the rift nexus. Unravel the revelation from Areelu's lab: her ritual did not summon her child, but Yog-Sothoth siphoned your reincarnated soul into this closed playback cycle.");
 			ObjectiveAct4 = CreateObjective("IsekaiQuestObjective_Act4", "The Key of Causal Rupture: Slay the Abyssal Rift Titan", "Deep in the Abyss, the rift disruption has manifested an immense titan. Claim the Key of Causal Rupture, rejecting Yog-Sothoth's whisper to remain comfortably within the endless loop.");
 			ObjectiveAct5 = CreateObjective("IsekaiQuestObjective_Act5", "Breach the Perimeter: Defeat the Herald of the Closed Threshold", "At the precipice of the Threshold, the final guardian of the multiversal barrier awaits. Defeat the Herald to unlock the core mechanism of the temporal cycle.");
-			ObjectiveAct6 = CreateObjective("IsekaiQuestObjective_Act6", "Shatter the Infinite Loop: The Unwritten Dawn", "Using the assembled Keys of Causal Rupture, confront the Grand Arbiter of the Loop. Decide whether to remain the adored immortal star of the celestial stream, or shatter the loop forever to claim true unscripted freedom.");
+			ObjectiveAct6 = CreateObjective("IsekaiQuestObjective_Act6", "Shatter the Infinite Loop: The Unwritten Dawn", "Using the assembled Keys of Causal Rupture, confront the Grand Arbiter of the Loop. Decide whether to remain the adored immortal star of the celestial tapestry, or shatter the loop forever to claim true unscripted freedom.");
 			ObjectiveEnding_UnwrittenDawn = CreateObjective("ObjectiveEnding_UnwrittenDawn", "The Unwritten Dawn (True Loop-Breaker)", "Shatter Yog-Sothoth's causal anchors. Break the loop forever and open an interdimensional gateway between Golarion and Earth.");
 			ObjectiveEnding_InterdimensionalTraveler = CreateObjective("ObjectiveEnding_InterdimensionalTraveler", "The Interdimensional Traveler", "Seal the Worldwound and step into the dimensional slipstream to explore the Great Beyond.");
 			ObjectiveEnding_EternalActor = CreateObjective("ObjectiveEnding_EternalActor", "The Eternal Actor", "Surrender to the Constellation broadcast, choosing comfortable eternal celebrity over unknown reality.");
@@ -121,6 +124,7 @@ namespace IsekaiMod.Content.Quests
 			ObjectiveEnding_SeveredHorizon = CreateObjective("ObjectiveEnding_SeveredHorizon", "The Severed Horizon", "Unleash a catastrophic eruption of unrestrained Ki that cleaves reality too deeply, collapsing the dimensional boundaries of Golarion.");
 			TransmigrationQuest.m_Objectives = new List<BlueprintQuestObjectiveReference>
 			{
+				ObjectivePrologue.ToReference<BlueprintQuestObjectiveReference>(),
 				ObjectiveAct1.ToReference<BlueprintQuestObjectiveReference>(),
 				ObjectiveAct2.ToReference<BlueprintQuestObjectiveReference>(),
 				ObjectiveAct3.ToReference<BlueprintQuestObjectiveReference>(),
@@ -172,7 +176,7 @@ namespace IsekaiMod.Content.Quests
 				QuestBook questBook = Game.Instance?.Player?.QuestBook;
 				if (questBook != null && questBook.GetQuestState(TransmigrationQuest) == QuestState.None)
 				{
-					questBook.GiveObjective(ObjectiveAct1);
+					questBook.GiveObjective(ObjectivePrologue);
 					PostLog("<color=#9400D3><b>[New Quest]</b></color> <b>The Outer Threshold: Reincarnation Mystery</b> has begun!");
 					ConstellationChatManager.OnNewRun(TimelineManager.Data.TotalRuns);
 				}
@@ -180,6 +184,15 @@ namespace IsekaiMod.Content.Quests
 			catch (Exception ex)
 			{
 				Main.IsekaiContext.Logger.LogError("Error starting IsekaiTransmigrationQuest: " + ex);
+			}
+		}
+
+		public static void CheckAdvancePrologue()
+		{
+			QuestBook questBook = Game.Instance?.Player?.QuestBook;
+			if (questBook != null && ObjectivePrologue != null && questBook.GetObjectiveState(ObjectivePrologue) == QuestObjectiveState.Started)
+			{
+				CompleteAct(0);
 			}
 		}
 
@@ -248,6 +261,10 @@ namespace IsekaiMod.Content.Quests
 				BlueprintQuestObjective blueprintQuestObjective2 = null;
 				switch (act)
 				{
+				case 0:
+					blueprintQuestObjective = ObjectivePrologue;
+					blueprintQuestObjective2 = ObjectiveAct1;
+					break;
 				case 1:
 					blueprintQuestObjective = ObjectiveAct1;
 					blueprintQuestObjective2 = ObjectiveAct2;
@@ -288,6 +305,7 @@ namespace IsekaiMod.Content.Quests
 					PostLog($"<color=#9400D3><b>[Quest Updated]</b></color> <b>{blueprintQuestObjective2.Title}</b>!");
 					ConstellationChatManager.OnActProgression(act + 1);
 				}
+				SubclassPersonalQuests.AdvanceAct(act);
 			}
 			catch (Exception ex)
 			{

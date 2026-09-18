@@ -122,6 +122,8 @@ namespace IsekaiMod.Content
 		private static void PatchHeritages()
 		{
 			HumanHeritageSelection.Patch();
+			SlimeReincarnateHeritage.Patch();
+			HeteromorphicOverlordHeritage.Patch();
 		}
 	}
 }

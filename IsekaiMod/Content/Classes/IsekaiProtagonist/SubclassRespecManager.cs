@@ -66,6 +66,7 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist
 					EnsureMortalGuiseOnGameStart(unitEntityData);
 					EvaluateResonance(unitEntityData);
 					SylvanFeyAllianceQuest.CheckAndActivateSylvanQuest();
+					SubclassPersonalQuests.CheckAndActivateArchetypeQuest();
 					IsekaiKingdomProjects.CheckAndAddAvailableProjects();
 				}
 			}

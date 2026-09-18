@@ -19,7 +19,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 
 		public static void Add()
 		{
-			SpecialPowerSelection.AddToSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "VampiricDrain", delegate(BlueprintFeature bp)
+			SpecialPowerSelection.AddToDefenseSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "VampiricDrain", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Special Power - Vampiric Drain");
 				bp.SetDescription(Main.IsekaiContext, "Your attacks thirst for the vital essence of your foes. \nBenefit: Whenever you strike a living creature with a weapon attack, you drain their vitality, healing for 1d6 plus half your character level in hit points.\nRequires character level 5.");
@@ -48,7 +48,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 				});
 				bp.AddComponent(delegate(PrerequisiteCharacterLevel c)
 				{
-					c.Level = 5;
+					c.Level = 9;
 				});
 			}));
 		}

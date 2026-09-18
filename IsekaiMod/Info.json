@@ -2,7 +2,7 @@
   "Id": "IsekaiMod",
   "DisplayName": "Isekai Mod",
   "Author": "Gekko Lionheart",
-  "Version": "6.2.0",
+  "Version": "6.3.0",
   "ManagerVersion": "0.24.0",
   "Requirements": [ "TabletopTweaks-Core-0.6.2" ],
   "AssemblyName": "IsekaiMod.dll",

@@ -18,6 +18,7 @@ using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Mechanics.Actions;
+using Kingmaker.UnitLogic.Mechanics.Components;
 using Kingmaker.Utility;
 using Kingmaker.Visual.Animation.Kingmaker.Actions;
 using TabletopTweaks.Core.Utilities;
@@ -33,27 +34,62 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 
 		public static void Add()
 		{
+			BlueprintAbilityResource MartialGodFlashStepResource = Helpers.CreateBlueprint(Main.IsekaiContext, "MartialGodFlashStepResource", delegate(BlueprintAbilityResource bp)
+			{
+				bp.m_MaxAmount = new BlueprintAbilityResource.Amount
+				{
+					BaseValue = 3,
+					IncreasedByStat = true,
+					ResourceBonusStat = StatType.Dexterity,
+					m_ClassDiv = new BlueprintCharacterClassReference[0],
+					m_ArchetypesDiv = new BlueprintArchetypeReference[0]
+				};
+			});
 			BlueprintBuff MartialGodTranscendenceBuff = Helpers.CreateBlueprint(Main.IsekaiContext, "MartialGodTranscendenceBuff", delegate(BlueprintBuff bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Transcendental Velocity");
-				bp.SetDescription(Main.IsekaiContext, "Having flash-stepped through sheer physical velocity, your next strikes catch the foe flat-footed and carry a +4 untyped bonus to attack rolls.");
+				bp.SetDescription(Main.IsekaiContext, "Having flash-stepped through sheer physical velocity, your next strikes catch the foe flat-footed and carry an untyped bonus to attack rolls (+2 at levels 1--9, +3 at levels 10--14, and +4 at level 15+).");
 				((BlueprintUnitFact)bp).m_Icon = Icon_Transcendence;
 				bp.IsClassFeature = true;
 				bp.AddComponent(delegate(AddCondition c)
 				{
 					c.Condition = UnitCondition.Invisible;
 				});
-				bp.AddComponent(delegate(AddStatBonus c)
+				bp.AddComponent(delegate(ContextRankConfig c)
+				{
+					c.m_Type = AbilityRankType.StatBonus;
+					c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
+					c.m_Progression = ContextRankProgression.Custom;
+					c.m_CustomProgression = new ContextRankConfig.CustomProgressionItem[3]
+					{
+						new ContextRankConfig.CustomProgressionItem
+						{
+							BaseValue = 9,
+							ProgressionValue = 2
+						},
+						new ContextRankConfig.CustomProgressionItem
+						{
+							BaseValue = 14,
+							ProgressionValue = 3
+						},
+						new ContextRankConfig.CustomProgressionItem
+						{
+							BaseValue = 100,
+							ProgressionValue = 4
+						}
+					};
+				});
+				bp.AddComponent(delegate(AddContextStatBonus c)
 				{
 					c.Descriptor = ModifierDescriptor.UntypedStackable;
 					c.Stat = StatType.AdditionalAttackBonus;
-					c.Value = 4;
+					c.Value = Values.CreateContextRankValue(AbilityRankType.StatBonus);
 				});
 			});
 			BlueprintAbility MartialGodTranscendenceAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "MartialGodTranscendenceAbility", delegate(BlueprintAbility bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Transcendental Flash Step");
-				bp.SetDescription(Main.IsekaiContext, "As a swift action, instantaneously displace yourself up to 40 feet. Foes at your destination are caught flat-footed and your attacks gain a +4 bonus for 1 round.");
+				bp.SetDescription(Main.IsekaiContext, "As a swift action, instantaneously displace yourself up to 40 feet. Foes at your destination are caught flat-footed and your attacks gain an untyped bonus (+2 at levels 1--9, +3 at levels 10--14, and +4 at level 15+) for 1 round.");
 				((BlueprintUnitFact)bp).m_Icon = ((BlueprintUnitFact)DimensionDoor)?.m_Icon;
 				bp.Type = AbilityType.Special;
 				bp.Range = AbilityRange.Close;
@@ -79,6 +115,12 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 					c.CasterDisappearFx = c.CasterDisappearFx ?? new PrefabLink();
 					c.CasterAppearFx = c.CasterAppearFx ?? new PrefabLink();
 				});
+				bp.AddComponent(delegate(AbilityResourceLogic c)
+				{
+					c.m_RequiredResource = MartialGodFlashStepResource.ToReference<BlueprintAbilityResourceReference>();
+					c.m_IsSpendResource = true;
+					c.Amount = 1;
+				});
 				bp.AddComponent(delegate(AbilityEffectRunAction c)
 				{
 					c.Actions = Helpers.CreateActionList(new ContextActionApplyBuff
@@ -93,23 +135,72 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 			OverpoweredAbilitySelection.AddToSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "MartialGodTranscendenceFeature", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Overpowered Ability - Martial God Transcendence");
-				bp.SetDescription(Main.IsekaiContext, "Exclusive to the Martial God archetype. You have ascended beyond mortal martial disciplines, turning your physical form into an engine of supreme combat superiority.\nBenefit: You gain +30 feet to base movement speed, +5 feet reach with melee weapons, +1 extra attack per round on a full attack, and your critical damage multiplier increases by 1 across all attack types. Additionally, you can use Transcendental Flash Step as a swift action at will.");
+				bp.SetDescription(Main.IsekaiContext, "Exclusive to the Martial God archetype. You have ascended beyond mortal martial disciplines, turning your physical form into an engine of supreme combat superiority.\nBenefit: You gain a bonus to base movement speed (+10 ft at levels 1--9, +20 ft at levels 10--14, and +30 ft at level 15+), one extra attack on a full attack, +5 ft reach with melee weapons and one extra off-hand attack (unlocking at level 10), and your critical damage multiplier increases by 1 across all attack types (unlocking at level 15). Additionally, you can use Transcendental Flash Step as a swift action (3 + Dex modifier per day) to teleport up to 40 ft, catching foes flat-footed and gaining an attack bonus (+2 at levels 1--9, +3 at levels 10--14, and +4 at level 15+) for 1 round.");
 				((BlueprintUnitFact)bp).m_Icon = Icon_Transcendence;
 				bp.AddComponent(delegate(AddFacts c)
 				{
 					c.m_Facts = new BlueprintUnitFactReference[1] { MartialGodTranscendenceAbility.ToReference<BlueprintUnitFactReference>() };
 				});
-				bp.AddComponent(delegate(AddStatBonus c)
+				bp.AddComponent(delegate(AddAbilityResources c)
+				{
+					c.m_Resource = MartialGodFlashStepResource.ToReference<BlueprintAbilityResourceReference>();
+					c.RestoreAmount = true;
+					c.RestoreOnLevelUp = true;
+				});
+				bp.AddComponent(delegate(ContextRankConfig c)
+				{
+					c.m_Type = AbilityRankType.Default;
+					c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
+					c.m_Progression = ContextRankProgression.Custom;
+					c.m_CustomProgression = new ContextRankConfig.CustomProgressionItem[3]
+					{
+						new ContextRankConfig.CustomProgressionItem
+						{
+							BaseValue = 9,
+							ProgressionValue = 10
+						},
+						new ContextRankConfig.CustomProgressionItem
+						{
+							BaseValue = 14,
+							ProgressionValue = 20
+						},
+						new ContextRankConfig.CustomProgressionItem
+						{
+							BaseValue = 100,
+							ProgressionValue = 30
+						}
+					};
+				});
+				bp.AddComponent(delegate(AddContextStatBonus c)
 				{
 					c.Descriptor = ModifierDescriptor.UntypedStackable;
 					c.Stat = StatType.Speed;
-					c.Value = 30;
+					c.Value = Values.CreateContextRankValue(AbilityRankType.Default);
 				});
-				bp.AddComponent(delegate(AddStatBonus c)
+				bp.AddComponent(delegate(ContextRankConfig c)
+				{
+					c.m_Type = AbilityRankType.ProjectilesCount;
+					c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
+					c.m_Progression = ContextRankProgression.Custom;
+					c.m_CustomProgression = new ContextRankConfig.CustomProgressionItem[2]
+					{
+						new ContextRankConfig.CustomProgressionItem
+						{
+							BaseValue = 9,
+							ProgressionValue = 0
+						},
+						new ContextRankConfig.CustomProgressionItem
+						{
+							BaseValue = 100,
+							ProgressionValue = 5
+						}
+					};
+				});
+				bp.AddComponent(delegate(AddContextStatBonus c)
 				{
 					c.Descriptor = ModifierDescriptor.UntypedStackable;
 					c.Stat = StatType.Reach;
-					c.Value = 5;
+					c.Value = Values.CreateContextRankValue(AbilityRankType.ProjectilesCount);
 				});
 				bp.AddComponent(delegate(AddExtraAttack c)
 				{
@@ -118,21 +209,25 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 				bp.AddComponent(delegate(AddExtraOffHandAttack c)
 				{
 					c.Number = 1;
+					c.MinCharacterLevel = 10;
 				});
-				bp.AddComponent(delegate(AttackTypeCriticalMultiplierIncrease c)
+				bp.AddComponent(delegate(AttackTypeCriticalMultiplierIncreaseScaled c)
 				{
 					c.Type = WeaponRangeType.Melee;
 					c.AdditionalMultiplier = 1;
+					c.MinCharacterLevel = 15;
 				});
-				bp.AddComponent(delegate(AttackTypeCriticalMultiplierIncrease c)
+				bp.AddComponent(delegate(AttackTypeCriticalMultiplierIncreaseScaled c)
 				{
 					c.Type = WeaponRangeType.Ranged;
 					c.AdditionalMultiplier = 1;
+					c.MinCharacterLevel = 15;
 				});
-				bp.AddComponent(delegate(AttackTypeCriticalMultiplierIncrease c)
+				bp.AddComponent(delegate(AttackTypeCriticalMultiplierIncreaseScaled c)
 				{
 					c.Type = WeaponRangeType.Touch;
 					c.AdditionalMultiplier = 1;
+					c.MinCharacterLevel = 15;
 				});
 				bp.AddComponent(delegate(PrerequisiteArchetypeLevel c)
 				{

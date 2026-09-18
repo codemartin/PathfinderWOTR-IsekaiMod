@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using IsekaiMod.Content.Constellations;
 using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
@@ -164,11 +163,21 @@ namespace IsekaiMod.Content.Dialogue
 		private static void CreateBuffsAndFeatures()
 		{
 			Sprite iconCoin = AssetLoader.LoadInternal(Main.IsekaiContext, "Features", "ICON_COSMIC_COIN.png");
+			Sprite iconScale = BlueprintTools.GetBlueprint<BlueprintItem>("816f244523b5455a85ae06db452d4330")?.m_Icon ?? iconCoin;
+			Sprite iconPearl = BlueprintTools.GetBlueprint<BlueprintItem>("f682126f69da1ea479bf1ddf1d775d97")?.m_Icon ?? iconCoin;
+			Sprite iconFeather = BlueprintTools.GetBlueprint<BlueprintItem>("9ba0194ebcbeb8a428926c1ad9911967")?.m_Icon ?? iconCoin;
+			Sprite iconCharm = ((BlueprintItem)BlueprintTools.GetBlueprint<BlueprintItemEquipmentUsable>("235d859d7b7c9c240a1cec89eefb1f7a"))?.m_Icon ?? iconCoin;
+			Sprite iconMedallion = BlueprintTools.GetBlueprint<BlueprintItem>("06846b7beaca5444d8eebfebc320adca")?.m_Icon ?? iconCoin;
+			Sprite iconFlask = ((BlueprintItem)BlueprintTools.GetBlueprint<BlueprintItemEquipmentUsable>("c76deb732d037024a98fb5aa549df478"))?.m_Icon ?? iconCoin;
+			Sprite iconLockpick = BlueprintTools.GetBlueprint<BlueprintItem>("f00d1a227450e3b49af4b9cc38145c89")?.m_Icon ?? iconCoin;
+			Sprite iconTome = ((BlueprintItem)BlueprintTools.GetBlueprint<BlueprintItemEquipmentUsable>("3584c2a2f8b5b1b43ae11128f0ff1583"))?.m_Icon ?? iconCoin;
+			Sprite iconPotion = ((BlueprintItem)BlueprintTools.GetBlueprint<BlueprintItemEquipmentUsable>("5219d5846529ae949b88c87858c1bb9e"))?.m_Icon ?? iconCoin;
+			Sprite iconSignet = ((BlueprintItem)BlueprintTools.GetBlueprint<BlueprintItemEquipmentRing>("e0986c3e091b2a14a91d2257979b39b6"))?.m_Icon ?? iconCoin;
 			SilverDragonAegisBuff = Helpers.CreateBlueprint(Main.IsekaiContext, "SilverDragonAegisBuff", delegate(BlueprintBuff bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Silver Dragon's Aegis");
 				bp.SetDescription(Main.IsekaiContext, "Terendelev's draconic starlight grants a +2 sacred bonus on all saving throws and absolute immunity to fear effects.");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconScale;
 				bp.AddComponent(delegate(AddStatBonus c)
 				{
 					c.Descriptor = ModifierDescriptor.Sacred;
@@ -205,7 +214,7 @@ namespace IsekaiMod.Content.Dialogue
 			{
 				bp.SetName(Main.IsekaiContext, "Mind of the Otherworlder");
 				bp.SetDescription(Main.IsekaiContext, "Having traversed the cosmic void between dimensions, your mind is anchored beyond mortal terror, granting a permanent +2 sacred bonus on Will saving throws against fear and mind-affecting effects.");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = AssetLoader.LoadInternal(Main.IsekaiContext, "Features", "ICON_MIND_CONTROL_IMMUNE.png") ?? iconCoin;
 				bp.AddComponent(delegate(AddStatBonus c)
 				{
 					c.Descriptor = ModifierDescriptor.Sacred;
@@ -217,7 +226,7 @@ namespace IsekaiMod.Content.Dialogue
 			{
 				bp.SetName(Main.IsekaiContext, "Stitch's Scavenged Ward");
 				bp.SetDescription(Main.IsekaiContext, "A hastily woven protective ward scavenged from Kenabres rubble, granting a +2 dodge bonus to Armor Class for 1 hour.");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconCharm;
 				bp.AddComponent(delegate(AddStatBonus c)
 				{
 					c.Descriptor = ModifierDescriptor.Dodge;
@@ -229,7 +238,7 @@ namespace IsekaiMod.Content.Dialogue
 			{
 				bp.SetName(Main.IsekaiContext, "Ember's Saintly Spark");
 				bp.SetDescription(Main.IsekaiContext, "Resonating with Ember's pure-hearted innocent flame, your fire spells and healing abilities receive a +2 sacred bonus.");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = AssetLoader.LoadInternal(Main.IsekaiContext, "Features", "ICON_ENERGY_LIGHT.png") ?? iconCoin;
 				bp.AddComponent(delegate(AddStatBonus c)
 				{
 					c.Descriptor = ModifierDescriptor.Sacred;
@@ -241,7 +250,7 @@ namespace IsekaiMod.Content.Dialogue
 			{
 				bp.SetName(Main.IsekaiContext, "Lariel's Vow");
 				bp.SetDescription(Main.IsekaiContext, "The fallen angel Lariel honors your dual covenant of mercy and retribution, granting a +1 sacred bonus on attack rolls and +1 to caster level against chaotic evil outsiders.");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconFeather;
 				bp.AddComponent(delegate(AddStatBonus c)
 				{
 					c.Descriptor = ModifierDescriptor.Sacred;
@@ -257,7 +266,7 @@ namespace IsekaiMod.Content.Dialogue
 			{
 				bp.SetName(Main.IsekaiContext, "Resonant Mythic Spark");
 				bp.SetDescription(Main.IsekaiContext, "Cleansing and harmonizing the Kenabres Wardstone with otherworldly mana awakens your dormant mythic potential, granting a +1 sacred bonus to attack rolls, AC, and all saving throws.");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = AssetLoader.LoadInternal(Main.IsekaiContext, "Features", "ICON_GODHOOD.png") ?? iconCoin;
 				bp.AddComponent(delegate(AddStatBonus c)
 				{
 					c.Descriptor = ModifierDescriptor.Sacred;
@@ -293,7 +302,7 @@ namespace IsekaiMod.Content.Dialogue
 			{
 				bp.SetName(Main.IsekaiContext, "Silver Dragon's Shard");
 				bp.SetDescription(Main.IsekaiContext, "A radiant silver crystal fragment imbued with Terendelev's sacred starlight. It pulses with gentle warmth, shielding its bearer from dark sorceries.");
-				bp.m_Icon = iconCoin;
+				bp.m_Icon = iconScale;
 				bp.m_Cost = 1000;
 				bp.m_Weight = 0.5f;
 				bp.m_IsNotable = true;
@@ -356,7 +365,7 @@ namespace IsekaiMod.Content.Dialogue
 			{
 				bp.SetName(Main.IsekaiContext, "Tear of the Silver Dragon");
 				bp.SetDescription(Main.IsekaiContext, "A pearlescent silver teardrop gifted directly by Terendelev. Radiates ancient draconic grace, granting its bearer supernatural endurance against the freezing dark.");
-				((BlueprintItem)bp).m_Icon = iconCoin;
+				((BlueprintItem)bp).m_Icon = iconPearl;
 				((BlueprintItem)bp).m_Cost = 3000;
 				((BlueprintItem)bp).m_Weight = 0.5f;
 				((BlueprintItem)bp).m_IsNotable = true;
@@ -370,7 +379,7 @@ namespace IsekaiMod.Content.Dialogue
 			{
 				bp.SetName(Main.IsekaiContext, "Lariel's Radiant Feather");
 				bp.SetDescription(Main.IsekaiContext, "A pristine celestial feather plucked from the memory of the angel Lariel. Glows with unyielding righteousness against the demonic hordes.");
-				bp.m_Icon = iconCoin;
+				bp.m_Icon = iconFeather;
 				bp.m_Cost = 2500;
 				bp.m_Weight = 0.1f;
 				bp.m_IsNotable = true;
@@ -380,7 +389,7 @@ namespace IsekaiMod.Content.Dialogue
 			{
 				bp.SetName(Main.IsekaiContext, "Thiefling's Luck Charm");
 				bp.SetDescription(Main.IsekaiContext, "A brass coin stamped with the mark of the Kenabres Thieflings, pledged by Woljif Jefto under an Otherworlder retainer contract.");
-				bp.m_Icon = iconCoin;
+				bp.m_Icon = iconCharm;
 				bp.m_Cost = 1500;
 				bp.m_Weight = 0.1f;
 				bp.m_IsNotable = true;
@@ -390,7 +399,7 @@ namespace IsekaiMod.Content.Dialogue
 			{
 				bp.SetName(Main.IsekaiContext, "Royal Mendevian Command Signet");
 				bp.SetDescription(Main.IsekaiContext, "A gold signet ring engraved with the royal crest of Mendev, gifted directly by Queen Galfrey. Radiates sovereign authority, inspiring all companion vanguard forces.");
-				bp.m_Icon = iconCoin;
+				bp.m_Icon = iconSignet;
 				bp.m_Cost = 3500;
 				bp.m_Weight = 0.1f;
 				bp.m_IsNotable = true;
@@ -400,7 +409,7 @@ namespace IsekaiMod.Content.Dialogue
 			{
 				bp.SetName(Main.IsekaiContext, "Hellknight Officer's Field Regalia");
 				bp.SetDescription(Main.IsekaiContext, "A polished cold iron medallion stamped with the symbol of the Order of the Godclaw, conferred by Paralictor Regill Derenge in recognition of impeccable field triage and strategic logic.");
-				bp.m_Icon = iconCoin;
+				bp.m_Icon = iconMedallion;
 				bp.m_Cost = 4000;
 				bp.m_Weight = 0.5f;
 				bp.m_IsNotable = true;
@@ -410,7 +419,7 @@ namespace IsekaiMod.Content.Dialogue
 			{
 				bp.SetName(Main.IsekaiContext, "Vescavor Pheromone Flask");
 				bp.SetDescription(Main.IsekaiContext, "A sealed crystal flask filled with concentrated Vescavor Queen pheromones confiscated from the saboteur Nurah. Its pungent scent can confound insectoid swarms and draw vermin away from friendly ranks.");
-				((BlueprintItem)bp).m_Icon = iconCoin;
+				((BlueprintItem)bp).m_Icon = iconFlask;
 				((BlueprintItem)bp).m_Cost = 2000;
 				((BlueprintItem)bp).m_Weight = 0.5f;
 				((BlueprintItem)bp).m_IsNotable = true;
@@ -499,12 +508,16 @@ namespace IsekaiMod.Content.Dialogue
 					c.Value = 2;
 				});
 			});
-			ItemGwermAncestralRapier = BlueprintTools.GetBlueprint<BlueprintItemWeapon>("ec731c55e657cf0408fd89c648ccc536").CreateCopy(Main.IsekaiContext, "ItemGwermAncestralRapier", delegate(BlueprintItemWeapon bp)
+			BlueprintItemWeapon blueprint = BlueprintTools.GetBlueprint<BlueprintItemWeapon>("ec731c55e657cf0408fd89c648ccc536");
+			if (blueprint != null)
 			{
-				bp.SetName(Main.IsekaiContext, "Gwerm Ancestral Rapier");
-				bp.SetDescription(Main.IsekaiContext, "An heirloom cold iron rapier passed down through the Gwerm bloodline, sharpened to a lethal edge. Deals +1 enhancement bonus and possesses the Keen property.");
-				((BlueprintItem)bp).m_Cost = 4500;
-			});
+				ItemGwermAncestralRapier = blueprint.CreateCopy(Main.IsekaiContext, "ItemGwermAncestralRapier", delegate(BlueprintItemWeapon bp)
+				{
+					bp.SetName(Main.IsekaiContext, "Gwerm Ancestral Rapier");
+					bp.SetDescription(Main.IsekaiContext, "An heirloom cold iron rapier passed down through the Gwerm bloodline, sharpened to a lethal edge. Deals +1 enhancement bonus and possesses the Keen property.");
+					((BlueprintItem)bp).m_Cost = 4500;
+				});
+			}
 			BlueprintItemEquipmentRing baseRing = BlueprintTools.GetBlueprint<BlueprintItemEquipmentRing>("f333bf86cd122974792162cbcd27c9ed");
 			ItemRingOfTheAncientChronicler = Helpers.CreateBlueprint(Main.IsekaiContext, "ItemRingOfTheAncientChronicler", delegate(BlueprintItemEquipmentRing bp)
 			{
@@ -520,7 +533,7 @@ namespace IsekaiMod.Content.Dialogue
 			{
 				bp.SetName(Main.IsekaiContext, "Thiefling Master Lockpicks");
 				bp.SetDescription(Main.IsekaiContext, "A set of finely-tempered cold iron tension wrenches and skeleton picks gifted by Sister Kerisme. Grants a +3 competence bonus to Trickery checks.");
-				bp.m_Icon = iconCoin;
+				bp.m_Icon = iconLockpick;
 				bp.m_Cost = 2500;
 				bp.m_Weight = 0.5f;
 				bp.m_IsNotable = true;
@@ -530,7 +543,7 @@ namespace IsekaiMod.Content.Dialogue
 			{
 				bp.SetName(Main.IsekaiContext, "Nenio's Inscribed Research Journal");
 				bp.SetDescription(Main.IsekaiContext, "A thick leather-bound compendium filled with Nenio's frantic diagrams, multiversal theorems, and cellular taxonomy notes. Inspires profound intellectual curiosity.");
-				bp.m_Icon = iconCoin;
+				bp.m_Icon = iconTome;
 				bp.m_Cost = 3000;
 				bp.m_Weight = 1f;
 				bp.m_IsNotable = true;
@@ -705,7 +718,7 @@ namespace IsekaiMod.Content.Dialogue
 			{
 				bp.SetName(Main.IsekaiContext, "Tavern Defiance Morale");
 				bp.SetDescription(Main.IsekaiContext, "Inspired by the Otherworlder Vanguard Doctrine during the defense of Defender's Heart, this unit gains a +2 morale bonus on attack rolls and Will saving throws.");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = AssetLoader.LoadInternal(Main.IsekaiContext, "Features", "ICON_AURA_FRIENDLY.png") ?? iconCoin;
 				bp.AddComponent(delegate(AddStatBonus c)
 				{
 					c.Descriptor = ModifierDescriptor.Morale;
@@ -723,7 +736,7 @@ namespace IsekaiMod.Content.Dialogue
 			{
 				bp.SetName(Main.IsekaiContext, "Otherworld Espresso Rush");
 				bp.SetDescription(Main.IsekaiContext, "A concentrated jolt of dimensional caffeine and alchemical sugar, granting Haste, a +2 morale bonus to attack rolls, saving throws, and skill checks, and absolute immunity to sleep and fatigue for 10 minutes.");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
+				((BlueprintUnitFact)bp).m_Icon = iconPotion;
 				bp.AddComponent(delegate(AddStatBonus c)
 				{
 					c.Descriptor = ModifierDescriptor.Morale;
@@ -775,7 +788,7 @@ namespace IsekaiMod.Content.Dialogue
 			{
 				bp.SetName(Main.IsekaiContext, "Otherworld Triple-Shot Espresso");
 				bp.SetDescription(Main.IsekaiContext, "A steaming porcelain thermos filled with concentrated Otherworld espresso brewed from celestial roasted beans. Grants the Otherworld Espresso Rush buff for 10 minutes.");
-				((BlueprintItem)bp).m_Icon = iconCoin;
+				((BlueprintItem)bp).m_Icon = iconPotion;
 				((BlueprintItem)bp).m_Cost = 750;
 				((BlueprintItem)bp).m_Weight = 0.5f;
 				((BlueprintItem)bp).m_IsNotable = true;
@@ -785,7 +798,6 @@ namespace IsekaiMod.Content.Dialogue
 				bp.Charges = 1;
 			});
 			BlueprintItemEquipmentNeck baseNeck = BlueprintTools.GetBlueprint<BlueprintItemEquipmentNeck>("afd04948b8f211c448f1cc4bd9a67e3e");
-			BlueprintItemEquipmentHead baseHead = BlueprintTools.GetBlueprint<BlueprintItemEquipmentHead>("a3e8e907908ca7a40ac6da78e70bf33d");
 			BlueprintFeature touristFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "ItemTalismanOfTheCosmicTouristFeature", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Talisman of the Cosmic Tourist");
@@ -911,6 +923,7 @@ namespace IsekaiMod.Content.Dialogue
 					c.m_Fact = auditorFeature.ToReference<BlueprintUnitFactReference>();
 				});
 			});
+			BlueprintItemEquipmentHead baseHead = BlueprintTools.GetBlueprint<BlueprintItemEquipmentHead>("a3e8e907908ca7a40ac6da78e70bf33d");
 			BlueprintFeature martialBandFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "ItemMartialGodFocusBandFeature", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Martial God's Focus Band");
@@ -1011,15 +1024,7 @@ namespace IsekaiMod.Content.Dialogue
 				bp.RequirePlotArmor();
 				configureAnswer?.Invoke(bp);
 			});
-			if (page.Answers == null)
-			{
-				page.Answers = new List<BlueprintAnswerBaseReference>();
-			}
-			BlueprintAnswerBaseReference item = answer.ToReference<BlueprintAnswerBaseReference>();
-			if (!page.Answers.Any((BlueprintAnswerBaseReference a) => ((BlueprintReferenceBase)a).deserializedGuid == answer.AssetGuid))
-			{
-				page.Answers.Insert(0, item);
-			}
+			page.InsertAnswer(answer);
 		}
 
 		private static void AddUniversalAnswer(BlueprintAnswersList answersList, string id, string answerText, string replyText, int expCr = 2, Action<BlueprintCue> configureReply = null, Action<BlueprintAnswer> configureAnswer = null)
@@ -1032,9 +1037,10 @@ namespace IsekaiMod.Content.Dialogue
 			{
 				bp.SetText(Main.IsekaiContext, replyText);
 				configureReply?.Invoke(bp);
-				if (bp.Answers.Count == 0 && (bp.Continue == null || bp.Continue.Cues.Count == 0))
+				List<BlueprintAnswerBaseReference> answers = bp.Answers;
+				if ((answers == null || answers.Count == 0) && (bp.Continue?.Cues?.Count).GetValueOrDefault() == 0)
 				{
-					bp.Answers = answersList.Answers;
+					bp.SetAnswersList(answersList);
 				}
 			});
 			BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(id, delegate(BlueprintAnswer bp)
@@ -1058,16 +1064,7 @@ namespace IsekaiMod.Content.Dialogue
 				bp.RequirePlotArmor();
 				configureAnswer?.Invoke(bp);
 			});
-			BlueprintAnswersList blueprintAnswersList = answersList;
-			if (blueprintAnswersList.Answers == null)
-			{
-				blueprintAnswersList.Answers = new List<BlueprintAnswerBaseReference>();
-			}
-			BlueprintAnswerBaseReference item = answer.ToReference<BlueprintAnswerBaseReference>();
-			if (!answersList.Answers.Any((BlueprintAnswerBaseReference a) => ((BlueprintReferenceBase)a).deserializedGuid == answer.AssetGuid))
-			{
-				answersList.Answers.Insert(0, item);
-			}
+			answersList.InsertAnswer(answer);
 		}
 
 		private static void AddSubclassAnswer(BlueprintAnswersList answersList, string id, string answerText, string replyText, string proficiencyFactName, int expCr = 2, Action<BlueprintCue> configureReply = null, Action<BlueprintAnswer> configureAnswer = null)
@@ -1085,9 +1082,10 @@ namespace IsekaiMod.Content.Dialogue
 			{
 				bp.SetText(Main.IsekaiContext, replyText);
 				configureReply?.Invoke(bp);
-				if (bp.Answers.Count == 0 && (bp.Continue == null || bp.Continue.Cues.Count == 0))
+				List<BlueprintAnswerBaseReference> answers = bp.Answers;
+				if ((answers == null || answers.Count == 0) && (bp.Continue?.Cues?.Count).GetValueOrDefault() == 0)
 				{
-					bp.Answers = answersList.Answers;
+					bp.SetAnswersList(answersList);
 				}
 			});
 			BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(id, delegate(BlueprintAnswer bp)
@@ -1108,23 +1106,14 @@ namespace IsekaiMod.Content.Dialogue
 						c.Modifier = 1f;
 					});
 				}
-				bp.ShowConditions.Conditions = bp.ShowConditions.Conditions.AppendToArray(new HasFact
+				bp.AddShowCondition(delegate(HasFact c)
 				{
-					Unit = new PlayerCharacter(),
-					m_Fact = feat.ToReference<BlueprintUnitFactReference>()
+					c.Unit = new PlayerCharacter();
+					c.m_Fact = feat.ToReference<BlueprintUnitFactReference>();
 				});
 				configureAnswer?.Invoke(bp);
 			});
-			BlueprintAnswersList blueprintAnswersList = answersList;
-			if (blueprintAnswersList.Answers == null)
-			{
-				blueprintAnswersList.Answers = new List<BlueprintAnswerBaseReference>();
-			}
-			BlueprintAnswerBaseReference item = answer.ToReference<BlueprintAnswerBaseReference>();
-			if (!answersList.Answers.Any((BlueprintAnswerBaseReference a) => ((BlueprintReferenceBase)a).deserializedGuid == answer.AssetGuid))
-			{
-				answersList.Answers.Insert(0, item);
-			}
+			answersList.InsertAnswer(answer);
 		}
 
 		private static void AddAlignedAnswer(BlueprintAnswersList answersList, string id, string answerText, string replyText, AlignmentShiftDirection alignmentShift, string proficiencyFactName = null, int expCr = 2, Action<BlueprintCue> configureReply = null, Action<BlueprintAnswer> configureAnswer = null)
@@ -1146,9 +1135,10 @@ namespace IsekaiMod.Content.Dialogue
 			{
 				bp.SetText(Main.IsekaiContext, replyText);
 				configureReply?.Invoke(bp);
-				if (bp.Answers.Count == 0 && (bp.Continue == null || bp.Continue.Cues.Count == 0))
+				List<BlueprintAnswerBaseReference> answers = bp.Answers;
+				if ((answers == null || answers.Count == 0) && (bp.Continue?.Cues?.Count).GetValueOrDefault() == 0)
 				{
-					bp.Answers = answersList.Answers;
+					bp.SetAnswersList(answersList);
 				}
 			});
 			BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(id, delegate(BlueprintAnswer bp)
@@ -1171,10 +1161,10 @@ namespace IsekaiMod.Content.Dialogue
 				}
 				if (feat != null)
 				{
-					bp.ShowConditions.Conditions = bp.ShowConditions.Conditions.AppendToArray(new HasFact
+					bp.AddShowCondition(delegate(HasFact c)
 					{
-						Unit = new PlayerCharacter(),
-						m_Fact = feat.ToReference<BlueprintUnitFactReference>()
+						c.Unit = new PlayerCharacter();
+						c.m_Fact = feat.ToReference<BlueprintUnitFactReference>();
 					});
 				}
 				else
@@ -1192,16 +1182,7 @@ namespace IsekaiMod.Content.Dialogue
 				}
 				configureAnswer?.Invoke(bp);
 			});
-			BlueprintAnswersList blueprintAnswersList = answersList;
-			if (blueprintAnswersList.Answers == null)
-			{
-				blueprintAnswersList.Answers = new List<BlueprintAnswerBaseReference>();
-			}
-			BlueprintAnswerBaseReference item = answer.ToReference<BlueprintAnswerBaseReference>();
-			if (!answersList.Answers.Any((BlueprintAnswerBaseReference a) => ((BlueprintReferenceBase)a).deserializedGuid == answer.AssetGuid))
-			{
-				answersList.Answers.Insert(0, item);
-			}
+			answersList.InsertAnswer(answer);
 		}
 
 		private static void AddMythicAnswer(BlueprintAnswersList answersList, string id, string answerText, string replyText, string mythicClassGuid, string proficiencyFactName = null, AlignmentShiftDirection alignmentShift = AlignmentShiftDirection.TrueNeutral, int expCr = 5, Action<BlueprintCue> configureReply = null, Action<BlueprintAnswer> configureAnswer = null)
@@ -1235,9 +1216,10 @@ namespace IsekaiMod.Content.Dialogue
 			{
 				bp.SetText(Main.IsekaiContext, replyText);
 				configureReply?.Invoke(bp);
-				if (bp.Answers.Count == 0 && (bp.Continue == null || bp.Continue.Cues.Count == 0))
+				List<BlueprintAnswerBaseReference> answers = bp.Answers;
+				if ((answers == null || answers.Count == 0) && (bp.Continue?.Cues?.Count).GetValueOrDefault() == 0)
 				{
-					bp.Answers = answersList.Answers;
+					bp.SetAnswersList(answersList);
 				}
 			});
 			BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(id, delegate(BlueprintAnswer bp)
@@ -1258,17 +1240,17 @@ namespace IsekaiMod.Content.Dialogue
 						c.Modifier = 1f;
 					});
 				}
-				bp.ShowConditions.Conditions = bp.ShowConditions.Conditions.AppendToArray(new UnitClass
+				bp.AddShowCondition(delegate(UnitClass c)
 				{
-					Unit = new PlayerCharacter(),
-					m_Class = mythicClass.ToReference<BlueprintCharacterClassReference>()
+					c.Unit = new PlayerCharacter();
+					c.m_Class = mythicClass.ToReference<BlueprintCharacterClassReference>();
 				});
 				if (feat != null)
 				{
-					bp.ShowConditions.Conditions = bp.ShowConditions.Conditions.AppendToArray(new HasFact
+					bp.AddShowCondition(delegate(HasFact c)
 					{
-						Unit = new PlayerCharacter(),
-						m_Fact = feat.ToReference<BlueprintUnitFactReference>()
+						c.Unit = new PlayerCharacter();
+						c.m_Fact = feat.ToReference<BlueprintUnitFactReference>();
 					});
 				}
 				else
@@ -1286,16 +1268,7 @@ namespace IsekaiMod.Content.Dialogue
 				}
 				configureAnswer?.Invoke(bp);
 			});
-			BlueprintAnswersList blueprintAnswersList = answersList;
-			if (blueprintAnswersList.Answers == null)
-			{
-				blueprintAnswersList.Answers = new List<BlueprintAnswerBaseReference>();
-			}
-			BlueprintAnswerBaseReference item = answer.ToReference<BlueprintAnswerBaseReference>();
-			if (!answersList.Answers.Any((BlueprintAnswerBaseReference a) => ((BlueprintReferenceBase)a).deserializedGuid == answer.AssetGuid))
-			{
-				answersList.Answers.Insert(0, item);
-			}
+			answersList.InsertAnswer(answer);
 		}
 
 		private static void InjectCompanionRootHubEncounters()
@@ -1472,7 +1445,18 @@ namespace IsekaiMod.Content.Dialogue
 			BlueprintAnswersList blueprint = BlueprintTools.GetBlueprint<BlueprintAnswersList>("87997a477e6a58d4aae46e26a3712825");
 			if (blueprint != null)
 			{
-				AddUniversalAnswer(blueprint, "IsekaiPrologueSquareAwakening", "(Isekai Protagonist) [Otherworlder's Instinct] \"Alright, deep breaths... let's test the classic protocol. 'Status Window, open!' ...Menu? Character sheet? System inventory? ...Nothing. No floating blue display, no cheerful tutorial fairy. Just cold cobblestones, church bells, and a terrifyingly real wound in my chest.\"", "{n}The attending priestess gasps in alarm, frantically pressing a cool, glowing palm against your brow while looking anxiously toward her fellow clerics.{/n} \"Merciful gods, lie still! He is delirious--muttering strange incantations about floating windows and invisible menus while clutching his heart! Peace, traveler, you are safe in Kenabres. By the grace of the Inheritor and our noble dragon protector, the wound is closing. Take this blessed relic shard; let its sacred starlight steady your fevered spirit until the festival concludes.\"", 2, null, delegate(BlueprintAnswer bp)
+				AddUniversalAnswer(blueprint, "IsekaiPrologueSquareAwakening", "(Isekai Protagonist) [Otherworlder's Instinct] \"Alright, deep breaths... let's test the classic protocol. 'Status Window, open!' ...Menu? Character sheet? System inventory? ...Nothing. No floating blue display, no cheerful tutorial fairy. Just cold cobblestones, church bells, and a terrifyingly real wound in my chest.\"", "{n}The attending priestess gasps in alarm, frantically pressing a cool, glowing palm against your brow while looking anxiously toward her fellow clerics.{/n} \"Merciful gods, lie still! He is delirious--muttering strange incantations about floating windows and invisible menus while clutching his heart! Peace, traveler, you are safe in Kenabres. By the grace of the Inheritor and our noble dragon protector, the wound is closing. Take this blessed relic shard; let its sacred starlight steady your fevered spirit until the festival concludes.\"", 2, delegate(BlueprintCue bp)
+				{
+					BlueprintCue blueprint19 = BlueprintTools.GetBlueprint<BlueprintCue>("76c6a0e7880db144c9138c6b39d386d9");
+					if (blueprint19 != null)
+					{
+						bp.Continue = new CueSelection
+						{
+							Cues = new List<BlueprintCueBaseReference> { blueprint19.ToReference<BlueprintCueBaseReference>() },
+							Strategy = Strategy.First
+						};
+					}
+				}, delegate(BlueprintAnswer bp)
 				{
 					bp.OnSelect = ActionFlow.DoSingle(delegate(ContextActionGiveOtherworlderRewards c)
 					{
@@ -1486,7 +1470,18 @@ namespace IsekaiMod.Content.Dialogue
 			BlueprintAnswersList blueprint2 = BlueprintTools.GetBlueprint<BlueprintAnswersList>("e27807b731f3b1a4eb19c1a04fdfcf53");
 			if (blueprint2 != null)
 			{
-				AddUniversalAnswer(blueprint2, "IsekaiPrologueSquareHulrun", "(Isekai Protagonist) [Otherworlder's Frank Confession] \"I didn't sneak through your checkpoints, Prelate. The truth is far stranger: I am an Otherworlder. In the realm I came from, there are spires of glass and steel that scrape the clouds, horseless carriages of metal, and nights illuminated by harnessed lightning. I went to sleep in my world and woke up bleeding on your cobblestones.\"", "{n}Hulrun's weathered face twitches with severe suspicion, his knuckles tightening on his halberd until the metal creaks. He stares at you in complete, dumbfounded disbelief before letting out a harsh, rasping snort of exasperation.{/n} \"'Towers of glass'? 'Harnessed lightning'? By the Inheritor's shield, the blow to your skull must have scrambled your brains entirely! You are no demonic saboteur--even the most half-witted cultist of Baphomet would invent a less preposterous tale. Take Terendelev's festival stipend and report to the cathedral's infirmary before you collapse and make a spectacle of yourself on a holy day.\"", 3, null, delegate(BlueprintAnswer bp)
+				AddUniversalAnswer(blueprint2, "IsekaiPrologueSquareHulrun", "(Isekai Protagonist) [Otherworlder's Frank Confession] \"I didn't sneak through your checkpoints, Prelate. The truth is far stranger: I am an Otherworlder. In the realm I came from, there are spires of glass and steel that scrape the clouds, horseless carriages of metal, and nights illuminated by harnessed lightning. I went to sleep in my world and woke up bleeding on your cobblestones.\"", "{n}Hulrun's weathered face twitches with severe suspicion, his knuckles tightening on his halberd until the metal creaks. He stares at you in complete, dumbfounded disbelief before letting out a harsh, rasping snort of exasperation.{/n} \"'Towers of glass'? 'Harnessed lightning'? By the Inheritor's shield, the blow to your skull must have scrambled your brains entirely! You are no demonic saboteur--even the most half-witted cultist of Baphomet would invent a less preposterous tale. Take Terendelev's festival stipend and report to the cathedral's infirmary before you collapse and make a spectacle of yourself on a holy day.\"", 3, delegate(BlueprintCue bp)
+				{
+					BlueprintCue blueprint19 = BlueprintTools.GetBlueprint<BlueprintCue>("ba9c82193a32275408973a8aebdb3a6d");
+					if (blueprint19 != null)
+					{
+						bp.Continue = new CueSelection
+						{
+							Cues = new List<BlueprintCueBaseReference> { blueprint19.ToReference<BlueprintCueBaseReference>() },
+							Strategy = Strategy.First
+						};
+					}
+				}, delegate(BlueprintAnswer bp)
 				{
 					bp.OnSelect = ActionFlow.DoSingle(delegate(ContextActionGiveOtherworlderRewards c)
 					{
@@ -1501,7 +1496,7 @@ namespace IsekaiMod.Content.Dialogue
 			BlueprintAnswersList blueprint3 = BlueprintTools.GetBlueprint<BlueprintAnswersList>("0f7dddeb3f77a4f408e7dc843b9c66fb");
 			if (blueprint3 != null)
 			{
-				AddUniversalAnswer(blueprint3, "IsekaiPrologueSquareTerendelev", "(Isekai Protagonist) [Awe of the Reincarnated] \"In the world I came from, dragons existed only in bedtime chronicles and faded tapestries. But standing before you... seeing silver scales that shimmer like polished starlight and feeling the warmth of your breath... you are truly magnificent, Lady Terendelev.\"", "{n}The ancient silver dragon lowers her magnificent, horned head until her molten-gold eyes meet yours, a gentle, fragrant warmth washing over you like mountain pine and clean morning frost.{/n} \"You speak with the quiet wonder of a traveler who has crossed unfathomable oceans of stars, child of another sky. I can feel it--an extraordinary spark slumbering deep within your soul, alien to this world yet pure and untainted by the Abyss. Take this silver tear as my keepsake. Whatever trials await you beneath these heavens, let my light shield you from the dark.\"", 3, null, delegate(BlueprintAnswer bp)
+				AddUniversalAnswer(blueprint3, "IsekaiPrologueSquareTerendelev", "(Isekai Protagonist) [Awe of the Reincarnated] \"In the world I came from, beings of your legendary grace existed only in bedtime chronicles and faded tapestries. Even standing before me in mortal guise, the ancient nobility of your presence is unmistakable. It is an honor, Lady Terendelev.\"", "{n}The silver-haired noblewoman smiles with gentle warmth, her luminous, liquid-silver eyes shimmering with ancient draconic wisdom as she studies your face.{/n} \"You speak with the quiet wonder of a traveler who has crossed unfathomable oceans of stars, child of another sky. Even through your injuries, I can feel it--an extraordinary spark slumbering deep within your soul, foreign to this world yet pure and untainted by the Abyss. Take this silver tear as my keepsake. Whatever trials await you beneath these heavens, let my light shield you from the dark.\"", 3, null, delegate(BlueprintAnswer bp)
 				{
 					bp.OnSelect = ActionFlow.DoSingle(delegate(ContextActionGiveOtherworlderRewards c)
 					{

@@ -1,5 +1,7 @@
 ﻿using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.Classes;
+using Kingmaker.Blueprints.Classes.Prerequisites;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Designers.Mechanics.Facts;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
@@ -30,7 +32,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 				bp.Stacking = StackingType.Replace;
 				bp.IsClassFeature = true;
 			});
-			OverpoweredAbilitySelection.AddToSelection(TTCoreExtensions.CreateToggleBuffFeature("MetaLuck", "Overpowered Ability - Meta Luck", "Everyone mistakes you for a prodigal genius, treating every action you make as a calculated move in your 1000 year plan. Enemies tremble in fear as they meet you, hallucinating a universe-sized gap between them and your power level.\nBenefit: You always take the higher of two d20 rolls. Enemies that attack you take the lower of two d20 rolls for one round.", "Meta Luck", "This character always takes the higher of two d20 rolls.", Icon_Fortune, delegate(BlueprintBuff bp)
+			BlueprintFeature blueprintFeature = TTCoreExtensions.CreateToggleBuffFeature("MetaLuck", "Overpowered Ability - Meta Luck", "Everyone mistakes you for a prodigal genius, treating every action you make as a calculated move in your 1000-year plan. Enemies tremble in fear as they meet you, hallucinating a universe-sized gap between them and your power level. Guided by karmic providence and chaotic fortune (echoing Desna's boundless luck), reality bends to your whims.\nBenefit: You always take the higher of two d20 rolls. Enemies that attack you take the lower of two d20 rolls for one round.\nNote: Mutually exclusive with Perfect Roll (Axis Determinism) and Otherworldly Gacha (Merchant's Gamble).", "Meta Luck", "This character always takes the higher of two d20 rolls.", Icon_Fortune, delegate(BlueprintBuff bp)
 			{
 				bp.AddComponent(delegate(ModifyD20 c)
 				{
@@ -47,7 +49,16 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 					});
 					c.ActionOnSelf = ActionFlow.DoNothing();
 				});
-			}));
+			});
+			blueprintFeature.AddComponent(delegate(PrerequisiteNoFeature c)
+			{
+				c.m_Feature = BlueprintTools.GetModBlueprintReference<BlueprintFeatureReference>(Main.IsekaiContext, "PerfectRollFeature");
+			});
+			blueprintFeature.AddComponent(delegate(PrerequisiteNoFeature c)
+			{
+				c.m_Feature = BlueprintTools.GetModBlueprintReference<BlueprintFeatureReference>(Main.IsekaiContext, "MerchantsGambleFeature");
+			});
+			OverpoweredAbilitySelection.AddToSelection(blueprintFeature);
 		}
 	}
 }

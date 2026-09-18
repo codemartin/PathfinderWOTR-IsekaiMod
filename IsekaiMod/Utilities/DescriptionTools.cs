@@ -329,21 +329,28 @@ namespace IsekaiMod.Utilities
 
 		public static string TagEncyclopediaEntries(string description)
 		{
-			string str = description;
-			str = str.StripHTML();
+			if (string.IsNullOrEmpty(description))
+			{
+				return description ?? string.Empty;
+			}
+			string text = description.StripHTML();
 			EncyclopediaEntry[] encyclopediaEntries = EncyclopediaEntries;
 			foreach (EncyclopediaEntry encyclopediaEntry in encyclopediaEntries)
 			{
 				foreach (string pattern in encyclopediaEntry.Patterns)
 				{
-					str = str.ApplyTags(pattern, encyclopediaEntry);
+					text = text.ApplyTags(pattern, encyclopediaEntry);
 				}
 			}
-			return str;
+			return text;
 		}
 
 		private static string ApplyTags(this string str, string from, EncyclopediaEntry entry)
 		{
+			if (string.IsNullOrEmpty(str))
+			{
+				return str ?? string.Empty;
+			}
 			string pattern = from.EnforceSolo().ExcludeTagged();
 			string text = (from m in Regex.Matches(str, pattern, RegexOptions.IgnoreCase).OfType<Match>()
 				select m.Value).Distinct().FirstOrDefault();
@@ -356,11 +363,19 @@ namespace IsekaiMod.Utilities
 
 		public static string StripHTML(this string str)
 		{
+			if (string.IsNullOrEmpty(str))
+			{
+				return str ?? string.Empty;
+			}
 			return Regex.Replace(str, "<.*?>", string.Empty);
 		}
 
 		public static string StripEncyclopediaTags(this string str)
 		{
+			if (string.IsNullOrEmpty(str))
+			{
+				return str ?? string.Empty;
+			}
 			return Regex.Replace(str, "{.*?}", string.Empty);
 		}
 

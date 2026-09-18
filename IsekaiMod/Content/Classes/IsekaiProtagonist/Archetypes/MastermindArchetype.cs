@@ -3,6 +3,7 @@ using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Mastermind;
 using IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
+using Kingmaker.Blueprints.Classes.Prerequisites;
 using Kingmaker.Blueprints.Classes.Selection;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.Localization;
@@ -56,8 +57,11 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist.Archetypes
 				bp.LocalizedDescriptionShort = Description;
 				bp.IsArcaneCaster = true;
 				bp.IsDivineCaster = true;
-				bp.ChangeCasterType = true;
-				bp.RemoveFeatures = new LevelEntry[16]
+				BlueprintFeature modBlueprint = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "TranscendentProtagonistFeature");
+				BlueprintFeature modBlueprint2 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "AnimeFinalFormFeature");
+				BlueprintFeature modBlueprint3 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "MastermindGrandmasterForesightEpic");
+				BlueprintFeature modBlueprint4 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "MastermindAbsoluteCheckmate");
+				bp.RemoveFeatures = new LevelEntry[36]
 				{
 					Helpers.CreateLevelEntry(1, IsekaiBonusFeatSelection, IsekaiProficiencies, StartingWeaponSelection, Gifted, LegacySelection.GetClassFeature(), ChronicleOtherworldFeature),
 					Helpers.CreateLevelEntry(2, IsekaiBonusFeatSelection),
@@ -74,29 +78,60 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist.Archetypes
 					Helpers.CreateLevelEntry(15, IsekaiQuickFooted, SecondReincarnation),
 					Helpers.CreateLevelEntry(16, IsekaiBonusFeatSelection),
 					Helpers.CreateLevelEntry(18, IsekaiBonusFeatSelection),
-					Helpers.CreateLevelEntry(20, IsekaiBonusFeatSelection, HaxSelection)
+					Helpers.CreateLevelEntry(20, IsekaiBonusFeatSelection, HaxSelection),
+					Helpers.CreateLevelEntry(21, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(22, IsekaiBonusFeatSelection),
+					Helpers.CreateLevelEntry(23, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(24, IsekaiBonusFeatSelection),
+					Helpers.CreateLevelEntry(25, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(26, IsekaiBonusFeatSelection),
+					Helpers.CreateLevelEntry(27, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(28, IsekaiBonusFeatSelection),
+					Helpers.CreateLevelEntry(29, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(30, IsekaiBonusFeatSelection, SecretPowerSelection, modBlueprint),
+					Helpers.CreateLevelEntry(31, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(32, IsekaiBonusFeatSelection),
+					Helpers.CreateLevelEntry(33, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(34, IsekaiBonusFeatSelection),
+					Helpers.CreateLevelEntry(35, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(36, IsekaiBonusFeatSelection),
+					Helpers.CreateLevelEntry(37, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(38, IsekaiBonusFeatSelection),
+					Helpers.CreateLevelEntry(39, SpecialPowerSelection),
+					Helpers.CreateLevelEntry(40, IsekaiBonusFeatSelection, HaxSelection, modBlueprint2)
 				};
-				BlueprintFeature modBlueprint = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "TacticalAmbushFeature");
-				BlueprintFeature modBlueprint2 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "MastermindGrandmasterForesight");
-				BlueprintFeature modBlueprint3 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "MastermindPersuasionTake20");
-				BlueprintFeature modBlueprint4 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "MastermindCheckmateGambit");
-				BlueprintFeature modBlueprint5 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "MastermindZugzwang");
-				BlueprintFeature modBlueprint6 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "MastermindCalculatedSacrifice");
-				BlueprintFeature modBlueprint7 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "MastermindGeassOfAbsoluteCommand");
-				bp.AddFeatures = new LevelEntry[12]
+				BlueprintFeature modBlueprint5 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "TacticalAmbushFeature");
+				BlueprintFeature modBlueprint6 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "MastermindGrandmasterForesight");
+				BlueprintFeature modBlueprint7 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "MastermindPersuasionTake20");
+				BlueprintFeature modBlueprint8 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "MastermindCheckmateGambit");
+				BlueprintFeature modBlueprint9 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "MastermindZugzwang");
+				BlueprintFeature modBlueprint10 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "MastermindCalculatedSacrifice");
+				BlueprintFeature modBlueprint11 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "MastermindGeassOfAbsoluteCommand");
+				bp.AddFeatures = new LevelEntry[23]
 				{
-					Helpers.CreateLevelEntry(1, MastermindProficiencies, AutoMetamagicSelectionMastermind, ArcanistArcaneReservoirFeature, MastermindConsumeSpells, GrandStrategyFeature, modBlueprint2, modBlueprint3, MastermindLegacySelection.getClassFeature()),
-					Helpers.CreateLevelEntry(3, modBlueprint, ArcanistExploitSelection, EldritchFontEldritchSurge),
-					Helpers.CreateLevelEntry(5, AutoMetamagicSelectionMastermind, modBlueprint4),
+					Helpers.CreateLevelEntry(1, MastermindProficiencies, AutoMetamagicSelectionMastermind, ArcanistArcaneReservoirFeature, MastermindConsumeSpells, GrandStrategyFeature, modBlueprint6, modBlueprint7, MastermindLegacySelection.getClassFeature()),
+					Helpers.CreateLevelEntry(3, modBlueprint5, ArcanistExploitSelection, EldritchFontEldritchSurge),
+					Helpers.CreateLevelEntry(5, AutoMetamagicSelectionMastermind, modBlueprint8),
 					Helpers.CreateLevelEntry(6, SignatureAbility),
-					Helpers.CreateLevelEntry(7, modBlueprint, ArcanistExploitSelection, EldritchFontImprovedSurge),
-					Helpers.CreateLevelEntry(9, AutoMetamagicSelectionMastermind, modBlueprint5),
-					Helpers.CreateLevelEntry(11, modBlueprint, ArcanistGreaterExploitsFeature, ArcanistExploitSelection),
-					Helpers.CreateLevelEntry(13, AutoMetamagicSelectionMastermind, EldritchFontGreaterSurge, modBlueprint6),
-					Helpers.CreateLevelEntry(15, modBlueprint, ArcanistExploitSelection, MastermindQuickFooted),
-					Helpers.CreateLevelEntry(17, AutoMetamagicSelectionMastermind, modBlueprint7),
-					Helpers.CreateLevelEntry(19, modBlueprint, ArcanistExploitSelection),
-					Helpers.CreateLevelEntry(20, MasterplanFeature)
+					Helpers.CreateLevelEntry(7, modBlueprint5, ArcanistExploitSelection, EldritchFontImprovedSurge),
+					Helpers.CreateLevelEntry(9, AutoMetamagicSelectionMastermind, modBlueprint9),
+					Helpers.CreateLevelEntry(11, modBlueprint5, ArcanistGreaterExploitsFeature, ArcanistExploitSelection),
+					Helpers.CreateLevelEntry(13, AutoMetamagicSelectionMastermind, EldritchFontGreaterSurge, modBlueprint10),
+					Helpers.CreateLevelEntry(15, modBlueprint5, ArcanistExploitSelection, MastermindQuickFooted),
+					Helpers.CreateLevelEntry(17, AutoMetamagicSelectionMastermind, modBlueprint11),
+					Helpers.CreateLevelEntry(19, modBlueprint5, ArcanistExploitSelection),
+					Helpers.CreateLevelEntry(20, MasterplanFeature),
+					Helpers.CreateLevelEntry(21, modBlueprint5, ArcanistExploitSelection),
+					Helpers.CreateLevelEntry(23, AutoMetamagicSelectionMastermind),
+					Helpers.CreateLevelEntry(25, modBlueprint5, ArcanistExploitSelection),
+					Helpers.CreateLevelEntry(27, AutoMetamagicSelectionMastermind),
+					Helpers.CreateLevelEntry(29, modBlueprint5, ArcanistExploitSelection),
+					Helpers.CreateLevelEntry(30, modBlueprint3),
+					Helpers.CreateLevelEntry(33, AutoMetamagicSelectionMastermind),
+					Helpers.CreateLevelEntry(35, modBlueprint5, ArcanistExploitSelection),
+					Helpers.CreateLevelEntry(37, AutoMetamagicSelectionMastermind),
+					Helpers.CreateLevelEntry(39, modBlueprint5, ArcanistExploitSelection),
+					Helpers.CreateLevelEntry(40, modBlueprint4)
 				};
 				bp.OverrideAttributeRecommendations = true;
 				bp.m_ReplaceSpellbook = MastermindSpellbook.GetReference();
@@ -104,7 +139,24 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist.Archetypes
 				bp.AddComponent(delegate(PrerequisiteCycleOriginLock c)
 				{
 					c.AllowedOrigin = "Mastermind";
+					c.HideInUI = true;
 				});
+				BlueprintFeature SlimeHeritage = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "SlimeReincarnateHeritage");
+				if (SlimeHeritage != null)
+				{
+					bp.AddComponent(delegate(PrerequisiteNoFeature c)
+					{
+						c.m_Feature = SlimeHeritage.ToReference<BlueprintFeatureReference>();
+					});
+				}
+				BlueprintFeature OverlordHeritage = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "HeteromorphicOverlordHeritage");
+				if (OverlordHeritage != null)
+				{
+					bp.AddComponent(delegate(PrerequisiteNoFeature c)
+					{
+						c.m_Feature = OverlordHeritage.ToReference<BlueprintFeatureReference>();
+					});
+				}
 				bp.RemoveSpellbook = Main.IsekaiContext.AddedContent.DisableSpellbookMastermind;
 			}));
 		}

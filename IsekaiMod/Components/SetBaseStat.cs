@@ -28,7 +28,7 @@ namespace IsekaiMod.Components
 		public override void OnActivate()
 		{
 			ModifiableValueAttributeStat modifiableValueAttributeStat = base.Owner?.Stats?.GetAttribute(Stat);
-			if (modifiableValueAttributeStat != null)
+			if (modifiableValueAttributeStat != null && base.Data != null)
 			{
 				base.Data.BaseStatValue = modifiableValueAttributeStat.BaseValue;
 			}
@@ -37,7 +37,7 @@ namespace IsekaiMod.Components
 		public override void OnDeactivate()
 		{
 			ModifiableValueAttributeStat modifiableValueAttributeStat = base.Owner?.Stats?.GetAttribute(Stat);
-			if (modifiableValueAttributeStat != null)
+			if (modifiableValueAttributeStat != null && base.Data != null)
 			{
 				modifiableValueAttributeStat.BaseValue = base.Data.BaseStatValue;
 			}

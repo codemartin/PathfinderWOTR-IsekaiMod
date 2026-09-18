@@ -17,7 +17,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 
 		public static void Add()
 		{
-			SpecialPowerSelection.AddToSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "BodyStrengthening", delegate(BlueprintFeature bp)
+			SpecialPowerSelection.AddToDefenseSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "BodyStrengthening", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Body Strengthening");
 				bp.SetDescription(Main.IsekaiContext, "You gain {g|Encyclopedia:Damage_Reduction}DR{/g}/- equal to your character level.\nRequires character level 5.");

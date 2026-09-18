@@ -24,7 +24,7 @@ namespace IsekaiMod.Components
 
 		public override void RunAction()
 		{
-			if (Actions?.Actions == null || Actions.Actions.Length == 0)
+			if (base.Context?.MainTarget == null || Actions?.Actions == null || Actions.Actions.Length == 0)
 			{
 				return;
 			}

@@ -23,7 +23,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 			{
 				c.Level = 15;
 			});
-			SpecialPowerSelection.AddToSelection(blueprintFeature);
+			SpecialPowerSelection.AddToMartialSelection(blueprintFeature);
 		}
 	}
 }

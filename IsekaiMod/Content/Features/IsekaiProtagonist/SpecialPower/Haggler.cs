@@ -37,7 +37,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 		public static void Add()
 		{
 			LocalizedString HagglerDesc = Helpers.CreateString(Main.IsekaiContext, "Haggler.Description", "Vendor prices and Cosmic Sponsorship Store costs are reduced by 10%, plus an additional 2% per character level (up to a maximum of 50% at 20th level).");
-			SpecialPowerSelection.AddToSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "Haggler", delegate(BlueprintFeature bp)
+			SpecialPowerSelection.AddToAuthoritySelection(Helpers.CreateBlueprint(Main.IsekaiContext, "Haggler", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Haggler");
 				bp.SetDescription(HagglerDesc);

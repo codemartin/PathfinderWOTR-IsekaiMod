@@ -1,5 +1,6 @@
 ﻿using Kingmaker;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.JsonSystem;
 using Kingmaker.Controllers.Rest;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Kingdom;
@@ -10,6 +11,7 @@ using TabletopTweaks.Core.Utilities;
 
 namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.GodEmperor
 {
+	[TypeId("9a1e0b5278454cd2b91834927f8a3182")]
 	public class ImperialSovereigntyComponent : UnitFactComponentDelegate, IRestFinishedHandler, ISubscriber, IGlobalSubscriber, IKingdomDayHandler, IAreaHandler
 	{
 		private static readonly BlueprintKingdomBuffReference CrusadeMaxMoraleBonus20 = BlueprintTools.GetBlueprint<BlueprintKingdomBuff>("5d021876b91bdb4468d2fdb524c7de28")?.ToReference<BlueprintKingdomBuffReference>();

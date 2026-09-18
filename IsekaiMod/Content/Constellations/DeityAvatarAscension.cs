@@ -2,6 +2,7 @@
 using Kingmaker.Blueprints.Classes.Spells;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Designers.Mechanics.Facts;
+using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.Enums;
 using Kingmaker.Enums.Damage;
@@ -487,6 +488,24 @@ namespace IsekaiMod.Content.Constellations
 					c.Value = 8;
 				});
 			});
+		}
+
+		public static bool HasAnyAvatar(UnitEntityData player)
+		{
+			if (player == null)
+			{
+				return false;
+			}
+			FeatureCollection features = player.Descriptor.Progression.Features;
+			if ((AvatarCaydenFeature == null || !features.HasFact(AvatarCaydenFeature)) && (AvatarIomedaeFeature == null || !features.HasFact(AvatarIomedaeFeature)) && (AvatarAsmodeusFeature == null || !features.HasFact(AvatarAsmodeusFeature)) && (AvatarDesnaFeature == null || !features.HasFact(AvatarDesnaFeature)) && (AvatarPharasmaFeature == null || !features.HasFact(AvatarPharasmaFeature)) && (AvatarCalistriaFeature == null || !features.HasFact(AvatarCalistriaFeature)) && (AvatarNethysFeature == null || !features.HasFact(AvatarNethysFeature)) && (AvatarGorumFeature == null || !features.HasFact(AvatarGorumFeature)) && (AvatarBesmaraFeature == null || !features.HasFact(AvatarBesmaraFeature)) && (AvatarLanternKingFeature == null || !features.HasFact(AvatarLanternKingFeature)) && (AvatarChaldiraFeature == null || !features.HasFact(AvatarChaldiraFeature)))
+			{
+				if (GodDefierFeature != null)
+				{
+					return features.HasFact(GodDefierFeature);
+				}
+				return false;
+			}
+			return true;
 		}
 	}
 }

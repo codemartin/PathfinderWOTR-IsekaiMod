@@ -1,4 +1,6 @@
-﻿using IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower;
+﻿using IsekaiMod.Content.Classes.IsekaiProtagonist;
+using IsekaiMod.Content.Classes.IsekaiProtagonist.Prestige;
+using IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Prerequisites;
@@ -291,6 +293,86 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist
 					c.Descriptor = ModifierDescriptor.UntypedStackable;
 					c.Stat = StatType.AdditionalDamage;
 					c.Value = 4;
+				});
+			}));
+			RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "TranscendentAscendantSynergy", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Transcendent Ascendant Synergy");
+				bp.SetDescription(Main.IsekaiContext, "Your mastery as an otherworldly protagonist and transcendent sovereign converges into supreme cosmic authority. You gain a +4 untyped bonus to the difficulty class of all spells and abilities, a +4 bonus to caster level, and your Reality Rewrite ability gains 1 additional use per day.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_Spell;
+				bp.IsClassFeature = true;
+				bp.AddComponent(delegate(IncreaseSpellDC c)
+				{
+					c.BonusDC = 4;
+				});
+				bp.AddComponent(delegate(AddCasterLevel c)
+				{
+					c.Bonus = 4;
+				});
+				BlueprintAbilityResource rwResource = BlueprintTools.GetModBlueprint<BlueprintAbilityResource>(Main.IsekaiContext, "RealityRewriteResource");
+				if (rwResource != null)
+				{
+					bp.AddComponent(delegate(IncreaseResourceAmount c)
+					{
+						c.m_Resource = rwResource.ToReference<BlueprintAbilityResourceReference>();
+						c.Value = 1;
+					});
+				}
+				bp.AddComponent(delegate(PrerequisiteClassLevel c)
+				{
+					c.m_CharacterClass = TranscendentSovereignClass.GetReference();
+					c.Level = 10;
+				});
+				bp.AddComponent(delegate(PrerequisiteClassLevel c)
+				{
+					c.m_CharacterClass = IsekaiProtagonistClass.GetReference();
+					c.Level = 20;
+				});
+			}));
+			RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "RetinueCommanderResonanceSynergy", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Retinue Commander Resonance");
+				bp.SetDescription(Main.IsekaiContext, "The metaphysical resonance between you and your retinue reaches its zenith. You gain a +4 bonus to Armor Class, attack rolls, and all saving throws, as well as Damage Reduction 10/-.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_Shield;
+				bp.IsClassFeature = true;
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.UntypedStackable;
+					c.Stat = StatType.AC;
+					c.Value = 4;
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.UntypedStackable;
+					c.Stat = StatType.AdditionalAttackBonus;
+					c.Value = 4;
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.UntypedStackable;
+					c.Stat = StatType.SaveFortitude;
+					c.Value = 4;
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.UntypedStackable;
+					c.Stat = StatType.SaveReflex;
+					c.Value = 4;
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.UntypedStackable;
+					c.Stat = StatType.SaveWill;
+					c.Value = 4;
+				});
+				bp.AddComponent(delegate(AddDamageResistancePhysical c)
+				{
+					c.Value = 10;
+				});
+				bp.AddComponent(delegate(PrerequisiteClassLevel c)
+				{
+					c.m_CharacterClass = OtherworldRetinuePrestige.GetReference();
+					c.Level = 10;
 				});
 			}));
 			static void RegisterEpicFeat(BlueprintFeature feat)

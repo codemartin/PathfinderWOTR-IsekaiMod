@@ -150,7 +150,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 				bp.m_Buff = KillingIntentAreaBuff.ToReference<BlueprintBuffReference>();
 				bp.DoNotTurnOffOnRest = true;
 			});
-			SpecialPowerSelection.AddToSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "KillingIntentFeature", delegate(BlueprintFeature bp)
+			SpecialPowerSelection.AddToAuthoritySelection(Helpers.CreateBlueprint(Main.IsekaiContext, "KillingIntentFeature", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Killing Intent");
 				bp.SetDescription(KingmakerIntentDesc);

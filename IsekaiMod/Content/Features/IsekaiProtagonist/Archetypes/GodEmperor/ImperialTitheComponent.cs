@@ -1,5 +1,6 @@
 ﻿using IsekaiMod.Content.Classes.IsekaiProtagonist;
 using Kingmaker;
+using Kingmaker.Blueprints.JsonSystem;
 using Kingmaker.Controllers.Rest;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Kingdom;
@@ -8,6 +9,7 @@ using Kingmaker.UnitLogic;
 
 namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.GodEmperor
 {
+	[TypeId("5d2c88f1239a48be991572c842918bc3")]
 	public class ImperialTitheComponent : UnitFactComponentDelegate, IRestFinishedHandler, ISubscriber, IGlobalSubscriber, IKingdomDayHandler
 	{
 		public void HandleRestFinished(RestStatus status)

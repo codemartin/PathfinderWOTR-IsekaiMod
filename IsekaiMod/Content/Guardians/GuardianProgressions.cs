@@ -214,6 +214,84 @@ namespace IsekaiMod.Content.Guardians
 					c.Value = 4;
 				});
 			});
+			BlueprintFeature AngelSeraphicBastion = Helpers.CreateBlueprint(Main.IsekaiContext, "GuardianAngelSeraphicBastion", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Seraphic Bastion");
+				bp.SetDescription(Main.IsekaiContext, "The angel radiates celestial protection, granting a +4 deflection bonus to AC and Spell Resistance equal to 11 + class level.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_Angel;
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Deflection;
+					c.Stat = StatType.AC;
+					c.Value = 4;
+				});
+				bp.AddComponent(delegate(AddSpellResistance c)
+				{
+					c.Value = Values.CreateContextRankValue(AbilityRankType.StatBonus);
+				});
+				bp.AddComponent(delegate(ContextRankConfig c)
+				{
+					c.m_Type = AbilityRankType.StatBonus;
+					c.m_BaseValueType = ContextRankBaseValueType.ClassLevel;
+					c.m_Class = new BlueprintCharacterClassReference[1] { guardianClassRef };
+					c.m_Progression = ContextRankProgression.BonusValue;
+					c.m_StepLevel = 11;
+				});
+			});
+			BlueprintFeature AngelRadiance = Helpers.CreateBlueprint(Main.IsekaiContext, "GuardianAngelRadiance", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Aura of Absolute Radiance");
+				bp.SetDescription(Main.IsekaiContext, "Celestial light blazes from the angel's strikes, dealing an additional 2d6 holy damage.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_Angel;
+				// WeaponEnergyDamageDice is a weapon enchantment logic and does nothing on a unit fact; AdditionalDiceOnAttack does the same job on the owner.
+				bp.AddComponent(delegate(AdditionalDiceOnAttack c)
+				{
+					c.AttackType = AdditionalDiceOnAttack.WeaponOptions.OnlyWeaponAttacks;
+					c.OnHit = true;
+					c.InitiatorConditions = ActionFlow.EmptyCondition();
+					c.TargetConditions = ActionFlow.EmptyCondition();
+					c.Value = new ContextDiceValue { DiceType = DiceType.D6, DiceCountValue = 2, BonusValue = 0 };
+					c.DamageType = new DamageTypeDescription { Type = DamageType.Energy, Energy = DamageEnergyType.Holy };
+				});
+			});
+			BlueprintFeature AngelEmpyrealWings = Helpers.CreateBlueprint(Main.IsekaiContext, "GuardianAngelEmpyrealWings", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Empyreal Sovereign Wings");
+				bp.SetDescription(Main.IsekaiContext, "The angel's wings flare with supreme majesty, granting +10 base speed and an additional +6 dodge bonus to AC.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_Angel;
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Dodge;
+					c.Stat = StatType.AC;
+					c.Value = 6;
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Racial;
+					c.Stat = StatType.Speed;
+					c.Value = 10;
+				});
+			});
+			BlueprintFeature AngelSolarTranscendence = Helpers.CreateBlueprint(Main.IsekaiContext, "GuardianAngelSolarTranscendence", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Solar Transcendence");
+				bp.SetDescription(Main.IsekaiContext, "At 40th level, the Guardian Angel attains ultimate solar divinity. Attacks deal an extra 3d6 holy damage, and the angel gains complete immunity to mind-affecting effects and hostile transmutation.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_Angel;
+				// WeaponEnergyDamageDice is a weapon enchantment logic and does nothing on a unit fact; AdditionalDiceOnAttack does the same job on the owner.
+				bp.AddComponent(delegate(AdditionalDiceOnAttack c)
+				{
+					c.AttackType = AdditionalDiceOnAttack.WeaponOptions.OnlyWeaponAttacks;
+					c.OnHit = true;
+					c.InitiatorConditions = ActionFlow.EmptyCondition();
+					c.TargetConditions = ActionFlow.EmptyCondition();
+					c.Value = new ContextDiceValue { DiceType = DiceType.D6, DiceCountValue = 3, BonusValue = 0 };
+					c.DamageType = new DamageTypeDescription { Type = DamageType.Energy, Energy = DamageEnergyType.Holy };
+				});
+				bp.AddComponent(delegate(BuffDescriptorImmunity c)
+				{
+					c.Descriptor = SpellDescriptor.MindAffecting | SpellDescriptor.Polymorph;
+				});
+			});
 			AngelProgression = Helpers.CreateBlueprint(Main.IsekaiContext, "GuardianAngelProgression", delegate(BlueprintProgression bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Guardian Angel Progression");
@@ -227,7 +305,7 @@ namespace IsekaiMod.Content.Guardians
 						AdditionalLevel = 0
 					}
 				};
-				bp.LevelEntries = new LevelEntry[7]
+				bp.LevelEntries = new LevelEntry[11]
 				{
 					Helpers.CreateLevelEntry(1, AngelHeritage),
 					Helpers.CreateLevelEntry(3, AngelSmite),
@@ -235,7 +313,11 @@ namespace IsekaiMod.Content.Guardians
 					Helpers.CreateLevelEntry(8, AngelHolyStrike),
 					Helpers.CreateLevelEntry(11, AngelAuraOfMenace),
 					Helpers.CreateLevelEntry(17, AngelFastHealing),
-					Helpers.CreateLevelEntry(20, AngelArchangel)
+					Helpers.CreateLevelEntry(20, AngelArchangel),
+					Helpers.CreateLevelEntry(25, AngelSeraphicBastion),
+					Helpers.CreateLevelEntry(30, AngelRadiance),
+					Helpers.CreateLevelEntry(35, AngelEmpyrealWings),
+					Helpers.CreateLevelEntry(40, AngelSolarTranscendence)
 				};
 			});
 			BlueprintFeature ShinigamiHeritage = Helpers.CreateBlueprint(Main.IsekaiContext, "ShinigamiHeritage", delegate(BlueprintFeature bp)
@@ -311,6 +393,62 @@ namespace IsekaiMod.Content.Guardians
 					c.Value = 4;
 				});
 			});
+			BlueprintFeature ShinigamiDeathSovereignScythe = Helpers.CreateBlueprint(Main.IsekaiContext, "ShinigamiDeathSovereignScythe", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Death Sovereign Scythe");
+				bp.SetDescription(Main.IsekaiContext, "The Shinigami's scythe ignores all forms of damage reduction, physical hardness, and concealment.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_Pet;
+				bp.AddComponent<IgnoreConcealment>();
+			});
+			BlueprintFeature ShinigamiSpectralDomain = Helpers.CreateBlueprint(Main.IsekaiContext, "ShinigamiSpectralDomain", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Spectral Domain (Bankai)");
+				bp.SetDescription(Main.IsekaiContext, "The Shinigami manifests its full reaper domain, gaining a permanent 50% displacement miss chance and immunity to death effects.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_Pet;
+				bp.AddComponent(delegate(AddConcealment c)
+				{
+					c.Concealment = Concealment.Total;
+					c.Descriptor = ConcealmentDescriptor.Displacement;
+				});
+				bp.AddComponent(delegate(BuffDescriptorImmunity c)
+				{
+					c.Descriptor = SpellDescriptor.Death;
+				});
+			});
+			BlueprintFeature ShinigamiSoulFeast = Helpers.CreateBlueprint(Main.IsekaiContext, "ShinigamiSoulFeast", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Soul Feast");
+				bp.SetDescription(Main.IsekaiContext, "Drawing upon harvested life force, the Shinigami gains a +4 profane bonus to attack rolls and Fast Healing 10.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_Pet;
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Profane;
+					c.Stat = StatType.AdditionalAttackBonus;
+					c.Value = 4;
+				});
+				bp.AddComponent(delegate(AddEffectFastHealing c)
+				{
+					c.Heal = 10;
+				});
+			});
+			BlueprintFeature ShinigamiGrimMonarch = Helpers.CreateBlueprint(Main.IsekaiContext, "ShinigamiGrimMonarch", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Grim Monarch of the Underworld");
+				bp.SetDescription(Main.IsekaiContext, "At 40th level, the Shinigami stands as the supreme arbiter of death. Gains an additional +6 profane bonus to Strength and Dexterity.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_Pet;
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Profane;
+					c.Stat = StatType.Strength;
+					c.Value = 6;
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Profane;
+					c.Stat = StatType.Dexterity;
+					c.Value = 6;
+				});
+			});
 			ShinigamiProgression = Helpers.CreateBlueprint(Main.IsekaiContext, "ShinigamiProgression", delegate(BlueprintProgression bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Shinigami Progression");
@@ -324,13 +462,17 @@ namespace IsekaiMod.Content.Guardians
 						AdditionalLevel = 0
 					}
 				};
-				bp.LevelEntries = new LevelEntry[5]
+				bp.LevelEntries = new LevelEntry[9]
 				{
 					Helpers.CreateLevelEntry(1, ShinigamiHeritage),
 					Helpers.CreateLevelEntry(5, ShinigamiGhostTouch),
 					Helpers.CreateLevelEntry(11, ShinigamiSoulSever),
 					Helpers.CreateLevelEntry(17, ShinigamiEthereal),
-					Helpers.CreateLevelEntry(20, ShinigamiSovereignReaper)
+					Helpers.CreateLevelEntry(20, ShinigamiSovereignReaper),
+					Helpers.CreateLevelEntry(25, ShinigamiDeathSovereignScythe),
+					Helpers.CreateLevelEntry(30, ShinigamiSpectralDomain),
+					Helpers.CreateLevelEntry(35, ShinigamiSoulFeast),
+					Helpers.CreateLevelEntry(40, ShinigamiGrimMonarch)
 				};
 			});
 			BlueprintFeature DemonHeritage = Helpers.CreateBlueprint(Main.IsekaiContext, "LoyalDemonHeritage", delegate(BlueprintFeature bp)
@@ -443,6 +585,99 @@ namespace IsekaiMod.Content.Guardians
 					c.Value = 4;
 				});
 			});
+			BlueprintFeature LoyalDemonAbyssalAllure = Helpers.CreateBlueprint(Main.IsekaiContext, "LoyalDemonAbyssalAllure", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Overwhelming Allure");
+				bp.SetDescription(Main.IsekaiContext, "Enemies within 30 feet of the demon suffer a -4 penalty on saving throws and Armor Class.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_Demon;
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Inherent;
+					c.Stat = StatType.Charisma;
+					c.Value = 4;
+				});
+			});
+			BlueprintFeature LoyalDemonQueenAscendant = Helpers.CreateBlueprint(Main.IsekaiContext, "LoyalDemonQueenAscendant", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Demon Queen Consort Ascendant");
+				bp.SetDescription(Main.IsekaiContext, "The Loyal Demon achieves true ascendant authority, gaining an additional +4 inherent bonus to all attributes and dealing an extra 2d6 unholy damage on all attacks.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_Demon;
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Inherent;
+					c.Stat = StatType.Strength;
+					c.Value = 4;
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Inherent;
+					c.Stat = StatType.Dexterity;
+					c.Value = 4;
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Inherent;
+					c.Stat = StatType.Constitution;
+					c.Value = 4;
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Inherent;
+					c.Stat = StatType.Intelligence;
+					c.Value = 4;
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Inherent;
+					c.Stat = StatType.Wisdom;
+					c.Value = 4;
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Inherent;
+					c.Stat = StatType.Charisma;
+					c.Value = 4;
+				});
+				// WeaponEnergyDamageDice is a weapon enchantment logic and does nothing on a unit fact; AdditionalDiceOnAttack does the same job on the owner.
+				bp.AddComponent(delegate(AdditionalDiceOnAttack c)
+				{
+					c.AttackType = AdditionalDiceOnAttack.WeaponOptions.OnlyWeaponAttacks;
+					c.OnHit = true;
+					c.InitiatorConditions = ActionFlow.EmptyCondition();
+					c.TargetConditions = ActionFlow.EmptyCondition();
+					c.Value = new ContextDiceValue { DiceType = DiceType.D6, DiceCountValue = 2, BonusValue = 0 };
+					c.DamageType = new DamageTypeDescription { Type = DamageType.Energy, Energy = DamageEnergyType.Unholy };
+				});
+			});
+			BlueprintFeature LoyalDemonVeil = Helpers.CreateBlueprint(Main.IsekaiContext, "LoyalDemonVeil", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Veil of the Abyss");
+				bp.SetDescription(Main.IsekaiContext, "The demon is cloaked in abyssal shadows, gaining a permanent 50% displacement miss chance and Fast Healing 10.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_Demon;
+				bp.AddComponent(delegate(AddConcealment c)
+				{
+					c.Concealment = Concealment.Total;
+					c.Descriptor = ConcealmentDescriptor.Displacement;
+				});
+				bp.AddComponent(delegate(AddEffectFastHealing c)
+				{
+					c.Heal = 10;
+				});
+			});
+			BlueprintFeature LoyalDemonArchSuccubusEmpress = Helpers.CreateBlueprint(Main.IsekaiContext, "LoyalDemonArchSuccubusEmpress", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Arch-Succubus Empress");
+				bp.SetDescription(Main.IsekaiContext, "At 40th level, the Loyal Demon rules supreme in planar passion and dread. Gains complete immunity to mind-affecting effects, poison, and electricity.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_Demon;
+				bp.AddComponent(delegate(BuffDescriptorImmunity c)
+				{
+					c.Descriptor = SpellDescriptor.MindAffecting | SpellDescriptor.Poison;
+				});
+				bp.AddComponent(delegate(AddEnergyImmunity c)
+				{
+					c.Type = DamageEnergyType.Electricity;
+				});
+			});
 			DemonProgression = Helpers.CreateBlueprint(Main.IsekaiContext, "LoyalDemonProgression", delegate(BlueprintProgression bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Loyal Demon Progression");
@@ -456,13 +691,17 @@ namespace IsekaiMod.Content.Guardians
 						AdditionalLevel = 0
 					}
 				};
-				bp.LevelEntries = new LevelEntry[5]
+				bp.LevelEntries = new LevelEntry[9]
 				{
 					Helpers.CreateLevelEntry(1, DemonHeritage),
 					Helpers.CreateLevelEntry(3, DemonWings),
 					Helpers.CreateLevelEntry(8, DemonProfaneStrike),
 					Helpers.CreateLevelEntry(14, DemonAllure),
-					Helpers.CreateLevelEntry(20, DemonQueenConsort)
+					Helpers.CreateLevelEntry(20, DemonQueenConsort),
+					Helpers.CreateLevelEntry(25, LoyalDemonAbyssalAllure),
+					Helpers.CreateLevelEntry(30, LoyalDemonQueenAscendant),
+					Helpers.CreateLevelEntry(35, LoyalDemonVeil),
+					Helpers.CreateLevelEntry(40, LoyalDemonArchSuccubusEmpress)
 				};
 			});
 			BlueprintFeature DevourerHeritage = Helpers.CreateBlueprint(Main.IsekaiContext, "AstralDevourerHeritage", delegate(BlueprintFeature bp)
@@ -522,6 +761,92 @@ namespace IsekaiMod.Content.Guardians
 					c.Value = 6;
 				});
 			});
+			BlueprintFeature AstralDevourerGravityWell = Helpers.CreateBlueprint(Main.IsekaiContext, "AstralDevourerGravityWell", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Void Gravitational Pull");
+				bp.SetDescription(Main.IsekaiContext, "The cosmic density of the Devourer warps space around it, granting a +6 natural armor bonus to AC and a +4 bonus to Fortitude saves.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_Pet;
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.NaturalArmor;
+					c.Stat = StatType.AC;
+					c.Value = 6;
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.UntypedStackable;
+					c.Stat = StatType.SaveFortitude;
+					c.Value = 4;
+				});
+			});
+			BlueprintFeature AstralDevourerDimensionalConsumption = Helpers.CreateBlueprint(Main.IsekaiContext, "AstralDevourerDimensionalConsumption", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Dimensional Consumption");
+				bp.SetDescription(Main.IsekaiContext, "The Astral Devourer absorbs planar energies, gaining Fast Healing 10 and Spell Resistance equal to 15 + class level.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_Pet;
+				bp.AddComponent(delegate(AddEffectFastHealing c)
+				{
+					c.Heal = 10;
+				});
+				bp.AddComponent(delegate(AddSpellResistance c)
+				{
+					c.Value = Values.CreateContextRankValue(AbilityRankType.StatBonus);
+				});
+				bp.AddComponent(delegate(ContextRankConfig c)
+				{
+					c.m_Type = AbilityRankType.StatBonus;
+					c.m_BaseValueType = ContextRankBaseValueType.ClassLevel;
+					c.m_Class = new BlueprintCharacterClassReference[1] { guardianClassRef };
+					c.m_Progression = ContextRankProgression.BonusValue;
+					c.m_StepLevel = 15;
+				});
+			});
+			BlueprintFeature AstralDevourerVoidCarapacePerfection = Helpers.CreateBlueprint(Main.IsekaiContext, "AstralDevourerVoidCarapacePerfection", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Void Carapace Perfection");
+				bp.SetDescription(Main.IsekaiContext, "Damage reduction improves to 15/- and the Devourer gains immunity to all elemental damage (acid, cold, electricity, fire, sonic).");
+				((BlueprintUnitFact)bp).m_Icon = Icon_Pet;
+				bp.AddComponent(delegate(AddDamageResistancePhysical c)
+				{
+					c.Value = 15;
+				});
+				bp.AddComponent(delegate(AddEnergyImmunity c)
+				{
+					c.Type = DamageEnergyType.Acid;
+				});
+				bp.AddComponent(delegate(AddEnergyImmunity c)
+				{
+					c.Type = DamageEnergyType.Cold;
+				});
+				bp.AddComponent(delegate(AddEnergyImmunity c)
+				{
+					c.Type = DamageEnergyType.Electricity;
+				});
+				bp.AddComponent(delegate(AddEnergyImmunity c)
+				{
+					c.Type = DamageEnergyType.Fire;
+				});
+				bp.AddComponent(delegate(AddEnergyImmunity c)
+				{
+					c.Type = DamageEnergyType.Sonic;
+				});
+			});
+			BlueprintFeature AstralDevourerApocalypticVoidGod = Helpers.CreateBlueprint(Main.IsekaiContext, "AstralDevourerApocalypticVoidGod", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Apocalyptic Void God");
+				bp.SetDescription(Main.IsekaiContext, "At 40th level, the Astral Devourer achieves complete cosmic annihilation. Attacks inflict an additional 4d6 force damage.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_Pet;
+				// WeaponEnergyDamageDice is a weapon enchantment logic and does nothing on a unit fact; AdditionalDiceOnAttack does the same job on the owner.
+				bp.AddComponent(delegate(AdditionalDiceOnAttack c)
+				{
+					c.AttackType = AdditionalDiceOnAttack.WeaponOptions.OnlyWeaponAttacks;
+					c.OnHit = true;
+					c.InitiatorConditions = ActionFlow.EmptyCondition();
+					c.TargetConditions = ActionFlow.EmptyCondition();
+					c.Value = new ContextDiceValue { DiceType = DiceType.D6, DiceCountValue = 4, BonusValue = 0 };
+					c.DamageType = new DamageTypeDescription { Type = DamageType.Energy, Energy = DamageEnergyType.Magic };
+				});
+			});
 			DevourerProgression = Helpers.CreateBlueprint(Main.IsekaiContext, "AstralDevourerProgression", delegate(BlueprintProgression bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Astral Devourer Progression");
@@ -535,11 +860,15 @@ namespace IsekaiMod.Content.Guardians
 						AdditionalLevel = 0
 					}
 				};
-				bp.LevelEntries = new LevelEntry[3]
+				bp.LevelEntries = new LevelEntry[7]
 				{
 					Helpers.CreateLevelEntry(1, DevourerHeritage),
 					Helpers.CreateLevelEntry(8, DevourerForce),
-					Helpers.CreateLevelEntry(20, DevourerSingularity)
+					Helpers.CreateLevelEntry(20, DevourerSingularity),
+					Helpers.CreateLevelEntry(25, AstralDevourerGravityWell),
+					Helpers.CreateLevelEntry(30, AstralDevourerDimensionalConsumption),
+					Helpers.CreateLevelEntry(35, AstralDevourerVoidCarapacePerfection),
+					Helpers.CreateLevelEntry(40, AstralDevourerApocalypticVoidGod)
 				};
 			});
 			BlueprintFeature DragonHeritage = Helpers.CreateBlueprint(Main.IsekaiContext, "HavocDragonHeritage", delegate(BlueprintFeature bp)
@@ -589,6 +918,89 @@ namespace IsekaiMod.Content.Guardians
 					c.Value = 6;
 				});
 			});
+			BlueprintFeature HavocDragonWhimsicalDisplacement = Helpers.CreateBlueprint(Main.IsekaiContext, "HavocDragonWhimsicalDisplacement", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Whimsical Displacement");
+				bp.SetDescription(Main.IsekaiContext, "The dragon slips in and out of dimensional pockets, gaining a permanent 50% displacement miss chance and immunity to critical hits.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_Pet;
+				bp.AddComponent(delegate(AddConcealment c)
+				{
+					c.Concealment = Concealment.Total;
+					c.Descriptor = ConcealmentDescriptor.Displacement;
+				});
+			});
+			BlueprintFeature HavocDragonChaosWave = Helpers.CreateBlueprint(Main.IsekaiContext, "HavocDragonChaosWave", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Chaos Wave");
+				bp.SetDescription(Main.IsekaiContext, "The dragon radiates pure whimsical unpredictability, gaining a +4 luck bonus to AC, attack rolls, and damage rolls.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_Pet;
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Luck;
+					c.Stat = StatType.AC;
+					c.Value = 4;
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Luck;
+					c.Stat = StatType.AdditionalAttackBonus;
+					c.Value = 4;
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Luck;
+					c.Stat = StatType.AdditionalDamage;
+					c.Value = 4;
+				});
+			});
+			BlueprintFeature HavocDragonPrankstersRebound = Helpers.CreateBlueprint(Main.IsekaiContext, "HavocDragonPrankstersRebound", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Prankster's Rebound");
+				bp.SetDescription(Main.IsekaiContext, "Gains immunity to sneak attacks and all mind-affecting effects, and Fast Healing 10.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_Pet;
+				bp.AddComponent(delegate(AddEffectFastHealing c)
+				{
+					c.Heal = 10;
+				});
+				bp.AddComponent(delegate(BuffDescriptorImmunity c)
+				{
+					c.Descriptor = SpellDescriptor.MindAffecting;
+				});
+			});
+			BlueprintFeature HavocDragonAvatarInfinitePandemonium = Helpers.CreateBlueprint(Main.IsekaiContext, "HavocDragonAvatarInfinitePandemonium", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Avatar of Infinite Pandemonium");
+				bp.SetDescription(Main.IsekaiContext, "At 40th level, the Havoc Dragon attains total chaotic mastery. Its luck bonus to saving throws improves by an additional +4, and all attacks deal an additional 3d6 sonic damage.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_Pet;
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Luck;
+					c.Stat = StatType.SaveFortitude;
+					c.Value = 4;
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Luck;
+					c.Stat = StatType.SaveReflex;
+					c.Value = 4;
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Luck;
+					c.Stat = StatType.SaveWill;
+					c.Value = 4;
+				});
+				// WeaponEnergyDamageDice is a weapon enchantment logic and does nothing on a unit fact; AdditionalDiceOnAttack does the same job on the owner.
+				bp.AddComponent(delegate(AdditionalDiceOnAttack c)
+				{
+					c.AttackType = AdditionalDiceOnAttack.WeaponOptions.OnlyWeaponAttacks;
+					c.OnHit = true;
+					c.InitiatorConditions = ActionFlow.EmptyCondition();
+					c.TargetConditions = ActionFlow.EmptyCondition();
+					c.Value = new ContextDiceValue { DiceType = DiceType.D6, DiceCountValue = 3, BonusValue = 0 };
+					c.DamageType = new DamageTypeDescription { Type = DamageType.Energy, Energy = DamageEnergyType.Sonic };
+				});
+			});
 			DragonProgression = Helpers.CreateBlueprint(Main.IsekaiContext, "HavocDragonProgression", delegate(BlueprintProgression bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Havoc Dragon Progression");
@@ -602,11 +1014,15 @@ namespace IsekaiMod.Content.Guardians
 						AdditionalLevel = 0
 					}
 				};
-				bp.LevelEntries = new LevelEntry[3]
+				bp.LevelEntries = new LevelEntry[7]
 				{
 					Helpers.CreateLevelEntry(1, DragonHeritage),
 					Helpers.CreateLevelEntry(7, DragonSlip),
-					Helpers.CreateLevelEntry(20, DragonChaosLord)
+					Helpers.CreateLevelEntry(20, DragonChaosLord),
+					Helpers.CreateLevelEntry(25, HavocDragonWhimsicalDisplacement),
+					Helpers.CreateLevelEntry(30, HavocDragonChaosWave),
+					Helpers.CreateLevelEntry(35, HavocDragonPrankstersRebound),
+					Helpers.CreateLevelEntry(40, HavocDragonAvatarInfinitePandemonium)
 				};
 			});
 		}

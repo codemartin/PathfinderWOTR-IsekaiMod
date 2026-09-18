@@ -228,7 +228,8 @@ namespace IsekaiMod.Utilities
 						}
 						for (int k = 0; k < blueprintAbility2.ComponentsArray.Length; k++)
 						{
-							if (blueprintAbility2.ComponentsArray[k] is ContextCalculateAbilityParamsBasedOnClass contextCalculateAbilityParamsBasedOnClass)
+							BlueprintComponent blueprintComponent = blueprintAbility2.ComponentsArray[k];
+							if (blueprintComponent is ContextCalculateAbilityParamsBasedOnClass contextCalculateAbilityParamsBasedOnClass)
 							{
 								ReplaceComponentInSlot(blueprintAbility2.ComponentsArray, k, new ContextCalculateAbilityParamsBasedOnClasses
 								{
@@ -237,6 +238,10 @@ namespace IsekaiMod.Utilities
 									// Without this, inherited kinetic blasts use the stored stat instead of the kineticist main stat.
 									UseKineticistMainStat = contextCalculateAbilityParamsBasedOnClass.UseKineticistMainStat
 								});
+							}
+							else if (blueprintComponent is ContextCalculateAbilityParamsBasedOnClasses { m_CharacterClasses: not null } contextCalculateAbilityParamsBasedOnClasses && !contextCalculateAbilityParamsBasedOnClasses.m_CharacterClasses.Contains(classRef))
+							{
+								contextCalculateAbilityParamsBasedOnClasses.m_CharacterClasses = contextCalculateAbilityParamsBasedOnClasses.m_CharacterClasses.AddToArray(classRef);
 							}
 						}
 					}
@@ -597,96 +602,113 @@ namespace IsekaiMod.Utilities
 				return prog;
 			}
 			BlueprintFeatureBase[] array2 = new BlueprintFeatureBase[0];
-			LevelEntry[] array3 = array;
-			foreach (LevelEntry levelEntry in array3)
+			LevelEntry[] array3 = refArchetype.RemoveFeatures.EmptyIfNull();
+			LevelEntry[] array4 = refArchetype.AddFeatures.EmptyIfNull();
+			LevelEntry[] array5 = array;
+			foreach (LevelEntry levelEntry in array5)
 			{
-				BlueprintFeatureBaseReference[] array4 = new BlueprintFeatureBaseReference[0];
-				BlueprintFeatureBaseReference[] array5 = levelEntry.m_Features.ToArray();
+				if (levelEntry == null || levelEntry.m_Features == null)
+				{
+					continue;
+				}
 				BlueprintFeatureBaseReference[] array6 = new BlueprintFeatureBaseReference[0];
-				LevelEntry[] removeFeatures = refArchetype.RemoveFeatures;
-				foreach (LevelEntry levelEntry2 in removeFeatures)
-				{
-					if (levelEntry2.Level == levelEntry.Level)
-					{
-						array6 = array6.AddRangeToArray(levelEntry2.m_Features.ToArray());
-					}
-				}
-				BlueprintFeatureBaseReference[] array7 = array5;
-				foreach (BlueprintFeatureBaseReference blueprintFeatureBaseReference in array7)
-				{
-					if (!array6.Contains(blueprintFeatureBaseReference))
-					{
-						array4 = array4.AddToArray(blueprintFeatureBaseReference);
-					}
-				}
+				BlueprintFeatureBaseReference[] array7 = levelEntry.m_Features.ToArray();
 				BlueprintFeatureBaseReference[] array8 = new BlueprintFeatureBaseReference[0];
-				removeFeatures = refArchetype.AddFeatures;
-				foreach (LevelEntry levelEntry3 in removeFeatures)
+				LevelEntry[] array9 = array3;
+				foreach (LevelEntry levelEntry2 in array9)
 				{
-					if (levelEntry3.Level == levelEntry.Level)
+					if (levelEntry2 != null && levelEntry2.Level == levelEntry.Level && levelEntry2.m_Features != null)
 					{
-						array8 = array8.AddRangeToArray(levelEntry3.m_Features.ToArray());
+						array8 = array8.AddRangeToArray(levelEntry2.m_Features.ToArray());
 					}
 				}
-				if (array8 != null && array8.Length != 0)
+				BlueprintFeatureBaseReference[] array10 = array7;
+				foreach (BlueprintFeatureBaseReference blueprintFeatureBaseReference in array10)
 				{
-					array7 = array8;
-					foreach (BlueprintFeatureBaseReference blueprintFeatureBaseReference2 in array7)
+					if (blueprintFeatureBaseReference != null && !array8.Contains(blueprintFeatureBaseReference))
 					{
-						array4 = array4.AddToArray(blueprintFeatureBaseReference2);
-						if (!array2.Contains(blueprintFeatureBaseReference2))
+						array6 = array6.AddToArray(blueprintFeatureBaseReference);
+					}
+				}
+				BlueprintFeatureBaseReference[] array11 = new BlueprintFeatureBaseReference[0];
+				array9 = array4;
+				foreach (LevelEntry levelEntry3 in array9)
+				{
+					if (levelEntry3 != null && levelEntry3.Level == levelEntry.Level && levelEntry3.m_Features != null)
+					{
+						array11 = array11.AddRangeToArray(levelEntry3.m_Features.ToArray());
+					}
+				}
+				if (array11 != null && array11.Length != 0)
+				{
+					array10 = array11;
+					foreach (BlueprintFeatureBaseReference blueprintFeatureBaseReference2 in array10)
+					{
+						if (blueprintFeatureBaseReference2 != null)
 						{
-							array2 = array2.AddToArray(blueprintFeatureBaseReference2);
+							array6 = array6.AddToArray(blueprintFeatureBaseReference2);
+							if (!array2.Contains(blueprintFeatureBaseReference2))
+							{
+								array2 = array2.AddToArray(blueprintFeatureBaseReference2);
+							}
 						}
 					}
 				}
 				if (additionalReference != null)
 				{
 					LevelEntry levelEntry4 = null;
-					removeFeatures = additionalReference;
-					foreach (LevelEntry levelEntry5 in removeFeatures)
+					array9 = additionalReference;
+					foreach (LevelEntry levelEntry5 in array9)
 					{
-						if (levelEntry5.Level == levelEntry.Level)
+						if (levelEntry5 != null && levelEntry5.Level == levelEntry.Level)
 						{
 							levelEntry4 = levelEntry5;
 						}
 					}
-					if (levelEntry4 != null)
+					if (levelEntry4 != null && levelEntry4.m_Features != null)
 					{
 						foreach (BlueprintFeatureBaseReference feature in levelEntry4.m_Features)
 						{
-							array4 = array4.AddToArray(feature);
-							if (!array2.Contains(feature))
+							if (feature != null)
 							{
-								array2 = array2.AddToArray(feature);
+								array6 = array6.AddToArray(feature);
+								if (!array2.Contains(feature))
+								{
+									array2 = array2.AddToArray(feature);
+								}
 							}
 						}
 					}
 				}
-				prog.LevelEntries = prog.LevelEntries.AddToArray(Helpers.CreateLevelEntry(levelEntry.Level, array4));
+				prog.LevelEntries = (prog.LevelEntries ?? new LevelEntry[0]).AddToArray(Helpers.CreateLevelEntry(levelEntry.Level, array6));
 			}
 			if (additionalReference != null)
 			{
-				array3 = additionalReference;
-				foreach (LevelEntry levelEntry6 in array3)
+				array5 = additionalReference;
+				foreach (LevelEntry levelEntry6 in array5)
 				{
-					bool flag = false;
-					LevelEntry[] removeFeatures = prog.LevelEntries;
-					for (int j = 0; j < removeFeatures.Length; j++)
+					if (levelEntry6 == null || levelEntry6.m_Features == null)
 					{
-						if (removeFeatures[j].Level == levelEntry6.Level)
+						continue;
+					}
+					bool flag = false;
+					LevelEntry[] array9 = prog.LevelEntries.EmptyIfNull();
+					foreach (LevelEntry levelEntry7 in array9)
+					{
+						if (levelEntry7 != null && levelEntry7.Level == levelEntry6.Level)
 						{
 							flag = true;
+							break;
 						}
 					}
 					if (flag)
 					{
 						continue;
 					}
-					prog.LevelEntries = prog.LevelEntries.AddToArray(levelEntry6);
+					prog.LevelEntries = (prog.LevelEntries ?? new LevelEntry[0]).AddToArray(levelEntry6);
 					foreach (BlueprintFeatureBaseReference feature2 in levelEntry6.m_Features)
 					{
-						if (!array2.Contains(feature2))
+						if (feature2 != null && !array2.Contains(feature2))
 						{
 							array2 = array2.AddToArray(feature2);
 						}
@@ -695,7 +717,7 @@ namespace IsekaiMod.Utilities
 			}
 			if (array2.Length != 0)
 			{
-				prog.UIGroups = prog.UIGroups.AddToArray(Helpers.CreateUIGroup(array2));
+				prog.UIGroups = (prog.UIGroups ?? new UIGroup[0]).AddToArray(Helpers.CreateUIGroup(array2));
 			}
 			return prog;
 		}
@@ -915,10 +937,14 @@ namespace IsekaiMod.Utilities
 				progression.AddClass(myClass);
 			}
 			HashSet<BlueprintFeatureBase> hashSet = new HashSet<BlueprintFeatureBase>();
-			LevelEntry[] levelEntries = progression.LevelEntries;
-			for (int i = 0; i < levelEntries.Length; i++)
+			LevelEntry[] array = progression.LevelEntries.EmptyIfNull();
+			foreach (LevelEntry levelEntry in array)
 			{
-				foreach (BlueprintFeatureBase feature in levelEntries[i].Features)
+				if (levelEntry?.Features == null)
+				{
+					continue;
+				}
+				foreach (BlueprintFeatureBase feature in levelEntry.Features)
 				{
 					if (feature != null && !hashSet.Contains(feature))
 					{
@@ -945,9 +971,12 @@ namespace IsekaiMod.Utilities
 				return;
 			}
 			BlueprintFeatureReference[] allFeatures = selection.m_AllFeatures;
-			for (int i = 0; i < allFeatures.Length; i++)
+			foreach (BlueprintFeatureReference blueprintFeatureReference in allFeatures)
 			{
-				PatchClassIntoFeatureOfReferenceClass(allFeatures[i]?.Get(), myClass, referenceClass, mylevel, loopPrevention);
+				if (blueprintFeatureReference != null)
+				{
+					PatchClassIntoFeatureOfReferenceClass(blueprintFeatureReference.Get(), myClass, referenceClass, mylevel, loopPrevention);
+				}
 			}
 		}
 
@@ -1002,15 +1031,36 @@ namespace IsekaiMod.Utilities
 				}
 				if (component is AddAbilityUseTrigger { m_Spellbooks: not null } addAbilityUseTrigger && addAbilityUseTrigger.m_Spellbooks.Length != 0)
 				{
-					addAbilityUseTrigger.m_Spellbooks = addAbilityUseTrigger.m_Spellbooks.AddRangeToArray(patchableSpellBooks);
+					BlueprintSpellbookReference[] array = patchableSpellBooks;
+					foreach (BlueprintSpellbookReference blueprintSpellbookReference in array)
+					{
+						if (blueprintSpellbookReference != null && !addAbilityUseTrigger.m_Spellbooks.Contains(blueprintSpellbookReference))
+						{
+							addAbilityUseTrigger.m_Spellbooks = addAbilityUseTrigger.m_Spellbooks.AddToArray(blueprintSpellbookReference);
+						}
+					}
 				}
 				if (component is AddCasterLevelForSpellbook { m_Spellbooks: not null } addCasterLevelForSpellbook && addCasterLevelForSpellbook.m_Spellbooks.Length != 0)
 				{
-					addCasterLevelForSpellbook.m_Spellbooks = addCasterLevelForSpellbook.m_Spellbooks.AddRangeToArray(patchableSpellBooks);
+					BlueprintSpellbookReference[] array = patchableSpellBooks;
+					foreach (BlueprintSpellbookReference blueprintSpellbookReference2 in array)
+					{
+						if (blueprintSpellbookReference2 != null && !addCasterLevelForSpellbook.m_Spellbooks.Contains(blueprintSpellbookReference2))
+						{
+							addCasterLevelForSpellbook.m_Spellbooks = addCasterLevelForSpellbook.m_Spellbooks.AddToArray(blueprintSpellbookReference2);
+						}
+					}
 				}
 				if (component is IncreaseSpellSpellbookDC { m_Spellbooks: not null } increaseSpellSpellbookDC && increaseSpellSpellbookDC.m_Spellbooks.Length != 0)
 				{
-					increaseSpellSpellbookDC.m_Spellbooks = increaseSpellSpellbookDC.m_Spellbooks.AddRangeToArray(patchableSpellBooks);
+					BlueprintSpellbookReference[] array = patchableSpellBooks;
+					foreach (BlueprintSpellbookReference blueprintSpellbookReference3 in array)
+					{
+						if (blueprintSpellbookReference3 != null && !increaseSpellSpellbookDC.m_Spellbooks.Contains(blueprintSpellbookReference3))
+						{
+							increaseSpellSpellbookDC.m_Spellbooks = increaseSpellSpellbookDC.m_Spellbooks.AddToArray(blueprintSpellbookReference3);
+						}
+					}
 				}
 				if (component is AddFeatureOnClassLevel addFeatureOnClassLevel)
 				{
@@ -1460,13 +1510,13 @@ namespace IsekaiMod.Utilities
 
 		internal static void PatchResource(BlueprintAbilityResource resource, BlueprintCharacterClassReference classRef)
 		{
-			if (resource != null)
+			if (resource != null && classRef != null)
 			{
-				if (resource.m_MaxAmount.m_Class != null && resource.m_MaxAmount.m_Class.Length != 0)
+				if (resource.m_MaxAmount.m_Class != null && resource.m_MaxAmount.m_Class.Length != 0 && !resource.m_MaxAmount.m_Class.Contains(classRef))
 				{
 					resource.m_MaxAmount.m_Class = resource.m_MaxAmount.m_Class.AppendToArray(classRef);
 				}
-				if (resource.m_MaxAmount.m_ClassDiv != null && resource.m_MaxAmount.m_ClassDiv.Length != 0)
+				if (resource.m_MaxAmount.m_ClassDiv != null && resource.m_MaxAmount.m_ClassDiv.Length != 0 && !resource.m_MaxAmount.m_ClassDiv.Contains(classRef))
 				{
 					resource.m_MaxAmount.m_ClassDiv = resource.m_MaxAmount.m_ClassDiv.AppendToArray(classRef);
 				}
@@ -1475,14 +1525,14 @@ namespace IsekaiMod.Utilities
 
 		internal static void PatchAbility(BlueprintAbility ability, BlueprintCharacterClassReference classRef)
 		{
-			if (((BlueprintScriptableObject)ability)?.Components == null)
+			if (((BlueprintScriptableObject)ability)?.Components == null || classRef == null)
 			{
 				return;
 			}
 			BlueprintComponent[] components = ((BlueprintScriptableObject)ability).Components;
 			for (int i = 0; i < components.Length; i++)
 			{
-				if (components[i] is ContextRankConfig { m_Class: not null } contextRankConfig && contextRankConfig.m_Class.Length != 0)
+				if (components[i] is ContextRankConfig { m_Class: not null } contextRankConfig && contextRankConfig.m_Class.Length != 0 && !contextRankConfig.m_Class.Contains(classRef))
 				{
 					contextRankConfig.m_Class = contextRankConfig.m_Class.AppendToArray(classRef);
 				}
@@ -1491,22 +1541,28 @@ namespace IsekaiMod.Utilities
 
 		private static void PatchBuff(BlueprintBuff buff, BlueprintSpellbookReference spellbookRef)
 		{
-			if (((BlueprintScriptableObject)buff)?.Components == null)
+			if (((BlueprintScriptableObject)buff)?.Components == null || spellbookRef == null)
 			{
 				return;
 			}
 			BlueprintComponent[] components = ((BlueprintScriptableObject)buff).Components;
 			foreach (BlueprintComponent blueprintComponent in components)
 			{
-				if (blueprintComponent is AddAbilityUseTrigger addAbilityUseTrigger)
+				if (blueprintComponent is AddAbilityUseTrigger { m_Spellbooks: not null } addAbilityUseTrigger)
 				{
-					addAbilityUseTrigger.m_Spellbooks = addAbilityUseTrigger.m_Spellbooks.AppendToArray(spellbookRef);
+					if (!addAbilityUseTrigger.m_Spellbooks.Contains(spellbookRef))
+					{
+						addAbilityUseTrigger.m_Spellbooks = addAbilityUseTrigger.m_Spellbooks.AppendToArray(spellbookRef);
+					}
 				}
-				else if (blueprintComponent is AddCasterLevelForSpellbook addCasterLevelForSpellbook)
+				else if (blueprintComponent is AddCasterLevelForSpellbook { m_Spellbooks: not null } addCasterLevelForSpellbook)
 				{
-					addCasterLevelForSpellbook.m_Spellbooks = addCasterLevelForSpellbook.m_Spellbooks.AppendToArray(spellbookRef);
+					if (!addCasterLevelForSpellbook.m_Spellbooks.Contains(spellbookRef))
+					{
+						addCasterLevelForSpellbook.m_Spellbooks = addCasterLevelForSpellbook.m_Spellbooks.AppendToArray(spellbookRef);
+					}
 				}
-				else if (blueprintComponent is IncreaseSpellSpellbookDC increaseSpellSpellbookDC)
+				else if (blueprintComponent is IncreaseSpellSpellbookDC { m_Spellbooks: not null } increaseSpellSpellbookDC && !increaseSpellSpellbookDC.m_Spellbooks.Contains(spellbookRef))
 				{
 					increaseSpellSpellbookDC.m_Spellbooks = increaseSpellSpellbookDC.m_Spellbooks.AppendToArray(spellbookRef);
 				}
@@ -1515,14 +1571,14 @@ namespace IsekaiMod.Utilities
 
 		private static void PatchBuff(BlueprintBuff buff, BlueprintCharacterClassReference classRef)
 		{
-			if (((BlueprintScriptableObject)buff)?.Components == null)
+			if (((BlueprintScriptableObject)buff)?.Components == null || classRef == null)
 			{
 				return;
 			}
 			BlueprintComponent[] components = ((BlueprintScriptableObject)buff).Components;
 			for (int i = 0; i < components.Length; i++)
 			{
-				if (components[i] is ContextRankConfig { m_Class: not null } contextRankConfig && contextRankConfig.m_Class.Length != 0)
+				if (components[i] is ContextRankConfig { m_Class: not null } contextRankConfig && contextRankConfig.m_Class.Length != 0 && !contextRankConfig.m_Class.Contains(classRef))
 				{
 					contextRankConfig.m_Class = contextRankConfig.m_Class.AppendToArray(classRef);
 				}

@@ -4,6 +4,7 @@ using Kingmaker.RuleSystem.Rules.Damage;
 using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
+using Kingmaker.Blueprints.Classes.Spells;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Designers.Mechanics.Buffs;
 using Kingmaker.Designers.Mechanics.Facts;
@@ -38,6 +39,12 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.MartialGod
 		public static BlueprintFeature Stage3 { get; private set; }
 
 		public static BlueprintFeature Stage4 { get; private set; }
+
+		public static BlueprintFeature Stage5 { get; private set; }
+
+		public static BlueprintFeature Stage6 { get; private set; }
+
+		public static BlueprintFeature Stage7 { get; private set; }
 
 		public static void Add()
 		{
@@ -199,6 +206,86 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.MartialGod
 				bp.AddComponent(delegate(AddFacts c)
 				{
 					c.m_Facts = new BlueprintUnitFactReference[1] { SurgeAbility.ToReference<BlueprintUnitFactReference>() };
+				});
+			});
+			Stage5 = Helpers.CreateBlueprint(Main.IsekaiContext, "MartialSoulAwakeningStage5", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Inner Soul Awakening V: Transcendent Flow");
+				bp.SetDescription(Main.IsekaiContext, "Your spirit flows seamlessly through the fabric of combat. You gain a +2 enhancement bonus on attack and damage rolls, an additional attack at your highest BAB when making a full attack, and all your attacks bypass Damage Reduction as epic.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_InnerSoul;
+				bp.IsClassFeature = true;
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Enhancement;
+					c.Stat = StatType.AdditionalAttackBonus;
+					c.Value = 2;
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Enhancement;
+					c.Stat = StatType.AdditionalDamage;
+					c.Value = 2;
+				});
+				bp.AddComponent(delegate(BuffExtraAttack c)
+				{
+					c.Number = 1;
+				});
+			});
+			Stage6 = Helpers.CreateBlueprint(Main.IsekaiContext, "MartialSoulAwakeningStage6", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Inner Soul Awakening VI: Spirit Severing Strike");
+				bp.SetDescription(Main.IsekaiContext, "Your attacks sever spiritual threads and rend reality. You gain an additional 2d6 force damage on all attacks, a +4 dodge bonus to AC, and a +4 enhancement bonus to all saving throws.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_InnerSoul;
+				bp.IsClassFeature = true;
+				// WeaponEnergyDamageDice is a weapon enchantment logic and does nothing on a unit fact; AdditionalDiceOnAttack does the same job on the owner.
+				bp.AddComponent(delegate(AdditionalDiceOnAttack c)
+				{
+					c.AttackType = AdditionalDiceOnAttack.WeaponOptions.OnlyWeaponAttacks;
+					c.OnHit = true;
+					c.InitiatorConditions = ActionFlow.EmptyCondition();
+					c.TargetConditions = ActionFlow.EmptyCondition();
+					c.Value = new ContextDiceValue { DiceType = DiceType.D6, DiceCountValue = 2, BonusValue = 0 };
+					c.DamageType = new DamageTypeDescription { Type = DamageType.Energy, Energy = DamageEnergyType.Magic };
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Dodge;
+					c.Stat = StatType.AC;
+					c.Value = 4;
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Enhancement;
+					c.Stat = StatType.SaveFortitude;
+					c.Value = 4;
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Enhancement;
+					c.Stat = StatType.SaveReflex;
+					c.Value = 4;
+				});
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Enhancement;
+					c.Stat = StatType.SaveWill;
+					c.Value = 4;
+				});
+			});
+			Stage7 = Helpers.CreateBlueprint(Main.IsekaiContext, "MartialSoulAwakeningStage7", delegate(BlueprintFeature bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Inner Soul Awakening VII: Apex Transcendent Body");
+				bp.SetDescription(Main.IsekaiContext, "Reaching the absolute pinnacle of martial physiology, you gain permanent immunity to paralysis, trip, disarm, and stun, and your base land speed increases by +30 feet.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_InnerSoul;
+				bp.IsClassFeature = true;
+				bp.AddComponent(delegate(BuffMovementSpeed c)
+				{
+					c.Value = 30;
+					c.Descriptor = ModifierDescriptor.Enhancement;
+				});
+				bp.AddComponent(delegate(BuffDescriptorImmunity c)
+				{
+					c.Descriptor = SpellDescriptor.Stun | SpellDescriptor.Paralysis;
 				});
 			});
 		}

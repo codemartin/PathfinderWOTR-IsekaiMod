@@ -8,6 +8,7 @@ using Kingmaker.Blueprints.Facts;
 using Kingmaker.Designers.Mechanics.Facts;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.Enums;
+using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Interaction;
 using TabletopTweaks.Core.Utilities;
@@ -111,9 +112,13 @@ namespace IsekaiMod.Content.Guardians
 				bp.m_AddFacts = array;
 			});
 			TempestStarWolfFeature = CreateSubclassGuardianFeature("TempestStarWolfFeature", "★ Tempest Star Wolf (Slime Exclusive)", "[Slime Archetype Exclusive Partner]\nA majestic silver wolf whose fur crackles with azure lightning and shadow mist.\nBorn from the tempestuous residual energy of an apex predator, it coordinates lethal pack tactics with its slime sovereign.\n\n{g|Encyclopedia:Size}Size{/g}: Medium\n{g|Encyclopedia:Speed}Speed{/g}: 60 ft.\n{g|Encyclopedia:Armor_Class}AC{/g}: +4 natural armor\n{g|Encyclopedia:Ability_Scores}Starting ability scores{/g}: Str 16, Dex 20, Con 16, Int 12, Wis 16, Cha 14\nAdvances 1-20 in Guardian Class with custom storm-pack milestones.", petUnit, SubclassGuardianProgressions.TempestStarWolfProgression, BlueprintTools.GetModBlueprint<BlueprintArchetype>(Main.IsekaiContext, "DevourerArchetype"));
+			BlueprintBuff shadowFXBuff = BlueprintTools.GetBlueprint<BlueprintBuff>("8caafe9dc0ff21041b36ad225569d164");
 			BlueprintUnit petUnit2 = (ShadowSoldierBase ?? AstralDevaBase).CreateCopy(Main.IsekaiContext, "ShadowMarshallCompanionUnit", delegate(BlueprintUnit bp)
 			{
 				bp.SetLocalisedName(Main.IsekaiContext, "Shadow Marshall (Igris)");
+				bp.m_Type = BlueprintTools.GetBlueprintReference<BlueprintUnitTypeReference>("d0aa7a6da15f0d3498b046bfaec72c9a");
+				bp.m_Portrait = BlueprintTools.GetBlueprintReference<BlueprintPortraitReference>("4ee2f49b8baf48fabe567465618bf3ce");
+				bp.m_Race = null;
 				bp.ComponentsArray = new BlueprintComponent[0];
 				bp.AddComponent(delegate(AddClassLevels c)
 				{
@@ -146,6 +151,10 @@ namespace IsekaiMod.Content.Guardians
 					GuardianBarks.ShadowMarshallBarksFeature.ToReference<BlueprintUnitFactReference>(),
 					SubclassGuardianProgressions.ShadowMarshallProgression.ToReference<BlueprintUnitFactReference>()
 				};
+				if (shadowFXBuff != null)
+				{
+					array = array.AppendToArray(shadowFXBuff.ToReference<BlueprintUnitFactReference>());
+				}
 				if (slotFeature != null)
 				{
 					array = array.AppendToArray(slotFeature.ToReference<BlueprintUnitFactReference>());

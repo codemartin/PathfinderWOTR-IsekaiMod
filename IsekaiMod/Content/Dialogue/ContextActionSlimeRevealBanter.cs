@@ -1,5 +1,5 @@
-﻿using IsekaiMod.Content.Constellations;
-using Kingmaker.PubSubSystem;
+﻿using System.Collections.Generic;
+using IsekaiMod.Content.Constellations;
 using Kingmaker.UnitLogic.Mechanics.Actions;
 
 namespace IsekaiMod.Content.Dialogue
@@ -14,12 +14,14 @@ namespace IsekaiMod.Content.Dialogue
 		public override void RunAction()
 		{
 			DivineTokens.AddCoins(250, "The Laughing King");
-			foreach (string line in ConstellationDialogueBanter.GetSlimeRevealBanter())
+			List<string> slimeRevealBanter = ConstellationDialogueBanter.GetSlimeRevealBanter();
+			if (slimeRevealBanter == null)
 			{
-				EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
-				{
-					h.HandleLogMessage(line);
-				});
+				return;
+			}
+			foreach (string item in slimeRevealBanter)
+			{
+				ConstellationChatManager.PostLog(item, "The Laughing King", ConstellationCategory.Subclass, 0, "Slime Reveal");
 			}
 		}
 	}

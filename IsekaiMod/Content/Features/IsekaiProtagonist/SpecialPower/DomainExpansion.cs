@@ -165,9 +165,9 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 			});
 			DomainExpansionFeature.AddComponent(delegate(PrerequisiteCharacterLevel c)
 			{
-				c.Level = 7;
+				c.Level = 13;
 			});
-			SpecialPowerSelection.AddToSelection(DomainExpansionFeature);
+			SpecialPowerSelection.AddToMagicSelection(DomainExpansionFeature);
 		}
 	}
 }

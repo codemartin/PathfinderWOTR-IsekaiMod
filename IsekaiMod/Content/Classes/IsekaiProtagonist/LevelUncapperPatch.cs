@@ -43,13 +43,13 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist
 		{
 			public static void Postfix(BlueprintCharacterClass __instance, UnitDescriptor unit, LevelUpState state, bool ignoreAlignment, ref bool __result)
 			{
-				if (__result || !Main.IsekaiContext.AddedContent.EnableLevelUncapping || __instance == null || unit == null || unit.Progression == null)
+				if (__result || !Main.IsekaiContext.AddedContent.EnableLevelUncapping || __instance == null || unit == null || unit.Progression == null || __instance.PrestigeClass || __instance != IsekaiProtagonistClass.Get())
 				{
 					return;
 				}
 				int classLevel = unit.Progression.GetClassLevel(__instance);
-				int num = ((__instance == IsekaiProtagonistClass.Get()) ? 40 : (__instance.PrestigeClass ? 20 : 40));
-				if ((classLevel < 20 && (!__instance.PrestigeClass || classLevel < 10)) || classLevel >= num)
+				int num = 40;
+				if (classLevel < 20 || classLevel >= num)
 				{
 					return;
 				}

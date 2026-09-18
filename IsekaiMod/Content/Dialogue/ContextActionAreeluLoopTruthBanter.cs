@@ -1,5 +1,5 @@
-﻿using IsekaiMod.Content.Constellations;
-using Kingmaker.PubSubSystem;
+﻿using System.Collections.Generic;
+using IsekaiMod.Content.Constellations;
 using Kingmaker.UnitLogic.Mechanics.Actions;
 
 namespace IsekaiMod.Content.Dialogue
@@ -13,11 +13,23 @@ namespace IsekaiMod.Content.Dialogue
 
 		public override void RunAction()
 		{
-			DivineTokens.AddCoins(500, "The Key and the Gate");
-			EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
+			if (ConstellationChatManager.HasTriggeredMilestone("Act3AreeluLabTruth"))
 			{
-				h.HandleLogMessage("<color=#9400D3><b>[The Key and the Gate]</b></color>: <i>\"The veil of causality is pierced. The architect of the wound gazes into the infinite recurring corridors of the All-in-One.\"</i>");
-			});
+				return;
+			}
+			ConstellationChatManager.MarkMilestoneTriggered("Act3AreeluLabTruth");
+			List<string> act3AreeluLabTruthBanter = ConstellationDialogueBanter.GetAct3AreeluLabTruthBanter(TimelineManager.GetCurrentCycle(), out var coinsAwarded, out var primarySponsor);
+			if (act3AreeluLabTruthBanter != null)
+			{
+				foreach (string item in act3AreeluLabTruthBanter)
+				{
+					ConstellationChatManager.PostLog(item, primarySponsor, ConstellationCategory.Quest, 0, "Areelu's Laboratory: The Unscripted Soul");
+				}
+			}
+			if (coinsAwarded > 0)
+			{
+				DivineTokens.AddCoins(coinsAwarded, primarySponsor);
+			}
 		}
 	}
 }

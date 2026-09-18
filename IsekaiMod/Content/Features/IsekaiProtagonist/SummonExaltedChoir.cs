@@ -33,7 +33,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist
 
 		private static readonly BlueprintUnit CR22_ErinyesDevilStandard = BlueprintTools.GetBlueprint<BlueprintUnit>("b576f3eb0aa94af44a985f51eda9db7b");
 
-		private static readonly BlueprintUnit ShadowSoldierUnit = BlueprintTools.GetBlueprint<BlueprintUnit>("7121303d0f344a5abb3b43b0c9cef8e4");
+		private static readonly BlueprintUnit ShadowSoldierUnit = BlueprintTools.GetBlueprint<BlueprintUnit>("7237a32613fe55e479d1141682f2bbd4") ?? BlueprintTools.GetBlueprint<BlueprintUnit>("7121303d0f344a5abb3b43b0c9cef8e4");
 
 		private static readonly BlueprintUnit HamadryadQueenUnit = BlueprintTools.GetBlueprint<BlueprintUnit>("b8972cfe36e3cd945bbd2c4c320d5237") ?? BlueprintTools.GetBlueprint<BlueprintUnit>("0cc7a2526e4557945b1d8eb277d1fb3a");
 

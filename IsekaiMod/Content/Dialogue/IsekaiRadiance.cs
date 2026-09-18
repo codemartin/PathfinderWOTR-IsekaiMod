@@ -210,22 +210,22 @@ namespace IsekaiMod.Content.Dialogue
 			}
 			void AddAwakenAnswer(string id, string text, RadianceForm form)
 			{
-				BlueprintAnswer bp = TTCoreExtensions.CreateAnswer(id, delegate(BlueprintAnswer blueprintAnswer)
+				BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(id, delegate(BlueprintAnswer bp)
 				{
-					blueprintAnswer.SetText(Main.IsekaiContext, text);
-					blueprintAnswer.NextCue = new CueSelection
+					bp.SetText(Main.IsekaiContext, text);
+					bp.NextCue = new CueSelection
 					{
 						Cues = new List<BlueprintCueBaseReference> { upgradeRadianceCue.ToReference<BlueprintCueBaseReference>() },
 						Strategy = Strategy.First
 					};
-					blueprintAnswer.ShowOnce = true;
-					blueprintAnswer.OnSelect = ActionFlow.DoSingle(delegate(ContextActionAwakenRadiance c)
+					bp.ShowOnce = true;
+					bp.OnSelect = ActionFlow.DoSingle(delegate(ContextActionAwakenRadiance c)
 					{
 						c.InitialForm = form;
 					});
-					blueprintAnswer.RequirePlotArmor();
+					bp.RequirePlotArmor();
 				});
-				answersList_0002.Answers.Insert(0, bp.ToReference<BlueprintAnswerBaseReference>());
+				answersList_0002.InsertAnswer(answer);
 			}
 		}
 	}

@@ -19,7 +19,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 
 		public static void Add()
 		{
-			SpecialPowerSelection.AddToSelection(TTCoreExtensions.CreateToggleAuraBuffFeature("ExtremeSpeed", "Allies within 40 feet of you gain a +20-foot bonus to speed, plus an additional 5 feet for every 4 character levels.", "This creature gains a {g|Encyclopedia:Bonus}bonus{/g} to their {g|Encyclopedia:Speed}speed{/g}.", Icon_SupersonicSpeed, BlueprintAbilityAreaEffect.TargetType.Ally, new Feet(40f), affectEnemies: false, delegate(BlueprintBuff bp)
+			SpecialPowerSelection.AddToMartialSelection(TTCoreExtensions.CreateToggleAuraBuffFeature("ExtremeSpeed", "Allies within 40 feet of you gain a +20-foot bonus to speed, plus an additional 5 feet for every 4 character levels.", "This creature gains a {g|Encyclopedia:Bonus}bonus{/g} to their {g|Encyclopedia:Speed}speed{/g}.", Icon_SupersonicSpeed, BlueprintAbilityAreaEffect.TargetType.Ally, new Feet(40f), affectEnemies: false, delegate(BlueprintBuff bp)
 			{
 				bp.AddComponent(delegate(AddStatBonus c)
 				{

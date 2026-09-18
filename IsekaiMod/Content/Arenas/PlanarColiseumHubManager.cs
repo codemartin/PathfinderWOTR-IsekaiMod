@@ -183,7 +183,7 @@ namespace IsekaiMod.Content.Arenas
 				BlueprintAnswer ansTrade = TTCoreExtensions.CreateAnswer("Ans_Envoy_Trade", delegate(BlueprintAnswer a)
 				{
 					a.SetText(Main.IsekaiContext, "Browse the Cosmic Relics exchange (Trade Cosmic Coins).");
-					BlueprintCue bp3 = TTCoreExtensions.CreateCue("Cue_Envoy_Trade", delegate(BlueprintCue ct)
+					BlueprintCue bp2 = TTCoreExtensions.CreateCue("Cue_Envoy_Trade", delegate(BlueprintCue ct)
 					{
 						ct.SetText(Main.IsekaiContext, "\"Behold the treasures of the cosmos.\"");
 						ct.Speaker = envoySpeaker;
@@ -191,36 +191,36 @@ namespace IsekaiMod.Content.Arenas
 					});
 					a.NextCue = new CueSelection
 					{
-						Cues = new List<BlueprintCueBaseReference> { bp3.ToReference<BlueprintCueBaseReference>() }
+						Cues = new List<BlueprintCueBaseReference> { bp2.ToReference<BlueprintCueBaseReference>() }
 					};
+				});
+				BlueprintCue cueLore = TTCoreExtensions.CreateCue("Cue_Envoy_Lore", delegate(BlueprintCue cl)
+				{
+					cl.SetText(Main.IsekaiContext, "\"Cosmic Coins are awarded for conquering tournament cups in this coliseum, defeating rift bosses, progressing through New Game+ cycles, achieving milestones, and issuing commercial crusade decrees.\"");
+					cl.Speaker = envoySpeaker;
 				});
 				BlueprintAnswer ansLore = TTCoreExtensions.CreateAnswer("Ans_Envoy_Lore", delegate(BlueprintAnswer a)
 				{
 					a.SetText(Main.IsekaiContext, "How do I earn more Cosmic Coins?");
-					BlueprintCue bp3 = TTCoreExtensions.CreateCue("Cue_Envoy_Lore", delegate(BlueprintCue cl)
-					{
-						cl.SetText(Main.IsekaiContext, "\"Cosmic Coins are awarded for conquering tournament cups in this coliseum, defeating rift bosses, progressing through New Game+ cycles, achieving milestones, and issuing commercial crusade decrees.\"");
-						cl.Speaker = envoySpeaker;
-					});
 					a.NextCue = new CueSelection
 					{
-						Cues = new List<BlueprintCueBaseReference> { bp3.ToReference<BlueprintCueBaseReference>() }
+						Cues = new List<BlueprintCueBaseReference> { cueLore.ToReference<BlueprintCueBaseReference>() }
 					};
 				});
 				BlueprintAnswer ansLeave = TTCoreExtensions.CreateAnswer("Ans_Envoy_Leave", delegate(BlueprintAnswer a)
 				{
 					a.SetText(Main.IsekaiContext, "I will return when I possess more coins.");
-					BlueprintCue bp3 = TTCoreExtensions.CreateCue("Cue_Envoy_Leave", delegate(BlueprintCue cl)
+					BlueprintCue bp2 = TTCoreExtensions.CreateCue("Cue_Envoy_Leave", delegate(BlueprintCue cl)
 					{
 						cl.SetText(Main.IsekaiContext, "\"May the stars guide your path, otherworlder.\"");
 						cl.Speaker = envoySpeaker;
 					});
 					a.NextCue = new CueSelection
 					{
-						Cues = new List<BlueprintCueBaseReference> { bp3.ToReference<BlueprintCueBaseReference>() }
+						Cues = new List<BlueprintCueBaseReference> { bp2.ToReference<BlueprintCueBaseReference>() }
 					};
 				});
-				BlueprintAnswersList bp2 = Helpers.CreateBlueprint(Main.IsekaiContext, "Envoy_AnswersList", delegate(BlueprintAnswersList al)
+				BlueprintAnswersList answersList = Helpers.CreateBlueprint(Main.IsekaiContext, "Envoy_AnswersList", delegate(BlueprintAnswersList al)
 				{
 					al.Answers = new List<BlueprintAnswerBaseReference>
 					{
@@ -229,7 +229,8 @@ namespace IsekaiMod.Content.Arenas
 						ansLeave.ToReference<BlueprintAnswerBaseReference>()
 					};
 				});
-				blueprintCue.Answers = new List<BlueprintAnswerBaseReference> { bp2.ToReference<BlueprintAnswerBaseReference>() };
+				cueLore.SetAnswersList(answersList);
+				blueprintCue.SetAnswersList(answersList);
 				bp.FirstCue = new CueSelection
 				{
 					Cues = new List<BlueprintCueBaseReference> { blueprintCue.ToReference<BlueprintCueBaseReference>() }
@@ -273,7 +274,7 @@ namespace IsekaiMod.Content.Arenas
 				BlueprintAnswer ansTrade = TTCoreExtensions.CreateAnswer("Ans_Smuggler_Trade", delegate(BlueprintAnswer a)
 				{
 					a.SetText(Main.IsekaiContext, "Show me your luxury contraband (Trade Gold).");
-					BlueprintCue bp3 = TTCoreExtensions.CreateCue("Cue_Smuggler_Trade", delegate(BlueprintCue ct)
+					BlueprintCue bp2 = TTCoreExtensions.CreateCue("Cue_Smuggler_Trade", delegate(BlueprintCue ct)
 					{
 						ct.SetText(Main.IsekaiContext, "\"Gold talks, otherworlder. Take a look at this lot.\"");
 						ct.Speaker = smugglerSpeaker;
@@ -281,36 +282,36 @@ namespace IsekaiMod.Content.Arenas
 					});
 					a.NextCue = new CueSelection
 					{
-						Cues = new List<BlueprintCueBaseReference> { bp3.ToReference<BlueprintCueBaseReference>() }
+						Cues = new List<BlueprintCueBaseReference> { bp2.ToReference<BlueprintCueBaseReference>() }
 					};
+				});
+				BlueprintCue cueLore = TTCoreExtensions.CreateCue("Cue_Smuggler_Lore", delegate(BlueprintCue cl)
+				{
+					cl.SetText(Main.IsekaiContext, "\"Who said anything about the Worldwound? I siphon supplies straight from the Astral Plane and dead empires across the Great Beyond. The crusaders fight in mud; we deal in cosmic supremacy.\"");
+					cl.Speaker = smugglerSpeaker;
 				});
 				BlueprintAnswer ansLore = TTCoreExtensions.CreateAnswer("Ans_Smuggler_Lore", delegate(BlueprintAnswer a)
 				{
 					a.SetText(Main.IsekaiContext, "How did you acquire +5 and +6 enchantments in the Worldwound?");
-					BlueprintCue bp3 = TTCoreExtensions.CreateCue("Cue_Smuggler_Lore", delegate(BlueprintCue cl)
-					{
-						cl.SetText(Main.IsekaiContext, "\"Who said anything about the Worldwound? I siphon supplies straight from the Astral Plane and dead empires across the Great Beyond. The crusaders fight in mud; we deal in cosmic supremacy.\"");
-						cl.Speaker = smugglerSpeaker;
-					});
 					a.NextCue = new CueSelection
 					{
-						Cues = new List<BlueprintCueBaseReference> { bp3.ToReference<BlueprintCueBaseReference>() }
+						Cues = new List<BlueprintCueBaseReference> { cueLore.ToReference<BlueprintCueBaseReference>() }
 					};
 				});
 				BlueprintAnswer ansLeave = TTCoreExtensions.CreateAnswer("Ans_Smuggler_Leave", delegate(BlueprintAnswer a)
 				{
 					a.SetText(Main.IsekaiContext, "I have no need of your wares right now.");
-					BlueprintCue bp3 = TTCoreExtensions.CreateCue("Cue_Smuggler_Leave", delegate(BlueprintCue cl)
+					BlueprintCue bp2 = TTCoreExtensions.CreateCue("Cue_Smuggler_Leave", delegate(BlueprintCue cl)
 					{
 						cl.SetText(Main.IsekaiContext, "\"Come back when your bags are heavier. I never close up shop.\"");
 						cl.Speaker = smugglerSpeaker;
 					});
 					a.NextCue = new CueSelection
 					{
-						Cues = new List<BlueprintCueBaseReference> { bp3.ToReference<BlueprintCueBaseReference>() }
+						Cues = new List<BlueprintCueBaseReference> { bp2.ToReference<BlueprintCueBaseReference>() }
 					};
 				});
-				BlueprintAnswersList bp2 = Helpers.CreateBlueprint(Main.IsekaiContext, "Smuggler_AnswersList", delegate(BlueprintAnswersList al)
+				BlueprintAnswersList answersList = Helpers.CreateBlueprint(Main.IsekaiContext, "Smuggler_AnswersList", delegate(BlueprintAnswersList al)
 				{
 					al.Answers = new List<BlueprintAnswerBaseReference>
 					{
@@ -319,7 +320,8 @@ namespace IsekaiMod.Content.Arenas
 						ansLeave.ToReference<BlueprintAnswerBaseReference>()
 					};
 				});
-				blueprintCue.Answers = new List<BlueprintAnswerBaseReference> { bp2.ToReference<BlueprintAnswerBaseReference>() };
+				cueLore.SetAnswersList(answersList);
+				blueprintCue.SetAnswersList(answersList);
 				bp.FirstCue = new CueSelection
 				{
 					Cues = new List<BlueprintCueBaseReference> { blueprintCue.ToReference<BlueprintCueBaseReference>() }
@@ -359,7 +361,7 @@ namespace IsekaiMod.Content.Arenas
 				BlueprintAnswer ansStore = TTCoreExtensions.CreateAnswer("Ans_Oracle_Store", delegate(BlueprintAnswer a)
 				{
 					a.SetText(Main.IsekaiContext, "Commune with the constellations for spiritual blessings and patron ascensions.");
-					BlueprintCue bp3 = TTCoreExtensions.CreateCue("Cue_Oracle_Store", delegate(BlueprintCue cs)
+					BlueprintCue bp2 = TTCoreExtensions.CreateCue("Cue_Oracle_Store", delegate(BlueprintCue cs)
 					{
 						cs.SetText(Main.IsekaiContext, "\"Let the divine resonance wash over your soul.\"");
 						cs.Speaker = oracleSpeaker;
@@ -367,36 +369,36 @@ namespace IsekaiMod.Content.Arenas
 					});
 					a.NextCue = new CueSelection
 					{
-						Cues = new List<BlueprintCueBaseReference> { bp3.ToReference<BlueprintCueBaseReference>() }
+						Cues = new List<BlueprintCueBaseReference> { bp2.ToReference<BlueprintCueBaseReference>() }
 					};
+				});
+				BlueprintCue cueLore = TTCoreExtensions.CreateCue("Cue_Oracle_Lore", delegate(BlueprintCue cl)
+				{
+					cl.SetText(Main.IsekaiContext, "\"Desna's song, Gorum's fury, Iomedae's righteousness, Calistria's venom, Nethys's duality, Asmodeus's order, the Lantern King's mischief, and Yog-Sothoth's timeless gate. When you fight, they all bear witness.\"");
+					cl.Speaker = oracleSpeaker;
 				});
 				BlueprintAnswer ansLore = TTCoreExtensions.CreateAnswer("Ans_Oracle_Lore", delegate(BlueprintAnswer a)
 				{
 					a.SetText(Main.IsekaiContext, "Which constellations watch over the coliseum?");
-					BlueprintCue bp3 = TTCoreExtensions.CreateCue("Cue_Oracle_Lore", delegate(BlueprintCue cl)
-					{
-						cl.SetText(Main.IsekaiContext, "\"Desna's song, Gorum's fury, Iomedae's righteousness, Calistria's venom, Nethys's duality, Asmodeus's order, the Lantern King's mischief, and Yog-Sothoth's timeless gate. When you fight, they all bear witness.\"");
-						cl.Speaker = oracleSpeaker;
-					});
 					a.NextCue = new CueSelection
 					{
-						Cues = new List<BlueprintCueBaseReference> { bp3.ToReference<BlueprintCueBaseReference>() }
+						Cues = new List<BlueprintCueBaseReference> { cueLore.ToReference<BlueprintCueBaseReference>() }
 					};
 				});
 				BlueprintAnswer ansLeave = TTCoreExtensions.CreateAnswer("Ans_Oracle_Leave", delegate(BlueprintAnswer a)
 				{
 					a.SetText(Main.IsekaiContext, "I will meditate on your words.");
-					BlueprintCue bp3 = TTCoreExtensions.CreateCue("Cue_Oracle_Leave", delegate(BlueprintCue cl)
+					BlueprintCue bp2 = TTCoreExtensions.CreateCue("Cue_Oracle_Leave", delegate(BlueprintCue cl)
 					{
 						cl.SetText(Main.IsekaiContext, "\"The cosmos remains with you, always.\"");
 						cl.Speaker = oracleSpeaker;
 					});
 					a.NextCue = new CueSelection
 					{
-						Cues = new List<BlueprintCueBaseReference> { bp3.ToReference<BlueprintCueBaseReference>() }
+						Cues = new List<BlueprintCueBaseReference> { bp2.ToReference<BlueprintCueBaseReference>() }
 					};
 				});
-				BlueprintAnswersList bp2 = Helpers.CreateBlueprint(Main.IsekaiContext, "Oracle_AnswersList", delegate(BlueprintAnswersList al)
+				BlueprintAnswersList answersList = Helpers.CreateBlueprint(Main.IsekaiContext, "Oracle_AnswersList", delegate(BlueprintAnswersList al)
 				{
 					al.Answers = new List<BlueprintAnswerBaseReference>
 					{
@@ -405,7 +407,8 @@ namespace IsekaiMod.Content.Arenas
 						ansLeave.ToReference<BlueprintAnswerBaseReference>()
 					};
 				});
-				blueprintCue.Answers = new List<BlueprintAnswerBaseReference> { bp2.ToReference<BlueprintAnswerBaseReference>() };
+				cueLore.SetAnswersList(answersList);
+				blueprintCue.SetAnswersList(answersList);
 				bp.FirstCue = new CueSelection
 				{
 					Cues = new List<BlueprintCueBaseReference> { blueprintCue.ToReference<BlueprintCueBaseReference>() }

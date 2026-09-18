@@ -125,7 +125,7 @@ namespace IsekaiMod.Content.Arenas
 				BlueprintAnswer ansEnter = TTCoreExtensions.CreateAnswer("Ans_Gateway_Enter", delegate(BlueprintAnswer a)
 				{
 					a.SetText(Main.IsekaiContext, "Open the planar rift to the Planar Coliseum.");
-					BlueprintCue bp3 = TTCoreExtensions.CreateCue("Cue_Gateway_Enter", delegate(BlueprintCue ce)
+					BlueprintCue bp2 = TTCoreExtensions.CreateCue("Cue_Gateway_Enter", delegate(BlueprintCue ce)
 					{
 						ce.SetText(Main.IsekaiContext, "\"Step through the threshold, champion. May the constellations favor your courage.\"");
 						ce.Speaker = speaker;
@@ -133,36 +133,36 @@ namespace IsekaiMod.Content.Arenas
 					});
 					a.NextCue = new CueSelection
 					{
-						Cues = new List<BlueprintCueBaseReference> { bp3.ToReference<BlueprintCueBaseReference>() }
+						Cues = new List<BlueprintCueBaseReference> { bp2.ToReference<BlueprintCueBaseReference>() }
 					};
+				});
+				BlueprintCue cueLore = TTCoreExtensions.CreateCue("Cue_Gateway_Lore", delegate(BlueprintCue cl)
+				{
+					cl.SetText(Main.IsekaiContext, "\"An interdimensional gladiatorial hub outside linear time. You will find the Coliseum Master to organize tournament cups, an Astral Envoy trading relics for Cosmic Coins, a smuggler dealing planar contraband, and the High Oracle of the Constellations.\"");
+					cl.Speaker = speaker;
 				});
 				BlueprintAnswer ansLore = TTCoreExtensions.CreateAnswer("Ans_Gateway_Lore", delegate(BlueprintAnswer a)
 				{
 					a.SetText(Main.IsekaiContext, "What awaits me in the Planar Coliseum?");
-					BlueprintCue bp3 = TTCoreExtensions.CreateCue("Cue_Gateway_Lore", delegate(BlueprintCue cl)
-					{
-						cl.SetText(Main.IsekaiContext, "\"An interdimensional gladiatorial hub outside linear time. You will find the Coliseum Master to organize tournament cups, an Astral Envoy trading relics for Cosmic Coins, a smuggler dealing planar contraband, and the High Oracle of the Constellations.\"");
-						cl.Speaker = speaker;
-					});
 					a.NextCue = new CueSelection
 					{
-						Cues = new List<BlueprintCueBaseReference> { bp3.ToReference<BlueprintCueBaseReference>() }
+						Cues = new List<BlueprintCueBaseReference> { cueLore.ToReference<BlueprintCueBaseReference>() }
 					};
 				});
 				BlueprintAnswer ansLeave = TTCoreExtensions.CreateAnswer("Ans_Gateway_Leave", delegate(BlueprintAnswer a)
 				{
 					a.SetText(Main.IsekaiContext, "Not at this time.");
-					BlueprintCue bp3 = TTCoreExtensions.CreateCue("Cue_Gateway_Leave", delegate(BlueprintCue cl)
+					BlueprintCue bp2 = TTCoreExtensions.CreateCue("Cue_Gateway_Leave", delegate(BlueprintCue cl)
 					{
 						cl.SetText(Main.IsekaiContext, "\"As you will, otherworlder. The rift endures whenever you are ready.\"");
 						cl.Speaker = speaker;
 					});
 					a.NextCue = new CueSelection
 					{
-						Cues = new List<BlueprintCueBaseReference> { bp3.ToReference<BlueprintCueBaseReference>() }
+						Cues = new List<BlueprintCueBaseReference> { bp2.ToReference<BlueprintCueBaseReference>() }
 					};
 				});
-				BlueprintAnswersList bp2 = Helpers.CreateBlueprint(Main.IsekaiContext, "GatewayEmissary_AnswersList", delegate(BlueprintAnswersList al)
+				BlueprintAnswersList answersList = Helpers.CreateBlueprint(Main.IsekaiContext, "GatewayEmissary_AnswersList", delegate(BlueprintAnswersList al)
 				{
 					al.Answers = new List<BlueprintAnswerBaseReference>
 					{
@@ -171,7 +171,8 @@ namespace IsekaiMod.Content.Arenas
 						ansLeave.ToReference<BlueprintAnswerBaseReference>()
 					};
 				});
-				blueprintCue.Answers = new List<BlueprintAnswerBaseReference> { bp2.ToReference<BlueprintAnswerBaseReference>() };
+				cueLore.SetAnswersList(answersList);
+				blueprintCue.SetAnswersList(answersList);
 				bp.FirstCue = new CueSelection
 				{
 					Cues = new List<BlueprintCueBaseReference> { blueprintCue.ToReference<BlueprintCueBaseReference>() }

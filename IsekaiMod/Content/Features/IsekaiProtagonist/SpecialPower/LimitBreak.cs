@@ -53,7 +53,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 				});
 				bp.m_Flags = BlueprintBuff.Flags.StayOnDeath;
 			});
-			SpecialPowerSelection.AddToSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "LimitBreak", delegate(BlueprintFeature bp)
+			SpecialPowerSelection.AddToAuthoritySelection(Helpers.CreateBlueprint(Main.IsekaiContext, "LimitBreak", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Special Power - Limit Break");
 				bp.SetDescription(Main.IsekaiContext, "True protagonists grow strongest when their backs are against the wall. \nBenefit: When your hit points fall below 25%, you enter a Limit Break Awakening for 3 rounds, gaining an extra attack (Haste), +4 to attack and damage, and DR 20/-.\nRequires character level 5.");
@@ -85,7 +85,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 				});
 				bp.AddComponent(delegate(PrerequisiteCharacterLevel c)
 				{
-					c.Level = 5;
+					c.Level = 13;
 				});
 			}));
 		}

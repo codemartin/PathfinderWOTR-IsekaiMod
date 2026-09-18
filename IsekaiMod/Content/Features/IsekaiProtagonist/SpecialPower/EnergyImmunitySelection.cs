@@ -37,7 +37,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 				CreateImmunity("ElectricityImmunity", "You gain immunity to Electricity.", Icon_ProtectionFromElectricity, DamageEnergyType.Electricity, SpellDescriptor.Electricity),
 				CreateImmunity("SonicImmunity", "You gain immunity to Sonic.", Icon_ProtectionFromSonic, DamageEnergyType.Sonic, SpellDescriptor.Sonic)
 			};
-			SpecialPowerSelection.AddToSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "EnergyImmunitySelection", delegate(BlueprintFeatureSelection bp)
+			SpecialPowerSelection.AddToDefenseSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "EnergyImmunitySelection", delegate(BlueprintFeatureSelection bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Energy Immunity");
 				bp.SetDescription(Main.IsekaiContext, "You gain energy immunity of a particular type.\nRequires character level 5.");

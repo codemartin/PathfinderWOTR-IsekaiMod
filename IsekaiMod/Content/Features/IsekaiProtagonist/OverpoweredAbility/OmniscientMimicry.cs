@@ -28,7 +28,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 			BlueprintFeature blueprintFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "OmniscientMimicryFeature", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Overpowered Ability - Omniscient Mimicry (Great Sage)");
-				bp.SetDescription(Main.IsekaiContext, "Operating with the analytical perfection of an omniscient voice in your soul (Great Sage / Copy Ninja), you instantly analyze and counter enemy fighting styles.\nBenefit: You gain a +4 insight bonus to Armor Class, attack rolls, and saving throws. You cannot be flat-footed or surprised, and you automatically gain the Outflank, Combat Reflexes, and Seize the Moment teamwork feats.");
+				bp.SetDescription(Main.IsekaiContext, "Operating with the analytical perfection of an omniscient voice in your soul (Great Sage / Copy Ninja), you instantly analyze and counter enemy fighting styles.\nBenefit: You gain a +4 insight bonus to Armor Class, attack rolls, and saving throws. You cannot be flat-footed or surprised, and you automatically gain the Outflank, Combat Reflexes, and Seize the Moment teamwork feats.\nNote: Mutually exclusive with Status Window (System Interface) and Paradox Sovereign (Temporal Inevitable).");
 				((BlueprintUnitFact)bp).m_Icon = Icon_Omniscient;
 				bp.AddComponent(delegate(AddStatBonus c)
 				{
@@ -88,6 +88,18 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 			blueprintFeature.AddComponent(delegate(PrerequisiteCharacterLevel c)
 			{
 				c.Level = 10;
+			});
+			blueprintFeature.AddComponent(delegate(PrerequisiteNoFeature c)
+			{
+				c.m_Feature = BlueprintTools.GetModBlueprintReference<BlueprintFeatureReference>(Main.IsekaiContext, "StatusWindowFeature");
+			});
+			blueprintFeature.AddComponent(delegate(PrerequisiteNoFeature c)
+			{
+				c.m_Feature = BlueprintTools.GetModBlueprintReference<BlueprintFeatureReference>(Main.IsekaiContext, "ParadoxSovereignFeature");
+			});
+			blueprintFeature.AddComponent(delegate(PrerequisiteNoFeature c)
+			{
+				c.m_Feature = BlueprintTools.GetModBlueprintReference<BlueprintFeatureReference>(Main.IsekaiContext, "AllAccordingToPlanFeature");
 			});
 			OverpoweredAbilitySelection.AddToSelection(blueprintFeature);
 		}

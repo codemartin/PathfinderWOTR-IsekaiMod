@@ -1,9 +1,11 @@
 ﻿using System.Collections.Generic;
 using IsekaiMod.Utilities;
+using Kingmaker.Assets.UnitLogic.Mechanics.Properties;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Spells;
 using Kingmaker.Blueprints.Facts;
+using Kingmaker.Designers.Mechanics.Facts;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.Enums;
 using Kingmaker.Enums.Damage;
@@ -19,6 +21,7 @@ using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Mechanics.Actions;
 using Kingmaker.UnitLogic.Mechanics.Components;
+using Kingmaker.UnitLogic.Mechanics.Properties;
 using Kingmaker.Utility;
 using Kingmaker.Visual.Animation.Kingmaker.Actions;
 using TabletopTweaks.Core.Utilities;
@@ -34,10 +37,36 @@ namespace IsekaiMod.Content.Heritages
 			BlueprintActivatableAbility DevilWingsAbility = BlueprintTools.GetModBlueprint<BlueprintActivatableAbility>(Main.IsekaiContext, "DevilWingsAbility");
 			BlueprintActivatableAbility DemonWingsAbility = BlueprintTools.GetModBlueprint<BlueprintActivatableAbility>(Main.IsekaiContext, "DemonWingsAbility");
 			BlueprintActivatableAbility BlackWingsAbility = BlueprintTools.GetModBlueprint<BlueprintActivatableAbility>(Main.IsekaiContext, "BlackWingsAbility");
+			BlueprintAbilityResource AbyssalHellfireResource = Helpers.CreateBlueprint(Main.IsekaiContext, "AbyssalHellfireResource", delegate(BlueprintAbilityResource bp)
+			{
+				bp.m_MaxAmount = new BlueprintAbilityResource.Amount
+				{
+					BaseValue = 3,
+					IncreasedByLevel = false,
+					IncreasedByStat = false
+				};
+			});
+			BlueprintUnitProperty AbyssalHellfireUnitProperty = Helpers.CreateBlueprint(Main.IsekaiContext, "AbyssalHellfireUnitProperty", delegate(BlueprintUnitProperty bp)
+			{
+				bp.name = "AbyssalHellfireUnitProperty";
+				bp.AddComponent(delegate(ComplexPropertyGetter c)
+				{
+					c.Property = UnitProperty.Level;
+					c.Denominator = 2;
+					c.Multiplier = 1;
+					c.Bonus = 0;
+				});
+				bp.AddComponent(delegate(SimplePropertyGetter c)
+				{
+					c.Property = UnitProperty.StatBonusCharisma;
+				});
+				bp.BaseValue = 10;
+				bp.OperationOnComponents = BlueprintUnitProperty.MathOperation.Sum;
+			});
 			BlueprintAbility AbyssalHellfireAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "AbyssalHellfireAbility", delegate(BlueprintAbility bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Abyssal Hellfire");
-				bp.SetDescription(Main.IsekaiContext, "Exhale a 30 ft cone of pure Abyssal hellfire. Deals 1d6 damage per 2 character levels (half fire, half unholy). Reflex save halves.");
+				bp.SetDescription(Main.IsekaiContext, "Exhale a 30 ft cone of pure Abyssal hellfire. Deals 1d6 damage per 2 character levels (half fire, half unholy). Reflex save halves (DC 10 + 1/2 character level + Charisma modifier).");
 				((BlueprintUnitFact)bp).m_Icon = Icon_Succubus;
 				bp.Type = AbilityType.Special;
 				bp.Range = AbilityRange.Close;
@@ -84,6 +113,16 @@ namespace IsekaiMod.Content.Heritages
 					c.m_Type = AbilityRankType.Default;
 					c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
 					c.m_Progression = ContextRankProgression.Div2;
+				});
+				bp.AddComponent(delegate(ContextSetAbilityParams c)
+				{
+					c.DC = Values.CreateContextCasterCustomPropertyValue(AbyssalHellfireUnitProperty);
+				});
+				bp.AddComponent(delegate(AbilityResourceLogic c)
+				{
+					c.m_RequiredResource = AbyssalHellfireResource.ToReference<BlueprintAbilityResourceReference>();
+					c.m_IsSpendResource = true;
+					c.Amount = 1;
 				});
 			});
 			BlueprintBuff DemonLordAuraBuff = TTCoreExtensions.CreateBuff("DemonLordAuraBuff", delegate(BlueprintBuff bp)
@@ -227,6 +266,11 @@ namespace IsekaiMod.Content.Heritages
 				bp.AddComponent(delegate(AddFacts c)
 				{
 					c.m_Facts = facts.ToArray();
+				});
+				bp.AddComponent(delegate(AddAbilityResources c)
+				{
+					c.m_Resource = AbyssalHellfireResource.ToReference<BlueprintAbilityResourceReference>();
+					c.RestoreAmount = true;
 				});
 				bp.Groups = new FeatureGroup[2]
 				{

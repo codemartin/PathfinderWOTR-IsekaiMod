@@ -22,13 +22,15 @@ using UnityEngine.AI;
 
 namespace IsekaiMod.Content.Features.IsekaiProtagonist
 {
-	public class DimensionalReinforcements : IDamageHandler, ISubscriber, IGlobalSubscriber, IAreaHandler, IGlobalRulebookHandler<RuleDealDamage>, IRulebookHandler<RuleDealDamage>, IGlobalRulebookSubscriber
+	public class DimensionalReinforcements : IAreaHandler, ISubscriber, IGlobalSubscriber, IGlobalRulebookHandler<RuleDealDamage>, IRulebookHandler<RuleDealDamage>, IGlobalRulebookSubscriber
 	{
 		private static bool _initialized = false;
 
 		private static DimensionalReinforcements _instance;
 
 		private static readonly HashSet<string> _triggeredBossIds = new HashSet<string>();
+
+		private static readonly Dictionary<BlueprintUnit, bool> _bossCheckCache = new Dictionary<BlueprintUnit, bool>();
 
 		private static readonly Dictionary<string, BlueprintUnit> _summonCache = new Dictionary<string, BlueprintUnit>();
 
@@ -49,6 +51,24 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist
 		public static bool HasTriggered(string uniqueId)
 		{
 			return _triggeredBossIds.Contains(uniqueId);
+		}
+
+		public static bool IsTrueBoss(UnitEntityData unit)
+		{
+			if (unit?.Blueprint == null)
+			{
+				return false;
+			}
+			if (_bossCheckCache.TryGetValue(unit.Blueprint, out var value))
+			{
+				return value;
+			}
+			int num = unit.Progression?.CharacterLevel ?? 0;
+			int cR = unit.Blueprint.CR;
+			string text = unit.Blueprint.name ?? "";
+			value = cR >= 20 || num >= 20 || text.IndexOf("Boss", StringComparison.OrdinalIgnoreCase) >= 0 || text.IndexOf("Leader", StringComparison.OrdinalIgnoreCase) >= 0 || text.IndexOf("Lord", StringComparison.OrdinalIgnoreCase) >= 0 || text.IndexOf("Areelu", StringComparison.OrdinalIgnoreCase) >= 0 || text.IndexOf("Baphomet", StringComparison.OrdinalIgnoreCase) >= 0 || text.IndexOf("Deskari", StringComparison.OrdinalIgnoreCase) >= 0 || text.IndexOf("Nocticula", StringComparison.OrdinalIgnoreCase) >= 0 || text.IndexOf("Mephistopheles", StringComparison.OrdinalIgnoreCase) >= 0 || text.IndexOf("InevitableKolyarut", StringComparison.OrdinalIgnoreCase) >= 0 || text.IndexOf("BarrenBoss", StringComparison.OrdinalIgnoreCase) >= 0;
+			_bossCheckCache[unit.Blueprint] = value;
+			return value;
 		}
 
 		public static void Add()
@@ -127,13 +147,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist
 				}
 				UnitEntityData target = evt.Target;
 				UnitEntityData unitEntityData = BlueprintSafetyExtensions.SafeGetMainCharacter();
-				if (unitEntityData == null || !target.IsEnemy(unitEntityData) || _triggeredBossIds.Contains(target.UniqueId))
-				{
-					return;
-				}
-				int num = target.Progression?.CharacterLevel ?? 0;
-				int num2 = target.Blueprint?.CR ?? 0;
-				if (num < 12 && num2 < 12)
+				if (unitEntityData == null || !target.IsEnemy(unitEntityData) || _triggeredBossIds.Contains(target.UniqueId) || !IsTrueBoss(target))
 				{
 					return;
 				}
@@ -141,10 +155,10 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist
 				int hPLeft = target.HPLeft;
 				if (maxHP > 0 && hPLeft > maxHP / 2)
 				{
-					int num3 = maxHP / 2;
-					if (!evt.MinHPAfterDamage.HasValue || evt.MinHPAfterDamage < num3)
+					int num = maxHP / 2;
+					if (!evt.MinHPAfterDamage.HasValue || evt.MinHPAfterDamage < num)
 					{
-						evt.MinHPAfterDamage = num3;
+						evt.MinHPAfterDamage = num;
 					}
 				}
 			}
@@ -159,11 +173,6 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist
 			CheckAndTriggerBossPhase(evt?.Target);
 		}
 
-		public void HandleDamageDealt(RuleDealDamage dealDamage)
-		{
-			CheckAndTriggerBossPhase(dealDamage?.Target);
-		}
-
 		private static void CheckAndTriggerBossPhase(UnitEntityData target)
 		{
 			try
@@ -173,13 +182,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist
 					return;
 				}
 				UnitEntityData unitEntityData = BlueprintSafetyExtensions.SafeGetMainCharacter();
-				if (unitEntityData == null || !target.IsEnemy(unitEntityData) || _triggeredBossIds.Contains(target.UniqueId))
-				{
-					return;
-				}
-				int num = target.Progression?.CharacterLevel ?? 0;
-				int num2 = target.Blueprint?.CR ?? 0;
-				if (num < 12 && num2 < 12)
+				if (unitEntityData == null || !target.IsEnemy(unitEntityData) || _triggeredBossIds.Contains(target.UniqueId) || !IsTrueBoss(target))
 				{
 					return;
 				}

@@ -18,7 +18,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 
 		public static void Add()
 		{
-			SpecialPowerSelection.AddToSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "TrainingMontage", delegate(BlueprintFeature bp)
+			SpecialPowerSelection.AddToMartialSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "TrainingMontage", delegate(BlueprintFeature bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Training Montage");
 				bp.SetDescription(Main.IsekaiContext, "Through relentless training and an unwavering desire to better yourself, you gain a bonus to all attributes scaling from +1 at level 2 to +8 at level 20.\nRequires character level 5.");
