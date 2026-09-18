@@ -1,9 +1,11 @@
-using IsekaiMod.Content.Classes.IsekaiProtagonist;
+﻿using IsekaiMod.Content.Classes.IsekaiProtagonist;
+using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Devourer;
 using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.GodEmperor;
 using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Hero;
 using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.MartialGod;
 using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Mastermind;
 using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Overlord;
+using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.ShadowMonarch;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Selection;
 using TabletopTweaks.Core.Utilities;
@@ -48,6 +50,8 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature
 			HeroLegacySelection.Register(prog);
 			MastermindLegacySelection.Register(prog);
 			OverlordLegacySelection.Register(prog);
+			ShadowMonarchLegacySelection.Register(prog);
+			DevourerLegacySelection.Register(prog);
 		}
 
 		public static void PatchProgression()
