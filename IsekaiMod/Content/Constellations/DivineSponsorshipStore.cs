@@ -1019,7 +1019,7 @@ namespace IsekaiMod.Content.Constellations
 			});
 			BlueprintCue blueprintCue8 = TTCoreExtensions.CreateCue("CueStoreGodDefier", delegate(BlueprintCue blueprintCue9)
 			{
-				blueprintCue9.SetText(Main.IsekaiContext, "<color=#F5C542><b>[Path of the God Defier]</b></color>\n\n<i>\"We bow to no throne and worship no star. Our fate belongs only to us.\"</i>\n\nReject all divine authority and constellation patronage. Gaining supreme immunity to divine spells, SR 35, +5 untyped attack/damage, and true sovereign freedom.\n\n<b>Requirements:</b> Atheism & 10,000 Cosmic Coins.");
+				blueprintCue9.SetText(Main.IsekaiContext, "<color=#F5C542><b>[Path of the God Defier]</b></color>\n\n<i>\"We bow to no throne and worship no star. Our fate belongs only to us.\"</i>\n\nReject all divine authority and constellation patronage. Gain +4 to all ability scores, immunity to curses and death magic, spell resistance equal to 6 + your character level, and +4d6 damage on weapon hits against outsiders.\n\n<b>Requirements:</b> Atheism & 10,000 Cosmic Coins.");
 				blueprintCue9.Answers = new List<BlueprintAnswerBaseReference>();
 			});
 			BlueprintCue CosmicStoreRootCue = TTCoreExtensions.CreateCue("CosmicStoreRootCue", delegate(BlueprintCue blueprintCue9)
