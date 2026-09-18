@@ -137,6 +137,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature
 			OracleLegacy.Configure();
 			PaladinBaseLegacy.Configure();
 			PlayerComputerNerdLegacy.Configure();
+			PlayerPartTimeWorkerLegacy.Configure();
 			RogueLegacy.Configure();
 			ShamanLegacy.Configure();
 			ShifterLegacy.Configure();
@@ -196,6 +197,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature
 			OracleLegacy.PatchProgression();
 			PaladinBaseLegacy.PatchProgression();
 			PlayerComputerNerdLegacy.PatchProgression();
+			PlayerPartTimeWorkerLegacy.PatchProgression();
 			RogueLegacy.PatchProgression();
 			ShamanLegacy.PatchProgression();
 			ShifterLegacy.PatchProgression();
