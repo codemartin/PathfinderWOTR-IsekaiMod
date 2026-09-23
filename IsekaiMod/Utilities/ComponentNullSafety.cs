@@ -75,3 +75,35 @@ namespace IsekaiMod.Utilities {
         }
     }
 }
+
+namespace IsekaiMod.Utilities {
+    /// <summary>
+    /// A rank config that cannot be evaluated (a class entry whose class blueprint is gone, a null
+    /// archetype list, and so on) used to throw out of MechanicsContext.Recalculate. During a level-up
+    /// commit that exception escapes, the commit is abandoned half-way and the level-up screen is left
+    /// blank. The config now evaluates to 0 instead, and the owner is logged once so the source can be
+    /// fixed.
+    /// </summary>
+    [HarmonyPatch(typeof(Kingmaker.UnitLogic.Mechanics.Components.ContextRankConfig), "GetBaseValue", typeof(Kingmaker.UnitLogic.Mechanics.MechanicsContext))]
+    internal static class ContextRankConfigBaseValueSafety {
+        private static readonly HashSet<string> reported = new HashSet<string>();
+
+        private static System.Exception Finalizer(System.Exception __exception, Kingmaker.UnitLogic.Mechanics.Components.ContextRankConfig __instance, Kingmaker.UnitLogic.Mechanics.MechanicsContext context, ref int __result) {
+            if (__exception == null) return null;
+            __result = 0;
+            string owner = __instance?.OwnerBlueprint?.name ?? "(no owner)";
+            if (reported.Add(owner)) {
+                string classes = "";
+                try {
+                    var list = new List<string>();
+                    foreach (var entry in context?.MaybeCaster?.Descriptor?.Progression?.Classes ?? new List<Kingmaker.UnitLogic.ClassData>()) {
+                        list.Add((entry?.CharacterClass?.name ?? "<null class>") + ":" + (entry?.Archetypes == null ? "<null archetypes>" : entry.Archetypes.Count.ToString()));
+                    }
+                    classes = string.Join(", ", list);
+                } catch { }
+                IsekaiContext.Logger.LogWarning($"ContextRankConfig on {owner} ({__instance?.m_BaseValueType}) could not be evaluated for {context?.MaybeCaster?.CharacterName}; using 0. archetype={(__instance?.Archetype == null ? "null" : "set")} additional={(__instance?.m_AdditionalArchetypes == null ? "null" : __instance.m_AdditionalArchetypes.Length.ToString())} classes=[{classes}] {__exception.GetType().Name}: {__exception.Message}");
+            }
+            return null;
+        }
+    }
+}
