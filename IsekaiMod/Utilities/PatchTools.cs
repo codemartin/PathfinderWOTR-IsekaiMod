@@ -862,6 +862,10 @@ namespace IsekaiMod.Utilities
 									if (contextRankConfig.m_BaseValueType == ContextRankBaseValueType.ClassLevel || contextRankConfig.m_BaseValueType == ContextRankBaseValueType.SummClassLevelWithArchetype || contextRankConfig.m_BaseValueType == ContextRankBaseValueType.MaxClassLevelWithArchetype)
 									{
 										contextRankConfig.m_BaseValueType = ContextRankBaseValueType.SummClassLevelWithArchetype;
+										// A ClassLevel config never reads its archetype fields, so a loaded blueprint may carry
+										// nulls there. The archetype-aware evaluation dereferences both; give it empty values.
+										contextRankConfig.Archetype ??= new BlueprintArchetypeReference();
+										contextRankConfig.m_AdditionalArchetypes ??= new BlueprintArchetypeReference[0];
 									}
 								}
 								// CustomProperty / MaxCustomProperty configs scale off unit properties whose getters name the class.
