@@ -204,6 +204,9 @@ namespace IsekaiMod.Utilities {
                     string owner = evt.Initiator?.CharacterName ?? "unknown unit";
                     IsekaiContext.Logger.Log(
                         $"Slow rule: {type.Name} for {owner} took {ms:F1}ms with {eventModifierAdds} stat modifier add(s) and {eventValueUpdates} stat update(s)");
+                    FrameStallDiagnostics.Note($"rule {type.Name} for {owner} took {ms:F0}ms");
+                } else if (evt is Kingmaker.RuleSystem.Rules.Abilities.RuleCastSpell cast) {
+                    FrameStallDiagnostics.Note($"cast {cast.Spell?.Name ?? "?"} by {evt.Initiator?.CharacterName ?? "?"} ({ms:F0}ms)");
                 }
 
                 DateTime now = DateTime.UtcNow;

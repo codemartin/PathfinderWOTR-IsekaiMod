@@ -194,6 +194,7 @@
     <Compile Include="Utilities\BlueprintSafetyExtensions.cs" />
     <Compile Include="Utilities\CharGenSafetyPatch.cs" />
     <Compile Include="Utilities\CombatPerformanceDiagnostics.cs" />
+    <Compile Include="Utilities\FrameStallDiagnostics.cs" />
     <Compile Include="Utilities\ArmorRecalculationThrottle.cs" />
     <Compile Include="Utilities\ComponentNullSafety.cs" />
     <Compile Include="Utilities\DescriptionTools.cs" />

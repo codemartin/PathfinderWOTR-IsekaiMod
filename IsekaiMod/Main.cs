@@ -35,6 +35,7 @@ namespace IsekaiMod
 				IsekaiContext.ModEntry.OnGUI = UMMSettingsUI.OnGUI;
 				harmony.PatchAll();
 				Utilities.CombatPerformanceDiagnostics.Install(harmony);
+				Utilities.FrameStallDiagnostics.Install(harmony);
 				PostPatchInitializer.Initialize(IsekaiContext);
 				return true;
 			}
