@@ -157,7 +157,9 @@ namespace IsekaiMod.Content.Heritages
 					c.m_Facts = new BlueprintUnitFactReference[1] { HowlOfFenrirAbility.ToReference<BlueprintUnitFactReference>() };
 				});
 				bp.Groups = new FeatureGroup[1] { FeatureGroup.Racial };
-				bp.ReapplyOnLevelUp = true;
+				// Every component here is static; re-applying on level-up only re-attached the natural weapon,
+				// which re-equips the body and cost over a second per level-up refresh.
+				bp.ReapplyOnLevelUp = false;
 			});
 			FeatTools.Selections.KitsuneHeritageSelection.AddToSelection(feature);
 			BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("8c3244440e0b4d1d9d9b182685cbacbd")?.AddToSelection(feature);

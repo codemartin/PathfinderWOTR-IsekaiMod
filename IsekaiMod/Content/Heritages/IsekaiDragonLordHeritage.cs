@@ -180,7 +180,9 @@ namespace IsekaiMod.Content.Heritages
 					};
 				});
 				bp.Groups = new FeatureGroup[1] { FeatureGroup.Racial };
-				bp.ReapplyOnLevelUp = true;
+				// Every component here is static; re-applying on level-up only re-attached the natural weapon,
+				// which re-equips the body and cost over a second per level-up refresh.
+				bp.ReapplyOnLevelUp = false;
 			});
 			FeatTools.Selections.ElvenHeritageSelection.AddToSelection(feature);
 			BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("fd6e1f53589049cbbbc6a8e058d83b74")?.AddToSelection(feature);

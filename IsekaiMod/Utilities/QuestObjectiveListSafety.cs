@@ -1,4 +1,4 @@
-using Kingmaker;
+﻿using Kingmaker;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Area;
 using Kingmaker.Blueprints.Quests;
@@ -22,6 +22,9 @@ namespace IsekaiMod.Utilities {
             if (objective.m_Areas == null) { objective.m_Areas = new List<BlueprintAreaReference>(); filled++; }
             if (objective.m_Addendums == null) { objective.m_Addendums = new List<BlueprintQuestObjectiveReference>(); filled++; }
             if (objective.m_NextObjectives == null) { objective.m_NextObjectives = new List<BlueprintQuestObjectiveReference>(); filled++; }
+            // EntityFact.Setup collects components from the objective and its quest; a null array throws there.
+            if (objective.ComponentsArray == null) { objective.ComponentsArray = new BlueprintComponent[0]; filled++; }
+            if (objective.Quest != null && objective.Quest.ComponentsArray == null) { objective.Quest.ComponentsArray = new BlueprintComponent[0]; filled++; }
             return filled;
         }
 
@@ -31,6 +34,10 @@ namespace IsekaiMod.Utilities {
                 if (bp is BlueprintQuestObjective objective) {
                     int n = Fill(objective);
                     if (n > 0) { objectives++; fields += n; }
+                }
+                else if (bp is BlueprintQuest quest && quest.ComponentsArray == null) {
+                    quest.ComponentsArray = new BlueprintComponent[0];
+                    fields++;
                 }
             });
             if (objectives > 0) {
