@@ -19,8 +19,7 @@ namespace IsekaiMod.Utilities {
     ///
     /// A hidden MonoBehaviour watches the frame time. When one frame takes longer than StallSeconds it writes
     /// one log entry with the frame length, the garbage collections that happened during it, and the last
-    /// few things that were recorded before it: slow buff applications, slow action lists, FX spawns and
-    /// prefab loads. Those are recorded by small timing patches that only write to a ring buffer, so the
+    /// few things that were recorded before it: slow buff applications, slow action lists and FX spawns. Those are recorded by small timing patches that only write to a ring buffer, so the
     /// cost while nothing stalls is a few microseconds per call.
     ///
     /// Everything here is diagnostics only and can be removed once the freeze is understood.
@@ -30,7 +29,6 @@ namespace IsekaiMod.Utilities {
         private const double NoteBuffMs = 25.0;
         private const double NoteActionListMs = 40.0;
         private const double NoteFxMs = 15.0;
-        private const double NotePrefabMs = 15.0;
         private const int RingSize = 40;
 
         private static readonly object gate = new object();
@@ -62,11 +60,12 @@ namespace IsekaiMod.Utilities {
                         patched += TryPatch(harmony, m, nameof(TimedPrefix), nameof(FxPostfix));
                     }
                 }
-                Type prefabLink = typeof(FxHelper).Assembly.GetType("Kingmaker.ResourceLinks.WeakResourceLink`1");
-                if (prefabLink != null) {
-                    MethodInfo load = prefabLink.MakeGenericType(typeof(GameObject)).GetMethod("Load", BindingFlags.Public | BindingFlags.Instance);
-                    patched += TryPatch(harmony, load, nameof(TimedPrefix), nameof(PrefabLoadPostfix));
-                }
+                // Deliberately NOT patched: WeakResourceLink<T>.Load. It is a generic method, and on Mono every
+                // reference-type instantiation shares one body. Harmony re-emits the patched body specialised for
+                // the instantiation it was given, so patching the GameObject version also rerouted the TextAsset
+                // version the area loader uses for navmeshes; that asked the resource library for a GameObject under
+                // a TextAsset id, got null, and every area transition failed with a NullReferenceException in
+                // NavMeshManager.SetNavMeshInternal (r74). Never patch generic methods of that class.
                 IsekaiContext.Logger.Log($"Frame stall diagnostics installed ({patched} timing patch(es)); frames above {StallSeconds * 1000:F0}ms are logged with recent activity.");
             } catch (Exception ex) {
                 IsekaiContext.Logger.Log($"Frame stall diagnostics could not be installed: {ex.Message}");
@@ -112,14 +111,6 @@ namespace IsekaiMod.Utilities {
             double ms = Ms(__state);
             if (ms < NoteFxMs) return;
             Note($"fx spawn {prefab?.name ?? "?"} took {ms:F0}ms");
-        }
-
-        private static void PrefabLoadPostfix(object __instance, long __state) {
-            double ms = Ms(__state);
-            if (ms < NotePrefabMs) return;
-            string id = "?";
-            try { id = __instance?.GetType().GetField("AssetId")?.GetValue(__instance) as string ?? "?"; } catch { }
-            Note($"prefab load {id} took {ms:F0}ms");
         }
 
         private sealed class FrameStallWatcher : MonoBehaviour {
