@@ -8,6 +8,10 @@ namespace IsekaiMod.Content.Dialogue
 	// 6.2 remember those answers in the dialogue history, and the loader refuses the save when a remembered
 	// blueprint no longer exists. These stubs keep the old names alive under their registered GUIDs. Nothing
 	// links to them, so they never show in a conversation.
+	//
+	// The NarrativeEngine still creates IsekaiDialogueFinnean and IsekaiDialogueNenioStatueAnswer1-6 itself
+	// (ArtifactInteractions and Companions_Climaxes reuse the old option ids), so those must not be stubbed
+	// here: a stub created first takes the GUID and the engine's real answer then fails to add.
 	internal static class LegacyDialogueStubs
 	{
 		private static readonly string[] Answers = new string[]
@@ -15,13 +19,6 @@ namespace IsekaiMod.Content.Dialogue
 			"IsekaiDialogueHulrun",
 			"IsekaiDialogueHorgus",
 			"IsekaiDialogueMinagho",
-			"IsekaiDialogueFinnean",
-			"IsekaiDialogueNenioStatueAnswer1",
-			"IsekaiDialogueNenioStatueAnswer2",
-			"IsekaiDialogueNenioStatueAnswer3",
-			"IsekaiDialogueNenioStatueAnswer4",
-			"IsekaiDialogueNenioStatueAnswer5",
-			"IsekaiDialogueNenioStatueAnswer6",
 			"IsekaiKaylessaDrowLeader"
 		};
 
