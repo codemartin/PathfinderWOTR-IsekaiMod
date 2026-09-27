@@ -62,6 +62,9 @@ namespace IsekaiMod.Content
 					return;
 				}
 				Initialized = true;
+				// Diagnostics: how much managed memory Isekai's own blueprints add. The managed heap is the main driver
+				// of garbage-collection pauses in a heavily modded game, so this number says whether trimming here helps.
+				long heapBefore = System.GC.GetTotalMemory(false);
 				SafeStep("ExtraWings.Add", ExtraWings.Add);
 				SafeStep("ExoticWeaponProficiency.Add", ExoticWeaponProficiency.Add);
 				SafeStep("AddExceptionalFeats", AddExceptionalFeats);
@@ -92,6 +95,8 @@ namespace IsekaiMod.Content
 				{
 					SafeStep("AddIsekaiDialogue", AddIsekaiDialogue);
 				}
+				long heapAfter = System.GC.GetTotalMemory(false);
+				Main.IsekaiContext.Logger.Log($"Managed heap: {heapBefore / (1024 * 1024)}MB before Isekai blueprints, {heapAfter / (1024 * 1024)}MB after (+{(heapAfter - heapBefore) / (1024 * 1024)}MB).");
 			}
 
 			public static void SafeStep(string name, Action action)

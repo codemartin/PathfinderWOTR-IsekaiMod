@@ -35,6 +35,7 @@ namespace IsekaiMod.Utilities {
         private static readonly Queue<string> recent = new Queue<string>(RingSize);
         private static readonly Stopwatch clock = Stopwatch.StartNew();
         private static int lastGc0, lastGc1, lastGc2;
+        private static long lastHeapMb;
 
         internal static void Note(string what) {
             lock (gate) {
@@ -128,10 +129,12 @@ namespace IsekaiMod.Utilities {
                         recent.Clear();
                     }
                     long mem = GC.GetTotalMemory(false) / (1024 * 1024);
+                    // A heap that shrinks across a frame in which nothing was recorded is a garbage collection pause.
                     IsekaiContext.Logger.Log(
-                        $"Long frame: {dt * 1000:F0}ms at {clock.Elapsed.TotalSeconds:F2}s; GC gen0/1/2 during it: {gc0 - lastGc0}/{gc1 - lastGc1}/{gc2 - lastGc2}; managed heap {mem}MB; recent activity:\n{lines}");
+                        $"Long frame: {dt * 1000:F0}ms at {clock.Elapsed.TotalSeconds:F2}s; GC gen0/1/2 during it: {gc0 - lastGc0}/{gc1 - lastGc1}/{gc2 - lastGc2}; managed heap {lastHeapMb}MB -> {mem}MB; recent activity:\n{lines}");
                 }
                 lastGc0 = gc0; lastGc1 = gc1; lastGc2 = gc2;
+                lastHeapMb = GC.GetTotalMemory(false) / (1024 * 1024);
             }
         }
     }
