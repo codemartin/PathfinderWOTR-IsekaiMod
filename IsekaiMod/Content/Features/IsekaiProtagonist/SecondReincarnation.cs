@@ -32,6 +32,11 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist
 				bp.AddComponent(delegate(DeathActions c)
 				{
 					c.CheckResource = false;
+					// The default trigger only fires on actual death. Party members at 0 HP usually go unconscious
+					// instead, so the "when your HP drops to 0" promise never came true. Fire on the life-state
+					// change and include unconsciousness; Resurrect clears the damage either way.
+					c.m_DeathTrigger = DeathActions.DeathTrigger.OnUnitLifeState;
+					c.m_WithUnconsciousLifeState = true;
 					c.Actions = Helpers.CreateActionList(new ContextActionResurrect
 					{
 						FullRestore = true
