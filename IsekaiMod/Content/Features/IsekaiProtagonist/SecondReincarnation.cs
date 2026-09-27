@@ -21,7 +21,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist
 
 		public static void Add()
 		{
-			LocalizedString SecondReincarnationDesc = Helpers.CreateString(Main.IsekaiContext, "SecondReincarnation.Description", "Your attacks ignore damage reduction and your spells ignore spell resistance and spell immunity.\nOnce per day, when your {g|Encyclopedia:HP}HP{/g} drops to 0, you are resurrected to full health.");
+			LocalizedString SecondReincarnationDesc = Helpers.CreateString(Main.IsekaiContext, "SecondReincarnation.Description", "Your attacks ignore damage reduction and your spells ignore spell resistance, spell immunity, and energy resistance and immunity.\nOnce per day, when your {g|Encyclopedia:HP}HP{/g} drops to 0, you are resurrected to full health.");
 			BlueprintBuff SecondReincarnationBuff = TTCoreExtensions.CreateBuff("SecondReincarnationBuff", delegate(BlueprintBuff bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Second Reincarnation");
@@ -58,6 +58,9 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist
 				// IgnoreSpellImmunity only removes the owner's own immunities and did nothing with descriptor None;
 				// the caster-side bypass the description promises is IgnoreTargetSpellImmunity.
 				bp.AddComponent<IsekaiMod.Components.IgnoreTargetSpellImmunity>();
+				// Energy immunity (a demon's immunity to electricity) is a damage rule, not spell immunity, but it is
+				// what players run into. Matches the Ascendant Element mythic ability, for every energy type.
+				bp.AddComponent<IsekaiMod.Components.IgnoreEnergyResistanceAndImmunity>();
 				bp.AddComponent(delegate(IgnoreSpellResistanceForSpells c)
 				{
 					c.m_AbilityList = new BlueprintAbilityReference[0];
