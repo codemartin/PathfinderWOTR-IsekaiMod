@@ -55,10 +55,9 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist
 				bp.SetDescription(SecondReincarnationDesc);
 				((BlueprintUnitFact)bp).m_Icon = Icon_SecondReincarnation;
 				bp.AddComponent<IgnoreDamageReductionOnAttack>();
-				bp.AddComponent(delegate(IgnoreSpellImmunity c)
-				{
-					c.SpellDescriptor = SpellDescriptor.None;
-				});
+				// IgnoreSpellImmunity only removes the owner's own immunities and did nothing with descriptor None;
+				// the caster-side bypass the description promises is IgnoreTargetSpellImmunity.
+				bp.AddComponent<IsekaiMod.Components.IgnoreTargetSpellImmunity>();
 				bp.AddComponent(delegate(IgnoreSpellResistanceForSpells c)
 				{
 					c.m_AbilityList = new BlueprintAbilityReference[0];
