@@ -97,6 +97,8 @@ namespace IsekaiMod.Content
 				}
 				long heapAfter = System.GC.GetTotalMemory(false);
 				Main.IsekaiContext.Logger.Log($"Managed heap: {heapBefore / (1024 * 1024)}MB before Isekai blueprints, {heapAfter / (1024 * 1024)}MB after (+{(heapAfter - heapBefore) / (1024 * 1024)}MB).");
+				// Installed here rather than in Main.Load so that every other mod's assembly is already loaded and scanned.
+				SafeStep("AreaLoadDiagnostics.Install", delegate { IsekaiMod.Utilities.AreaLoadDiagnostics.Install(new HarmonyLib.Harmony("IsekaiMod.AreaLoadDiagnostics")); });
 			}
 
 			public static void SafeStep(string name, Action action)

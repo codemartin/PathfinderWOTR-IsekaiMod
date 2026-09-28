@@ -189,6 +189,7 @@
     <Compile Include="Components\*.cs" />
     <Compile Include="Utilities\ActionFlow.cs" />
     <Compile Include="Utilities\AreaAbilityDiagnostics.cs" />
+    <Compile Include="Utilities\AreaLoadDiagnostics.cs" />
     <Compile Include="Utilities\AreaEffectActionSafety.cs" />
     <Compile Include="Utilities\AssetLoaderExtension.cs" />
     <Compile Include="Utilities\BlueprintSafetyExtensions.cs" />
