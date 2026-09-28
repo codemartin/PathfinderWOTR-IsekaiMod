@@ -9,6 +9,8 @@ using Kingmaker.RuleSystem.Rules.Damage;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components;
+using Kingmaker.UnitLogic.Abilities.Components.TargetCheckers;
+using Kingmaker.Utility;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.FactLogic;
@@ -91,6 +93,10 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.ShadowMonarch
 						BonusValue = 0
 					}
 				};
+				bp.AddComponent(delegate(ContextCalculateAbilityParams c)
+				{
+					c.StatType = StatType.Charisma;
+				});
 				ContextActionKnockdownTarget prone = new ContextActionKnockdownTarget();
 				bp.AddComponent(delegate(AbilityEffectRunAction c)
 				{
@@ -154,9 +160,17 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.ShadowMonarch
 				bp.Type = AbilityType.Supernatural;
 				bp.Range = AbilityRange.Close;
 				bp.CanTargetEnemies = true;
-				bp.CanTargetPoint = true;
+				bp.CanTargetFriends = true;
+				bp.CanTargetPoint = false;
 				bp.ActionType = UnitCommand.CommandType.Swift;
 				bp.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Self;
+				// The text says "a fallen enemy": only dead units are valid targets, and the spell slot the text
+				// promises is restored before the buff. The 6.3 pre-alpha only applied the buff.
+				bp.AddComponent<IsekaiMod.Components.AbilityTargetIsDead>();
+				bp.AddComponent(delegate(ContextCalculateAbilityParams c)
+				{
+					c.StatType = StatType.Charisma;
+				});
 				ContextActionApplyBuff applySelfBuff = new ContextActionApplyBuff
 				{
 					m_Buff = ShadowReaveEssenceBuff.ToReference<BlueprintBuffReference>(),
@@ -171,7 +185,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.ShadowMonarch
 				};
 				bp.AddComponent(delegate(AbilityEffectRunAction c)
 				{
-					c.Actions = Helpers.CreateActionList(applySelfBuff);
+					c.Actions = Helpers.CreateActionList(new IsekaiMod.Components.ContextActionRestoreOneSpellSlot { MaxSpellLevel = 5 }, applySelfBuff);
 				});
 			});
 			ShadowEssenceAbsorptionFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "ShadowEssenceAbsorptionFeature", delegate(BlueprintFeature bp)
@@ -185,6 +199,42 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.ShadowMonarch
 					c.m_Facts = new BlueprintUnitFactReference[1] { ShadowEssenceAbsorptionAbility.ToReference<BlueprintUnitFactReference>() };
 				});
 			});
+			// The "next attack" payload of Dagger Rush: +3d6 precision damage on the first hit, target treated as
+			// flat-footed, then the buff removes itself. The 6.3 pre-alpha applied a Foretell Aid buff instead.
+			BlueprintBuff ShadowDaggerRushBuff = Helpers.CreateBlueprint(Main.IsekaiContext, "ShadowDaggerRushBuff", delegate(BlueprintBuff bp)
+			{
+				bp.SetName(Main.IsekaiContext, "Shadow Step: Dagger Rush");
+				bp.SetDescription(Main.IsekaiContext, "Your next attack this turn deals an additional 3d6 sneak attack damage and catches the target flat-footed.");
+				((BlueprintUnitFact)bp).m_Icon = Icon_Dagger;
+				bp.IsClassFeature = true;
+				bp.AddComponent<IsekaiMod.Components.SetFlatFootedOnAttack>();
+				bp.AddComponent(delegate(AddInitiatorAttackWithWeaponTrigger c)
+				{
+					c.OnlyHit = true;
+					c.ActionsOnInitiator = false;
+					c.Action = Helpers.CreateActionList(new ContextActionDealDamage
+					{
+						DamageType = new DamageTypeDescription
+						{
+							Type = DamageType.Physical,
+							Common = new DamageTypeDescription.CommomData(),
+							Physical = new DamageTypeDescription.PhysicalData { Form = Kingmaker.Enums.Damage.PhysicalDamageForm.Piercing }
+						},
+						Value = new ContextDiceValue { DiceType = DiceType.D6, DiceCountValue = 3, BonusValue = 0 }
+					}, new ContextActionRemoveBuff
+					{
+						ToCaster = true
+					});
+				});
+			});
+			// The remove-self action needs the buff's own reference, which only exists after creation.
+			foreach (Kingmaker.ElementsSystem.GameAction action in ShadowDaggerRushBuff.GetComponent<AddInitiatorAttackWithWeaponTrigger>().Action.Actions)
+			{
+				if (action is ContextActionRemoveBuff remove)
+				{
+					remove.m_Buff = ShadowDaggerRushBuff.ToReference<BlueprintBuffReference>();
+				}
+			}
 			ShadowDaggerRushAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "ShadowDaggerRushAbility", delegate(BlueprintAbility bp)
 			{
 				bp.SetName(Main.IsekaiContext, "Shadow Step: Dagger Rush");
@@ -193,16 +243,30 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.ShadowMonarch
 				bp.Type = AbilityType.Supernatural;
 				bp.Range = AbilityRange.Close;
 				bp.CanTargetEnemies = true;
+				bp.CanTargetFriends = false;
+				bp.CanTargetSelf = false;
 				bp.ActionType = UnitCommand.CommandType.Swift;
 				bp.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Directional;
+				// AbilityCustomTeleportation places the caster just behind the targeted unit (the game's Dark Lurker
+				// "Blade from Shadows" uses it the same way); the FX and projectile are borrowed from that ability.
+				bp.AddComponent(delegate(AbilityCustomTeleportation c)
+				{
+					c.m_Projectile = BlueprintTools.GetBlueprint<Kingmaker.Blueprints.BlueprintProjectile>("f8daba62ae5f454aae7bcd280d924e74")?.ToReference<BlueprintProjectileReference>();
+					c.DisappearFx = new Kingmaker.ResourceLinks.PrefabLink { AssetId = "f1f41fef03cb5734e95db1342f0c605e" };
+					c.DisappearDuration = 0.3f;
+					c.AppearFx = new Kingmaker.ResourceLinks.PrefabLink();
+					c.AppearDuration = 0f;
+					c.AlongPath = false;
+				});
 				bp.AddComponent(delegate(AbilityEffectRunAction c)
 				{
 					c.Actions = Helpers.CreateActionList(new ContextActionApplyBuff
 					{
-						m_Buff = BlueprintTools.GetBlueprint<BlueprintBuff>("faf473e3a977fd4428cd3f1a526346d2")?.ToReference<BlueprintBuffReference>(),
+						m_Buff = ShadowDaggerRushBuff.ToReference<BlueprintBuffReference>(),
 						DurationValue = new ContextDurationValue
 						{
 							Rate = DurationRate.Rounds,
+							DiceType = DiceType.Zero,
 							BonusValue = 1
 						},
 						ToCaster = true
@@ -262,7 +326,19 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.ShadowMonarch
 				};
 				bp.AddComponent(delegate(AbilityEffectRunAction c)
 				{
-					c.Actions = Helpers.CreateActionList(applySelf);
+					// Greater Invisibility is promised by the text; the 6.3 pre-alpha only had the displacement and Stealth parts.
+					c.Actions = Helpers.CreateActionList(applySelf, new ContextActionApplyBuff
+					{
+						m_Buff = BlueprintTools.GetBlueprint<BlueprintBuff>("e6b35473a237a6045969253beb09777c")?.ToReference<BlueprintBuffReference>(),
+						DurationValue = new ContextDurationValue
+						{
+							Rate = DurationRate.Minutes,
+							DiceType = DiceType.Zero,
+							DiceCountValue = 0,
+							BonusValue = 1
+						},
+						ToCaster = true
+					});
 				});
 			});
 			ShadowCloakFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "ShadowCloakFeature", delegate(BlueprintFeature bp)
@@ -297,6 +373,29 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.ShadowMonarch
 				bp.CanTargetSelf = true;
 				bp.ActionType = UnitCommand.CommandType.Standard;
 				bp.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Omni;
+				// Without a targets-around component a personal ability runs its actions on the caster, so the
+				// 6.3 pre-alpha version paralysed the Shadow Monarch instead of the enemies.
+				bp.AddComponent(delegate(AbilityTargetsAround c)
+				{
+					c.m_Radius = 30.Feet();
+					c.m_TargetType = TargetType.Enemy;
+					c.m_IncludeDead = false;
+				});
+				bp.AddComponent(delegate(ContextCalculateAbilityParams c)
+				{
+					c.StatType = StatType.Charisma;
+				});
+				ContextActionApplyBuff applyShaken = new ContextActionApplyBuff
+				{
+					m_Buff = BlueprintTools.GetBlueprint<BlueprintBuff>("25ec6cb6ab1845c48a95f9c20b034220")?.ToReference<BlueprintBuffReference>(),
+					DurationValue = new ContextDurationValue
+					{
+						Rate = DurationRate.Minutes,
+						DiceType = DiceType.Zero,
+						DiceCountValue = 0,
+						BonusValue = 1
+					}
+				};
 				ContextActionApplyBuff applyFear = new ContextActionApplyBuff
 				{
 					m_Buff = MonarchDragonsFearBuff.ToReference<BlueprintBuffReference>(),
@@ -315,7 +414,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.ShadowMonarch
 						Type = SavingThrowType.Will,
 						Actions = Helpers.CreateActionList(new ContextActionConditionalSaved
 						{
-							Failed = Helpers.CreateActionList(applyFear)
+							Failed = Helpers.CreateActionList(applyFear, applyShaken)
 						})
 					});
 				});

@@ -3785,6 +3785,8 @@
     "Zacharius_Crypt_GodEmperor_HeresyReplyCue": "b03e3f36-3c57-58a3-9660-55f76fd2e116",
     "Zacharius_Crypt_ShadowMonarch_Dominance": "0b78026f-6d2a-5b48-b833-2bd7c26e648a",
     "Zacharius_Crypt_ShadowMonarch_DominanceReplyCue": "4bab7f98-d0b3-575d-9790-a48d7279684b",
+    // ---- Shadow Monarch arts rework (deterministic uuid5, added 2026-09-28) ----
+    "ShadowDaggerRushBuff": "de791b31-b482-55fb-8e43-17d47f920421",
     "ProneImmunity": "810c6a97-d836-b30f-fec4-9189e5580ec9"
   },
   "OverrideIds": false,
