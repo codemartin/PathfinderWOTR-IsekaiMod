@@ -670,13 +670,18 @@ namespace IsekaiMod.Content.Constellations
 			storeAbilities.Add(item5);
 			BlueprintAbilityResource CosmicWishResource = Helpers.CreateBlueprint(Main.IsekaiContext, "CosmicWishResource", delegate(BlueprintAbilityResource blueprintAbilityResource)
 			{
+				// A resource restore is clamped to the maximum, so with a maximum of 0 the purchased charge was
+				// thrown away and Cosmic Wish could never be cast. The maximum is now 99; the resource starts at 0
+				// (RestoreAmount is false where it is granted) and resting is stopped from refilling it by
+				// CosmicWishRestGuard, so charges only ever come from the store.
 				blueprintAbilityResource.m_MaxAmount = new BlueprintAbilityResource.Amount
 				{
-					BaseValue = 0,
+					BaseValue = 99,
 					IncreasedByLevel = false,
 					IncreasedByStat = false
 				};
 			});
+			CosmicWishRestGuard.Resource = CosmicWishResource;
 			BlueprintAbility WishStrength = CreateWishVariant("WishStrengthAbility", "Strength", StatType.Strength);
 			BlueprintAbility WishDexterity = CreateWishVariant("WishDexterityAbility", "Dexterity", StatType.Dexterity);
 			BlueprintAbility WishConstitution = CreateWishVariant("WishConstitutionAbility", "Constitution", StatType.Constitution);
