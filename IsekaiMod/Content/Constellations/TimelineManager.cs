@@ -357,10 +357,7 @@ namespace IsekaiMod.Content.Constellations
 							fact = unitEntityData.Descriptor.Progression.Features.AddFeature(blueprintFeature);
 							if (fact != null && desiredRanks > 1)
 							{
-								for (int i = 1; i < desiredRanks; i++)
-								{
-									fact.AddRank();
-								}
+								fact.SetRank(desiredRanks);
 							}
 							EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
 							{
@@ -369,10 +366,7 @@ namespace IsekaiMod.Content.Constellations
 						}
 						else if (fact.GetRank() < desiredRanks)
 						{
-							while (fact.GetRank() < desiredRanks)
-							{
-								fact.AddRank();
-							}
+							fact.SetRank(desiredRanks);
 						}
 					}
 				}

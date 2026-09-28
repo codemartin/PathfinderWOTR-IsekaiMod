@@ -53,24 +53,14 @@ namespace IsekaiMod.Content.Constellations
 			{
 				FeatureCollection features = player.Descriptor.Progression.Features;
 				Feature fact = features.GetFact(CosmicTokensFeature);
-				if (fact == null)
+				if (fact == null && num > 0)
 				{
 					fact = features.AddFeature(CosmicTokensFeature);
-					if (fact != null && num > 1)
-					{
-						for (int i = 1; i < num; i++)
-						{
-							fact.AddRank();
-						}
-					}
 				}
-				else
-				{
-					for (int j = rank; j < num; j++)
-					{
-						fact.AddRank();
-					}
-				}
+				// Coins are the rank of a feature. AddRank/RemoveRank deactivate and reactivate the feature each
+				// call (a few ms every time), so walking thousands of ranks one by one froze the game for
+				// 5 to 30 seconds per purchase. SetRank does the same reapply once.
+				fact?.SetRank(num);
 			}
 			else if (rank > cosmicCoins)
 			{
@@ -268,20 +258,11 @@ namespace IsekaiMod.Content.Constellations
 			if (fact == null)
 			{
 				fact = features.AddFeature(CosmicTokensFeature);
-				if (fact != null && num2 > 1)
-				{
-					for (int i = 1; i < num2; i++)
-					{
-						fact.AddRank();
-					}
-				}
+				fact?.SetRank(num2);
 			}
 			else
 			{
-				for (int j = 0; j < num2; j++)
-				{
-					fact.AddRank();
-				}
+				fact.SetRank(fact.GetRank() + num2);
 			}
 			int rank = features.GetRank(CosmicTokensFeature);
 			TimelineManager.Data.CosmicCoins = rank;
@@ -365,9 +346,16 @@ namespace IsekaiMod.Content.Constellations
 			Feature fact = features.GetFact(CosmicTokensFeature);
 			if (fact != null)
 			{
-				for (int num = 0; num < finalAmount; num++)
+				int newRank = fact.GetRank() - finalAmount;
+				if (newRank <= 0)
 				{
-					fact.RemoveRank();
+					// SetRank clamps at 1, so an empty balance is represented by not having the feature at all
+					// (GetRank then reports 0, which is what the old RemoveRank loop reached).
+					features.RemoveFact(fact);
+				}
+				else
+				{
+					fact.SetRank(newRank);
 				}
 			}
 			int rank2 = features.GetRank(CosmicTokensFeature);
