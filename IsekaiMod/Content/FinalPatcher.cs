@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using HarmonyLib;
 using IsekaiMod.Content.Classes.IsekaiProtagonist;
 using IsekaiMod.Content.Classes.IsekaiProtagonist.Archetypes;
@@ -70,6 +71,9 @@ namespace IsekaiMod.Content
 				PrerequisiteSymmetry.Apply(MirroredSelections.AllSelections());
 			});
 			SafeStep("ModItemFixer.FixEnchantmentArrays", ModItemFixer.FixEnchantmentArrays);
+			// Other mods register the Isekai spellbooks into the mythic spellbook selections once per class and
+			// archetype that references them; the duplicates become identical rows in the level-up UI.
+			SafeStep("DedupeMythicSpellbookLists", DedupeMythicSpellbookLists);
 			if (!Main.IsekaiContext.AddedContent.Isekai.IsDisabled("Isekai Protagonist"))
 			{
 				// Let Isekai wrapper selections satisfy feat and mythic prerequisites that expect the base-game selections.
@@ -81,6 +85,25 @@ namespace IsekaiMod.Content
 				SafeStep("InquisitorTacticianLegacy.PatchPrerequisiteCompatibility", InquisitorTacticianLegacy.PatchPrerequisiteCompatibility);
 				SafeStep("InquisitorDomainLordLegacy.PatchPrerequisiteCompatibility", InquisitorDomainLordLegacy.PatchPrerequisiteCompatibility);
 				PatchTools.ReportWalkStatistics("final patcher");
+			}
+		}
+
+		private static void DedupeMythicSpellbookLists()
+		{
+			int removed = 0;
+			Kingmaker.Blueprints.ResourcesLibrary.BlueprintsCache.ForEachLoaded(delegate (Kingmaker.Blueprints.BlueprintGuid guid, Kingmaker.Blueprints.SimpleBlueprint bp)
+			{
+				if (!(bp is BlueprintFeatureSelectMythicSpellbook selection) || selection.m_AllowedSpellbooks == null) return;
+				var unique = selection.m_AllowedSpellbooks.Where(r => r != null).GroupBy(r => r.Guid).Select(g => g.First()).ToArray();
+				if (unique.Length != selection.m_AllowedSpellbooks.Length)
+				{
+					removed += selection.m_AllowedSpellbooks.Length - unique.Length;
+					selection.m_AllowedSpellbooks = unique;
+				}
+			});
+			if (removed > 0)
+			{
+				Main.IsekaiContext.Logger.Log($"Removed {removed} duplicate spellbook entr{(removed == 1 ? "y" : "ies")} from the mythic spellbook selections.");
 			}
 		}
 

@@ -35,8 +35,13 @@ namespace IsekaiMod.Utilities {
 
 namespace IsekaiMod.Utilities {
     /// <summary>
-    /// Lists what the mythic spellbook selection offers a unit and which spellbooks that unit carries,
-    /// to explain duplicate "Mythic Spellbook (Isekai Protagonist)" rows.
+    /// Collapses duplicate rows in the mythic spellbook selection and logs what it offered.
+    ///
+    /// Other mods that gather "every modded spellbook" into the mythic spellbook selections add one entry
+    /// per class and archetype that references a book, so the Isekai base book showed up eight times and
+    /// the Shadow Monarch book twice (96 entries in the Demon selection's allowed list). The game builds
+    /// one row per allowed-list entry the unit carries, hence the wall of identical rows. Rows are now
+    /// reduced to one per spellbook blueprint; the standalone "(default)" row is untouched.
     /// </summary>
     [HarmonyPatch(typeof(Kingmaker.Blueprints.Classes.BlueprintFeatureSelectMythicSpellbook), "ExtractSelectionItems")]
     internal static class MythicSpellbookSelectionDiagnostics {
@@ -46,7 +51,8 @@ namespace IsekaiMod.Utilities {
         private static void Postfix(Kingmaker.Blueprints.Classes.BlueprintFeatureSelectMythicSpellbook __instance, UnitDescriptor previewUnit, ref IEnumerable<Kingmaker.Blueprints.Classes.Selection.IFeatureSelectionItem> __result) {
             try {
                 if (previewUnit == null || __result == null) return;
-                var items = __result.ToList();
+                var seen = new HashSet<Kingmaker.Blueprints.BlueprintScriptableObject>();
+                var items = __result.Where(item => item?.Param?.Blueprint == null || seen.Add(item.Param.Blueprint)).ToList();
                 __result = items;
                 string key = __instance.name + "|" + previewUnit.CharacterName;
                 if (!reported.Add(key)) return;
