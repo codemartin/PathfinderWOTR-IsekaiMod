@@ -64,11 +64,14 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist {
                 try {
                     BlueprintCharacterClass isekaiClass = IsekaiProtagonistClass.Get();
                     if (isekaiClass == null || __instance?.Progression?.GetClassData(isekaiClass) == null) return;
+                    // Two kinds of stray: a book of a class the unit has no levels in, and the base Isekai
+                    // Protagonist book on a character whose archetype replaced it (Shadow Monarch and the
+                    // others). Both are only removed when nothing was ever learned into them.
                     var stray = __instance.Spellbooks
                         .Where(book => book?.Blueprint != null && book.Blueprint.CharacterClass != null
-                            && book.Blueprint.CharacterClass != isekaiClass
-                            && __instance.Progression.GetClassData(book.Blueprint.CharacterClass) == null
                             && __instance.Progression.Classes.All(cd => cd.Spellbook != book.Blueprint)
+                            && (book.Blueprint.CharacterClass == isekaiClass
+                                || __instance.Progression.GetClassData(book.Blueprint.CharacterClass) == null)
                             && !book.GetAllKnownSpells().Any())
                         .Select(book => book.Blueprint)
                         .ToList();
@@ -78,6 +81,31 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist {
                     }
                 } catch (System.Exception ex) {
                     Main.IsekaiContext.Logger.Log($"Stray spellbook cleanup skipped for {__instance?.CharacterName}: {ex.Message}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Diagnostic: logs the caller whenever a spellbook is created on an Isekai character that none of
+        /// the character's classes reference (the replaced base book, or any other stray). Once per unit
+        /// and book. The cleanup above removes the book on the next load; this says who keeps adding it.
+        /// </summary>
+        [HarmonyPatch(typeof(UnitDescriptor), nameof(UnitDescriptor.DemandSpellbook), new System.Type[] { typeof(BlueprintSpellbook) })]
+        private static class StraySpellbookOrigin {
+            private static readonly System.Collections.Generic.HashSet<string> reported = new System.Collections.Generic.HashSet<string>();
+
+            [HarmonyPrefix]
+            private static void Prefix(UnitDescriptor __instance, BlueprintSpellbook blueprint) {
+                try {
+                    if (__instance == null || blueprint == null || __instance.GetSpellbook(blueprint) != null) return;
+                    BlueprintCharacterClass isekaiClass = IsekaiProtagonistClass.Get();
+                    if (isekaiClass == null || __instance.Progression?.GetClassData(isekaiClass) == null) return;
+                    if (__instance.Progression.Classes.Any(cd => cd.Spellbook == blueprint)) return;
+                    string key = __instance.CharacterName + "|" + blueprint.name;
+                    if (!reported.Add(key)) return;
+                    Main.IsekaiContext.Logger.Log($"Stray spellbook origin: {blueprint.name} is being created on {__instance.CharacterName}, whose classes do not use it. Stack:\n{System.Environment.StackTrace}");
+                } catch (System.Exception) {
+                    // diagnostics only
                 }
             }
         }
