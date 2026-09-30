@@ -36,6 +36,23 @@ namespace IsekaiMod.Utilities {
             }
         }
 
+        /// <summary>
+        /// The MarkForDestroy trace pointed at DropLootAndDestroyOnDeactivate on an expiring buff. This names
+        /// that buff: the game's own SummonedUnitBuff does not carry that component, so it is another buff.
+        /// </summary>
+        [HarmonyPatch(typeof(Kingmaker.UnitLogic.FactLogic.DropLootAndDestroyOnDeactivate), "OnDeactivate")]
+        private static class DestroyingBuffTrace {
+            private static void Prefix(Kingmaker.UnitLogic.FactLogic.DropLootAndDestroyOnDeactivate __instance) {
+                try {
+                    UnitEntityData unit = __instance?.Owner;
+                    if (unit == null || !InShadowPool(unit)) return;
+                    IsekaiContext.Logger.Log($"Shadow soldier {unit.CharacterName}: buff {__instance.Fact?.Blueprint?.name ?? "?"} ({__instance.Fact?.Blueprint?.AssetGuid}) is deactivating and will destroy the unit.");
+                } catch (Exception ex) {
+                    IsekaiContext.Logger.Log("Shadow summon diagnostics failed: " + ex.Message);
+                }
+            }
+        }
+
         [HarmonyPatch(typeof(SummonPool), nameof(SummonPool.Unregister))]
         private static class UnregisterTrace {
             private static void Prefix(SummonPool __instance, UnitEntityData unit) {
