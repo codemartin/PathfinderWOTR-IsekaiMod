@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Spells;
 using Kingmaker.Designers.Mechanics.Facts;
@@ -86,26 +86,42 @@ namespace IsekaiMod.Content.Classes.IsekaiProtagonist {
         }
 
         /// <summary>
-        /// Diagnostic: logs the caller whenever a spellbook is created on an Isekai character that none of
-        /// the character's classes reference (the replaced base book, or any other stray). Once per unit
-        /// and book. The cleanup above removes the book on the next load; this says who keeps adding it.
+        /// The spellbook overload. Callers that already hold a BlueprintSpellbook bypass the class overload above;
+        /// the two seen in practice are TabletopTweaks' Spell Kenning (a Skald feature, reached through the Skald
+        /// legacy, which demands the Skald spellbook to build its conversions) and SpellbookSync's prestige
+        /// fail-safe, which demands the base Isekai Protagonist book on characters whose archetype replaced it.
+        /// Both left an empty book that shows as a level 0 class row and a second spellbook tab.
+        ///
+        /// An Isekai Protagonist answers such a request with its own spellbook (or the archetype's replacement)
+        /// when the requested book belongs to the Isekai class itself, or to a non-mythic class the unit has no
+        /// levels in. Books already on the unit, mythic books, and requests on non-Isekai or multiclassed units
+        /// take the unmodified path.
         /// </summary>
         [HarmonyPatch(typeof(UnitDescriptor), nameof(UnitDescriptor.DemandSpellbook), new System.Type[] { typeof(BlueprintSpellbook) })]
-        private static class StraySpellbookOrigin {
+        private static class DemandSpellbookByBlueprintPatcher {
             private static readonly System.Collections.Generic.HashSet<string> reported = new System.Collections.Generic.HashSet<string>();
 
             [HarmonyPrefix]
-            private static void Prefix(UnitDescriptor __instance, BlueprintSpellbook blueprint) {
+            private static bool Prefix(UnitDescriptor __instance, BlueprintSpellbook blueprint, ref Spellbook __result) {
                 try {
-                    if (__instance == null || blueprint == null || __instance.GetSpellbook(blueprint) != null) return;
+                    if (__instance == null || blueprint?.CharacterClass == null || __instance.GetSpellbook(blueprint) != null) return true;
                     BlueprintCharacterClass isekaiClass = IsekaiProtagonistClass.Get();
-                    if (isekaiClass == null || __instance.Progression?.GetClassData(isekaiClass) == null) return;
-                    if (__instance.Progression.Classes.Any(cd => cd.Spellbook == blueprint)) return;
-                    string key = __instance.CharacterName + "|" + blueprint.name;
-                    if (!reported.Add(key)) return;
-                    Main.IsekaiContext.Logger.Log($"Stray spellbook origin: {blueprint.name} is being created on {__instance.CharacterName}, whose classes do not use it. Stack:\n{System.Environment.StackTrace}");
-                } catch (System.Exception) {
-                    // diagnostics only
+                    if (isekaiClass == null) return true;
+                    ClassData isekai = __instance.Progression?.GetClassData(isekaiClass);
+                    if (isekai?.Spellbook == null || isekai.Spellbook == blueprint) return true;
+                    if (__instance.Progression.Classes.Any(cd => cd.Spellbook == blueprint)) return true;
+                    if (blueprint.CharacterClass.IsMythic) return true;
+                    if (blueprint.CharacterClass != isekaiClass && __instance.Progression.GetClassData(blueprint.CharacterClass) != null) return true;
+                    Spellbook own = __instance.DemandSpellbook(isekai.Spellbook);
+                    if (own == null) return true;
+                    if (reported.Add(__instance.CharacterName + "|" + blueprint.name)) {
+                        Main.IsekaiContext.Logger.Log($"Spellbook request for {blueprint.name} on {__instance.CharacterName} answered with {own.Blueprint.name}");
+                    }
+                    __result = own;
+                    return false;
+                } catch (System.Exception ex) {
+                    Main.IsekaiContext.Logger.Log($"Spellbook redirect skipped for {__instance?.CharacterName}: {ex.Message}");
+                    return true;
                 }
             }
         }
