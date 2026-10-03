@@ -194,6 +194,8 @@
     <Compile Include="Utilities\IslandMapDiagnostics.cs" />
     <Compile Include="Utilities\ShadowSummonDiagnostics.cs" />
     <Compile Include="Utilities\LevelUpSelectionDiagnostics.cs" />
+    <Compile Include="Utilities\LevelUpPreviewDiagnostics.cs" />
+    <Compile Include="Utilities\BlueprintInitDiagnostics.cs" />
     <Compile Include="Utilities\AreaEffectActionSafety.cs" />
     <Compile Include="Utilities\AssetLoaderExtension.cs" />
     <Compile Include="Utilities\BlueprintSafetyExtensions.cs" />

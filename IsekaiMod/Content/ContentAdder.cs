@@ -100,6 +100,7 @@ namespace IsekaiMod.Content
 				// Installed here rather than in Main.Load so that every other mod's assembly is already loaded and scanned.
 				SafeStep("AreaLoadDiagnostics.Install", delegate { IsekaiMod.Utilities.AreaLoadDiagnostics.Install(new HarmonyLib.Harmony("IsekaiMod.AreaLoadDiagnostics")); });
 				SafeStep("FactGainDiagnostics.Install", delegate { IsekaiMod.Utilities.FactGainDiagnostics.Install(new HarmonyLib.Harmony("IsekaiMod.FactGainDiagnostics")); });
+				SafeStep("LevelUpPreviewDiagnostics.Install", delegate { IsekaiMod.Utilities.LevelUpPreviewDiagnostics.Install(new HarmonyLib.Harmony("IsekaiMod.LevelUpPreviewDiagnostics")); });
 			}
 
 			public static void SafeStep(string name, Action action)
