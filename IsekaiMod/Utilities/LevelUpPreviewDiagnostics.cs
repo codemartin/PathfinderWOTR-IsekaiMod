@@ -104,7 +104,7 @@ namespace IsekaiMod.Utilities {
             private static void Postfix(long __state) { RecordTop("create preview unit (copy)", __state); }
         }
 
-        [HarmonyPatch(typeof(UnitEntityData), nameof(UnitEntityData.Dispose))]
+        [HarmonyPatch(typeof(Kingmaker.EntitySystem.EntityDataBase), "Dispose")]
         private static class DisposeTrace {
             private static void Prefix(out long __state) { __state = Stopwatch.GetTimestamp(); }
             private static void Postfix(UnitEntityData __instance, long __state) { if (current != null) RecordTop("dispose unit", __state); }
