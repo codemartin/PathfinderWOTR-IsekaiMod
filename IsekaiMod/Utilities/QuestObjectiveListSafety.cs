@@ -55,25 +55,38 @@ internal static class QuestObjectiveListSafety
 
 	public static void FillAllLoaded()
 	{
-		int objectives = 0;
-		int fields = 0;
+		// Fill() reads objective.Quest, which loads the quest blueprint into the cache. Doing that while
+		// ForEachLoaded is enumerating the cache throws "Collection was modified" and the whole step was
+		// skipped (seen in Player.log on the 6.5 build). Collect first, then fill.
+		List<BlueprintQuestObjective> objectiveList = new List<BlueprintQuestObjective>();
+		List<BlueprintQuest> questList = new List<BlueprintQuest>();
 		ResourcesLibrary.BlueprintsCache.ForEachLoaded(delegate(BlueprintGuid guid, SimpleBlueprint bp)
 		{
 			if (bp is BlueprintQuestObjective objective)
 			{
-				int num = Fill(objective);
-				if (num > 0)
-				{
-					objectives++;
-					fields += num;
-				}
+				objectiveList.Add(objective);
 			}
 			else if (bp is BlueprintQuest { ComponentsArray: null } blueprintQuest)
 			{
-				blueprintQuest.ComponentsArray = new BlueprintComponent[0];
-				fields++;
+				questList.Add(blueprintQuest);
 			}
 		});
+		int objectives = 0;
+		int fields = 0;
+		foreach (BlueprintQuestObjective objective in objectiveList)
+		{
+			int num = Fill(objective);
+			if (num > 0)
+			{
+				objectives++;
+				fields += num;
+			}
+		}
+		foreach (BlueprintQuest blueprintQuest in questList)
+		{
+			blueprintQuest.ComponentsArray = new BlueprintComponent[0];
+			fields++;
+		}
 		if (objectives > 0)
 		{
 			((ModContextBase)Main.IsekaiContext).Logger.Log($"QuestObjectiveListSafety: filled {fields} missing list(s) on {objectives} quest objective(s).");
