@@ -1,193 +1,181 @@
-﻿using System;
+using System;
 using System.Linq;
+using IsekaiMod.Components;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Selection;
 using Kingmaker.Blueprints.Classes.Spells;
-using Kingmaker.Blueprints.Facts;
-using Kingmaker.Designers.Mechanics.Facts;
+using Kingmaker.EntitySystem.Stats;
 using Kingmaker.Localization;
-using Kingmaker.RuleSystem.Rules;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.FactLogic;
 using TabletopTweaks.Core.Utilities;
-using UnityEngine;
 
-namespace IsekaiMod.Content.Features.ExceptionalFeats
+namespace IsekaiMod.Content.Features.ExceptionalFeats;
+
+internal class EffectImmunitySelection
 {
-	internal class EffectImmunitySelection
+	internal const SpellDescriptor HarmfulMindDescriptors = SpellDescriptor.Fear | SpellDescriptor.Compulsion | SpellDescriptor.Charm | SpellDescriptor.Daze | SpellDescriptor.Shaken | SpellDescriptor.Frightened | SpellDescriptor.Confusion | SpellDescriptor.Sleep | SpellDescriptor.NegativeEmotion;
+
+	public static void Add()
 	{
-		private static readonly Sprite Icon_ExceptionalFeat = AssetLoader.LoadInternal(Main.IsekaiContext, "Features", "ICON_EXCEPTIONAL_FEAT.png");
-
-		public static void Add()
+		Helpers.CreateBlueprint(Main.IsekaiContext, "StatDamageNegativeLevelImmunity", delegate(BlueprintFeature bp)
 		{
-			BlueprintFeature blueprintFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "StatDamageNegativeLevelImmunity", delegate(BlueprintFeature bp)
+			bp.SetName(Main.IsekaiContext, "Ability Damage and Negative Level Immunity");
+			bp.SetDescription(Main.IsekaiContext, "You gain immunity to ability score damage and negative levels.");
+			bp.AddComponent(delegate(BuffDescriptorImmunity c)
 			{
-				bp.SetName(Main.IsekaiContext, "Stat Damage and Negative Level Immunity");
-				bp.SetDescription(Main.IsekaiContext, "You gain immunity to ability score damage, ability score drain, energy drain, and negative levels.");
-				bp.AddComponent(delegate(BuffDescriptorImmunity c)
-				{
-					c.Descriptor = SpellDescriptor.StatDebuff | SpellDescriptor.NegativeLevel;
-				});
-				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
-				{
-					c.Descriptor = SpellDescriptor.StatDebuff | SpellDescriptor.NegativeLevel;
-				});
-				bp.AddComponent(delegate(AddImmunityToAbilityScoreDamage c)
-				{
-					c.Drain = false;
-				});
-				bp.AddComponent(delegate(AddImmunityToAbilityScoreDamage c)
-				{
-					c.Drain = true;
-				});
-				bp.AddComponent<AddImmunityToEnergyDrain>();
+				c.Descriptor = SpellDescriptor.StatDebuff | SpellDescriptor.NegativeLevel;
 			});
-			BlueprintFeature blueprintFeature2 = Helpers.CreateBlueprint(Main.IsekaiContext, "SneakAttackImmunity", delegate(BlueprintFeature bp)
+			bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
 			{
-				bp.SetName(Main.IsekaiContext, "Sneak attack Immunity");
-				bp.SetDescription(Main.IsekaiContext, "You gain immunity to sneak attacks.");
-				bp.AddComponent<AddImmunityToPrecisionDamage>();
+				c.Descriptor = SpellDescriptor.StatDebuff | SpellDescriptor.NegativeLevel;
 			});
-			BlueprintFeature blueprintFeature3 = Helpers.CreateBlueprint(Main.IsekaiContext, "CriticalHitImmunity", delegate(BlueprintFeature bp)
+			bp.AddComponent(delegate(AddImmunityToAbilityScoreDamage c)
 			{
-				bp.SetName(Main.IsekaiContext, "Critical hit Immunity");
-				bp.SetDescription(Main.IsekaiContext, "You gain immunity to critical hits.");
-				bp.AddComponent<AddImmunityToCriticalHits>();
+				c.Drain = true;
+				c.StatTypes = new StatType[0];
 			});
-			BlueprintFeature blueprintFeature4 = CreateImmunity("ProneImmunity", "You gain immunity to being tripped and falling prone.", delegate(BlueprintFeature bp)
+			bp.AddComponent<AddImmunityToEnergyDrain>();
+		});
+		BlueprintFeature blueprintFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "SneakAttackImmunity", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Sneak attack Immunity");
+			bp.SetDescription(Main.IsekaiContext, "You gain immunity to sneak attacks.");
+			bp.AddComponent<AddImmunityToPrecisionDamage>();
+		});
+		BlueprintFeature blueprintFeature2 = Helpers.CreateBlueprint(Main.IsekaiContext, "CriticalHitImmunity", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Critical hit Immunity");
+			bp.SetDescription(Main.IsekaiContext, "You gain immunity to critical hits.");
+			bp.AddComponent<AddImmunityToCriticalHits>();
+		});
+		BlueprintFeature[] source = new BlueprintFeature[31]
+		{
+			CreateImmunity("BlindImmunity", "You gain immunity to blindness.", UnitCondition.Blindness, SpellDescriptor.Blindness),
+			CreateImmunity("NauseatedImmunity", "You gain immunity to the nauseated condition.", UnitCondition.Nauseated, SpellDescriptor.Nauseated),
+			CreateImmunity("FatigueImmunity", "You gain immunity to fatigue.", UnitCondition.Fatigued, SpellDescriptor.Fatigue),
+			CreateImmunity("ParalyzedImmunity", "You gain immunity to paralysis.", UnitCondition.Paralyzed, SpellDescriptor.Paralysis),
+			CreateImmunity("StaggeredImmunity", "You gain immunity to the staggered condition.", UnitCondition.Staggered, SpellDescriptor.Staggered),
+			CreateImmunity("PetrifiedImmunity", "You gain immunity to petrification.", UnitCondition.Petrified, SpellDescriptor.Petrified),
+			CreateImmunity("DazedImmunity", "You gain immunity to daze.", UnitCondition.Dazed, SpellDescriptor.Daze),
+			CreateImmunity("SlowImmunity", "You gain immunity to slow, including the slow spell's staggered condition and penalties.", delegate(BlueprintFeature bp)
 			{
 				bp.AddComponent(delegate(AddConditionImmunity c)
 				{
-					c.Condition = UnitCondition.Prone;
+					c.Condition = UnitCondition.Slowed;
 				});
-				bp.AddComponent(delegate(ManeuverImmunity c)
+				bp.AddComponent(delegate(SpecificBuffImmunity c)
 				{
-					c.Type = CombatManeuver.Trip;
+					c.m_Buff = BlueprintTools.GetBlueprintReference<BlueprintBuffReference>("0bc608c3f2b548b44b7146b7530613ac");
 				});
-			});
-			BlueprintFeature[] source = new BlueprintFeature[33]
+			}),
+			CreateImmunity("EntangledImmunity", "You gain immunity to the entangled condition.", UnitCondition.Entangled),
+			CreateImmunity("FrightenedImmunity", "You gain immunity to the frightened condition.", UnitCondition.Frightened, SpellDescriptor.Frightened),
+			CreateImmunity("SickenedImmunity", "You gain immunity to the sickened condition.", UnitCondition.Sickened, SpellDescriptor.Sickened),
+			CreateImmunity("SleepImmunity", "You gain immunity to sleep.", UnitCondition.Sleeping, SpellDescriptor.Sleep),
+			CreateImmunity("ShakenImmunity", "You gain immunity to shaken effects.", UnitCondition.Shaken, SpellDescriptor.Shaken),
+			CreateImmunity("DazzledImmunity", "You gain immunity to the dazzled condition.", UnitCondition.Dazzled),
+			CreateImmunity("StunImmunity", "You gain immunity to stun effects.", UnitCondition.Stunned, SpellDescriptor.Stun),
+			CreateImmunity("ConfusionImmunity", "You gain immunity to confusion.", UnitCondition.Confusion, SpellDescriptor.Confusion),
+			CreateImmunity("MovementImpairingImmunity", "You gain immunity to movement impairing effects.", UnitCondition.MovementBan, SpellDescriptor.MovementImpairing),
+			CreateImmunity("CoweringImmunity", "You gain immunity to cowering.", UnitCondition.Cowering),
+			CreateImmunity("ExhaustedImmunity", "You gain immunity to exhaustion.", UnitCondition.Exhausted),
+			CreateImmunity("MindAffectingImmunity", "You gain immunity to harmful mind-affecting effects: charm, compulsion, confusion, daze, fear, sleep and harmful emotion effects such as crushing despair. Morale and inspiration effects from your allies still affect you.", SpellDescriptor.Fear | SpellDescriptor.Compulsion | SpellDescriptor.Charm | SpellDescriptor.Daze | SpellDescriptor.Shaken | SpellDescriptor.Frightened | SpellDescriptor.Confusion | SpellDescriptor.Sleep | SpellDescriptor.NegativeEmotion),
+			CreateImmunity("FearImmunity", "You gain immunity to fear effects.", SpellDescriptor.Fear),
+			CreateImmunity("CompulsionImmunity", "You gain immunity to compulsion effects.", SpellDescriptor.Compulsion),
+			CreateImmunity("PoisonImmunity", "You gain immunity to poison.", SpellDescriptor.Poison),
+			CreateImmunity("DiseaseImmunity", "You gain immunity to disease.", SpellDescriptor.Disease),
+			CreateImmunity("CharmImmunity", "You gain immunity to charm.", SpellDescriptor.Charm),
+			CreateImmunity("CurseImmunity", "You gain immunity to curses.", SpellDescriptor.Curse),
+			CreateImmunity("DeathImmunity", "You gain immunity to death effects.", SpellDescriptor.Death),
+			CreateImmunity("BleedImmunity", "You gain immunity to bleed.", SpellDescriptor.Bleed),
+			CreateImmunity("HexImmunity", "You are immune to the effects that hexes from hostile creatures place on you, such as misfortune, evil eye or slumber. Hexes from your allies, such as healing, ward or fortune, still affect you.", delegate(BlueprintFeature bp)
 			{
-				CreateImmunity("BlindImmunity", "You gain immunity to blindness.", UnitCondition.Blindness, SpellDescriptor.Blindness),
-				CreateImmunity("NauseatedImmunity", "You gain immunity to the nauseated condition.", UnitCondition.Nauseated, SpellDescriptor.Nauseated),
-				CreateImmunity("FatigueImmunity", "You gain immunity to fatigue.", UnitCondition.Fatigued, SpellDescriptor.Fatigue),
-				CreateImmunity("ParalyzedImmunity", "You gain immunity to paralysis.", UnitCondition.Paralyzed, SpellDescriptor.Paralysis),
-				CreateImmunity("StaggeredImmunity", "You gain immunity to the staggered condition.", UnitCondition.Staggered, SpellDescriptor.Staggered),
-				CreateImmunity("PetrifiedImmunity", "You gain immunity to petrification.", UnitCondition.Petrified, SpellDescriptor.Petrified),
-				CreateImmunity("DazedImmunity", "You gain immunity to daze.", UnitCondition.Dazed, SpellDescriptor.Daze),
-				CreateImmunity("SlowImmunity", "You gain immunity to slow.", UnitCondition.Slowed),
-				CreateImmunity("EntangledImmunity", "You gain immunity to the entangled condition.", UnitCondition.Entangled),
-				CreateImmunity("FrightenedImmunity", "You gain immunity to the frightened condition.", UnitCondition.Frightened, SpellDescriptor.Frightened),
-				CreateImmunity("SickenedImmunity", "You gain immunity to the sickened condition.", UnitCondition.Sickened, SpellDescriptor.Sickened),
-				CreateImmunity("SleepImmunity", "You gain immunity to sleep.", UnitCondition.Sleeping, SpellDescriptor.Sleep),
-				CreateImmunity("ShakenImmunity", "You gain immunity to shaken effects.", UnitCondition.Shaken, SpellDescriptor.Shaken),
-				CreateImmunity("DazzledImmunity", "You gain immunity to the dazzled condition.", UnitCondition.Dazzled),
-				CreateImmunity("StunImmunity", "You gain immunity to stun effects.", UnitCondition.Stunned, SpellDescriptor.Stun),
-				CreateImmunity("ConfusionImmunity", "You gain immunity to confusion.", UnitCondition.Confusion, SpellDescriptor.Confusion),
-				CreateImmunity("MovementImpairingImmunity", "You gain immunity to movement impairing effects.", UnitCondition.MovementBan, SpellDescriptor.MovementImpairing),
-				CreateImmunity("CoweringImmunity", "You gain immunity to cowering.", UnitCondition.Cowering),
-				CreateImmunity("ExhaustedImmunity", "You gain immunity to exhaustion.", UnitCondition.Exhausted),
-				CreateImmunity("MindAffectingImmunity", "You gain immunity to mind affecting effects.", SpellDescriptor.MindAffecting),
-				CreateImmunity("FearImmunity", "You gain immunity to fear effects.", SpellDescriptor.Fear),
-				CreateImmunity("CompulsionImmunity", "You gain immunity to compulsion effects.", SpellDescriptor.Compulsion),
-				CreateImmunity("PoisonImmunity", "You gain immunity to poison.", SpellDescriptor.Poison),
-				CreateImmunity("DiseaseImmunity", "You gain immunity to disease.", SpellDescriptor.Disease),
-				CreateImmunity("CharmImmunity", "You gain immunity to charm.", SpellDescriptor.Charm),
-				CreateImmunity("CurseImmunity", "You gain immunity to curses.", SpellDescriptor.Curse),
-				CreateImmunity("DeathImmunity", "You gain immunity to death effects.", SpellDescriptor.Death),
-				CreateImmunity("BleedImmunity", "You gain immunity to bleed.", SpellDescriptor.Bleed),
-				CreateImmunity("HexImmunity", "You gain immunity to hexes.", SpellDescriptor.Hex),
-				blueprintFeature4,
-				blueprintFeature,
-				blueprintFeature2,
-				blueprintFeature3
-			};
-			BlueprintFeatureReference[] EffectImmunityList = source.Select((BlueprintFeature bp) => bp.ToReference<BlueprintFeatureReference>()).ToArray();
-			LocalizedString EffectImmunitySelectionDesc = Helpers.CreateString(Main.IsekaiContext, "EffectImmunitySelection.Description", "You gain immunity to a specific condition or effect.");
-			BlueprintFeatureSelection selection = Helpers.CreateBlueprint(Main.IsekaiContext, "EffectImmunitySelection", delegate(BlueprintFeatureSelection bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Effect Immunity");
-				bp.SetDescription(EffectImmunitySelectionDesc);
-				((BlueprintUnitFact)bp).m_Icon = Icon_ExceptionalFeat;
-				bp.Ranks = 33;
-				bp.IsClassFeature = true;
-				bp.m_Features = EffectImmunityList;
-				bp.m_AllFeatures = EffectImmunityList;
-			});
-			BlueprintFeatureSelection bonusSelection = Helpers.CreateBlueprint(Main.IsekaiContext, "EffectImmunityBonusSelection", delegate(BlueprintFeatureSelection bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Effect Immunity");
-				bp.SetDescription(EffectImmunitySelectionDesc);
-				((BlueprintUnitFact)bp).m_Icon = Icon_ExceptionalFeat;
-				bp.Ranks = 33;
-				bp.IsClassFeature = true;
-				bp.m_Features = EffectImmunityList;
-				bp.m_AllFeatures = EffectImmunityList;
-			});
-			ExceptionalFeatSelection.AddToSelection(selection, bonusSelection);
-		}
-
-		private static BlueprintFeature CreateImmunity(string name, string description, UnitCondition condition, SpellDescriptor descriptor)
+				bp.AddComponent(delegate(HostileBuffDescriptorImmunity c)
+				{
+					c.Descriptor = SpellDescriptor.Hex;
+				});
+			}),
+			blueprintFeature,
+			blueprintFeature2
+		};
+		BlueprintFeatureReference[] EffectImmunityList = source.Select((BlueprintFeature bp) => bp.ToReference<BlueprintFeatureReference>()).ToArray();
+		LocalizedString EffectImmunitySelectionDesc = Helpers.CreateString(Main.IsekaiContext, "EffectImmunitySelection.Description", "You gain immunity to a specific condition or effect.");
+		BlueprintFeatureSelection selection = Helpers.CreateBlueprint(Main.IsekaiContext, "EffectImmunitySelection", delegate(BlueprintFeatureSelection bp)
 		{
-			return CreateImmunity(name, description, delegate(BlueprintFeature bp)
-			{
-				bp.AddComponent(delegate(AddConditionImmunity c)
-				{
-					c.Condition = condition;
-				});
-				if (condition == UnitCondition.MovementBan)
-				{
-					bp.AddComponent(delegate(AddConditionImmunity c)
-					{
-						c.Condition = UnitCondition.CantMove;
-					});
-				}
-				bp.AddComponent(delegate(BuffDescriptorImmunity c)
-				{
-					c.Descriptor = descriptor;
-				});
-				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
-				{
-					c.Descriptor = descriptor;
-				});
-			});
-		}
-
-		private static BlueprintFeature CreateImmunity(string name, string description, UnitCondition condition)
+			bp.SetName(Main.IsekaiContext, "Effect Immunity");
+			bp.SetDescription(EffectImmunitySelectionDesc);
+			bp.Ranks = 1;
+			bp.IsClassFeature = true;
+			bp.m_Features = EffectImmunityList;
+			bp.m_AllFeatures = EffectImmunityList;
+		});
+		BlueprintFeatureSelection bonusSelection = Helpers.CreateBlueprint(Main.IsekaiContext, "EffectImmunityBonusSelection", delegate(BlueprintFeatureSelection bp)
 		{
-			return CreateImmunity(name, description, delegate(BlueprintFeature bp)
-			{
-				bp.AddComponent(delegate(AddConditionImmunity c)
-				{
-					c.Condition = condition;
-				});
-			});
-		}
+			bp.SetName(Main.IsekaiContext, "Effect Immunity");
+			bp.SetDescription(EffectImmunitySelectionDesc);
+			bp.Ranks = 1;
+			bp.IsClassFeature = true;
+			bp.m_Features = EffectImmunityList;
+			bp.m_AllFeatures = EffectImmunityList;
+		});
+		ExceptionalFeatSelection.AddToSelection(selection, bonusSelection);
+	}
 
-		private static BlueprintFeature CreateImmunity(string name, string description, SpellDescriptor descriptor)
+	private static BlueprintFeature CreateImmunity(string name, string description, UnitCondition condition, SpellDescriptor descriptor)
+	{
+		return CreateImmunity(name, description, delegate(BlueprintFeature bp)
 		{
-			return CreateImmunity(name, description, delegate(BlueprintFeature bp)
+			bp.AddComponent(delegate(AddConditionImmunity c)
 			{
-				bp.AddComponent(delegate(BuffDescriptorImmunity c)
-				{
-					c.Descriptor = descriptor;
-				});
-				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
-				{
-					c.Descriptor = descriptor;
-				});
+				c.Condition = condition;
 			});
-		}
+			bp.AddComponent(delegate(BuffDescriptorImmunity c)
+			{
+				c.Descriptor = descriptor;
+			});
+			bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+			{
+				c.Descriptor = descriptor;
+			});
+		});
+	}
 
-		private static BlueprintFeature CreateImmunity(string name, string description, Action<BlueprintFeature> init = null)
+	private static BlueprintFeature CreateImmunity(string name, string description, UnitCondition condition)
+	{
+		return CreateImmunity(name, description, delegate(BlueprintFeature bp)
 		{
-			BlueprintFeature blueprintFeature = Helpers.CreateBlueprint(Main.IsekaiContext, name, delegate(BlueprintFeature bp)
+			bp.AddComponent(delegate(AddConditionImmunity c)
 			{
-				bp.SetName(Main.IsekaiContext, string.Concat(name.Select((char x) => (!char.IsUpper(x)) ? x.ToString() : (" " + x))).TrimStart(' '));
-				bp.SetDescription(Main.IsekaiContext, description);
+				c.Condition = condition;
 			});
-			init?.Invoke(blueprintFeature);
-			return blueprintFeature;
-		}
+		});
+	}
+
+	private static BlueprintFeature CreateImmunity(string name, string description, SpellDescriptor descriptor)
+	{
+		return CreateImmunity(name, description, delegate(BlueprintFeature bp)
+		{
+			bp.AddComponent(delegate(BuffDescriptorImmunity c)
+			{
+				c.Descriptor = descriptor;
+			});
+			bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+			{
+				c.Descriptor = descriptor;
+			});
+		});
+	}
+
+	private static BlueprintFeature CreateImmunity(string name, string description, Action<BlueprintFeature> init = null)
+	{
+		BlueprintFeature blueprintFeature = Helpers.CreateBlueprint(Main.IsekaiContext, name, delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, string.Concat(name.Select((char x) => (!char.IsUpper(x)) ? x.ToString() : (" " + x))).TrimStart(' '));
+			bp.SetDescription(Main.IsekaiContext, description);
+		});
+		init?.Invoke(blueprintFeature);
+		return blueprintFeature;
 	}
 }

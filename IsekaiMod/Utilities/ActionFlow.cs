@@ -1,70 +1,69 @@
-﻿using System;
-using System.Linq;
+using System;
 using Kingmaker.ElementsSystem;
 using Kingmaker.UnitLogic.Mechanics.Actions;
 using TabletopTweaks.Core.Utilities;
 
-namespace IsekaiMod.Utilities
+namespace IsekaiMod.Utilities;
+
+public static class ActionFlow
 {
-	public static class ActionFlow
+	public static ActionList DoNothing()
 	{
-		public static ActionList DoNothing()
-		{
-			return Helpers.CreateActionList();
-		}
+		return Helpers.CreateActionList();
+	}
 
-		public static ActionList DoSingle<T>(Action<T> init = null) where T : GameAction, new()
-		{
-			T val = new T();
-			init?.Invoke(val);
-			return Helpers.CreateActionList(val);
-		}
+	public static ActionList DoSingle<T>(Action<T> init = null) where T : GameAction, new()
+	{
+		T val = new T();
+		init?.Invoke(val);
+		return Helpers.CreateActionList(val);
+	}
 
-		public static ActionList DealDamage(Action<ContextActionDealDamage> init = null)
+	public static ActionList DealDamage(Action<ContextActionDealDamage> init = null)
+	{
+		ContextActionDealDamage contextActionDealDamage = new ContextActionDealDamage
 		{
-			ContextActionDealDamage contextActionDealDamage = new ContextActionDealDamage
-			{
-				m_Type = ContextActionDealDamage.Type.Damage,
-				Duration = Values.Duration.Zero,
-				UseWeaponDamageModifiers = true
-			};
-			init?.Invoke(contextActionDealDamage);
-			return Helpers.CreateActionList(contextActionDealDamage);
-		}
+			m_Type = ContextActionDealDamage.Type.Damage,
+			Duration = Values.Duration.Zero,
+			UseWeaponDamageModifiers = false,
+			IgnoreCritical = true
+		};
+		init?.Invoke(contextActionDealDamage);
+		return Helpers.CreateActionList(contextActionDealDamage);
+	}
 
-		public static ConditionsChecker IfSingle<T>(Action<T> init = null) where T : Condition, new()
-		{
-			T val = new T();
-			init?.Invoke(val);
-			ConditionsChecker conditionsChecker = new ConditionsChecker();
-			conditionsChecker.Conditions = new Condition[1] { val };
-			return conditionsChecker;
-		}
+	public static ConditionsChecker IfSingle<T>(Action<T> init = null) where T : Condition, new()
+	{
+		T val = new T();
+		init?.Invoke(val);
+		ConditionsChecker conditionsChecker = new ConditionsChecker();
+		conditionsChecker.Conditions = new Condition[1] { val };
+		return conditionsChecker;
+	}
 
-		public static ConditionsChecker IfAll(params Condition[] conditions)
+	public static ConditionsChecker IfAll(params Condition[] conditions)
+	{
+		return new ConditionsChecker
 		{
-			return new ConditionsChecker
-			{
-				Conditions = (conditions?.Where((Condition c) => c != null).ToArray() ?? Array.Empty<Condition>()),
-				Operation = Operation.And
-			};
-		}
+			Conditions = conditions,
+			Operation = Operation.And
+		};
+	}
 
-		public static ConditionsChecker IfAny(params Condition[] conditions)
+	public static ConditionsChecker IfAny(params Condition[] conditions)
+	{
+		return new ConditionsChecker
 		{
-			return new ConditionsChecker
-			{
-				Conditions = (conditions?.Where((Condition c) => c != null).ToArray() ?? Array.Empty<Condition>()),
-				Operation = Operation.Or
-			};
-		}
+			Conditions = conditions,
+			Operation = Operation.Or
+		};
+	}
 
-		public static ConditionsChecker EmptyCondition()
+	public static ConditionsChecker EmptyCondition()
+	{
+		return new ConditionsChecker
 		{
-			return new ConditionsChecker
-			{
-				Conditions = Array.Empty<Condition>()
-			};
-		}
+			Conditions = new Condition[0]
+		};
 	}
 }

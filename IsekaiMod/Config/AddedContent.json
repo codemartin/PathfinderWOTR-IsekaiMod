@@ -1,4 +1,4 @@
-﻿{
+{
   "NewSettingsOffByDefault": false,
   "ExcludeCompanionsFromIsekaiClass": true,
   "AllowMainCharacterRetinue": false,
@@ -8,46 +8,57 @@
   "MultipleMythicOPAbility": false,
   "MultipleMythicSpecialPower": false,
   "MergeIsekaiSpellList": false,
-  "IsekaiDefaultClothes": 20,
-  "IsekaiSpellsKnownIncrement": 6,
-  "DisableSpellbookMartialGod" : false,
+  "IsekaiDefaultClothes": 21,
+  "IsekaiSpellsKnownIncrement": 2,
+  "EnableLevelUncapping": true,
+  "EnableCosmicThreatScaling": true,
+  "CosmicThreatDifficultyMultiplier": 1,
+  "EnableRampantCheating": true,
+  "EnableRivalReincarnators": true,
+  "EnableDimensionalReinforcements": true,
+  "EnableIsekaiEncounterMultiplier": false,
+  "EnableConstellations": true,
+  "EnableConstellationChatOverlay": true,
+  "EnableConstellationCombatReactions": true,
+  "ConstellationChatDurationSeconds": 14,
+  "ConstellationChatPosition": 0,
+  "ConstellationChatMaxMessages": 5,
+  "ConstellationChatArrivalTenths": 6,
+  "EnableDimensionalArena": true,
+  "IOwnKingmaker": false,
+  "DisableSpellbookPhantomBlade" : false,
   "DisableSpellbookGodEmperor" : false,
   "DisableSpellbookHero" : false,
   "DisableSpellbookMastermind" : false,
   "DisableSpellbookOverlord" : false,
   "DisableSpellbookShadowMonarch" : false,
-  "EnableConstellationChatOverlay": true,
-  "ConstellationChatAlwaysVisible": true,
-  "ConstellationChatDurationSeconds": 14,
-  "ConstellationChatMaxMessages": 5,
-  "ConstellationChatPosition": 0,
   "Isekai": {
     "DisableAll": false,
     "Settings": {
       "Isekai Protagonist": {
         "Enabled": true,
         "Homebrew": true,
-        "Description": "Adds the Isekai Protagonist class."
+        "Description": "Offers the Isekai Protagonist class and its prestige classes. Off: new characters cannot take them; a character who already has Isekai levels keeps them, keeps every feature and can still level the class. Restart the game after changing."
       },
       "Isekai Dialogue": {
         "Enabled": true,
         "Homebrew": true,
-        "Description": "Adds extra dialogue for the Isekai Protagonist."
+        "Description": "Shows the extra Isekai Protagonist answers in vanilla conversations. Off: those answers are hidden; choices already made stay made. Takes effect the next time a conversation opens."
       },
       "Isekai Heritages": {
         "Enabled": true,
         "Homebrew": true,
-        "Description": "Adds Isekai Heritages."
+        "Description": "Offers the Isekai heritages at character creation. Off: they are no longer offered; a character who has one keeps it and all its bonuses. Restart the game after changing."
       },
       "Isekai Backgrounds": {
         "Enabled": true,
         "Homebrew": true,
-        "Description": "Adds Isekai Backgrounds."
+        "Description": "Offers the Isekai backgrounds at character creation. Off: they are no longer offered; a character who has one keeps it. Restart the game after changing."
       },
       "Isekai Deities": {
         "Enabled": true,
         "Homebrew": true,
-        "Description": "Adds Isekai Gods."
+        "Description": "Offers the Isekai gods in the deity selection. Off: they are no longer offered and the deity list is left as it is without the mod; a character who follows one keeps that deity. Restart the game after changing."
       }
     },
     "IsExpanded": true
@@ -58,17 +69,17 @@
       "Exceptional Feats": {
         "Enabled": true,
         "Homebrew": true,
-        "Description": "Adds Exceptional feats to feat selection."
+        "Description": "Offers the Exceptional feats in feat selection. Off: they are no longer offered; feats already taken are kept. Restart the game after changing."
       },
       "Relax Legacy Choices": {
         "Enabled": true,
         "Homebrew": true,
-        "Description": "Do not restrict what Legacy choices are available as a second choice by archetype."
+        "Description": "Do not restrict what Legacy choices are available as a second choice by archetype. Off: the restriction applies to new picks only; Legacies already taken are kept. Restart the game after changing."
       },
       "Mythic Class Feature": {
         "Enabled": true,
         "Homebrew": true,
-        "Description": "Adds the ability to select mythic traits from other classes to Mythic Overpowered Ability and Mythic Special Power Selection."
+        "Description": "Offers Blessing of the Mythic (mythic traits from other paths) in the Overpowered Ability, Special Power and mythic ability selections. Only offered while the Isekai Protagonist class is offered too. Off: it is no longer offered; picks already made are kept. Restart the game after changing."
       }
     },
     "IsExpanded": true

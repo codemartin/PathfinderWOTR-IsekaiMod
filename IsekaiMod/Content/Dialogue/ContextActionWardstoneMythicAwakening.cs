@@ -1,39 +1,31 @@
-﻿using System;
-using System.Collections.Generic;
 using IsekaiMod.Content.Constellations;
-using Kingmaker.UnitLogic.Mechanics.Actions;
+using IsekaiMod.Utilities;
+using Kingmaker.Blueprints.JsonSystem;
 
-namespace IsekaiMod.Content.Dialogue
+namespace IsekaiMod.Content.Dialogue;
+
+[TypeId("f242cafc062d4c17b2d57e7b15762a88")]
+public class ContextActionWardstoneMythicAwakening : IsekaiContextAction
 {
-	public class ContextActionWardstoneMythicAwakening : ContextAction
-	{
-		public override string GetCaption()
-		{
-			return "Awards 500 Cosmic Coins and triggers Wardstone Mythic Banter";
-		}
+	private const string WardstoneScene = "Gray Garrison: The Wardstone";
 
-		public override void RunAction()
+	public override string GetCaption()
+	{
+		return "Awards 500 Cosmic Coins and triggers Wardstone Mythic Banter";
+	}
+
+	protected override void RunSafely()
+	{
+		if (ConstellationChatManager.TryClaimSceneReward("WardstoneMythicAwakening"))
 		{
-			if (ConstellationChatManager.HasTriggeredMilestone("Act1WardstoneClimax"))
-			{
-				return;
-			}
-			ConstellationChatManager.MarkMilestoneTriggered("Act1WardstoneClimax");
-			List<string> wardstoneMythicAwakeningBanter = ConstellationDialogueBanter.GetWardstoneMythicAwakeningBanter(TimelineManager.GetCurrentCycle(), out var coinsAwarded, out var primarySponsor);
-			double num = ConstellationDialogueBanter.RollMultiplier(primarySponsor, out var shoutoutMsg);
-			int amount = (int)Math.Round((double)coinsAwarded * num);
-			if (wardstoneMythicAwakeningBanter != null)
-			{
-				foreach (string item in wardstoneMythicAwakeningBanter)
-				{
-					ConstellationChatManager.PostLog(item, primarySponsor, ConstellationCategory.Quest, 0, "Wardstone Mythic Awakening");
-				}
-			}
+			double num = ConstellationDialogueBanter.RollMultiplier("The Laughing King", out var shoutoutMsg);
+			int amount = (int)(500.0 * num);
 			if (!string.IsNullOrEmpty(shoutoutMsg))
 			{
-				ConstellationChatManager.PostLog(shoutoutMsg, primarySponsor, ConstellationCategory.Quest, 0, "Wardstone Mythic Awakening");
+				ConstellationChatManager.PostLog(shoutoutMsg, "The Laughing King", ConstellationCategory.Subclass, 0, "Gray Garrison: The Wardstone");
 			}
-			DivineTokens.AddCoins(amount, primarySponsor);
+			DivineTokens.AddClaimedCoins(amount, "The Laughing King");
 		}
+		ConstellationChatManager.PostLines(ConstellationDialogueBanter.GetWardstoneMythicAwakeningBanter("The Laughing King"), "The Laughing King", ConstellationCategory.Subclass, "Gray Garrison: The Wardstone");
 	}
 }

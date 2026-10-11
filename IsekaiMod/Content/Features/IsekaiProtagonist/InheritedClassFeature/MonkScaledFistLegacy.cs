@@ -1,4 +1,4 @@
-﻿using IsekaiMod.Content.Classes.IsekaiProtagonist;
+using IsekaiMod.Content.Classes.IsekaiProtagonist;
 using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Hero;
 using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.MartialGod;
 using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Mastermind;
@@ -10,56 +10,70 @@ using Kingmaker.Blueprints.Classes.Prerequisites;
 using Kingmaker.UnitLogic.Alignments;
 using TabletopTweaks.Core.Utilities;
 
-namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature
+namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature;
+
+internal class MonkScaledFistLegacy
 {
-	internal class MonkScaledFistLegacy
+	private static BlueprintArchetype BaseArchetype = BlueprintTools.GetBlueprint<BlueprintArchetype>("5868fc82eb11a4244926363983897279");
+
+	private static BlueprintProgression prog;
+
+	public static void Configure()
 	{
-		private static BlueprintArchetype BaseArchetype = BlueprintTools.GetBlueprint<BlueprintArchetype>("5868fc82eb11a4244926363983897279");
-
-		private static BlueprintProgression prog;
-
-		public static void Configure()
+		prog = Helpers.CreateBlueprint(Main.IsekaiContext, "MonkScaledFistLegacy", delegate(BlueprintProgression bp)
 		{
-			prog = Helpers.CreateBlueprint(Main.IsekaiContext, "MonkScaledFistLegacy", delegate(BlueprintProgression bp)
+			bp.SetName(Main.IsekaiContext, "Monk Legacy - Fist of a Dragon");
+			bp.SetDescription(Main.IsekaiContext, "You have a dragon in your dantian!");
+			bp.GiveFeaturesForPreviousLevels = true;
+			bp.AddComponent(delegate(PrerequisiteAlignment c)
 			{
-				bp.SetName(Main.IsekaiContext, "Monk Legacy - Fist of a Dragon");
-				bp.SetDescription(Main.IsekaiContext, "You have a dragon in your dantian!");
-				bp.GiveFeaturesForPreviousLevels = true;
-				bp.AddComponent(delegate(PrerequisiteAlignment c)
-				{
-					c.Alignment = AlignmentMaskType.Lawful | AlignmentMaskType.NeutralGood | AlignmentMaskType.TrueNeutral | AlignmentMaskType.NeutralEvil;
-				});
+				c.Alignment = AlignmentMaskType.Lawful | AlignmentMaskType.NeutralGood | AlignmentMaskType.TrueNeutral | AlignmentMaskType.NeutralEvil;
 			});
-			LegacySelection.RegisterForFeat(prog);
-			LegacySelection.Register(prog);
-			MartialGodLegacySelection.Register(prog);
-			HeroLegacySelection.Register(prog);
-			MastermindLegacySelection.Prohibit(prog);
-			OverlordLegacySelection.Register(prog);
+		});
+		LegacySelection.RegisterForFeat(prog);
+		LegacySelection.Register(prog);
+		MartialGodLegacySelection.Register(prog);
+		HeroLegacySelection.Register(prog);
+		MastermindLegacySelection.Prohibit(prog);
+		OverlordLegacySelection.Register(prog);
+	}
+
+	public static void PatchProgression()
+	{
+		if (prog == null)
+		{
+			return;
 		}
-
-		public static void PatchProgression()
+		if (BaseArchetype == null)
 		{
-			prog = PatchTools.PatchClassProgressionBasedonRefArchetype(prog, ClassTools.Classes.MonkClass, BaseArchetype, null);
-			BlueprintCharacterClassReference monkClass = ClassTools.ClassReferences.MonkClass;
-			PatchTools.PatchProgressionFeaturesBasedOnReferenceArchetype(IsekaiProtagonistClass.GetReference(), monkClass, BaseArchetype);
-			prog.AddPrerequisite(delegate(PrerequisiteNoClassLevel c)
+			BaseArchetype = BlueprintTools.GetBlueprint<BlueprintArchetype>("5868fc82eb11a4244926363983897279");
+			if (BaseArchetype == null)
 			{
-				c.m_CharacterClass = ClassTools.Classes.MonkClass.ToReference<BlueprintCharacterClassReference>();
-			});
-			prog.AddPrerequisite(delegate(PrerequisiteNoFeature c)
-			{
-				c.m_Feature = MonkLegacy.Get().ToReference<BlueprintFeatureReference>();
-			});
-		}
-
-		public static BlueprintProgression Get()
-		{
-			if (prog != null)
-			{
-				return prog;
+				Main.IsekaiContext.Logger.LogWarning("Scaled Fist archetype not present, MonkScaledFistLegacy skipped.");
+				return;
 			}
-			return BlueprintTools.GetModBlueprint<BlueprintProgression>(Main.IsekaiContext, "MonkScaledFistLegacy");
 		}
+		prog = PatchTools.PatchClassProgressionBasedonRefArchetype(prog, ClassTools.Classes.MonkClass, BaseArchetype, null);
+		BlueprintCharacterClassReference monkClass = ClassTools.ClassReferences.MonkClass;
+		BlueprintCharacterClassReference reference = IsekaiProtagonistClass.GetReference();
+		PatchTools.PatchProgressionFeaturesBasedOnReferenceArchetype(reference, monkClass, BaseArchetype);
+		PatchTools.PatchProgressionFeaturesBasedOnReferenceClass(prog, reference, monkClass);
+		prog.AddPrerequisite(delegate(PrerequisiteNoClassLevel c)
+		{
+			c.m_CharacterClass = ClassTools.Classes.MonkClass.ToReference<BlueprintCharacterClassReference>();
+		});
+		prog.AddPrerequisite(delegate(PrerequisiteNoFeature c)
+		{
+			c.m_Feature = MonkLegacy.Get().ToReference<BlueprintFeatureReference>();
+		});
+	}
+
+	public static BlueprintProgression Get()
+	{
+		if (prog != null)
+		{
+			return prog;
+		}
+		return BlueprintTools.GetModBlueprint<BlueprintProgression>(Main.IsekaiContext, "MonkScaledFistLegacy");
 	}
 }

@@ -1,6 +1,6 @@
-﻿using System;
-using System.Linq;
+using System;
 using HarmonyLib;
+using IsekaiMod.Config;
 using IsekaiMod.Content.Classes.IsekaiProtagonist;
 using IsekaiMod.Content.Classes.IsekaiProtagonist.Archetypes;
 using IsekaiMod.Content.Deities;
@@ -12,141 +12,130 @@ using Kingmaker.Blueprints.Classes.Selection;
 using Kingmaker.Blueprints.JsonSystem;
 using TabletopTweaks.Core.Utilities;
 
-namespace IsekaiMod.Content
+namespace IsekaiMod.Content;
+
+[HarmonyPatch]
+internal static class FinalPatcher
 {
-	[HarmonyPatch]
-	internal static class FinalPatcher
+	private static bool Run;
+
+	private const string Phase = "FinalPatcher";
+
+	[HarmonyPriority(-100)]
+	[HarmonyPatch(typeof(StartGameLoader), "LoadAllJson")]
+	[HarmonyPostfix]
+	private static void Postfix()
 	{
-		private static bool Run;
-
-		[HarmonyPriority(-100)]
-		[HarmonyPatch(typeof(StartGameLoader), "LoadAllJson")]
-		[HarmonyPostfix]
-		private static void Postfix()
+		if (Run)
 		{
-			if (Run)
-			{
-				return;
-			}
-			Run = true;
+			return;
+		}
+		Run = true;
+		try
+		{
+			PatchAll();
+		}
+		finally
+		{
+			RegressionSanityCheck.LogStepFailureSummary("FinalPatcher");
+		}
+	}
+
+	private static void PatchAll()
+	{
+		if (ContentOffering.IsOffered(OfferedContent.IsekaiDeities))
+		{
 			SafeStep("PatchDeitySelection", IsekaiDeitySelection.PatchDeitySelection);
-			if (Main.IsekaiContext.AddedContent.Isekai.IsEnabled("Isekai Heritages"))
+		}
+		if (Main.IsekaiContext.AddedContent.EnableConstellations)
+		{
+			SafeStep("MarkConstellationSponsors", IsekaiDeitySelection.MarkConstellationSponsors);
+		}
+		if (ModSupport.IsExpandedContentEnabled)
+		{
+			SafeStep("ModSupport.AddExpandedContentDrakes", delegate
 			{
-				SafeStep("PatchHeritages", PatchHeritages);
-			}
-			if (!Main.IsekaiContext.AddedContent.Isekai.IsDisabled("Isekai Protagonist"))
-			{
-				SafeStep("LegacySelection.ConfigureStep3", LegacySelection.ConfigureStep3);
-				SafeStep("PrebuildIsekaiProtagonistFeatureList.PatchLegacySelection", PrebuildIsekaiProtagonistFeatureList.PatchLegacySelection);
-				SafeStep("ArcanistPatcher", delegate
-				{
-					PatchTools.ArcanistPatcher.Patch(IsekaiProtagonistClass.GetReference(), MastermindSpellbook.GetReference());
-				});
-				SafeStep("KineticistPatcher", delegate
-				{
-					PatchTools.KineticistPatcher.Patch(IsekaiProtagonistClass.GetReference());
-				});
-				SafeStep("ShifterPatcher", delegate
-				{
-					PatchTools.ShifterPatcher.Patch(IsekaiProtagonistClass.GetReference());
-				});
-				SafeStep("PatchWearyingStrike", PatchTools.PatchWearyingStrike);
-				if (Main.IsekaiContext.AddedContent.MergeIsekaiSpellList)
-				{
-					SafeStep("MergeSpellLists", IsekaiProtagonistSpellList.MergeSpellLists);
-				}
-				SafeStep("PatchMastermindSpellList", MastermindSpellList.PatchMastermindSpellList);
-				if (ModSupport.IsTableTopTweakBaseEnabled)
-				{
-					SafeStep("PatchTableTopTweakCore", PatchTableTopTweakCore);
-				}
-			}
-			// Runs after every other mod's BlueprintsCache.Init postfix, so mirrored selections
-			// (Exceptional Feats, Isekai Bonus Feat, Extra Special Power) pick up features those mods added.
-			SafeStep("QuestObjectiveListSafety.FillAllLoaded", QuestObjectiveListSafety.FillAllLoaded);
-			SafeStep("MirroredSelections.Sync", MirroredSelections.Sync);
-			// After the mirrors are complete, so every progression an Isekai selection can offer is known.
-			SafeStep("PrerequisiteSymmetry.Apply", delegate
-			{
-				PrerequisiteSymmetry.Apply(MirroredSelections.AllSelections());
+				ModSupport.AddExpandedContentDrakes(IsekaiProtagonistClass.Get());
 			});
-			SafeStep("ModItemFixer.FixEnchantmentArrays", ModItemFixer.FixEnchantmentArrays);
-			// Other mods register the Isekai spellbooks into the mythic spellbook selections once per class and
-			// archetype that references them; the duplicates become identical rows in the level-up UI.
-			SafeStep("DedupeMythicSpellbookLists", DedupeMythicSpellbookLists);
-			if (!Main.IsekaiContext.AddedContent.Isekai.IsDisabled("Isekai Protagonist"))
-			{
-				// Let Isekai wrapper selections satisfy feat and mythic prerequisites that expect the base-game selections.
-				SafeStep("ShamanSelection.PatchPrerequisiteCompatibility", ShamanSelection.PatchPrerequisiteCompatibility);
-				SafeStep("ExtraOracleSelection.PatchPrerequisiteCompatibility", ExtraOracleSelection.PatchPrerequisiteCompatibility);
-				SafeStep("BloodragerChimeraLegacy.PatchPrerequisiteCompatibility", BloodragerChimeraLegacy.PatchPrerequisiteCompatibility);
-				SafeStep("ExtraBloodlineSelection.PatchPrerequisiteCompatibility", ExtraBloodlineSelection.PatchPrerequisiteCompatibility);
-				SafeStep("WitchPatronSelection.PatchPrerequisiteCompatibility", WitchPatronSelection.PatchPrerequisiteCompatibility);
-				SafeStep("InquisitorTacticianLegacy.PatchPrerequisiteCompatibility", InquisitorTacticianLegacy.PatchPrerequisiteCompatibility);
-				SafeStep("InquisitorDomainLordLegacy.PatchPrerequisiteCompatibility", InquisitorDomainLordLegacy.PatchPrerequisiteCompatibility);
-				PatchTools.ReportWalkStatistics("final patcher");
-			}
 		}
-
-		private static void DedupeMythicSpellbookLists()
+		SafeStep("BonusFeatListRefresh", BonusFeatListRefresh.RefreshAll);
+		SafeStep("FlushHeritageOffers", delegate
 		{
-			int removed = 0;
-			Kingmaker.Blueprints.ResourcesLibrary.BlueprintsCache.ForEachLoaded(delegate (Kingmaker.Blueprints.BlueprintGuid guid, Kingmaker.Blueprints.SimpleBlueprint bp)
-			{
-				if (!(bp is BlueprintFeatureSelectMythicSpellbook selection) || selection.m_AllowedSpellbooks == null) return;
-				var unique = selection.m_AllowedSpellbooks.Where(r => r != null).GroupBy(r => r.Guid).Select(g => g.First()).ToArray();
-				if (unique.Length != selection.m_AllowedSpellbooks.Length)
-				{
-					removed += selection.m_AllowedSpellbooks.Length - unique.Length;
-					selection.m_AllowedSpellbooks = unique;
-				}
-			});
-			if (removed > 0)
-			{
-				Main.IsekaiContext.Logger.Log($"Removed {removed} duplicate spellbook entr{(removed == 1 ? "y" : "ies")} from the mythic spellbook selections.");
-			}
-		}
-
-		private static void SafeStep(string name, Action action)
+			ContentOffering.FlushHeritageOffers();
+		});
+		SafeStep("PatchHeritages", PatchHeritages);
+		if (ContentOffering.IsOffered(OfferedContent.IsekaiHeritages))
 		{
-			try
-			{
-				action();
-			}
-			catch (Exception arg)
-			{
-				Main.IsekaiContext.Logger.LogError($"[FinalPatcher Warning] Step '{name}' threw an exception: {arg}");
-			}
+			SafeStep("HumanHeritageSelection.Patch", HumanHeritageSelection.Patch);
 		}
-
-		private static void PatchTableTopTweakCore()
+		SafeStep("LegacySelection.ConfigureStep3", LegacySelection.ConfigureStep3);
+		SafeStep("PrebuildIsekaiProtagonistFeatureList.PatchLegacySelection", PrebuildIsekaiProtagonistFeatureList.PatchLegacySelection);
+		SafeStep("ArcanistPatcher", delegate
 		{
-			BlueprintFeatureSelection blueprint = BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("c898b6e4918c41c3a351c9a882c65cea");
-			BlueprintFeatureSelection blueprint2 = BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("6e32488a2cec4ba586508db4f78b062d");
-			BlueprintFeatureSelection blueprint3 = BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("40f13b4925c24e50bc8f3d5fe4d42a05");
-			if (blueprint != null && OracleLegacy.Get() != null)
-			{
-				OracleLegacy.Get().LevelEntries = (OracleLegacy.Get().LevelEntries ?? new LevelEntry[0]).AddToArray(Helpers.CreateLevelEntry(20, blueprint));
-			}
-			if (blueprint2 != null && ShamanLegacy.Get() != null)
-			{
-				ShamanLegacy.Get().LevelEntries = (ShamanLegacy.Get().LevelEntries ?? new LevelEntry[0]).AddToArray(Helpers.CreateLevelEntry(20, blueprint2));
-			}
-			if (blueprint3 != null && SorcererLegacy.Get() != null)
-			{
-				SorcererLegacy.Get().LevelEntries = (SorcererLegacy.Get().LevelEntries ?? new LevelEntry[0]).AddToArray(Helpers.CreateLevelEntry(20, blueprint3));
-			}
-			MagusBasicLegacy.PatchForBroadStudy();
-			MagusArcherLegacy.PatchForBroadStudy();
-			MagusDancerLegacy.PatchForBroadStudy();
-			MagusSpellbladeLegacy.PatchForBroadStudy();
-		}
-
-		private static void PatchHeritages()
+			PatchTools.ArcanistPatcher.Patch(IsekaiProtagonistClass.GetReference(), MastermindSpellbook.GetReference());
+		});
+		SafeStep("KineticistPatcher", delegate
 		{
-			HumanHeritageSelection.Patch();
-			SlimeReincarnateHeritage.Patch();
-			HeteromorphicOverlordHeritage.Patch();
+			PatchTools.KineticistPatcher.Patch(IsekaiProtagonistClass.GetReference());
+		});
+		SafeStep("ShifterPatcher", delegate
+		{
+			PatchTools.ShifterPatcher.Patch(IsekaiProtagonistClass.GetReference());
+		});
+		if (ContentOffering.IsOffered(OfferedContent.IsekaiProtagonist))
+		{
+			SafeStep("PatchWearyingStrike", PatchTools.PatchWearyingStrike);
 		}
+		if (Main.IsekaiContext.AddedContent.MergeIsekaiSpellList)
+		{
+			SafeStep("MergeSpellLists", IsekaiProtagonistSpellList.MergeSpellLists);
+		}
+		SafeStep("PatchMastermindSpellList", MastermindSpellList.PatchMastermindSpellList);
+		if (ModSupport.IsTableTopTweakBaseEnabled)
+		{
+			SafeStep("PatchTableTopTweakCore", PatchTableTopTweakCore);
+		}
+		SafeStep("RegressionSanityCheck.RunAfterFinalPatch", RegressionSanityCheck.RunAfterFinalPatch);
+	}
+
+	private static void SafeStep(string name, Action action)
+	{
+		try
+		{
+			action();
+		}
+		catch (Exception arg)
+		{
+			RegressionSanityCheck.RecordStepFailure("FinalPatcher", name);
+			Main.IsekaiContext.Logger.LogError($"[FinalPatcher Warning] Step '{name}' threw an exception: {arg}");
+		}
+	}
+
+	private static void PatchTableTopTweakCore()
+	{
+		BlueprintFeatureSelection blueprint = BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("c898b6e4918c41c3a351c9a882c65cea");
+		BlueprintFeatureSelection blueprint2 = BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("6e32488a2cec4ba586508db4f78b062d");
+		BlueprintFeatureSelection blueprint3 = BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("40f13b4925c24e50bc8f3d5fe4d42a05");
+		if (blueprint != null && OracleLegacy.Get() != null)
+		{
+			OracleLegacy.Get().LevelEntries = (OracleLegacy.Get().LevelEntries ?? new LevelEntry[0]).AddToArray(Helpers.CreateLevelEntry(20, blueprint));
+		}
+		if (blueprint2 != null && ShamanLegacy.Get() != null)
+		{
+			ShamanLegacy.Get().LevelEntries = (ShamanLegacy.Get().LevelEntries ?? new LevelEntry[0]).AddToArray(Helpers.CreateLevelEntry(20, blueprint2));
+		}
+		if (blueprint3 != null && SorcererLegacy.Get() != null)
+		{
+			SorcererLegacy.Get().LevelEntries = (SorcererLegacy.Get().LevelEntries ?? new LevelEntry[0]).AddToArray(Helpers.CreateLevelEntry(20, blueprint3));
+		}
+		MagusBasicLegacy.PatchForBroadStudy();
+	}
+
+	private static void PatchHeritages()
+	{
+		SafeStep("IsekaiHumanCrossbreedLegacy.Patch", IsekaiHumanCrossbreedLegacy.Patch);
+		SafeStep("ElfHeritagePatcher.Patch", ElfHeritagePatcher.Patch);
+		SafeStep("RaceStatSuppressor.Patch", RaceStatSuppressor.Patch);
+		SafeStep("AlternateTraitExclusion.Patch", AlternateTraitExclusion.Patch);
 	}
 }

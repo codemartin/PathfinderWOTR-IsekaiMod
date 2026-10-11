@@ -1,10 +1,11 @@
-﻿using IsekaiMod.Content.Classes.IsekaiProtagonist;
+using IsekaiMod.Content.Classes.IsekaiProtagonist;
 using IsekaiMod.Content.Classes.IsekaiProtagonist.Archetypes;
 using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Prerequisites;
 using Kingmaker.Blueprints.Facts;
+using Kingmaker.Designers.EventConditionActionSystem.Actions;
 using Kingmaker.Designers.Mechanics.Facts;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.Enums;
@@ -20,181 +21,119 @@ using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Mechanics.Actions;
 using Kingmaker.UnitLogic.Mechanics.Components;
+using Kingmaker.UnitLogic.Mechanics.Conditions;
 using Kingmaker.Visual.Animation.Kingmaker.Actions;
 using TabletopTweaks.Core.Utilities;
 using UnityEngine;
 
-namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
-{
-	internal class GluttonyPredator
-	{
-		private static readonly Sprite Icon_Gluttony = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintAbility>("52b5df2a97df18242aec67610616ded0")).m_Icon;
+namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility;
 
-		public static void Add()
+internal class GluttonyPredator
+{
+	private static readonly Sprite Icon_Gluttony = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintFeature>("ea6a7bffdf2c43ddbf0ff7cc1bec5b06"))?.m_Icon;
+
+	public static void Add()
+	{
+		BlueprintAbilityResource PredatorMawResource = Helpers.CreateBlueprint(Main.IsekaiContext, "PredatorMawResource", delegate(BlueprintAbilityResource bp)
 		{
-			BlueprintAbilityResource PredatorMawResource = Helpers.CreateBlueprint(Main.IsekaiContext, "PredatorMawResource", delegate(BlueprintAbilityResource bp)
+			bp.m_MaxAmount = new BlueprintAbilityResource.Amount
 			{
-				bp.m_MaxAmount = new BlueprintAbilityResource.Amount
-				{
-					BaseValue = 3,
-					IncreasedByLevelStartPlusDivStep = true,
-					StartingLevel = 5,
-					StartingIncrease = 1,
-					LevelStep = 5,
-					PerStepIncrease = 1,
-					MinClassLevelIncrease = 0,
-					m_ClassDiv = new BlueprintCharacterClassReference[1] { IsekaiProtagonistClass.GetReference() },
-					m_ArchetypesDiv = new BlueprintArchetypeReference[0],
-					OtherClassesModifier = 0f
-				};
-				bp.m_UseMax = true;
-				bp.m_Max = 6;
+				BaseValue = 3,
+				IncreasedByLevelStartPlusDivStep = true,
+				StartingLevel = 5,
+				StartingIncrease = 1,
+				LevelStep = 5,
+				PerStepIncrease = 1,
+				MinClassLevelIncrease = 0,
+				m_ClassDiv = new BlueprintCharacterClassReference[1] { IsekaiProtagonistClass.GetReference() },
+				m_ArchetypesDiv = new BlueprintArchetypeReference[0],
+				OtherClassesModifier = 0f
+			};
+			bp.m_UseMax = true;
+			bp.m_Max = 6;
+		});
+		BlueprintBuff PredatorResonanceBuff = TTCoreExtensions.CreateBuff("PredatorResonanceBuff", delegate(BlueprintBuff bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Predator's Essence Absorption");
+			bp.SetDescription(Main.IsekaiContext, "You have devoured the essence of a worthy foe. Grants +2 profane bonus to Attack and Damage rolls, +10 energy resistance to all elements, and Fast Healing 5.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Gluttony;
+			bp.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Profane;
+				c.Stat = StatType.AdditionalAttackBonus;
+				c.Value = 2;
 			});
-			BlueprintBuff PredatorResonanceBuff = TTCoreExtensions.CreateBuff("PredatorResonanceBuff", delegate(BlueprintBuff bp)
+			bp.AddComponent(delegate(AddStatBonus c)
 			{
-				bp.SetName(Main.IsekaiContext, "Predator's Essence Absorption");
-				bp.SetDescription(Main.IsekaiContext, "You have devoured the essence of a worthy foe. Grants a profane bonus to attack and damage rolls (+2 at levels 1--9, +3 at levels 10--14, and +4 at level 15+), energy resistance to all elements (5 at levels 1--9, 10 at levels 10--14, and 20 at level 15+), and Fast Healing (2 at levels 1--9, 4 at levels 10--14, and 6 at level 15+).");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Gluttony;
-				bp.AddComponent(delegate(ContextRankConfig c)
-				{
-					c.m_Type = AbilityRankType.StatBonus;
-					c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
-					c.m_Progression = ContextRankProgression.Custom;
-					c.m_CustomProgression = new ContextRankConfig.CustomProgressionItem[3]
-					{
-						new ContextRankConfig.CustomProgressionItem
-						{
-							BaseValue = 9,
-							ProgressionValue = 2
-						},
-						new ContextRankConfig.CustomProgressionItem
-						{
-							BaseValue = 14,
-							ProgressionValue = 3
-						},
-						new ContextRankConfig.CustomProgressionItem
-						{
-							BaseValue = 100,
-							ProgressionValue = 4
-						}
-					};
-				});
-				bp.AddComponent(delegate(AddContextStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Profane;
-					c.Stat = StatType.AdditionalAttackBonus;
-					c.Value = Values.CreateContextRankValue(AbilityRankType.StatBonus);
-				});
-				bp.AddComponent(delegate(AddContextStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Profane;
-					c.Stat = StatType.AdditionalDamage;
-					c.Value = Values.CreateContextRankValue(AbilityRankType.StatBonus);
-				});
-				bp.AddComponent(delegate(ContextRankConfig c)
-				{
-					c.m_Type = AbilityRankType.Default;
-					c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
-					c.m_Progression = ContextRankProgression.Custom;
-					c.m_CustomProgression = new ContextRankConfig.CustomProgressionItem[3]
-					{
-						new ContextRankConfig.CustomProgressionItem
-						{
-							BaseValue = 9,
-							ProgressionValue = 5
-						},
-						new ContextRankConfig.CustomProgressionItem
-						{
-							BaseValue = 14,
-							ProgressionValue = 10
-						},
-						new ContextRankConfig.CustomProgressionItem
-						{
-							BaseValue = 100,
-							ProgressionValue = 20
-						}
-					};
-				});
-				bp.AddComponent(delegate(AddDamageResistanceEnergy c)
-				{
-					c.Type = DamageEnergyType.Fire;
-					c.Value = Values.CreateContextRankValue(AbilityRankType.Default);
-				});
-				bp.AddComponent(delegate(AddDamageResistanceEnergy c)
-				{
-					c.Type = DamageEnergyType.Cold;
-					c.Value = Values.CreateContextRankValue(AbilityRankType.Default);
-				});
-				bp.AddComponent(delegate(AddDamageResistanceEnergy c)
-				{
-					c.Type = DamageEnergyType.Acid;
-					c.Value = Values.CreateContextRankValue(AbilityRankType.Default);
-				});
-				bp.AddComponent(delegate(AddDamageResistanceEnergy c)
-				{
-					c.Type = DamageEnergyType.Electricity;
-					c.Value = Values.CreateContextRankValue(AbilityRankType.Default);
-				});
-				bp.AddComponent(delegate(ContextRankConfig c)
-				{
-					c.m_Type = AbilityRankType.DamageBonus;
-					c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
-					c.m_Progression = ContextRankProgression.Custom;
-					c.m_CustomProgression = new ContextRankConfig.CustomProgressionItem[3]
-					{
-						new ContextRankConfig.CustomProgressionItem
-						{
-							BaseValue = 9,
-							ProgressionValue = 2
-						},
-						new ContextRankConfig.CustomProgressionItem
-						{
-							BaseValue = 14,
-							ProgressionValue = 4
-						},
-						new ContextRankConfig.CustomProgressionItem
-						{
-							BaseValue = 100,
-							ProgressionValue = 6
-						}
-					};
-				});
-				bp.AddComponent(delegate(AddEffectFastHealing c)
-				{
-					c.Heal = 0;
-					c.Bonus = Values.CreateContextRankValue(AbilityRankType.DamageBonus);
-				});
+				c.Descriptor = ModifierDescriptor.Profane;
+				c.Stat = StatType.AdditionalDamage;
+				c.Value = 2;
 			});
-			BlueprintAbility PredatorMawAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "PredatorMawAbility", delegate(BlueprintAbility bp)
+			bp.AddComponent(delegate(AddDamageResistanceEnergy c)
 			{
-				bp.SetName(Main.IsekaiContext, "Overpowered Ability - Predator's Maw");
-				bp.SetDescription(Main.IsekaiContext, "Swift action bite against an adjacent enemy dealing 1d6 per character level divine/unholy damage. If the strike slays the target, you devour their essence: instantly restores 20% max HP, refreshes all lower spell slots, and grants Predator's Essence Absorption for 1 minute.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Gluttony;
-				bp.Type = AbilityType.Special;
-				bp.Range = AbilityRange.Touch;
-				bp.CanTargetEnemies = true;
-				bp.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Directional;
-				bp.ActionType = UnitCommand.CommandType.Swift;
-				bp.AddComponent(delegate(AbilityEffectRunAction c)
+				c.Type = DamageEnergyType.Fire;
+				c.Value = 10;
+			});
+			bp.AddComponent(delegate(AddDamageResistanceEnergy c)
+			{
+				c.Type = DamageEnergyType.Cold;
+				c.Value = 10;
+			});
+			bp.AddComponent(delegate(AddDamageResistanceEnergy c)
+			{
+				c.Type = DamageEnergyType.Acid;
+				c.Value = 10;
+			});
+			bp.AddComponent(delegate(AddDamageResistanceEnergy c)
+			{
+				c.Type = DamageEnergyType.Electricity;
+				c.Value = 10;
+			});
+			bp.AddComponent(delegate(AddEffectFastHealing c)
+			{
+				c.Heal = 5;
+				c.Bonus = 0;
+			});
+		});
+		BlueprintAbility PredatorMawAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "PredatorMawAbility", delegate(BlueprintAbility bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Overpowered Ability - Predator's Maw");
+			bp.SetDescription(Main.IsekaiContext, "Swift action bite against an adjacent enemy dealing 1d6 per character level unholy damage. If the strike slays the target, you devour their essence: you are healed for twice your character level and gain Predator's Essence Absorption for 1 minute.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Gluttony;
+			bp.Type = AbilityType.Special;
+			bp.Range = AbilityRange.Touch;
+			bp.CanTargetEnemies = true;
+			bp.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Directional;
+			bp.ActionType = UnitCommand.CommandType.Swift;
+			bp.SpellResistance = true;
+			bp.AddComponent(delegate(AbilityEffectRunAction c)
+			{
+				c.Actions = Helpers.CreateActionList(new ContextActionDealDamage
 				{
-					c.Actions = Helpers.CreateActionList(new ContextActionDealDamage
+					DamageType = new DamageTypeDescription
 					{
-						DamageType = new DamageTypeDescription
-						{
-							Type = DamageType.Energy,
-							Energy = DamageEnergyType.Unholy
-						},
-						Value = new ContextDiceValue
-						{
-							DiceType = DiceType.D6,
-							DiceCountValue = Values.CreateContextRankValue(AbilityRankType.Default),
-							BonusValue = 0
-						},
-						HalfIfSaved = false,
-						IsAoE = false
-					}, new ContextActionApplyBuff
+						Type = DamageType.Energy,
+						Energy = DamageEnergyType.Unholy
+					},
+					Value = new ContextDiceValue
+					{
+						DiceType = DiceType.D6,
+						DiceCountValue = Values.CreateContextRankValue(AbilityRankType.Default),
+						BonusValue = 0
+					},
+					HalfIfSaved = false,
+					IsAoE = false
+				}, new Conditional
+				{
+					ConditionsChecker = ActionFlow.IfSingle(delegate(ContextConditionCompareTargetHP chk)
+					{
+						chk.Value = 1;
+					}),
+					IfTrue = Helpers.CreateActionList(new ContextActionApplyBuff
 					{
 						m_Buff = PredatorResonanceBuff.ToReference<BlueprintBuffReference>(),
+						ToCaster = true,
+						AsChild = false,
 						DurationValue = new ContextDurationValue
 						{
 							Rate = DurationRate.Minutes,
@@ -205,42 +144,64 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
 								Value = 1
 							}
 						}
-					});
-				});
-				bp.AddComponent(delegate(ContextRankConfig c)
-				{
-					c.m_Type = AbilityRankType.Default;
-					c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
-				});
-				bp.AddComponent(delegate(AbilityResourceLogic c)
-				{
-					c.m_RequiredResource = PredatorMawResource.ToReference<BlueprintAbilityResourceReference>();
-					c.m_IsSpendResource = true;
-					c.Amount = 1;
+					}, new ContextActionOnContextCaster
+					{
+						Actions = Helpers.CreateActionList(new ContextActionHealTarget
+						{
+							Value = new ContextDiceValue
+							{
+								DiceType = DiceType.Zero,
+								DiceCountValue = 0,
+								BonusValue = Values.CreateContextRankValue(AbilityRankType.DamageBonus)
+							}
+						})
+					}),
+					IfFalse = ActionFlow.DoNothing()
 				});
 			});
-			OverpoweredAbilitySelection.AddToSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "GluttonyPredatorFeature", delegate(BlueprintFeature bp)
+			bp.AddComponent(delegate(ContextRankConfig c)
 			{
-				bp.SetName(Main.IsekaiContext, "Overpowered Ability - Gluttony (Predator)");
-				bp.SetDescription(Main.IsekaiContext, "Exclusive to the Slime archetype. Like a primordial slime from another dimension, your body can ingest and process the spiritual essence of anything you slay.\nBenefit: Grants the swift-action Predator's Maw ability (3/day) to deal devastating unholy bite damage (1d6 per character level) and absorb enemy essence, granting scaled profane attack/damage (+2 at levels 1--9, +3 at levels 10--14, +4 at level 15+), energy resistance (5 at levels 1--9, 10 at levels 10--14, 20 at level 15+), and Fast Healing (2 at levels 1--9, 4 at levels 10--14, 6 at level 15+) for 1 minute.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Gluttony;
-				bp.AddComponent(delegate(AddFacts c)
-				{
-					c.m_Facts = new BlueprintUnitFactReference[1] { PredatorMawAbility.ToReference<BlueprintUnitFactReference>() };
-				});
-				bp.AddComponent(delegate(AddAbilityResources c)
-				{
-					c.m_Resource = PredatorMawResource.ToReference<BlueprintAbilityResourceReference>();
-					c.RestoreAmount = true;
-					c.RestoreOnLevelUp = true;
-				});
-				bp.AddComponent(delegate(PrerequisiteArchetypeLevel c)
-				{
-					c.m_CharacterClass = IsekaiProtagonistClass.GetReference();
-					c.m_Archetype = DevourerArchetype.GetReference();
-					c.Level = 1;
-				});
-			}));
-		}
+				c.m_Type = AbilityRankType.Default;
+				c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
+			});
+			bp.AddComponent(delegate(ContextRankConfig c)
+			{
+				c.m_Type = AbilityRankType.DamageBonus;
+				c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
+				c.m_Progression = ContextRankProgression.MultiplyByModifier;
+				c.m_StepLevel = 2;
+			});
+			bp.AddComponent(delegate(AbilityResourceLogic c)
+			{
+				c.m_RequiredResource = PredatorMawResource.ToReference<BlueprintAbilityResourceReference>();
+				c.m_IsSpendResource = true;
+				c.Amount = 1;
+			});
+		});
+		OverpoweredAbilitySelection.AddToSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "GluttonyPredatorFeature", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Overpowered Ability - Gluttony (Predator)");
+			bp.SetDescription(Main.IsekaiContext, "Exclusive to the Slime archetype. Like a primordial slime from another dimension, your body can ingest and process the spiritual essence of anything you slay. \nBenefit: Grants the swift-action Predator's Maw ability (4/day at level 5, 5 at level 10, 6 from level 15) to deal devastating unholy bite damage and absorb enemy essence.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Gluttony;
+			bp.AddComponent(delegate(AddFacts c)
+			{
+				c.m_Facts = new BlueprintUnitFactReference[1] { PredatorMawAbility.ToReference<BlueprintUnitFactReference>() };
+			});
+			bp.AddComponent(delegate(AddAbilityResources c)
+			{
+				c.m_Resource = PredatorMawResource.ToReference<BlueprintAbilityResourceReference>();
+				c.RestoreAmount = true;
+			});
+			bp.AddComponent(delegate(PrerequisiteArchetypeLevel c)
+			{
+				c.m_CharacterClass = IsekaiProtagonistClass.GetReference();
+				c.m_Archetype = DevourerArchetype.GetReference();
+				c.Level = 1;
+			});
+			bp.AddComponent(delegate(PrerequisiteCharacterLevel c)
+			{
+				c.Level = 5;
+			});
+		}));
 	}
 }

@@ -1,28 +1,27 @@
-﻿using System;
+using System;
+using IsekaiMod.Utilities;
 using Kingmaker.Blueprints.JsonSystem;
 using Kingmaker.EntitySystem.Entities;
-using Kingmaker.UnitLogic.Mechanics.Conditions;
 
-namespace IsekaiMod.Components
+namespace IsekaiMod.Components;
+
+[TypeId("31889a286c02440da2565b130a1cddc7")]
+public class ContextConditionTargetHPLessThanPercent : IsekaiContextCondition
 {
-	[TypeId("31889a286c02440da2565b130a1cddc7")]
-	public class ContextConditionTargetHPLessThanPercent : ContextCondition
+	public int Percent = 25;
+
+	public override string GetConditionCaption()
 	{
-		public int Percent = 25;
+		return $"Target HP is less than or equal to {Percent}%";
+	}
 
-		public override string GetConditionCaption()
+	protected override bool CheckSafely()
+	{
+		UnitEntityData unitEntityData = base.Target?.Unit ?? base.Context?.MaybeCaster ?? base.Context?.MaybeOwner;
+		if (unitEntityData == null)
 		{
-			return $"Target HP is less than or equal to {Percent}%";
+			return false;
 		}
-
-		public override bool CheckCondition()
-		{
-			UnitEntityData unitEntityData = base.Target?.Unit ?? base.Context?.MaybeCaster ?? base.Context?.MaybeOwner;
-			if (unitEntityData == null)
-			{
-				return false;
-			}
-			return unitEntityData.HPLeft * 100 / Math.Max(1, unitEntityData.MaxHP) <= Percent;
-		}
+		return unitEntityData.HPLeft * 100 / Math.Max(1, unitEntityData.MaxHP) <= Percent;
 	}
 }

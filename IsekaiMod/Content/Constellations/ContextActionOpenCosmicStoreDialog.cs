@@ -1,36 +1,41 @@
-﻿using IsekaiMod.Utilities;
+using IsekaiMod.Utilities;
 using Kingmaker;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.JsonSystem;
 using Kingmaker.DialogSystem.Blueprints;
 using Kingmaker.EntitySystem.Entities;
-using Kingmaker.PubSubSystem;
-using Kingmaker.UnitLogic.Mechanics.Actions;
-using TabletopTweaks.Core.Utilities;
 
-namespace IsekaiMod.Content.Constellations
+namespace IsekaiMod.Content.Constellations;
+
+[TypeId("507b97acfb5742e783566df2fbfe313e")]
+public class ContextActionOpenCosmicStoreDialog : IsekaiContextAction
 {
-	public class ContextActionOpenCosmicStoreDialog : ContextAction
+	public BlueprintDialogReference m_Dialog;
+
+	public override string GetCaption()
 	{
-		public BlueprintDialogReference m_Dialog;
+		return "Opens Cosmic Store Dialog";
+	}
 
-		public override string GetCaption()
+	protected override void RunSafely()
+	{
+		if (!ConstellationSettings.Enabled)
 		{
-			return "Opens Cosmic Store Dialog";
+			DivineTokens.Log(CosmicStoreText.ConstellationsDisabled);
+			return;
 		}
-
-		public override void RunAction()
+		BlueprintDialog blueprintDialog = m_Dialog?.Get();
+		UnitEntityData player = DivineTokens.GetPlayer();
+		if (blueprintDialog != null && player != null)
 		{
-			BlueprintDialog blueprintDialog = m_Dialog?.Get() ?? BlueprintTools.GetModBlueprint<BlueprintDialog>(Main.IsekaiContext, "CosmicStoreDialog");
-			UnitEntityData unitEntityData = BlueprintSafetyExtensions.SafeGetMainCharacter();
-			if (blueprintDialog != null && unitEntityData != null && Game.Instance?.DialogController != null)
+			if (Game.Instance.Player.IsInCombat)
 			{
-				Game.Instance.DialogController.StartDialogWithoutTarget(blueprintDialog, null, unitEntityData);
-				return;
+				DivineTokens.Log(CosmicStoreText.InCombat);
 			}
-			EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
+			else
 			{
-				h.HandleLogMessage("<color=#F5C542><b>[Cosmic Sponsorship]</b></color> The Cosmic Constellation Exchange can be accessed through the Astral Coin Envoy or Herald at the Planar Coliseum.");
-			});
+				Game.Instance.DialogController.StartDialogWithoutTarget(blueprintDialog, null, player);
+			}
 		}
 	}
 }

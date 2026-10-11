@@ -1,28 +1,23 @@
-﻿using System.Collections.Generic;
 using IsekaiMod.Content.Constellations;
-using Kingmaker.UnitLogic.Mechanics.Actions;
+using IsekaiMod.Utilities;
+using Kingmaker.Blueprints.JsonSystem;
 
-namespace IsekaiMod.Content.Dialogue
+namespace IsekaiMod.Content.Dialogue;
+
+[TypeId("c3135aa9bf2444aa940de494c4692090")]
+public class ContextActionPastCycleReflectionBanter : IsekaiContextAction
 {
-	public class ContextActionPastCycleReflectionBanter : ContextAction
+	public override string GetCaption()
 	{
-		public override string GetCaption()
-		{
-			return "Triggers Constellation Banter reflecting upon past cycles";
-		}
+		return "Triggers Constellation Banter reflecting upon past cycles";
+	}
 
-		public override void RunAction()
+	protected override void RunSafely()
+	{
+		if (ConstellationChatManager.TryClaimSceneReward("PastCycleReflection"))
 		{
-			DivineTokens.AddCoins(250, "The Key and the Gate");
-			List<string> pastCycleRecognitionBanter = ConstellationDialogueBanter.GetPastCycleRecognitionBanter();
-			if (pastCycleRecognitionBanter == null)
-			{
-				return;
-			}
-			foreach (string item in pastCycleRecognitionBanter)
-			{
-				ConstellationChatManager.PostLog(item, "The Key and the Gate", ConstellationCategory.MetaLoop, 0, "Past Cycle Reflection");
-			}
+			DivineTokens.AddClaimedCoins(250, "The Key and the Gate");
 		}
+		ConstellationChatManager.PostLines(ConstellationDialogueBanter.GetPastCycleRecognitionBanter(), "The Key and the Gate", ConstellationCategory.MetaLoop, "Kenabres Square: Deja Vu");
 	}
 }

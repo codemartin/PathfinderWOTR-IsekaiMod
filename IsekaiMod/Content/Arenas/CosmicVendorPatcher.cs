@@ -1,9 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using IsekaiMod.Content.Constellations;
+using IsekaiMod.Utilities;
 using Kingmaker;
+using Kingmaker.Blueprints.Items;
 using Kingmaker.Items;
 using Kingmaker.PubSubSystem;
 using Kingmaker.QA.Statistics;
@@ -12,166 +14,184 @@ using Kingmaker.UI.MVVM._VM.Vendor;
 using Kingmaker.UI.Vendor;
 using UnityEngine;
 
-namespace IsekaiMod.Content.Arenas
+namespace IsekaiMod.Content.Arenas;
+
+[HarmonyPatch]
+public static class CosmicVendorPatcher
 {
-	[HarmonyPatch]
-	public static class CosmicVendorPatcher
+	public const string CosmicEnvoyBlueprintName = "AstralCoinEnvoyUnit";
+
+	[HarmonyPrepare]
+	private static bool Prepare()
 	{
-		public const string CosmicEnvoyBlueprintName = "AstralCoinEnvoyUnit";
+		return PatchGuard.ResolvesAll(typeof(CosmicVendorPatcher), (typeof(VendorUI), "UpdatePlayerMoneyAndInventoryWeight"));
+	}
 
-		private static bool IsCosmicEnvoy(VendorLogic logic)
+	private static bool IsCosmicEnvoy(VendorLogic logic)
+	{
+		return logic?.VendorUnit?.Blueprint?.name == "AstralCoinEnvoyUnit";
+	}
+
+	private static long EnvoyUnitPrice(BlueprintItem blueprint)
+	{
+		if (blueprint == null)
 		{
-			return logic?.VendorUnit?.Blueprint?.name == "AstralCoinEnvoyUnit";
+			return 0L;
 		}
+		return DivineTokens.PurchasePrice(CosmicEnvoyPrices.ListedCoins(blueprint.name, blueprint.AssetGuid.ToString(), blueprint.Cost));
+	}
 
-		[HarmonyPatch(typeof(VendorLogic), "PlayerMoneyAfterDeal", MethodType.Getter)]
-		[HarmonyPrefix]
-		public static bool PlayerMoneyAfterDeal_Prefix(VendorLogic __instance, ref long __result)
+	[HarmonyPatch(typeof(VendorLogic), "GetItemBuyPrice", new Type[] { typeof(ItemEntity) })]
+	[HarmonyBefore(new string[] { "0ToyBox0" })]
+	[HarmonyPrefix]
+	public static bool GetItemBuyPrice_Entity_Prefix(VendorLogic __instance, ItemEntity item, ref long __result)
+	{
+		if (!IsCosmicEnvoy(__instance) || item == null)
 		{
-			try
-			{
-				if (IsCosmicEnvoy(__instance))
-				{
-					__result = DivineTokens.GetCoins() + __instance.DealPrice;
-					return false;
-				}
-			}
-			catch (Exception ex)
-			{
-				Main.IsekaiContext.Logger.LogError("Error in PlayerMoneyAfterDeal_Prefix: " + ex);
-			}
 			return true;
 		}
+		__result = EnvoyUnitPrice(item.Blueprint);
+		return false;
+	}
 
-		[HarmonyPatch(typeof(VendorLogic), "IsDealPossible", MethodType.Getter)]
-		[HarmonyPrefix]
-		public static bool IsDealPossible_Prefix(VendorLogic __instance, ref bool __result)
+	[HarmonyPatch(typeof(VendorLogic), "GetItemBuyPrice", new Type[] { typeof(BlueprintItem) })]
+	[HarmonyBefore(new string[] { "0ToyBox0" })]
+	[HarmonyPrefix]
+	public static bool GetItemBuyPrice_Blueprint_Prefix(VendorLogic __instance, BlueprintItem blueprintItem, ref long __result)
+	{
+		if (!IsCosmicEnvoy(__instance) || blueprintItem == null)
 		{
-			try
-			{
-				if (IsCosmicEnvoy(__instance))
-				{
-					long num = -__instance.DealPrice;
-					if (num <= 0)
-					{
-						num = __instance.ItemsForBuyPrice;
-					}
-					__result = __instance.ItemsForBuy != null && __instance.ItemsForBuy.Any() && DivineTokens.GetCoins() >= num;
-					return false;
-				}
-			}
-			catch (Exception ex)
-			{
-				Main.IsekaiContext.Logger.LogError("Error in IsDealPossible_Prefix: " + ex);
-			}
 			return true;
 		}
+		__result = EnvoyUnitPrice(blueprintItem);
+		return false;
+	}
 
-		[HarmonyPatch(typeof(VendorLogic), "AddForSell")]
-		[HarmonyPrefix]
-		public static bool AddForSell_Prefix(VendorLogic __instance, ItemEntity item, ref ItemEntity __result)
+	private static long BasketPrice(VendorLogic logic)
+	{
+		if (logic?.ItemsForBuy == null)
 		{
-			try
+			return 0L;
+		}
+		long num = 0L;
+		foreach (ItemEntity item in logic.ItemsForBuy)
+		{
+			if (item != null)
 			{
-				if (IsCosmicEnvoy(__instance))
-				{
-					__result = null;
-					return false;
-				}
-				if (item?.Blueprint == DivineTokens.ItemCosmicCoin || item?.Blueprint?.name == "ItemCosmicCoin")
-				{
-					__result = null;
-					return false;
-				}
+				num += logic.GetItemBuyPrice(item) * item.Count;
 			}
-			catch (Exception ex)
-			{
-				Main.IsekaiContext.Logger.LogError("Error in AddForSell_Prefix: " + ex);
-			}
+		}
+		return num;
+	}
+
+	[HarmonyPatch(typeof(VendorLogic), "PlayerMoneyAfterDeal", MethodType.Getter)]
+	[HarmonyPrefix]
+	public static bool PlayerMoneyAfterDeal_Prefix(VendorLogic __instance, ref long __result)
+	{
+		if (IsCosmicEnvoy(__instance))
+		{
+			__result = DivineTokens.GetCoins() - BasketPrice(__instance);
+			return false;
+		}
+		return true;
+	}
+
+	[HarmonyPatch(typeof(VendorLogic), "IsDealPossible", MethodType.Getter)]
+	[HarmonyPrefix]
+	public static bool IsDealPossible_Prefix(VendorLogic __instance, ref bool __result)
+	{
+		if (IsCosmicEnvoy(__instance))
+		{
+			long num = BasketPrice(__instance);
+			__result = __instance.ItemsForBuy != null && __instance.ItemsForBuy.Any() && DivineTokens.GetCoins() >= num;
+			return false;
+		}
+		return true;
+	}
+
+	[HarmonyPatch(typeof(VendorLogic), "AddForSell")]
+	[HarmonyPrefix]
+	public static bool AddForSell_Prefix(VendorLogic __instance, ref ItemEntity __result)
+	{
+		if (IsCosmicEnvoy(__instance))
+		{
+			__result = null;
+			return false;
+		}
+		return true;
+	}
+
+	[HarmonyPatch(typeof(VendorLogic), "Deal")]
+	[HarmonyPrefix]
+	public static bool Deal_Prefix(VendorLogic __instance)
+	{
+		if (!IsCosmicEnvoy(__instance))
+		{
 			return true;
 		}
-
-		[HarmonyPatch(typeof(VendorLogic), "Deal")]
-		[HarmonyPrefix]
-		public static bool Deal_Prefix(VendorLogic __instance)
+		long num = BasketPrice(__instance);
+		if (num < 0 || num > int.MaxValue || DivineTokens.GetCoins() < num)
 		{
-			try
+			return false;
+		}
+		ItemsCollection itemsCollection = Game.Instance?.Player?.Inventory;
+		if (itemsCollection == null)
+		{
+			return false;
+		}
+		if (__instance.ItemsForBuy == null)
+		{
+			return false;
+		}
+		if (num > 0 && !DivineTokens.SpendCoins((int)num, applyHagglerDiscount: false))
+		{
+			return false;
+		}
+		List<ItemEntity> itemsToBuy = __instance.ItemsForBuy.ToList();
+		foreach (ItemEntity item in itemsToBuy)
+		{
+			item.SellTime = null;
+			item.SetVendorIfNull(__instance.VendorUnit);
+			__instance.ItemsForBuy.Transfer(item, itemsCollection);
+		}
+		EventBus.RaiseEvent(delegate(IVendorDealHandler h)
+		{
+			h.HandleVendorDeal(__instance.VendorUnit, MoneyFlowStatistic.ActionType.Buy, itemsToBuy);
+		});
+		__instance.ReturnItems();
+		__instance.UpdateDeal();
+		return false;
+	}
+
+	[HarmonyPatch(typeof(VendorUI), "UpdatePlayerMoneyAndInventoryWeight")]
+	[HarmonyPostfix]
+	public static void UpdatePlayerMoneyAndInventoryWeight_Postfix(VendorUI __instance)
+	{
+		try
+		{
+			if ((UnityEngine.Object)(object)__instance?.PlayerMoneyNow != null && IsCosmicEnvoy(VendorUI.Vendor))
 			{
-				if (!IsCosmicEnvoy(__instance))
-				{
-					return true;
-				}
-				long num = -__instance.DealPrice;
-				if (num <= 0)
-				{
-					num = __instance.ItemsForBuyPrice;
-				}
-				if (num <= 0 || DivineTokens.GetCoins() < num)
-				{
-					return false;
-				}
-				ItemsCollection itemsCollection = Game.Instance?.Player?.Inventory;
-				if (itemsCollection == null)
-				{
-					return false;
-				}
-				if (__instance.ItemsForBuy == null)
-				{
-					return false;
-				}
-				DivineTokens.SpendCoins((int)num, "Cosmic Vendor Purchase");
-				List<ItemEntity> itemsToBuy = __instance.ItemsForBuy.ToList();
-				foreach (ItemEntity item in itemsToBuy)
-				{
-					item.SellTime = null;
-					item.SetVendorIfNull(__instance.VendorUnit);
-					__instance.ItemsForBuy.Transfer(item, itemsCollection);
-				}
-				EventBus.RaiseEvent(delegate(IVendorDealHandler h)
-				{
-					h.HandleVendorDeal(__instance.VendorUnit, MoneyFlowStatistic.ActionType.Buy, itemsToBuy);
-				});
-				__instance.ReturnItems();
-				__instance.UpdateDeal();
-				return false;
-			}
-			catch (Exception ex)
-			{
-				Main.IsekaiContext.Logger.LogError("Error in Deal_Prefix: " + ex);
-				return true;
+				__instance.PlayerMoneyNow.text = ConstellationText.LocalizedFormat("Constellation.CosmicEnvoyMoneyLabel.Text", "{0} Cosmic Coins", DivineSponsorshipStore.FormatCoins(DivineTokens.GetCoins()));
 			}
 		}
-
-		[HarmonyPatch(typeof(VendorUI), "UpdatePlayerMoneyAndInventoryWeight")]
-		[HarmonyPostfix]
-		public static void UpdatePlayerMoneyAndInventoryWeight_Postfix(VendorUI __instance)
+		catch
 		{
-			try
+		}
+	}
+
+	[HarmonyPatch(typeof(InventoryStashVM), "UpdateGoldCoins")]
+	[HarmonyPostfix]
+	public static void UpdateGoldCoins_Postfix(InventoryStashVM __instance)
+	{
+		try
+		{
+			if (__instance?.Money != null && VendorHelper.Vendor?.VendorUnit?.Blueprint?.name == "AstralCoinEnvoyUnit")
 			{
-				if ((UnityEngine.Object)(object)__instance?.PlayerMoneyNow != null && IsCosmicEnvoy(VendorUI.Vendor))
-				{
-					__instance.PlayerMoneyNow.text = $"{DivineTokens.GetCoins():N0} Cosmic Coins";
-				}
-			}
-			catch
-			{
+				__instance.Money.Value = DivineTokens.GetCoins();
 			}
 		}
-
-		[HarmonyPatch(typeof(InventoryStashVM), "UpdateGoldCoins")]
-		[HarmonyPostfix]
-		public static void UpdateGoldCoins_Postfix(InventoryStashVM __instance)
+		catch
 		{
-			try
-			{
-				if (__instance?.Money != null && VendorHelper.Vendor?.VendorUnit?.Blueprint?.name == "AstralCoinEnvoyUnit")
-				{
-					__instance.Money.Value = DivineTokens.GetCoins();
-				}
-			}
-			catch
-			{
-			}
 		}
 	}
 }

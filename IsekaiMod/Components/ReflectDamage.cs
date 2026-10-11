@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using IsekaiMod.Utilities;
 using Kingmaker.Blueprints.JsonSystem;
 using Kingmaker.ElementsSystem;
@@ -10,76 +10,84 @@ using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Mechanics.Actions;
 using Kingmaker.UnitLogic.Mechanics.Components;
 
-namespace IsekaiMod.Components
+namespace IsekaiMod.Components;
+
+[TypeId("823bcefa4de241ed88a61db6886e16fb")]
+public class ReflectDamage : UnitFactComponentDelegate, ITargetRulebookHandler<RuleDealDamage>, IRulebookHandler<RuleDealDamage>, ISubscriber, ITargetRulebookSubscriber
 {
-	[TypeId("823bcefa4de241ed88a61db6886e16fb")]
-	public class ReflectDamage : UnitFactComponentDelegate, ITargetRulebookHandler<RuleDealDamage>, IRulebookHandler<RuleDealDamage>, ISubscriber, ITargetRulebookSubscriber
+	[ThreadStatic]
+	private static bool m_IsReflecting;
+
+	public bool FullCounter;
+
+	public void TryRunAction(RuleDealDamage e)
 	{
-		[ThreadStatic]
-		private static bool m_IsReflecting;
-
-		public bool UseScalingTiers;
-
-		public void TryRunAction(RuleDealDamage e)
+		if (e == null || e.Target == null || base.Owner == null || m_IsReflecting || e.Target != base.Owner || e.Initiator == null || e.Initiator == base.Owner || e.Reason.Fact == base.Fact || !(base.Fact is IFactContextOwner factContextOwner) || !ShouldReflect(e.Result, e.Initiator.IsEnemy(base.Owner)))
 		{
-			if (m_IsReflecting || e == null || e.Target != base.Owner || e.Initiator == null || e.Initiator == base.Owner || e.Reason.Fact == base.Fact || !(base.Fact is IFactContextOwner factContextOwner))
-			{
-				return;
-			}
-			try
-			{
-				m_IsReflecting = true;
-				int reflected;
-				if (UseScalingTiers)
-				{
-					int num = ((base.Owner.Progression == null) ? 1 : base.Owner.Progression.CharacterLevel);
-					if (num >= 15)
-					{
-						reflected = Math.Max(1, e.Result / 2);
-					}
-					else if (num >= 10)
-					{
-						reflected = Math.Max(1, e.Result * 35 / 100);
-					}
-					else
-					{
-						reflected = Math.Max(1, e.Result * 20 / 100);
-					}
-				}
-				else
-				{
-					reflected = ((base.Owner.Progression != null && base.Owner.Progression.CharacterLevel >= 15) ? Math.Max(1, e.Result * 3 / 4) : Math.Max(1, e.Result / 2));
-				}
-				ActionList action = ActionFlow.DealDamage(delegate(ContextActionDealDamage c)
-				{
-					c.DamageType = new DamageTypeDescription
-					{
-						Type = DamageType.Direct,
-						Physical = new DamageTypeDescription.PhysicalData(),
-						Common = new DamageTypeDescription.CommomData()
-					};
-					c.Value = new ContextDiceValue
-					{
-						DiceType = DiceType.Zero,
-						DiceCountValue = 0,
-						BonusValue = reflected
-					};
-				});
-				factContextOwner.RunActionInContext(action, e.Initiator);
-			}
-			finally
-			{
-				m_IsReflecting = false;
-			}
+			return;
 		}
-
-		public void OnEventAboutToTrigger(RuleDealDamage evt)
+		try
 		{
+			m_IsReflecting = true;
+			int characterLevel = base.Owner.Progression?.CharacterLevel ?? 0;
+			int reflected = (FullCounter ? CalculateFullCounterDamage(e.Result, characterLevel) : CalculateReflectedDamage(e.Result, characterLevel));
+			ActionList action = ActionFlow.DealDamage(delegate(ContextActionDealDamage c)
+			{
+				c.IgnoreCritical = true;
+				c.UseWeaponDamageModifiers = false;
+				c.DamageType = new DamageTypeDescription
+				{
+					Type = DamageType.Direct,
+					Physical = new DamageTypeDescription.PhysicalData(),
+					Common = new DamageTypeDescription.CommomData()
+				};
+				c.Value = new ContextDiceValue
+				{
+					DiceType = DiceType.Zero,
+					DiceCountValue = 0,
+					BonusValue = reflected
+				};
+			});
+			factContextOwner.RunActionInContext(action, e.Initiator);
 		}
-
-		public void OnEventDidTrigger(RuleDealDamage evt)
+		finally
 		{
-			TryRunAction(evt);
+			m_IsReflecting = false;
 		}
+	}
+
+	internal static bool ShouldReflect(int incomingDamage, bool initiatorIsEnemy)
+	{
+		return (incomingDamage > 0) & initiatorIsEnemy;
+	}
+
+	internal static int CalculateReflectedDamage(int incomingDamage, int characterLevel)
+	{
+		if (incomingDamage <= 0)
+		{
+			return 0;
+		}
+		int val = ((characterLevel >= 15) ? (incomingDamage / 2) : (incomingDamage / 4));
+		int val2 = 10 + Math.Max(0, characterLevel);
+		return Math.Max(1, Math.Min(val2, val));
+	}
+
+	internal static int CalculateFullCounterDamage(int incomingDamage, int characterLevel)
+	{
+		if (incomingDamage <= 0)
+		{
+			return 0;
+		}
+		int val = ((characterLevel >= 15) ? (incomingDamage * 3 / 4) : (incomingDamage / 2));
+		return Math.Max(1, val);
+	}
+
+	public void OnEventAboutToTrigger(RuleDealDamage evt)
+	{
+	}
+
+	public void OnEventDidTrigger(RuleDealDamage evt)
+	{
+		TryRunAction(evt);
 	}
 }

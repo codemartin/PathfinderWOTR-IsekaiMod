@@ -1,23 +1,20 @@
-﻿using Kingmaker;
-using Kingmaker.PubSubSystem;
-using Kingmaker.UnitLogic.Mechanics.Actions;
+using IsekaiMod.Utilities;
+using Kingmaker;
+using Kingmaker.Blueprints.JsonSystem;
 
-namespace IsekaiMod.Content.Constellations
+namespace IsekaiMod.Content.Constellations;
+
+[TypeId("14f55e9e86a4447685908914ae7e75c7")]
+public class ContextActionWishWealth : IsekaiContextAction
 {
-	public class ContextActionWishWealth : ContextAction
+	public override string GetCaption()
 	{
-		public override string GetCaption()
-		{
-			return "Grants 500,000 gold";
-		}
+		return "Grants 100,000 gold";
+	}
 
-		public override void RunAction()
-		{
-			Game.Instance?.Player?.GainMoney(500000L);
-			EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
-			{
-				h.HandleLogMessage("<color=#FFD700>[Cosmic Wish]</color> Granted 500,000 Gold from the cosmos!");
-			});
-		}
+	protected override void RunSafely()
+	{
+		Game.Instance?.Player?.GainMoney(100000L);
+		DivineTokens.Log(CosmicStoreText.WishWealth);
 	}
 }

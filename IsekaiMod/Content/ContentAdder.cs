@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using HarmonyLib;
 using IsekaiMod.Config;
 using IsekaiMod.Content.Arenas;
@@ -21,151 +22,296 @@ using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Hero;
 using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.MartialGod;
 using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Mastermind;
 using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Overlord;
+using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.PhantomBlade;
 using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.ShadowMonarch;
 using IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature;
 using IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility;
 using IsekaiMod.Content.Features.IsekaiProtagonist.SoloMastery;
 using IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower;
 using IsekaiMod.Content.Features.IsekaiProtagonist.TrainingEpisode;
+using IsekaiMod.Content.GlobalMap;
 using IsekaiMod.Content.Guardians;
 using IsekaiMod.Content.Heritages;
-using IsekaiMod.Content.Narrative;
 using IsekaiMod.Content.Quests;
+using IsekaiMod.Utilities;
 using Kingmaker.Blueprints.Classes.Prerequisites;
 using Kingmaker.Blueprints.JsonSystem;
-using TabletopTweaks.Core.Config;
+using Kingmaker.DialogSystem.Blueprints;
 using TabletopTweaks.Core.Utilities;
 
-namespace IsekaiMod.Content
+namespace IsekaiMod.Content;
+
+internal class ContentAdder
 {
-	internal class ContentAdder
+	[HarmonyPatch(typeof(BlueprintsCache), "Init")]
+	private static class BlueprintsCache_Init_Patch
 	{
-		[HarmonyPatch(typeof(BlueprintsCache), "Init")]
-		private static class BlueprintsCache_Init_Patch
+		private static bool Initialized;
+
+		private static readonly AddedContent AddedContent = Main.IsekaiContext.AddedContent;
+
+		private const string Phase = "CreateNewBlueprints";
+
+		[HarmonyPriority(800)]
+		[HarmonyPostfix]
+		public static void CreateNewBlueprints()
 		{
-			private static bool Initialized;
-
-			private static bool _constellationsAdded;
-
-			private static AddedContent AddedContent => Main.IsekaiContext.AddedContent;
-
-			private static SettingGroup Other => Main.IsekaiContext.AddedContent.Other;
-
-			private static SettingGroup Isekai => Main.IsekaiContext.AddedContent.Isekai;
-
-			[HarmonyPriority(800)]
-			[HarmonyPostfix]
-			public static void CreateNewBlueprints()
+			if (!Initialized)
 			{
-				if (Initialized)
-				{
-					return;
-				}
 				Initialized = true;
-				// Diagnostics: how much managed memory Isekai's own blueprints add. The managed heap is the main driver
-				// of garbage-collection pauses in a heavily modded game, so this number says whether trimming here helps.
-				long heapBefore = System.GC.GetTotalMemory(false);
+				SafeStep("PerPlaythroughState", delegate
+				{
+					PerPlaythroughState.Init();
+				});
 				SafeStep("ExtraWings.Add", ExtraWings.Add);
 				SafeStep("ExoticWeaponProficiency.Add", ExoticWeaponProficiency.Add);
 				SafeStep("AddExceptionalFeats", AddExceptionalFeats);
-				if (Isekai.IsEnabled("Isekai Backgrounds"))
+				SafeStep("AddIsekaiBackgrounds", AddIsekaiBackgrounds);
+				SafeStep("AddIsekaiDeities", AddIsekaiDeities);
+				SafeStep("AddIsekaiHeritages", AddIsekaiHeritages);
+				SafeStep("ConstellationBlueprints", CreateConstellationBlueprints);
+				if (ContentOffering.ShouldRestrictExceptionalFeats(ContentOffering.IsOffered(OfferedContent.IsekaiProtagonist), AddedContent.RestrictExceptionalFeats))
 				{
-					SafeStep("AddIsekaiBackgrounds", AddIsekaiBackgrounds);
+					SafeStep("RestrictExceptionalFeats", RestrictExceptionalFeats);
 				}
-				if (Isekai.IsEnabled("Isekai Deities"))
-				{
-					SafeStep("AddIsekaiDeities", AddIsekaiDeities);
-				}
-				if (Isekai.IsEnabled("Isekai Heritages"))
-				{
-					SafeStep("AddIsekaiHeritages", AddIsekaiHeritages);
-				}
-				if (Isekai.IsEnabled("Isekai Protagonist"))
-				{
-					if (AddedContent.RestrictExceptionalFeats)
-					{
-						SafeStep("RestrictExceptionalFeats", RestrictExceptionalFeats);
-					}
-					SafeStep("AddIsekaiProtagonistClass", AddIsekaiProtagonistClass);
-				}
+				SafeStep("AddIsekaiProtagonistClass", AddIsekaiProtagonistClass);
 				SafeStep("AddConstellations", AddConstellations);
-			// The class progression is built before the Constellation features exist; link them now.
-			SafeStep("LinkLateProgressionFeatures", IsekaiProtagonistProgression.LinkLateFeatures);
-				if (Isekai.IsEnabled("Isekai Dialogue"))
-				{
-					SafeStep("AddIsekaiDialogue", AddIsekaiDialogue);
-				}
-				long heapAfter = System.GC.GetTotalMemory(false);
-				Main.IsekaiContext.Logger.Log($"Managed heap: {heapBefore / (1024 * 1024)}MB before Isekai blueprints, {heapAfter / (1024 * 1024)}MB after (+{(heapAfter - heapBefore) / (1024 * 1024)}MB).");
-				// Installed here rather than in Main.Load so that every other mod's assembly is already loaded and scanned.
-				SafeStep("AreaLoadDiagnostics.Install", delegate { IsekaiMod.Utilities.AreaLoadDiagnostics.Install(new HarmonyLib.Harmony("IsekaiMod.AreaLoadDiagnostics")); });
-				SafeStep("FactGainDiagnostics.Install", delegate { IsekaiMod.Utilities.FactGainDiagnostics.Install(new HarmonyLib.Harmony("IsekaiMod.FactGainDiagnostics")); });
-				SafeStep("LevelUpPreviewDiagnostics.Install", delegate { IsekaiMod.Utilities.LevelUpPreviewDiagnostics.Install(new HarmonyLib.Harmony("IsekaiMod.LevelUpPreviewDiagnostics")); });
+				SafeStep("AddIsekaiDialogue", AddIsekaiDialogue);
+				SafeStep("BlueprintTextDefaults", BlueprintTextDefaultsPatch.FillComponents);
+				SafeStep("ElementDefaults", ElementDefaults.FillAll);
+				SafeStep("RegressionSanityCheck", RegressionSanityCheck.Run);
+				RegressionSanityCheck.LogStepFailureSummary("CreateNewBlueprints");
 			}
+		}
 
-			public static void SafeStep(string name, Action action)
+		public static void SafeStep(string name, Action action)
+		{
+			try
 			{
-				try
-				{
-					action();
-				}
-				catch (Exception arg)
-				{
-					Main.IsekaiContext.Logger.LogError($"[Startup Warning] Subsystem '{name}' threw an exception: {arg}");
-				}
+				action();
 			}
-
-			public static void AddConstellations()
+			catch (Exception arg)
 			{
-				if (!_constellationsAdded)
-				{
-					DivineTokens.Add();
-					DeityAvatarAscension.Add();
-					CosmicRelics.Add();
-					DivineSponsorshipStore.Add();
-					CosmicConsumables.Add();
-					CodexOfReincarnation.Add();
-					TimelineManager.Init();
-					ConstellationChatManager.Init();
-					DimensionalArenaManager.Init();
-					DimensionalArenaAbilities.Add();
-					PlanarColiseumEntrance.Add();
-					CosmicRelicsVendorTable.Add();
-					OtherworldLuxuryVendorTable.Add();
-					PlanarGatewayEmissary.Add();
-					PlanarColiseumHubManager.Init();
-					ShardOfTheShatteredLoop.Add();
-					EchoOfPastSovereigns.Add();
-					IsekaiTransmigrationQuest.Add();
-					DimensionalRiftIncursions.Init();
-					DimensionalRiftIncursions.Add();
-					SubclassPersonalQuests.Add();
-					SylvanFeyAllianceQuest.Add();
-					MythicQuestSynergies.Add();
-					IsekaiKingdomProjects.Add();
-					IsekaiSettlementBuildings.Add();
-					SubclassRespecManager.Init();
-					CosmicThreatScaling.Add();
-					RivalReincarnators.Add();
-					DimensionalReinforcements.Add();
-					CosmicBarrenBosses.Add();
-					_constellationsAdded = true;
-				}
+				RegressionSanityCheck.RecordStepFailure("CreateNewBlueprints", name);
+				Main.IsekaiContext.Logger.LogError($"[Startup Warning] Subsystem '{name}' threw an exception: {arg}");
 			}
+		}
 
-			public static void AddIsekaiProtagonistClass()
+		public static void CreateConstellationBlueprints()
+		{
+			SafeStep("DivineTokens.CreateBlueprints", DivineTokens.CreateBlueprints);
+			SafeStep("DivineSponsorshipStore.CreateBlueprints", DivineSponsorshipStore.CreateBlueprints);
+			SafeStep("CosmicBarrenBosses.CreateBlueprints", CosmicBarrenBosses.CreateBlueprints);
+			SafeStep("DimensionalRiftIncursions.CreateBlueprints", DimensionalRiftIncursions.CreateBlueprints);
+			SafeStep("EpicPrestigeClasses.CreateBlueprints", EpicPrestigeClasses.CreateBlueprints);
+		}
+
+		public static void AddConstellations()
+		{
+			SafeStep("DeityAvatarAscension", delegate
 			{
-				LegacySelection.ConfigureStep1();
-				IsekaiProtagonistSpellList.Add();
-				IsekaiProtagonistSpellsPerDay.Add();
-				IsekaiProtagonistSpellsKnown.Add();
-				IsekaiProtagonistSpellbook.Add();
-				IsekaiProtagonistClass.Add();
+				DeityAvatarAscension.Add();
+			});
+			SafeStep("CosmicRelics", delegate
+			{
+				CosmicRelics.Add();
+			});
+			SafeStep("DivineSponsorshipStore", delegate
+			{
+				DivineSponsorshipStore.Add();
+			});
+			SafeStep("CosmicConsumables", delegate
+			{
+				CosmicConsumables.Add();
+			});
+			SafeStep("DivineTokens", delegate
+			{
+				DivineTokens.Init();
+			});
+			SafeStep("ForbiddenCheatRecord", delegate
+			{
+				ForbiddenCheatRecord.Init();
+			});
+			SafeStep("KeptRewards", delegate
+			{
+				KeptRewards.Init();
+			});
+			SafeStep("CosmicExchangeGrant", delegate
+			{
+				CosmicExchangeGrant.Init();
+			});
+			SafeStep("TimelineManager", delegate
+			{
+				TimelineManager.Init();
+			});
+			SafeStep("ConstellationChatManager", delegate
+			{
+				ConstellationChatManager.Init();
+			});
+			SafeStep("CodexOfReincarnation", delegate
+			{
+				CodexOfReincarnation.Add();
+			});
+			SafeStep("CodexOfReincarnationDelivery", delegate
+			{
+				CodexOfReincarnation.Init();
+			});
+			SafeStep("DimensionalArenaManager", delegate
+			{
+				DimensionalArenaManager.Init();
+			});
+			SafeStep("PlanarColiseumArea", delegate
+			{
+				PlanarColiseumArea.Add();
+			});
+			SafeStep("PlanarColiseumMapPoint", delegate
+			{
+				PlanarColiseumMapPoint.Add();
+			});
+			SafeStep("BossSites", delegate
+			{
+				BossSites.Add();
+			});
+			SafeStep("BossSiteMapPoints", delegate
+			{
+				BossSiteMapPoints.Add();
+			});
+			SafeStep("BossSiteSpawner", delegate
+			{
+				BossSiteSpawner.Add();
+			});
+			SafeStep("PlanarColiseumEntrance", delegate
+			{
+				PlanarColiseumEntrance.Add();
+			});
+			SafeStep("CosmicRelicsVendorTable", delegate
+			{
+				CosmicRelicsVendorTable.Add();
+			});
+			SafeStep("OtherworldLuxuryVendorTable", delegate
+			{
+				OtherworldLuxuryVendorTable.Add();
+			});
+			SafeStep("PlanarGatewayEmissary", delegate
+			{
+				PlanarGatewayEmissary.Add();
+			});
+			SafeStep("PlanarColiseumHubManager", delegate
+			{
+				PlanarColiseumHubManager.Init();
+			});
+			SafeStep("ColiseumUiStateGuard", delegate
+			{
+				ColiseumUiStateGuard.Init();
+			});
+			SafeStep("ItemRenderGuard", delegate
+			{
+				ItemRenderGuard.Init();
+			});
+			SafeStep("LevelUncapperRecords", delegate
+			{
+				LevelUncapperPatch.Init();
+			});
+			SafeStep("HumanHeritageRepair", delegate
+			{
+				HumanHeritageSelection.InitRepair();
+			});
+			SafeStep("GuardianRoles.Init", delegate
+			{
+				GuardianRoles.Init();
+			});
+			SafeStep("IsekaiColiseumQuest", delegate
+			{
+				IsekaiColiseumQuest.Add();
+			});
+			SafeStep("ShardOfTheShatteredLoop", delegate
+			{
+				ShardOfTheShatteredLoop.Add();
+			});
+			SafeStep("EchoOfPastSovereigns", delegate
+			{
+				EchoOfPastSovereigns.Add();
+			});
+			SafeStep("IsekaiTransmigrationQuest", delegate
+			{
+				IsekaiTransmigrationQuest.Add();
+			});
+			SafeStep("DimensionalRiftIncursions", delegate
+			{
+				DimensionalRiftIncursions.Init();
+			});
+			SafeStep("IsekaiBarrenAnomaliesQuest", delegate
+			{
+				IsekaiBarrenAnomaliesQuest.Add();
+			});
+			SafeStep("SubclassPersonalQuests", delegate
+			{
+				SubclassPersonalQuests.Add();
+			});
+			SafeStep("PersonalQuestTrialDialog", delegate
+			{
+				PersonalQuestTrialDialog.Add();
+			});
+			SafeStep("SylvanFeyAllianceQuest", delegate
+			{
+				SylvanFeyAllianceQuest.Add();
+			});
+			SafeStep("MythicQuestSynergies", delegate
+			{
+				MythicQuestSynergies.Add();
+			});
+			SafeStep("IsekaiKingdomProjects", delegate
+			{
+				IsekaiKingdomProjects.Add();
+			});
+			SafeStep("IsekaiSettlementBuildings", delegate
+			{
+				IsekaiSettlementBuildings.Add();
+			});
+			SafeStep("SubclassRespecManager", delegate
+			{
+				SubclassRespecManager.Init();
+			});
+			SafeStep("CosmicThreatScaling", delegate
+			{
+				CosmicThreatScaling.Add();
+			});
+			SafeStep("RivalReincarnators", delegate
+			{
+				RivalReincarnators.Add();
+			});
+			SafeStep("DimensionalReinforcements", delegate
+			{
+				DimensionalReinforcements.Add();
+			});
+			SafeStep("ConstellationCombatReactions", delegate
+			{
+				ConstellationCombatReactions.Init();
+			});
+			SafeStep("CosmicBarrenBosses", delegate
+			{
+				CosmicBarrenBosses.Add();
+			});
+		}
+
+		public static void AddIsekaiProtagonistClass()
+		{
+			LegacySelection.ConfigureStep1();
+			IsekaiProtagonistSpellList.Add();
+			IsekaiProtagonistSpellsPerDay.Add();
+			IsekaiProtagonistSpellsKnown.Add();
+			IsekaiProtagonistSpellbook.Add();
+			IsekaiProtagonistClass.Add();
+			SafeStep("TrainingEpisode", delegate
+			{
 				TrainingEpisodeSelection.Add();
 				HealthyBody.Add();
 				InnerPower.Add();
 				MasterSelf.Add();
 				Tenacious.Add();
+			});
+			SafeStep("SpecialPower", delegate
+			{
 				SpecialPowerSelection.Add();
 				MundaneAura.Add();
 				AlphaStrike.Add();
@@ -191,6 +337,7 @@ namespace IsekaiMod.Content
 				IsekaiChannelNegativeEnergy.Add();
 				Supermassive.Add();
 				Excalibur.Add();
+				ArchetypeExclusivePowers.Add();
 				Unreactable.Add();
 				Haggler.Add();
 				VampiricDrain.Add();
@@ -202,7 +349,10 @@ namespace IsekaiMod.Content
 				InfiniteArmory.Add();
 				SecondaryAwakening.Add();
 				AdaptiveArmor.Add();
-				EchoOfPastLegacies.Add();
+			});
+			SafeStep("EchoOfPastLegacies", EchoOfPastLegacies.Add);
+			SafeStep("OverpoweredAbility", delegate
+			{
 				OverpoweredAbilitySelection.Add();
 				AutoMetamagicSelection.Add();
 				Instakill.Add();
@@ -211,6 +361,7 @@ namespace IsekaiMod.Content
 				SuperBuff.Add();
 				UnlimitedPower.Add();
 				MindControl.Add();
+				SummonCalamityPool.Add();
 				SummonCalamity.Add();
 				InfiniteSpace.Add();
 				TrueResurrection.Add();
@@ -218,8 +369,6 @@ namespace IsekaiMod.Content
 				MetaLuck.Add();
 				PowerLeveling.Add();
 				MasterSummoner.Add();
-				ShadowMonarch.Add();
-				GluttonyPredator.Add();
 				ChronoDomain.Add();
 				IsekaiLegendAscension.Add();
 				OverpoweredAuraSelection.Add();
@@ -230,7 +379,6 @@ namespace IsekaiMod.Content
 				SovereignsDread.Add();
 				OmniscientMimicry.Add();
 				Epic21Abilities.Add();
-				MartialGodTranscendence.Add();
 				MandateOfHeaven.Add();
 				PowerOfFriendship.Add();
 				AllAccordingToPlan.Add();
@@ -246,16 +394,16 @@ namespace IsekaiMod.Content
 				ProtagonistsSpotlight.Add();
 				ParadoxSovereign.Add();
 				ParallelProcessing.Add();
-				ParallelMetamagicResonance.Add();
-				if (Other.IsEnabled("Mythic Class Feature"))
-				{
-					BlessingOfTheMythic.Configure();
-				}
+				ChronoSurge.Add();
+				Port62ForbiddenCheats.Add();
+				BlessingOfTheMythic.Configure();
+			});
+			SafeStep("IsekaiProtagonistFeatures", delegate
+			{
 				IsekaiProficiencies.Add();
 				SubclassCantrips.Add();
 				IsekaiCantrips.Add();
 				IsekaiBonusFeatSelection.Add();
-				// Moved after IsekaiBonusFeatSelection: it registers itself into that selection.
 				OtherworldScavenger.Add();
 				IsekaiTalentSelection.Add();
 				GuardianCompanionClass.Add();
@@ -263,8 +411,11 @@ namespace IsekaiMod.Content
 				GuardianBarks.Add();
 				IsekaiGuardians.Add();
 				SoloSovereign.Add();
+				SafeStep("Guardians.TwinAvatarCompanionUnit.Add", TwinAvatarCompanionUnit.Add);
+				SafeStep("Features.IsekaiProtagonist.TwinAvatarCompanion.Add", TwinAvatarCompanion.Add);
 				IsekaiPetSelection.Add();
 				PlotArmor.Add();
+				IsekaiSpontaneousMetamagic.Add();
 				StartingWeaponSelection.Add();
 				IsekaiFighterTraining.Add();
 				SignatureMoveSelection.Add();
@@ -281,8 +432,9 @@ namespace IsekaiMod.Content
 				Appraisal.Add();
 				AnimeStoryMilestones.Add();
 				EpicFeats.Add();
-				EpicPrestigeClasses.AddCapstones();
-				EpicArchetypeFeatures.Add();
+			});
+			SafeStep("GodEmperorArchetype", delegate
+			{
 				GodEmperorSpellbook.Add();
 				GodEmperorProficiencies.Add();
 				GodEmperorQuickFooted.Add();
@@ -299,12 +451,18 @@ namespace IsekaiMod.Content
 				ImperialTithe.Add();
 				ImperialSovereignty.Add();
 				GodEmperorArchetype.Add();
-				MartialGodProficiencies.Add();
-				MartialFlurry.Add();
-				MartialDimensionalBlink.Add();
-				MartialVelocity.Add();
+			});
+			SafeStep("MartialGodArchetype", delegate
+			{
+				PhantomBladeProficiencies.Add();
+				PhantomFlurry.Add();
+				PhantomDimensionalBlink.Add();
+				PhantomVelocity.Add();
 				ExtraSpecialPowerSelection.Add();
 				MartialGodArchetype.Add();
+			});
+			SafeStep("HeroArchetype", delegate
+			{
 				HeroProficiencies.Add();
 				GracefulCombat.Add();
 				HandsOfSalvation.Add();
@@ -313,6 +471,9 @@ namespace IsekaiMod.Content
 				RetributionMiracle.Add();
 				HeroOfTimeFeatures.Add();
 				HeroArchetype.Add();
+			});
+			SafeStep("MastermindArchetype", delegate
+			{
 				MastermindConsumeSpells.Add();
 				MastermindSpellList.Add();
 				MastermindSpellsPerDay.Add();
@@ -323,6 +484,10 @@ namespace IsekaiMod.Content
 				TacticalAmbush.Add();
 				MastermindOverhaulFeatures.Add();
 				MastermindArchetype.Add();
+			});
+			SafeStep("ArchetypeHeritageTraits", ArchetypeHeritageTraits.Add);
+			SafeStep("OverlordArchetype", delegate
+			{
 				OverlordSpellbook.Add();
 				OverlordProficiencies.Add();
 				CorruptAuraFeature.Add();
@@ -336,6 +501,9 @@ namespace IsekaiMod.Content
 				SkeletalOverlordForm.Add();
 				OverlordBenevolentFeatures.Add();
 				OverlordArchetype.Add();
+			});
+			SafeStep("DevourerArchetype", delegate
+			{
 				DevourerProficiencies.Add();
 				PredatorInstincts.Add();
 				PredatorMaw.Add();
@@ -346,6 +514,11 @@ namespace IsekaiMod.Content
 				SlimeForm.Add();
 				SlimePredatorArts.Add();
 				DevourerArchetype.Add();
+				GluttonyPredator.Add();
+			});
+			SafeStep("ShadowMonarchArchetype", delegate
+			{
+				ShadowMonarchSummonPool.Add();
 				ShadowMonarchProficiencies.Add();
 				ShadowMonarchSpellbook.Add();
 				ShadowHunterInstincts.Add();
@@ -355,15 +528,24 @@ namespace IsekaiMod.Content
 				MonarchDomain.Add();
 				ShadowExchange.Add();
 				ShadowMonarchArts.Add();
+				ShadowMonarch.Add();
 				ShadowMonarchArchetype.Add();
-				TranscendentSovereignClass.Add();
-				TranscendentSovereignFeatures.Add();
-				TranscendentSovereignProgression.Add();
-				TranscendentSovereignArchetypes.Add();
-				EpicPrestigeClasses.Add();
-				OtherworldRetinuePrestige.Add();
+			});
+			SafeStep("StartingWeaponProficiencyFix", StartingWeaponProficiencyFix.Add);
+			SafeStep("PrebuildIsekaiProtagonistFeatureList", PrebuildIsekaiProtagonistFeatureList.Add);
+			SafeStep("IsekaiProtagonistProgression", IsekaiProtagonistProgression.Add);
+			SafeStep("ArchetypeExclusivePowers.Lock", ArchetypeExclusivePowers.Lock);
+			SafeStep("PrestigeClassReplaceSpellbook", PrestigeClassReplaceSpellbook.Patch);
+			SafeStep("IsekaiAscendantClass", delegate
+			{
+				IsekaiAscendantClass.Add();
+				PatchTools.RegisterClassLevelContinuation(IsekaiProtagonistClass.GetReference(), IsekaiAscendantClass.GetReference());
+				IsekaiAscendantProgression.Add();
+				IsekaiAscendantArchetypes.Add();
+			});
+			SafeStep("Deathsnatcher", delegate
+			{
 				DeathsnatcherClass.Add();
-				DeathsnatcherSpellLikeDC.Add();
 				DeathsnatcherSizeBaby.Add();
 				DeathsnatcherResistances.Add();
 				DeathsnatcherCommandUndead.Add();
@@ -375,114 +557,150 @@ namespace IsekaiMod.Content
 				DeathsnatcherUndeadMaster.Add();
 				DeathsnatcherProgression.Add();
 				DeathsnatcherUnit.Add();
+			});
+			SafeStep("SubclassGuardians", delegate
+			{
 				SubclassGuardianProgressions.Add();
 				SubclassGuardians.Add();
+				GuardianArchetypes.Add();
 				OtherworldGuardianPactSelection.Add();
-				PrebuildIsekaiProtagonistFeatureList.Add();
-				IsekaiProtagonistProgression.Add();
-				PrestigeClassReplaceSpellbook.Patch();
-				LegacySelection.ConfigureStep2();
-			}
-
-			public static void AddIsekaiDialogue()
+			});
+			SafeStep("GuardianRoles", delegate
 			{
-				IsekaiHulrun.Add();
-				LegacyDialogueStubs.Add();
-				IsekaiRadiance.Add();
-				IsekaiKaylessaDrowLeader.Add();
-				IsekaiHorgus.Add();
-				IsekaiMinagho.Add();
-				IsekaiRomanceDialogue.Add();
-				SubclassDialogueReactions.Add();
-				IsekaiEpilogueSlides.Add();
-				IsekaiFinnean.Add();
-				IsekaiNenioStatue.Add();
-				CompanionRetinueDialogue.Add();
-				IsekaiCampaignExpansions.Add();
-				NarrativeEngine.RegisterAllDefaultScenes();
-				NarrativeEngine.CompileAll();
-			}
-
-			public static void AddIsekaiHeritages()
+				GuardianRoles.Add();
+			});
+			SafeStep("TranscendentSovereign", delegate
 			{
-				HumanHeritageSelection.CreateDummy();
-				IsekaiSuccubusHeritage.Add();
-				IsekaiAngelHeritage.Add();
-				IsekaiVampireHeritage.Add();
-				IsekaiSprigganHeritage.Add();
-				IsekaiDarkElfHeritage.Add();
-				IsekaiHighElfHeritage.Add();
-				IsekaiWoodElfHeritage.Add();
-				IsekaiKitsuneHeritage.Add();
-				IsekaiHighHumanHeritage.Add();
-				IsekaiImmortalHumanHeritage.Add();
-				GnomeOfTheFirstWorld.Add();
-				DemonLordHeritage.Add();
-				IsekaiWerewolfHeritage.Add();
-				IsekaiDragonLordHeritage.Add();
-				IsekaiTitanDwarfHeritage.Add();
-				IsekaiFateweaverHeritage.Add();
-				IsekaiCataclysmBerserkerHeritage.Add();
-				IsekaiHumanCrossbreedLegacy.Add();
-				HeteromorphicOverlordHeritage.Add();
-				SlimeReincarnateHeritage.Add();
-				ElfHeritagePatcher.Patch();
-			}
+				TranscendentSovereignClass.Add();
+				TranscendentSovereignFeatures.Add();
+				TranscendentSovereignProgression.Add();
+				TranscendentSovereignArchetypes.Add();
+			});
+			SafeStep("EpicPrestigeClasses", EpicPrestigeClasses.Add);
+			SafeStep("OtherworldRetinuePrestige", OtherworldRetinuePrestige.Add);
+			SafeStep("LegacySelection.ConfigureStep2", LegacySelection.ConfigureStep2);
+			SafeStep("ExtraSpecialPowerSelection.Resync", ExtraSpecialPowerSelection.Resync);
+		}
 
-			public static void AddIsekaiBackgrounds()
+		public static void AddIsekaiDialogue()
+		{
+			List<BlueprintAnswer> list = (TTCoreExtensions.AnswerRecorder = new List<BlueprintAnswer>());
+			try
 			{
-				IsekaiBackgroundSelection.Add();
-				TabletopRPGPlayer.Add();
-				MartialArtist.Add();
-				Salaryman.Add();
-				HighschoolStudent.Add();
-				RebornDemonLord.Add();
-				Otaku.Add();
-				Gamer.Add();
-				BetaTester.Add();
-				DemonicCultivator.Add();
-				EnlightenedSage.Add();
-				Musician.Add();
-				Rationalist.Add();
-				CollegeStudent.Add();
-				Speedrunner.Add();
-				WebNovelAuthor.Add();
-				Surgeon.Add();
-				ModernSoldier.Add();
-				SoftwareEngineer.Add();
-				MasterChef.Add();
-				ChessGrandmaster.Add();
-				TruckDriver.Add();
-				AnimeReferenceBackgrounds.Add();
+				AddIsekaiDialogueGrafts();
 			}
+			finally
+			{
+				TTCoreExtensions.AnswerRecorder = null;
+			}
+			foreach (BlueprintAnswer item in list)
+			{
+				ContentOffering.ShowOnlyWhenOffered(item, OfferedContent.IsekaiDialogue);
+			}
+		}
 
-			public static void AddIsekaiDeities()
-			{
-				IsekaiDeitySelection.Add();
-				YogSothoth.Add();
-				BlackButterfly.Add();
-				Milani.Add();
-				LanternKing.Add();
-				Besmara.Add();
-				Chaldira.Add();
-			}
+		private static void AddIsekaiDialogueGrafts()
+		{
+			SafeStep("Dialogue.Port62Rewards", Port62Rewards.Create);
+			SafeStep("Dialogue.IsekaiPrologueExpansions", IsekaiPrologueExpansions.Add);
+			SafeStep("Dialogue.IsekaiHulrun", IsekaiHulrun.Add);
+			SafeStep("Dialogue.IsekaiRadiance", IsekaiRadiance.Add);
+			SafeStep("Dialogue.IsekaiKaylessaDrowLeader", IsekaiKaylessaDrowLeader.Add);
+			SafeStep("Dialogue.IsekaiHorgus", IsekaiHorgus.Add);
+			SafeStep("Dialogue.IsekaiMinagho", IsekaiMinagho.Add);
+			SafeStep("Dialogue.IsekaiRomanceDialogue", IsekaiRomanceDialogue.Add);
+			SafeStep("Dialogue.SubclassDialogueReactions", SubclassDialogueReactions.Add);
+			SafeStep("Dialogue.IsekaiFinnean", IsekaiFinnean.Add);
+			SafeStep("Dialogue.IsekaiNenioStatue", IsekaiNenioStatue.Add);
+			SafeStep("Dialogue.CompanionRetinueDialogue", CompanionRetinueDialogue.Add);
+			SafeStep("Dialogue.RecruitBothLannWenduag", RecruitBothLannWenduag.Add);
+			SafeStep("Dialogue.Port62Act2", Port62Act2.Add);
+			SafeStep("Dialogue.Port62Act3", Port62Act3.Add);
+			SafeStep("Dialogue.Port62CampHubs", Port62CampHubs.Add);
+			SafeStep("Dialogue.Port62Act1", Port62Act1.Add);
+			SafeStep("Dialogue.Port62Act4", Port62Act4.Add);
+			SafeStep("Dialogue.Port62Act5", Port62Act5.Add);
+			SafeStep("Dialogue.Port62Act6Dlc", Port62Act6Dlc.Add);
+		}
 
-			public static void AddExceptionalFeats()
-			{
-				ExceptionalFeatSelection.Add();
-				EffectImmunitySelection.Add();
-				ExceptionalSummoningSelection.Add();
-				ExceptionalWeaponSelection.Add();
-			}
+		public static void AddIsekaiHeritages()
+		{
+			SafeStep("Heritages.HumanHeritageSelection.CreateDummy", HumanHeritageSelection.CreateDummy);
+			SafeStep("Heritages.IsekaiSuccubusHeritage", IsekaiSuccubusHeritage.Add);
+			SafeStep("Heritages.IsekaiAngelHeritage", IsekaiAngelHeritage.Add);
+			SafeStep("Heritages.IsekaiVampireHeritage", IsekaiVampireHeritage.Add);
+			SafeStep("Heritages.IsekaiSprigganHeritage", IsekaiSprigganHeritage.Add);
+			SafeStep("Heritages.IsekaiDarkElfHeritage", IsekaiDarkElfHeritage.Add);
+			SafeStep("Heritages.IsekaiHighElfHeritage", IsekaiHighElfHeritage.Add);
+			SafeStep("Heritages.IsekaiWoodElfHeritage", IsekaiWoodElfHeritage.Add);
+			SafeStep("Heritages.IsekaiKitsuneHeritage", IsekaiKitsuneHeritage.Add);
+			SafeStep("Heritages.IsekaiHighHumanHeritage", IsekaiHighHumanHeritage.Add);
+			SafeStep("Heritages.IsekaiImmortalHumanHeritage", IsekaiImmortalHumanHeritage.Add);
+			SafeStep("Heritages.GnomeOfTheFirstWorld", GnomeOfTheFirstWorld.Add);
+			SafeStep("Heritages.DemonLordHeritage", DemonLordHeritage.Add);
+			SafeStep("Heritages.IsekaiWerewolfHeritage", IsekaiWerewolfHeritage.Add);
+			SafeStep("Heritages.IsekaiDragonLordHeritage", IsekaiDragonLordHeritage.Add);
+			SafeStep("Heritages.IsekaiTitanDwarfHeritage", IsekaiTitanDwarfHeritage.Add);
+			SafeStep("Heritages.IsekaiFateweaverHeritage", IsekaiFateweaverHeritage.Add);
+			SafeStep("Heritages.IsekaiCataclysmBerserkerHeritage", IsekaiCataclysmBerserkerHeritage.Add);
+			SafeStep("Heritages.IsekaiHumanCrossbreedLegacy", IsekaiHumanCrossbreedLegacy.Add);
+			SafeStep("Heritages.HeteromorphicOverlordHeritage", HeteromorphicOverlordHeritage.Add);
+			SafeStep("Heritages.SlimeReincarnateHeritage", SlimeReincarnateHeritage.Add);
+		}
 
-			public static void RestrictExceptionalFeats()
+		public static void AddIsekaiBackgrounds()
+		{
+			SafeStep("Backgrounds.IsekaiBackgroundSelection", IsekaiBackgroundSelection.Add);
+			SafeStep("Backgrounds.TabletopRPGPlayer", TabletopRPGPlayer.Add);
+			SafeStep("Backgrounds.MartialArtist", MartialArtist.Add);
+			SafeStep("Backgrounds.Salaryman", Salaryman.Add);
+			SafeStep("Backgrounds.HighschoolStudent", HighschoolStudent.Add);
+			SafeStep("Backgrounds.RebornDemonLord", RebornDemonLord.Add);
+			SafeStep("Backgrounds.Otaku", Otaku.Add);
+			SafeStep("Backgrounds.Gamer", Gamer.Add);
+			SafeStep("Backgrounds.BetaTester", BetaTester.Add);
+			SafeStep("Backgrounds.DemonicCultivator", DemonicCultivator.Add);
+			SafeStep("Backgrounds.EnlightenedSage", EnlightenedSage.Add);
+			SafeStep("Backgrounds.Musician", Musician.Add);
+			SafeStep("Backgrounds.Rationalist", Rationalist.Add);
+			SafeStep("Backgrounds.CollegeStudent", CollegeStudent.Add);
+			SafeStep("Backgrounds.Speedrunner", Speedrunner.Add);
+			SafeStep("Backgrounds.WebNovelAuthor", WebNovelAuthor.Add);
+			SafeStep("Backgrounds.Surgeon", Surgeon.Add);
+			SafeStep("Backgrounds.ModernSoldier", ModernSoldier.Add);
+			SafeStep("Backgrounds.SoftwareEngineer", SoftwareEngineer.Add);
+			SafeStep("Backgrounds.MasterChef", MasterChef.Add);
+			SafeStep("Backgrounds.ChessGrandmaster", ChessGrandmaster.Add);
+			SafeStep("Backgrounds.TruckDriver", TruckDriver.Add);
+			SafeStep("Backgrounds.AnimeReferenceBackgrounds", AnimeReferenceBackgrounds.Add);
+		}
+
+		public static void AddIsekaiDeities()
+		{
+			SafeStep("Deities.IsekaiDeitySelection", IsekaiDeitySelection.Add);
+			SafeStep("Deities.YogSothoth", YogSothoth.Add);
+			SafeStep("Deities.BlackButterfly", BlackButterfly.Add);
+			SafeStep("Deities.Milani", Milani.Add);
+			SafeStep("Deities.LanternKing", LanternKing.Add);
+			SafeStep("Deities.Besmara", Besmara.Add);
+			SafeStep("Deities.Chaldira", Chaldira.Add);
+		}
+
+		public static void AddExceptionalFeats()
+		{
+			ExceptionalFeatSelection.Add();
+			EffectImmunitySelection.Add();
+			ExceptionalSummoningSelection.Add();
+			ExceptionalWeaponSelection.Add();
+		}
+
+		public static void RestrictExceptionalFeats()
+		{
+			ExceptionalFeatSelection.Get().AddPrerequisite(delegate(PrerequisiteClassLevel c)
 			{
-				ExceptionalFeatSelection.Get()?.AddPrerequisite(delegate(PrerequisiteClassLevel c)
-				{
-					c.m_CharacterClass = IsekaiProtagonistClass.GetReference();
-					c.Level = 1;
-				});
-			}
+				c.m_CharacterClass = IsekaiProtagonistClass.GetReference();
+				c.Level = 1;
+			});
 		}
 	}
 }

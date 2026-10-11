@@ -1,6 +1,6 @@
-﻿using IsekaiMod.Utilities;
+using IsekaiMod.Config;
+using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
-using Kingmaker.ResourceLinks;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Selection;
 using Kingmaker.Blueprints.Facts;
@@ -11,126 +11,110 @@ using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.FactLogic;
-using Kingmaker.Utility;
 using Kingmaker.Visual.Animation.Kingmaker.Actions;
 using TabletopTweaks.Core.Utilities;
 using UnityEngine;
 
-namespace IsekaiMod.Content.Heritages
+namespace IsekaiMod.Content.Heritages;
+
+internal class IsekaiFateweaverHeritage
 {
-	internal class IsekaiFateweaverHeritage
+	public static void Add()
 	{
-		public static void Add()
+		Sprite Icon_Luck = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintFeature>("d86807f4e6d5ae34185f86c78979a995"))?.m_Icon ?? ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintAbility>("9af0b584f6f754045a0a79293d100ab3"))?.m_Icon;
+		BlueprintAbility blueprint = BlueprintTools.GetBlueprint<BlueprintAbility>("5bdc37e4acfa209408334326076a43bc");
+		Sprite Icon_FateStep = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintAbility>("66bbb0079b595874f8c698451be2329c"))?.m_Icon ?? ((BlueprintUnitFact)blueprint)?.m_Icon;
+		BlueprintAbilityResource ShadowStepResource = Helpers.CreateBlueprint(Main.IsekaiContext, "FateweaverShadowStepResource", delegate(BlueprintAbilityResource bp)
 		{
-			Sprite Icon_Luck = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintFeature>("d86807f4e6d5ae34185f86c78979a995")).m_Icon;
-			BlueprintAbility DimDoorAbility = BlueprintTools.GetBlueprint<BlueprintAbility>("5bdc37e4acfa209408334326076a43bc");
-			BlueprintFeature SneakAttack = BlueprintTools.GetBlueprint<BlueprintFeature>("9b9eac6709e1c084cb18c3a366e0ec87");
-			BlueprintAbilityResource ShadowStepResource = Helpers.CreateBlueprint(Main.IsekaiContext, "FateweaverShadowStepResource", delegate(BlueprintAbilityResource bp)
+			bp.m_MaxAmount = new BlueprintAbilityResource.Amount
 			{
-				bp.m_MaxAmount = new BlueprintAbilityResource.Amount
-				{
-					BaseValue = 3,
-					IncreasedByLevel = false,
-					IncreasedByStat = false
-				};
-			});
-			BlueprintAbility ShadowStepAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "FateweaverShadowStepAbility", delegate(BlueprintAbility bp)
+				BaseValue = 3,
+				IncreasedByLevel = false,
+				IncreasedByStat = false
+			};
+		});
+		BlueprintAbility ShadowStepAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "FateweaverShadowStepAbility", delegate(BlueprintAbility bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Shadow Step");
+			bp.SetDescription(Main.IsekaiContext, "Instantly fold spatial coordinates to step through shadows to a target location within close range as a swift action. Usable 3 times per day.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_FateStep;
+			bp.Type = AbilityType.Special;
+			bp.Range = AbilityRange.Close;
+			bp.CanTargetPoint = true;
+			bp.CanTargetSelf = true;
+			bp.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Omni;
+			bp.ActionType = UnitCommand.CommandType.Swift;
+			bp.AddComponent(delegate(AbilityResourceLogic c)
 			{
-				bp.SetName(Main.IsekaiContext, "Shadow Step");
-				bp.SetDescription(Main.IsekaiContext, "Instantly fold spatial coordinates to step through shadows to a target location within close range as a swift action.");
-				((BlueprintUnitFact)bp).m_Icon = ((BlueprintUnitFact)DimDoorAbility)?.m_Icon;
-				bp.Type = AbilityType.Special;
-				bp.Range = AbilityRange.Close;
-				bp.CanTargetPoint = true;
-				bp.CanTargetSelf = true;
-				bp.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Omni;
-				bp.ActionType = UnitCommand.CommandType.Swift;
-				bp.AddComponent(delegate(AbilityResourceLogic c)
-				{
-					c.m_RequiredResource = ShadowStepResource.ToReference<BlueprintAbilityResourceReference>();
-					c.m_IsSpendResource = true;
-					c.Amount = 1;
-				});
-				bp.AddComponent(delegate(AbilityCustomDimensionDoor c)
-				{
-					c.Radius = new Feet(0f);
-					c.PortalFromPrefab = DimDoorAbility?.GetComponent<AbilityCustomDimensionDoor>()?.PortalFromPrefab;
-					c.PortalToPrefab = DimDoorAbility?.GetComponent<AbilityCustomDimensionDoor>()?.PortalToPrefab;
-					c.PortalBone = DimDoorAbility?.GetComponent<AbilityCustomDimensionDoor>()?.PortalBone ?? "";
-					c.CasterDisappearFx = DimDoorAbility?.GetComponent<AbilityCustomDimensionDoor>()?.CasterDisappearFx;
-					c.CasterAppearFx = DimDoorAbility?.GetComponent<AbilityCustomDimensionDoor>()?.CasterAppearFx;
-					// Every PrefabLink on this component is loaded during delivery; a null one throws and the teleport
-					// silently never happens. Copy the side effects too and fall back to empty links.
-					c.SideDisappearFx = DimDoorAbility?.GetComponent<AbilityCustomDimensionDoor>()?.SideDisappearFx ?? new PrefabLink();
-					c.SideAppearFx = DimDoorAbility?.GetComponent<AbilityCustomDimensionDoor>()?.SideAppearFx ?? new PrefabLink();
-					c.PortalFromPrefab = c.PortalFromPrefab ?? new PrefabLink();
-					c.PortalToPrefab = c.PortalToPrefab ?? new PrefabLink();
-					c.CasterDisappearFx = c.CasterDisappearFx ?? new PrefabLink();
-					c.CasterAppearFx = c.CasterAppearFx ?? new PrefabLink();
-				});
+				c.m_RequiredResource = ShadowStepResource.ToReference<BlueprintAbilityResourceReference>();
+				c.m_IsSpendResource = true;
+				c.Amount = 1;
 			});
-			BlueprintFeature feature = Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiFateweaverHeritage", delegate(BlueprintFeature bp)
+			bp.AddComponent(TeleportMechanics.CasterOnlyTeleport());
+		});
+		BlueprintFeature feature = Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiFateweaverHeritage", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Fateweaver Halfling");
+			bp.SetDescription(Main.IsekaiContext, "Reincarnated with the supernatural ability to see, pluck, and reweave the invisible threads of fate and chance. Fateweavers slip effortlessly past impossible odds and strike where destiny is most vulnerable.\nThe Fateweaver Halfling gains a +4 racial bonus to Dexterity and a +2 racial bonus to Charisma, which replace the halfling's ability score adjustments, and +2d6 sneak attack damage.\nSupernal Luck: a +1 racial bonus on attack rolls and a +2 racial bonus on all saving throws.\nShadow Step: 3 times per day, as a swift action, teleport to a location within close range.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Luck;
+			bp.AddComponent(delegate(AddStatBonus c)
 			{
-				bp.SetName(Main.IsekaiContext, "Fateweaver Halfling");
-				bp.SetDescription(Main.IsekaiContext, "Reincarnated with the supernatural ability to see, pluck, and reweave the invisible threads of fate and chance. Fateweavers slip effortlessly past impossible odds and strike where destiny is most vulnerable.\nThe Fateweaver Halfling gains a +4 racial bonus to Dexterity and Charisma, a +2 luck bonus on all attack rolls and saving throws, +2d6 Sneak Attack damage, and the Shadow Step swift teleportation ability usable 3 times per day.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Luck;
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Racial;
-					c.Stat = StatType.Dexterity;
-					c.Value = 4;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Racial;
-					c.Stat = StatType.Charisma;
-					c.Value = 4;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Luck;
-					c.Stat = StatType.AdditionalAttackBonus;
-					c.Value = 2;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Luck;
-					c.Stat = StatType.SaveFortitude;
-					c.Value = 2;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Luck;
-					c.Stat = StatType.SaveReflex;
-					c.Value = 2;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Luck;
-					c.Stat = StatType.SaveWill;
-					c.Value = 2;
-				});
-				bp.AddComponent(delegate(AddFacts c)
-				{
-					c.m_Facts = new BlueprintUnitFactReference[2]
-					{
-						SneakAttack.ToReference<BlueprintUnitFactReference>(),
-						SneakAttack.ToReference<BlueprintUnitFactReference>()
-					};
-				});
-				bp.AddComponent(delegate(AddAbilityResources c)
-				{
-					c.m_Resource = ShadowStepResource.ToReference<BlueprintAbilityResourceReference>();
-					c.RestoreAmount = true;
-				});
-				bp.AddComponent(delegate(AddFacts c)
-				{
-					c.m_Facts = new BlueprintUnitFactReference[1] { ShadowStepAbility.ToReference<BlueprintUnitFactReference>() };
-				});
-				bp.Groups = new FeatureGroup[1] { FeatureGroup.Racial };
-				bp.ReapplyOnLevelUp = true;
+				c.Descriptor = ModifierDescriptor.Racial;
+				c.Stat = StatType.Dexterity;
+				c.Value = 4;
 			});
-			BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("b3bebe76e6c64e2ca11585f9e3e2554a")?.AddToSelection(feature);
+			bp.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Racial;
+				c.Stat = StatType.Charisma;
+				c.Value = 2;
+			});
+			bp.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Racial;
+				c.Stat = StatType.AdditionalAttackBonus;
+				c.Value = 1;
+			});
+			bp.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Racial;
+				c.Stat = StatType.SaveFortitude;
+				c.Value = 2;
+			});
+			bp.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Racial;
+				c.Stat = StatType.SaveReflex;
+				c.Value = 2;
+			});
+			bp.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Racial;
+				c.Stat = StatType.SaveWill;
+				c.Value = 2;
+			});
+			bp.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.UntypedStackable;
+				c.Stat = StatType.SneakAttack;
+				c.Value = 2;
+			});
+			bp.AddComponent(delegate(AddAbilityResources c)
+			{
+				c.m_Resource = ShadowStepResource.ToReference<BlueprintAbilityResourceReference>();
+				c.RestoreAmount = true;
+			});
+			bp.AddComponent(delegate(AddFacts c)
+			{
+				c.m_Facts = new BlueprintUnitFactReference[1] { ShadowStepAbility.ToReference<BlueprintUnitFactReference>() };
+			});
+			bp.Groups = new FeatureGroup[1] { FeatureGroup.Racial };
+			bp.ReapplyOnLevelUp = true;
+		});
+		BlueprintFeatureSelection blueprint2 = BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("b3bebe76e6c64e2ca11585f9e3e2554a");
+		if (blueprint2 != null)
+		{
+			ContentOffering.OfferInSelection(blueprint2, feature, OfferedContent.IsekaiHeritages);
 		}
 	}
 }

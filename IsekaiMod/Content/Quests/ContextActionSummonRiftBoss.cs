@@ -1,19 +1,18 @@
-﻿using Kingmaker.UnitLogic.Mechanics.Actions;
+using IsekaiMod.Utilities;
+using Kingmaker.Blueprints.JsonSystem;
 
-namespace IsekaiMod.Content.Quests
+namespace IsekaiMod.Content.Quests;
+
+[TypeId("38607665964f4d0f9372bf7bbbd97395")]
+public class ContextActionSummonRiftBoss : IsekaiContextAction
 {
-	public class ContextActionSummonRiftBoss : ContextAction
+	public override string GetCaption()
 	{
-		public int Act;
+		return "Summons the next Dimensional Rift Boss";
+	}
 
-		public override string GetCaption()
-		{
-			return $"Summons Act {Act} Dimensional Rift Boss";
-		}
-
-		public override void RunAction()
-		{
-			DimensionalRiftIncursions.SpawnRiftBoss(Act);
-		}
+	protected override void RunSafely()
+	{
+		DimensionalRiftIncursions.SpawnRiftBoss();
 	}
 }

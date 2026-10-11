@@ -1,386 +1,410 @@
-﻿using IsekaiMod.Content.Classes.IsekaiProtagonist;
-using IsekaiMod.Content.Classes.IsekaiProtagonist.Prestige;
+using IsekaiMod.Components;
+using IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility;
 using IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower;
+using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Prerequisites;
 using Kingmaker.Blueprints.Classes.Selection;
 using Kingmaker.Blueprints.Classes.Spells;
 using Kingmaker.Blueprints.Facts;
+using Kingmaker.Blueprints.Items.Armors;
 using Kingmaker.Designers.Mechanics.Buffs;
 using Kingmaker.Designers.Mechanics.Facts;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.Enums;
-using Kingmaker.UnitLogic.Abilities.Blueprints;
+using Kingmaker.RuleSystem;
+using Kingmaker.RuleSystem.Rules.Damage;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.UnitLogic.Buffs.Components;
 using Kingmaker.UnitLogic.FactLogic;
+using Kingmaker.UnitLogic.Mechanics;
+using Kingmaker.UnitLogic.Mechanics.Actions;
+using Kingmaker.UnitLogic.Mechanics.Components;
+using Kingmaker.UnitLogic.Mechanics.Conditions;
+using Kingmaker.UnitLogic.Mechanics.Properties;
 using TabletopTweaks.Core.Utilities;
 using UnityEngine;
 
-namespace IsekaiMod.Content.Features.IsekaiProtagonist
+namespace IsekaiMod.Content.Features.IsekaiProtagonist;
+
+internal static class EpicFeats
 {
-	internal static class EpicFeats
+	private static readonly Sprite Icon_Feat = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintFeature>("e6e1a24ce33454342b7053889391642c"))?.m_Icon;
+
+	private static readonly Sprite Icon_Sword = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintBuff>("f5f500d6a2a39fc4181af32ad79af488"))?.m_Icon ?? Icon_Feat;
+
+	private static readonly Sprite Icon_Shield = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintBuff>("9c0fa9b438ada3f43864be8dd8b3e741"))?.m_Icon ?? Icon_Feat;
+
+	private static readonly Sprite Icon_Spell = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintBuff>("faf473e3a977fd4428cd3f1a526346d2"))?.m_Icon ?? Icon_Feat;
+
+	private const string ParalyzedBuff = "af1e2d232ebbb334aaf25e2a46a92591";
+
+	public static void Add()
 	{
-		private static readonly Sprite Icon_Feat = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintFeature>("e45ab30f49215054e83b4ea12165409f"))?.m_Icon;
-
-		private static readonly Sprite Icon_Sword = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintAbility>("779179912e6c6fe458fa4cfb90d96e10"))?.m_Icon ?? Icon_Feat;
-
-		private static readonly Sprite Icon_Shield = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintBuff>("9c0fa9b438ada3f43864be8dd8b3e741"))?.m_Icon ?? Icon_Feat;
-
-		private static readonly Sprite Icon_Spell = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintBuff>("faf473e3a977fd4428cd3f1a526346d2"))?.m_Icon ?? Icon_Feat;
-
-		public static void Add()
+		RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "EpicWeaponMastery", delegate(BlueprintFeature bp)
 		{
-			RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "EpicWeaponMastery", delegate(BlueprintFeature bp)
+			bp.SetName(Main.IsekaiContext, "Epic Weapon Mastery");
+			bp.SetDescription(Main.IsekaiContext, "Your mastery of weaponry reaches transcendent heights. You gain a +4 untyped bonus to attack rolls that stacks with every other source, and the critical multiplier of your melee and ranged weapons increases by 1 (e.g. x2 becomes x3).");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Sword;
+			bp.IsClassFeature = true;
+			bp.AddComponent(delegate(AddStatBonus c)
 			{
-				bp.SetName(Main.IsekaiContext, "Epic Weapon Mastery");
-				bp.SetDescription(Main.IsekaiContext, "Your mastery of weaponry reaches transcendent heights. You gain a +4 competence bonus to attack rolls with all weapons, and your critical strike multiplier increases by 1 (e.g. x2 becomes x3).");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Sword;
-				bp.IsClassFeature = true;
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Competence;
-					c.Stat = StatType.AdditionalAttackBonus;
-					c.Value = 4;
-				});
-			}));
-			RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "EpicDevastatingCritical", delegate(BlueprintFeature bp)
+				c.Descriptor = ModifierDescriptor.UntypedStackable;
+				c.Stat = StatType.AdditionalAttackBonus;
+				c.Value = 4;
+			});
+			bp.AddComponent(delegate(AttackTypeCriticalMultiplierIncrease c)
 			{
-				bp.SetName(Main.IsekaiContext, "Epic Devastating Critical");
-				bp.SetDescription(Main.IsekaiContext, "When you score a critical hit, your weapon shatters bone and armor, dealing an additional 2d10 direct damage and forcing the target to succeed at a Fortitude save (DC = 10 + 1/2 character level + Strength modifier) or be Paralyzed for 1 round.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Sword;
-				bp.IsClassFeature = true;
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Competence;
-					c.Stat = StatType.AdditionalDamage;
-					c.Value = 6;
-				});
-			}));
-			RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "InfiniteCombatReflexes", delegate(BlueprintFeature bp)
+				c.Type = WeaponRangeType.Normal;
+				c.AdditionalMultiplier = 1;
+			});
+		}));
+		BlueprintUnitProperty DevastatingCriticalDC = Helpers.CreateBlueprint(Main.IsekaiContext, "EpicDevastatingCriticalDCProperty", delegate(BlueprintUnitProperty bp)
+		{
+			bp.BaseValue = 10;
+			bp.OperationOnComponents = BlueprintUnitProperty.MathOperation.Sum;
+			bp.AddComponent(delegate(SimplePropertyGetter c)
 			{
-				bp.SetName(Main.IsekaiContext, "Infinite Combat Reflexes");
-				bp.SetDescription(Main.IsekaiContext, "You can make an unlimited number of attacks of opportunity each round, and gain a +4 circumstance bonus to attack rolls on all attacks of opportunity.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Sword;
-				bp.IsClassFeature = true;
-				bp.AddComponent(delegate(AddStatBonus c)
+				c.Property = UnitProperty.Level;
+				c.Settings = new PropertySettings
 				{
-					c.Descriptor = ModifierDescriptor.Circumstance;
-					c.Stat = StatType.AdditionalAttackBonus;
-					c.Value = 4;
-				});
-			}));
-			RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "EpicOverwhelmingPower", delegate(BlueprintFeature bp)
+					m_Progression = PropertySettings.Progression.Div2
+				};
+			});
+			bp.AddComponent(delegate(SimplePropertyGetter c)
 			{
-				bp.SetName(Main.IsekaiContext, "Epic Overwhelming Power");
-				bp.SetDescription(Main.IsekaiContext, "The sheer kinetic force of your strikes ignores physical resistance. Your melee weapon attacks bypass all forms of damage reduction, including DR/Epic and DR/-.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Sword;
-				bp.IsClassFeature = true;
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.UntypedStackable;
-					c.Stat = StatType.AdditionalDamage;
-					c.Value = 8;
-				});
-			}));
-			RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "EpicRapidShot", delegate(BlueprintFeature bp)
+				c.Property = UnitProperty.StatBonusStrength;
+			});
+		});
+		RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "EpicDevastatingCritical", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Epic Devastating Critical");
+			bp.SetDescription(Main.IsekaiContext, "When you confirm a critical hit with a weapon, your weapon shatters bone and armor, dealing an additional 2d10 direct damage (not multiplied by the critical hit) and forcing the target to succeed at a Fortitude save (DC = 10 + 1/2 character level + Strength modifier) or be Paralyzed for 1 round.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Sword;
+			bp.IsClassFeature = true;
+			bp.AddComponent(delegate(AddInitiatorAttackWithWeaponTrigger c)
 			{
-				bp.SetName(Main.IsekaiContext, "Epic Rapid Shot");
-				bp.SetDescription(Main.IsekaiContext, "You fire with superhuman speed. When making a full attack with a ranged weapon, you gain 2 additional attacks at your highest base attack bonus with no attack penalty.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Sword;
-				bp.IsClassFeature = true;
-				bp.AddComponent(delegate(BuffExtraAttack c)
+				c.OnlyHit = true;
+				c.CriticalHit = true;
+				c.Action = Helpers.CreateActionList(new ContextActionDealDamage
 				{
-					c.Number = 2;
-					c.Haste = true;
-				});
-			}));
-			RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "EpicDistantShot", delegate(BlueprintFeature bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Epic Distant Shot");
-				bp.SetDescription(Main.IsekaiContext, "Your arrows and bolts transcend spatial limits. Ranged attacks ignore range increment penalties, point-blank range penalties, and target concealment miss chances.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Sword;
-				bp.IsClassFeature = true;
-				bp.AddComponent<IgnoreConcealment>();
-			}));
-			RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "TranscendentToughness", delegate(BlueprintFeature bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Transcendent Toughness");
-				bp.SetDescription(Main.IsekaiContext, "Your body attains immortal vitality. You gain +100 maximum hit points, damage reduction 10/-, and Fast Healing 5.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Shield;
-				bp.IsClassFeature = true;
-				bp.AddComponent(delegate(AddStatBonus c)
+					m_Type = ContextActionDealDamage.Type.Damage,
+					DamageType = new DamageTypeDescription
+					{
+						Type = DamageType.Direct,
+						Physical = new DamageTypeDescription.PhysicalData(),
+						Common = new DamageTypeDescription.CommomData()
+					},
+					Duration = Values.Duration.Zero,
+					Value = new ContextDiceValue
+					{
+						DiceType = DiceType.D10,
+						DiceCountValue = 2,
+						BonusValue = 0
+					},
+					IgnoreCritical = true
+				}, new ContextActionSavingThrow
 				{
-					c.Descriptor = ModifierDescriptor.UntypedStackable;
-					c.Stat = StatType.HitPoints;
-					c.Value = 100;
-				});
-				bp.AddComponent(delegate(AddDamageResistancePhysical c)
-				{
-					c.Value = 10;
-				});
-				bp.AddComponent(delegate(AddEffectFastHealing c)
-				{
-					c.Heal = 5;
-				});
-			}));
-			RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "UnyieldingMind", delegate(BlueprintFeature bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Unyielding Mind");
-				bp.SetDescription(Main.IsekaiContext, "Your psyche is an impenetrable fortress. You gain permanent immunity to all mind-affecting effects, compulsions, feeblemind, and madness, as well as a +4 bonus to Will saving throws.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Shield;
-				bp.IsClassFeature = true;
-				bp.AddComponent(delegate(BuffDescriptorImmunity c)
-				{
-					c.Descriptor = SpellDescriptor.MindAffecting | SpellDescriptor.Compulsion;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.UntypedStackable;
-					c.Stat = StatType.SaveWill;
-					c.Value = 4;
-				});
-			}));
-			RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "PreternaturalEvasion", delegate(BlueprintFeature bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Preternatural Evasion");
-				bp.SetDescription(Main.IsekaiContext, "You instinctively slip between the atoms of incoming danger. You gain Improved Evasion and a 50% displacement miss chance against all incoming attacks.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Shield;
-				bp.IsClassFeature = true;
-				bp.AddComponent<ImprovedEvasion>();
-				bp.AddComponent(delegate(AddConcealment c)
-				{
-					c.Concealment = Concealment.Total;
-					c.Descriptor = ConcealmentDescriptor.Displacement;
-				});
-			}));
-			RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "EpicArmorMastery", delegate(BlueprintFeature bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Epic Armor Mastery");
-				bp.SetDescription(Main.IsekaiContext, "Armor fits you like a second skin. Armor check penalty is reduced to 0, maximum Dexterity bonus to AC is increased by +10, and you gain an additional +6 shield and armor bonus to AC.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Shield;
-				bp.IsClassFeature = true;
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.ArmorEnhancement;
-					c.Stat = StatType.AC;
-					c.Value = 6;
-				});
-			}));
-			RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "EpicSpellPenetration", delegate(BlueprintFeature bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Epic Spell Penetration");
-				bp.SetDescription(Main.IsekaiContext, "Your magical incantations tear effortlessly through magical abjurations. You gain a +6 bonus to caster level checks to overcome spell resistance. Stacks with all other Spell Penetration feats.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Spell;
-				bp.IsClassFeature = true;
-				bp.AddComponent(delegate(SpellPenetrationBonus c)
-				{
-					c.Value = 6;
-				});
-			}));
-			RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "EpicMetamagicApotheosis", delegate(BlueprintFeature bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Epic Metamagic Apotheosis");
-				bp.SetDescription(Main.IsekaiContext, "Metamagic flows naturally through your conduits without expanding spell slots. Completely removes the spell slot level increase for Empower Spell and Extend Spell, and grants +2 to all spell save DCs.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Spell;
-				bp.IsClassFeature = true;
-				bp.AddComponent(delegate(IncreaseAllSpellsDC c)
-				{
-					c.Value = 2;
-					c.Descriptor = ModifierDescriptor.UntypedStackable;
-				});
-			}));
-			RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "EpicSpellFocus", delegate(BlueprintFeature bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Epic Spell Focus");
-				bp.SetDescription(Main.IsekaiContext, "Your mastery of all spell schools reaches absolute supremacy. The saving throw DC of all your spells increases by +3 across all schools. Stacks with all Spell Focus feats.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Spell;
-				bp.IsClassFeature = true;
-				bp.AddComponent(delegate(IncreaseAllSpellsDC c)
-				{
-					c.Value = 3;
-					c.Descriptor = ModifierDescriptor.UntypedStackable;
-				});
-			}));
-			RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "EpicMultispell", delegate(BlueprintFeature bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Epic Multispell");
-				bp.SetDescription(Main.IsekaiContext, "You can weave spells with dual-threaded casting speed, gaining the ability to cast an extra quickened or swift action spell each round.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Spell;
-				bp.IsClassFeature = true;
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.UntypedStackable;
-					c.Stat = StatType.Initiative;
-					c.Value = 6;
-				});
-			}));
-			BlueprintBuff EpicGrandSummonerBuff = Helpers.CreateBlueprint(Main.IsekaiContext, "EpicGrandSummonerBuff", delegate(BlueprintBuff bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Epic Grand Summoner");
-				bp.SetDescription(Main.IsekaiContext, "Summoned creatures and companions gain a +6 enhancement bonus to all ability scores and a +4 natural armor bonus to AC.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Spell;
-				bp.IsClassFeature = true;
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Enhancement;
-					c.Stat = StatType.Strength;
-					c.Value = 6;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Enhancement;
-					c.Stat = StatType.Dexterity;
-					c.Value = 6;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Enhancement;
-					c.Stat = StatType.Constitution;
-					c.Value = 6;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Enhancement;
-					c.Stat = StatType.Intelligence;
-					c.Value = 6;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Enhancement;
-					c.Stat = StatType.Wisdom;
-					c.Value = 6;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Enhancement;
-					c.Stat = StatType.Charisma;
-					c.Value = 6;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.NaturalArmor;
-					c.Stat = StatType.AC;
-					c.Value = 4;
+					Type = SavingThrowType.Fortitude,
+					m_ConditionalDCIncrease = new ContextActionSavingThrow.ConditionalDCIncrease[0],
+					HasCustomDC = true,
+					CustomDC = Values.CreateContextCasterCustomPropertyValue(DevastatingCriticalDC),
+					Actions = ActionFlow.DoSingle(delegate(ContextActionConditionalSaved s)
+					{
+						s.Succeed = ActionFlow.DoNothing();
+						s.Failed = ActionFlow.DoSingle(delegate(ContextActionApplyBuff b)
+						{
+							b.m_Buff = BlueprintTools.GetBlueprintReference<BlueprintBuffReference>("af1e2d232ebbb334aaf25e2a46a92591");
+							b.DurationValue = Values.Duration.OneRound;
+						});
+					})
 				});
 			});
-			RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "EpicGrandSummoner", delegate(BlueprintFeature bp)
+		}));
+		RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "InfiniteCombatReflexes", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Infinite Combat Reflexes");
+			bp.SetDescription(Main.IsekaiContext, "You can make 10 additional attacks of opportunity each round (still no more than one against the same creature), and gain a +4 circumstance bonus to attack rolls on attacks of opportunity.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Sword;
+			bp.IsClassFeature = true;
+			bp.AddComponent(delegate(AddStatBonus c)
 			{
-				bp.SetName(Main.IsekaiContext, "Epic Grand Summoner");
-				bp.SetDescription(Main.IsekaiContext, "Your summoned creatures and companions are imbued with epic planar resonance: they gain a +6 enhancement bonus to all ability scores, maximum hit points per hit die, and a +4 natural armor bonus.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Spell;
-				bp.IsClassFeature = true;
-				bp.AddComponent(delegate(BuffExtraEffects c)
-				{
-					c.m_CheckedBuff = BlueprintTools.GetBlueprint<BlueprintBuff>("706c182e86d9be848b59ddccca73d13e")?.ToReference<BlueprintBuffReference>();
-					c.m_ExtraEffectBuff = EpicGrandSummonerBuff.ToReference<BlueprintBuffReference>();
-				});
-			}));
-			RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "EpicFlurryOfBlades", delegate(BlueprintFeature bp)
+				c.Descriptor = ModifierDescriptor.UntypedStackable;
+				c.Stat = StatType.AttackOfOpportunityCount;
+				c.Value = 10;
+			});
+			bp.AddComponent(delegate(AttackOfOpportunityAttackBonus c)
 			{
-				bp.SetName(Main.IsekaiContext, "Epic Flurry of Blades");
-				bp.SetDescription(Main.IsekaiContext, "You wield two weapons with unmatched grace and coordination: you suffer no attack penalties when dual wielding, your off-hand weapon adds your full Strength or Dexterity modifier to damage, and you gain 1 additional off-hand attack.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Sword;
-				bp.IsClassFeature = true;
-				bp.AddComponent(delegate(BuffExtraAttack c)
-				{
-					c.Number = 1;
-					c.Haste = true;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.UntypedStackable;
-					c.Stat = StatType.AdditionalDamage;
-					c.Value = 4;
-				});
-			}));
-			RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "TranscendentAscendantSynergy", delegate(BlueprintFeature bp)
+				c.Descriptor = ModifierDescriptor.Circumstance;
+				c.Bonus = 4;
+			});
+		}));
+		RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "EpicOverwhelmingPower", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Epic Overwhelming Power");
+			bp.SetDescription(Main.IsekaiContext, "The sheer kinetic force of your strikes ignores physical resistance. Your weapon attacks, melee and ranged, bypass all forms of damage reduction, including DR/Epic and DR/-.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Sword;
+			bp.IsClassFeature = true;
+			bp.AddComponent<IgnoreDamageReductionOnAttack>();
+		}));
+		RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "EpicRapidShot", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Epic Rapid Shot");
+			bp.SetDescription(Main.IsekaiContext, "You fire with superhuman speed. When making a full attack with a ranged weapon, you gain 2 additional attacks at your highest base attack bonus with no attack penalty. These stack with haste and Rapid Shot.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Sword;
+			bp.IsClassFeature = true;
+			bp.AddComponent(delegate(BuffExtraAttackWeaponSpecific c)
 			{
-				bp.SetName(Main.IsekaiContext, "Transcendent Ascendant Synergy");
-				bp.SetDescription(Main.IsekaiContext, "Your mastery as an otherworldly protagonist and transcendent sovereign converges into supreme cosmic authority. You gain a +4 untyped bonus to the difficulty class of all spells and abilities, a +4 bonus to caster level, and your Reality Rewrite ability gains 1 additional use per day.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Spell;
-				bp.IsClassFeature = true;
-				bp.AddComponent(delegate(IncreaseSpellDC c)
-				{
-					c.BonusDC = 4;
-				});
-				bp.AddComponent(delegate(AddCasterLevel c)
-				{
-					c.Bonus = 4;
-				});
-				BlueprintAbilityResource rwResource = BlueprintTools.GetModBlueprint<BlueprintAbilityResource>(Main.IsekaiContext, "RealityRewriteResource");
-				if (rwResource != null)
-				{
-					bp.AddComponent(delegate(IncreaseResourceAmount c)
-					{
-						c.m_Resource = rwResource.ToReference<BlueprintAbilityResourceReference>();
-						c.Value = 1;
-					});
-				}
-				bp.AddComponent(delegate(PrerequisiteClassLevel c)
-				{
-					c.m_CharacterClass = TranscendentSovereignClass.GetReference();
-					c.Level = 10;
-				});
-				bp.AddComponent(delegate(PrerequisiteClassLevel c)
-				{
-					c.m_CharacterClass = IsekaiProtagonistClass.GetReference();
-					c.Level = 20;
-				});
-			}));
-			RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "RetinueCommanderResonanceSynergy", delegate(BlueprintFeature bp)
+				c.RangeType = WeaponRangeType.Ranged;
+			});
+			bp.AddComponent(delegate(BuffExtraAttackWeaponSpecific c)
 			{
-				bp.SetName(Main.IsekaiContext, "Retinue Commander Resonance");
-				bp.SetDescription(Main.IsekaiContext, "The metaphysical resonance between you and your retinue reaches its zenith. You gain a +4 bonus to Armor Class, attack rolls, and all saving throws, as well as Damage Reduction 10/-.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Shield;
-				bp.IsClassFeature = true;
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.UntypedStackable;
-					c.Stat = StatType.AC;
-					c.Value = 4;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.UntypedStackable;
-					c.Stat = StatType.AdditionalAttackBonus;
-					c.Value = 4;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.UntypedStackable;
-					c.Stat = StatType.SaveFortitude;
-					c.Value = 4;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.UntypedStackable;
-					c.Stat = StatType.SaveReflex;
-					c.Value = 4;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.UntypedStackable;
-					c.Stat = StatType.SaveWill;
-					c.Value = 4;
-				});
-				bp.AddComponent(delegate(AddDamageResistancePhysical c)
-				{
-					c.Value = 10;
-				});
-				bp.AddComponent(delegate(PrerequisiteClassLevel c)
-				{
-					c.m_CharacterClass = OtherworldRetinuePrestige.GetReference();
-					c.Level = 10;
-				});
-			}));
-			static void RegisterEpicFeat(BlueprintFeature feat)
+				c.RangeType = WeaponRangeType.Ranged;
+			});
+		}));
+		RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "EpicDistantShot", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Epic Distant Shot");
+			bp.SetDescription(Main.IsekaiContext, "Your arrows and bolts transcend spatial limits. You ignore the penalty for shooting into melee, and your attacks ignore concealment miss chances.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Sword;
+			bp.IsClassFeature = true;
+			bp.AddComponent<PreciseShot>();
+			bp.AddComponent<IgnoreConcealment>();
+		}));
+		RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "TranscendentToughness", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Transcendent Toughness");
+			bp.SetDescription(Main.IsekaiContext, "Your body attains immortal vitality. You gain +100 maximum hit points, damage reduction 10/-, and Fast Healing 5.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Shield;
+			bp.IsClassFeature = true;
+			bp.AddComponent(delegate(AddStatBonus c)
 			{
-				feat.AddComponent(delegate(PrerequisiteCharacterLevel c)
+				c.Descriptor = ModifierDescriptor.UntypedStackable;
+				c.Stat = StatType.HitPoints;
+				c.Value = 100;
+			});
+			bp.AddComponent(delegate(AddDamageResistancePhysical c)
+			{
+				c.Value = 10;
+			});
+			bp.AddComponent(delegate(AddEffectFastHealing c)
+			{
+				c.Heal = 5;
+				c.Bonus = 0;
+			});
+		}));
+		RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "UnyieldingMind", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Unyielding Mind");
+			bp.SetDescription(Main.IsekaiContext, "Your psyche is an impenetrable fortress. You gain permanent immunity to harmful mind-affecting effects (charm, compulsion, confusion, daze, fear, sleep and harmful emotion effects, which covers feeblemind and insanity), as well as a +4 bonus to Will saving throws. Morale and inspiration effects from your allies still affect you.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Shield;
+			bp.IsClassFeature = true;
+			bp.AddComponent(delegate(BuffDescriptorImmunity c)
+			{
+				c.Descriptor = SpellDescriptor.Fear | SpellDescriptor.Compulsion | SpellDescriptor.Charm | SpellDescriptor.Daze | SpellDescriptor.Shaken | SpellDescriptor.Frightened | SpellDescriptor.Confusion | SpellDescriptor.Sleep | SpellDescriptor.NegativeEmotion;
+			});
+			bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+			{
+				c.Descriptor = SpellDescriptor.Fear | SpellDescriptor.Compulsion | SpellDescriptor.Charm | SpellDescriptor.Daze | SpellDescriptor.Shaken | SpellDescriptor.Frightened | SpellDescriptor.Confusion | SpellDescriptor.Sleep | SpellDescriptor.NegativeEmotion;
+			});
+			bp.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.UntypedStackable;
+				c.Stat = StatType.SaveWill;
+				c.Value = 4;
+			});
+		}));
+		RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "PreternaturalEvasion", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Preternatural Evasion");
+			bp.SetDescription(Main.IsekaiContext, "You instinctively slip between the atoms of incoming danger. You gain Evasion and Improved Evasion (no damage on a successful Reflex save, half on a failed one) and a 50% displacement miss chance against all incoming attacks.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Shield;
+			bp.IsClassFeature = true;
+			bp.AddComponent(delegate(Evasion c)
+			{
+				c.SavingThrow = SavingThrowType.Reflex;
+			});
+			bp.AddComponent(delegate(ImprovedEvasion c)
+			{
+				c.SavingThrow = SavingThrowType.Reflex;
+			});
+			bp.AddComponent(delegate(AddConcealment c)
+			{
+				c.Concealment = Concealment.Total;
+				c.Descriptor = ConcealmentDescriptor.Displacement;
+			});
+		}));
+		RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "EpicArmorMastery", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Epic Armor Mastery");
+			bp.SetDescription(Main.IsekaiContext, "Armor fits you like a second skin. The armor check penalty of your armor and shield is reduced to 0, the maximum Dexterity bonus of your armor increases by +10, and you gain a +6 armor focus bonus to AC that stacks with your armor (it does not apply to touch attacks).");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Shield;
+			bp.IsClassFeature = true;
+			bp.AddComponent(delegate(ArmorCheckPenaltyIncrease c)
+			{
+				c.Bonus = 20;
+			});
+			ArmorProficiencyGroup[] array = new ArmorProficiencyGroup[4]
+			{
+				ArmorProficiencyGroup.Buckler,
+				ArmorProficiencyGroup.LightShield,
+				ArmorProficiencyGroup.HeavyShield,
+				ArmorProficiencyGroup.TowerShield
+			};
+			foreach (ArmorProficiencyGroup shield in array)
+			{
+				bp.AddComponent(delegate(ArmorCheckPenaltyIncrease c)
 				{
-					c.Level = 21;
+					c.Bonus = 20;
+					c.CheckCategory = true;
+					c.Category = shield;
 				});
+			}
+			bp.AddComponent(delegate(MaxDexBonusIncrease c)
+			{
+				c.Bonus = 10;
+			});
+			bp.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.ArmorFocus;
+				c.Stat = StatType.AC;
+				c.Value = 6;
+			});
+		}));
+		RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "EpicSpellPenetration", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Epic Spell Penetration");
+			bp.SetDescription(Main.IsekaiContext, "Your magical incantations tear effortlessly through magical abjurations. You gain a +6 bonus to caster level checks to overcome spell resistance. Stacks with all other Spell Penetration feats.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Spell;
+			bp.IsClassFeature = true;
+			bp.AddComponent(delegate(SpellPenetrationBonus c)
+			{
+				c.Value = 6;
+			});
+		}));
+		RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "EpicMetamagicApotheosis", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Epic Metamagic Apotheosis");
+			bp.SetDescription(Main.IsekaiContext, "Metamagic flows naturally through your conduits. Extend Spell no longer increases the spell slot level, Empower Spell increases it by 1 instead of 2, and you gain +2 to all spell save DCs. The slot reduction does not stack with the mythic Favorite Metamagic for the same metamagic.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Spell;
+			bp.IsClassFeature = true;
+			bp.AddComponent(delegate(AddMechanicsFeature c)
+			{
+				c.m_Feature = AddMechanicsFeature.MechanicsFeatureType.FavoriteMetamagicEmpower;
+			});
+			bp.AddComponent(delegate(AddMechanicsFeature c)
+			{
+				c.m_Feature = AddMechanicsFeature.MechanicsFeatureType.FavoriteMetamagicExtend;
+			});
+			bp.AddComponent(delegate(IncreaseAllSpellsDC c)
+			{
+				c.Value = 2;
+				c.Descriptor = ModifierDescriptor.UntypedStackable;
+			});
+		}));
+		RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "EpicSpellFocus", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Epic Spell Focus");
+			bp.SetDescription(Main.IsekaiContext, "Your mastery of all spell schools reaches absolute supremacy. The saving throw DC of all your spells increases by +3 across all schools. Stacks with all Spell Focus feats.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Spell;
+			bp.IsClassFeature = true;
+			bp.AddComponent(delegate(IncreaseAllSpellsDC c)
+			{
+				c.Value = 3;
+				c.Descriptor = ModifierDescriptor.UntypedStackable;
+			});
+		}));
+		RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "EpicMultispell", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Epic Multispell");
+			bp.SetDescription(Main.IsekaiContext, "You weave spells with dual-threaded speed. Quicken Spell increases the spell slot level by 3 instead of 4, and you gain a +6 bonus on initiative checks. The slot reduction does not stack with the mythic Favorite Metamagic (Quicken).");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Spell;
+			bp.IsClassFeature = true;
+			bp.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.UntypedStackable;
+				c.Stat = StatType.Initiative;
+				c.Value = 6;
+			});
+			bp.AddComponent(delegate(AddMechanicsFeature c)
+			{
+				c.m_Feature = AddMechanicsFeature.MechanicsFeatureType.FavoriteMetamagicQuicken;
+			});
+		}));
+		BlueprintBuff EpicGrandSummonerSummonBuff = TTCoreExtensions.CreateBuff("EpicGrandSummonerSummonBuff", delegate(BlueprintBuff bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Epic Grand Summoner");
+			bp.SetDescription(Main.IsekaiContext, "Imbued with epic planar resonance: +6 enhancement bonus to all ability scores and a +4 natural armor bonus to AC.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Spell;
+			bp.IsClassFeature = true;
+			bp.Stacking = StackingType.Replace;
+			StatType[] array = new StatType[6]
+			{
+				StatType.Strength,
+				StatType.Dexterity,
+				StatType.Constitution,
+				StatType.Intelligence,
+				StatType.Wisdom,
+				StatType.Charisma
+			};
+			foreach (StatType stat in array)
+			{
+				bp.AddComponent(delegate(AddStatBonus c)
+				{
+					c.Descriptor = ModifierDescriptor.Enhancement;
+					c.Stat = stat;
+					c.Value = 6;
+				});
+			}
+			bp.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.NaturalArmor;
+				c.Stat = StatType.AC;
+				c.Value = 4;
+			});
+		});
+		RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "EpicGrandSummoner", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Epic Grand Summoner");
+			bp.SetDescription(Main.IsekaiContext, "Your summoned creatures are imbued with epic planar resonance: they gain a +6 enhancement bonus to all ability scores and a +4 natural armor bonus to AC.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Spell;
+			bp.IsClassFeature = true;
+			bp.AddComponent(delegate(OnSpawnBuff c)
+			{
+				c.m_buff = EpicGrandSummonerSummonBuff.ToReference<BlueprintBuffReference>();
+				c.IsInfinity = true;
+			});
+		}));
+		RegisterEpicFeat(Helpers.CreateBlueprint(Main.IsekaiContext, "EpicFlurryOfBlades", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Epic Flurry of Blades");
+			bp.SetDescription(Main.IsekaiContext, "You wield two weapons with unmatched grace and coordination. While wielding a weapon in each hand you gain a +2 bonus on attack rolls (cancelling the Two-Weapon Fighting penalty with a light off-hand weapon), your off-hand weapon adds your full Strength bonus to damage, and you gain 1 additional off-hand attack when making a full attack.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Sword;
+			bp.IsClassFeature = true;
+			bp.AddComponent(delegate(AttackBonusConditional c)
+			{
+				c.Descriptor = ModifierDescriptor.UntypedStackable;
+				c.Bonus = 2;
+				c.Conditions = ActionFlow.IfSingle<ContextConditionCasterHasTwoWeapons>();
+			});
+			bp.AddComponent(delegate(AddMechanicsFeature c)
+			{
+				c.m_Feature = AddMechanicsFeature.MechanicsFeatureType.DoubleSlice;
+			});
+			bp.AddComponent(delegate(AddExtraOffHandAttack c)
+			{
+				c.Number = 1;
+			});
+		}));
+		static void RegisterEpicFeat(BlueprintFeature feat)
+		{
+			feat.AddComponent(delegate(PrerequisiteCharacterLevel c)
+			{
+				c.Level = 21;
+			});
+			Epic21Abilities.OfferEpicContent(delegate
+			{
 				SpecialPowerSelection.AddToSelection(feat);
 				BlueprintFeatureSelection modBlueprint = BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "IsekaiBonusFeatSelection");
 				if (modBlueprint != null)
@@ -388,7 +412,7 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist
 					modBlueprint.m_Features = modBlueprint.m_Features.AppendToArray(feat.ToReference<BlueprintFeatureReference>());
 					modBlueprint.m_AllFeatures = modBlueprint.m_AllFeatures.AppendToArray(feat.ToReference<BlueprintFeatureReference>());
 				}
-			}
+			});
 		}
 	}
 }

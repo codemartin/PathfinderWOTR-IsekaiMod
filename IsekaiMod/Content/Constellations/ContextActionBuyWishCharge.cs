@@ -1,45 +1,42 @@
-﻿using Kingmaker.Blueprints;
+using IsekaiMod.Utilities;
+using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.JsonSystem;
 using Kingmaker.EntitySystem.Entities;
-using Kingmaker.PubSubSystem;
-using Kingmaker.UnitLogic.Mechanics.Actions;
+using Kingmaker.UnitLogic;
 
-namespace IsekaiMod.Content.Constellations
+namespace IsekaiMod.Content.Constellations;
+
+[TypeId("4c52d6d390d04b8aa219e2a3b4236f96")]
+public class ContextActionBuyWishCharge : IsekaiContextAction
 {
-	public class ContextActionBuyWishCharge : ContextAction
+	public int Cost = 1000;
+
+	public BlueprintAbilityResourceReference m_WishResource;
+
+	public override string GetCaption()
 	{
-		public int Cost = 4000;
+		return $"Spends {Cost} Cosmic Coins and adds 1 Wish charge";
+	}
 
-		public BlueprintAbilityResourceReference m_WishResource;
-
-		public override string GetCaption()
+	protected override void RunSafely()
+	{
+		UnitEntityData unitEntityData = DivineTokens.ResolveDialogTarget(base.Target, DivineTokens.GetPlayer);
+		BlueprintAbilityResource blueprintAbilityResource = m_WishResource?.Get();
+		if (!(unitEntityData == null) && blueprintAbilityResource != null)
 		{
-			return $"Spends {Cost} Cosmic Coins and adds 1 Wish charge";
-		}
-
-		public override void RunAction()
-		{
-			UnitEntityData unitEntityData = base.Target?.Unit ?? DivineTokens.GetPlayer();
-			BlueprintAbilityResource blueprintAbilityResource = m_WishResource?.Get();
-			if (unitEntityData == null || blueprintAbilityResource == null)
+			UnitAbilityResourceCollection resources = unitEntityData.Descriptor.Resources;
+			if (!resources.ContainsResource(blueprintAbilityResource))
 			{
-				return;
+				DivineTokens.Log(CosmicStoreText.WishNoPool);
 			}
-			if (DivineTokens.SpendCoins(Cost))
+			else if (resources.HasMaxAmount(blueprintAbilityResource))
+			{
+				DivineTokens.Log(CosmicStoreText.WishFull, 10);
+			}
+			else if (DivineTokens.SpendCoins(Cost))
 			{
 				unitEntityData.Descriptor.Resources.Restore(blueprintAbilityResource, 1);
-				Main.Log(System.Text.RegularExpressions.Regex.Replace("<color=#FFD700>[Cosmic Store]</color> Purchased 1 Cosmic Wish charge! You may now cast the Cosmic Wish modular ability in the field.", "<[^>]+>", ""));
-				EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
-				{
-					h.HandleLogMessage("<color=#FFD700>[Cosmic Store]</color> Purchased 1 Cosmic Wish charge! You may now cast the Cosmic Wish modular ability in the field.");
-				});
-			}
-			else
-			{
-				Main.Log(System.Text.RegularExpressions.Regex.Replace($"<color=#DC143C>[Cosmic Store]</color> Insufficient Cosmic Coins! Required: {Cost}. Current: {DivineTokens.GetBalance()}.", "<[^>]+>", ""));
-				EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
-				{
-					h.HandleLogMessage($"<color=#DC143C>[Cosmic Store]</color> Insufficient Cosmic Coins! Required: {Cost}. Current: {DivineTokens.GetBalance()}.");
-				});
+				DivineTokens.Log(CosmicStoreText.WishBought);
 			}
 		}
 	}

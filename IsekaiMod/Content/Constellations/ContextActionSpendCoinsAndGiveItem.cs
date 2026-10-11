@@ -1,47 +1,32 @@
-﻿using Kingmaker;
+using IsekaiMod.Utilities;
+using Kingmaker;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Items;
-using Kingmaker.PubSubSystem;
-using Kingmaker.UnitLogic.Mechanics.Actions;
+using Kingmaker.Blueprints.JsonSystem;
+using Kingmaker.Items;
 
-namespace IsekaiMod.Content.Constellations
+namespace IsekaiMod.Content.Constellations;
+
+[TypeId("78cce67a040040c2b47a4c7bc83fbcea")]
+public class ContextActionSpendCoinsAndGiveItem : IsekaiContextAction
 {
-	public class ContextActionSpendCoinsAndGiveItem : ContextAction
+	public int Cost;
+
+	public BlueprintItemReference m_Item;
+
+	public override string GetCaption()
 	{
-		public int Cost;
+		return $"Spends {Cost} Cosmic Coins and gives an item";
+	}
 
-		public BlueprintItemReference m_Item;
-
-		public int Amount = 1;
-
-		public override string GetCaption()
+	protected override void RunSafely()
+	{
+		BlueprintItem blueprintItem = m_Item?.Get();
+		ItemsCollection itemsCollection = Game.Instance?.Player?.Inventory;
+		if (blueprintItem != null && itemsCollection != null && DivineTokens.SpendCoins(Cost))
 		{
-			return $"Spends {Cost} coins and gives {Amount} items";
-		}
-
-		public override void RunAction()
-		{
-			if (DivineTokens.SpendCoins(Cost))
-			{
-				BlueprintItem item = m_Item?.Get();
-				if (item != null)
-				{
-					Game.Instance?.Player?.Inventory?.Add(item, Amount);
-					Main.Log(System.Text.RegularExpressions.Regex.Replace($"<color=#FFD700>[Cosmic Store]</color> Purchased {item.Name} x{Amount}!", "<[^>]+>", ""));
-					EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
-					{
-						h.HandleLogMessage($"<color=#FFD700>[Cosmic Store]</color> Purchased {item.Name} x{Amount}!");
-					});
-				}
-			}
-			else
-			{
-				Main.Log(System.Text.RegularExpressions.Regex.Replace($"<color=#DC143C>[Cosmic Store]</color> Insufficient Cosmic Coins! Required: {Cost}. Current: {DivineTokens.GetBalance()}.", "<[^>]+>", ""));
-				EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
-				{
-					h.HandleLogMessage($"<color=#DC143C>[Cosmic Store]</color> Insufficient Cosmic Coins! Required: {Cost}. Current: {DivineTokens.GetBalance()}.");
-				});
-			}
+			itemsCollection.Add(blueprintItem, 1);
+			DivineTokens.Log(CosmicStoreText.ItemBought, blueprintItem.Name);
 		}
 	}
 }

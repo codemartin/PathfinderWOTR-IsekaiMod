@@ -1,964 +1,962 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using IsekaiMod.Content.Quests;
+using IsekaiMod.Utilities;
 using Kingmaker;
-using Kingmaker.Blueprints.Area;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Selection;
-using Kingmaker.Controllers.Dialog;
+using Kingmaker.Blueprints.Root;
 using Kingmaker.DialogSystem.Blueprints;
+using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Alignments;
 
-namespace IsekaiMod.Content.Constellations
+namespace IsekaiMod.Content.Constellations;
+
+public class ConstellationChatManager : ISelectAnswerHandler, ISubscriber, IGlobalSubscriber, IDialogStartHandler
 {
-	public class ConstellationChatManager : ISelectAnswerHandler, ISubscriber, IGlobalSubscriber, IDialogCueHandler, IAreaHandler
+	public enum LogRoute
 	{
-		private static bool _initialized = false;
+		Voice,
+		Notice,
+		Bookkeeping
+	}
 
-		private static readonly HashSet<string> _triggeredMilestones = new HashSet<string>();
+	private static bool _initialized = false;
 
-		private static readonly HashSet<string> _visitedAreasInCycle = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+	internal const string BanterRewardsStorage = "IsekaiMod.BanterRewards";
 
-		private static readonly Random _rng = new Random();
+	internal const string MilestoneKeyPrefix = "milestone:";
 
-		private static bool _warnedCheatingThisCombat = false;
+	internal const string AnswerKeyPrefix = "answer:";
 
-		private static readonly Dictionary<string, int> _deityDisfavor = new Dictionary<string, int>();
+	private static readonly HashSet<string> AwakeningAnswerGuids = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "eea5643f25d86dc43bb3024bbb83212f", "47cbc8ab5ca57a14684db2344d8057f4", "bad44b6d69be7b64e8db6a07dcdcd9fc", "db8320c0269ad9c4bb4408688adb8067" };
 
-		public static bool HasTriggeredMilestone(string milestone)
+	private static readonly HashSet<string> HulrunAnswerGuids = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "99b61d2799fab984d91a31523b791ac3", "d766a405f2efd4b4c9f3ffcd52537e91", "69ae3450833062d468074138f5b09812", "1ff8ff46ced090243af81f89a01422ee", "cd57229f881961846a5a20b7112a924b", "6898ccdc3dd26944c8e0ebb39d8c7777", "820751da02c91d54481d8732082b4806" };
+
+	private static readonly HashSet<string> HulrunAnswerNames = new HashSet<string>(StringComparer.Ordinal) { "IsekaiDialogueHulrun", "IsekaiHulrunPhantomBlade", "IsekaiHulrunGodEmperor", "IsekaiHulrunOverlord", "IsekaiHulrunDevourer", "IsekaiHulrunShadowMonarch", "IsekaiHulrunHero", "IsekaiHulrunMastermind" };
+
+	private static readonly HashSet<string> TerendelevAnswerGuids = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "cb5364b7c47d7a94f9dc05a4b1836051", "1d02bdcc7df6a3943babf9c11479cfaf", "a2e64274ac23831428eeea86b5e56f95", "99fede389ef058843947cebdce3c3408", "73858cd1fea29a74ba23407726ffda6e" };
+
+	private static readonly HashSet<string> TerendelevAnswerNames = new HashSet<string>(StringComparer.Ordinal) { "IsekaiWelcomeGeneral", "IsekaiWelcomeDevourer", "IsekaiWelcomeShadowMonarch", "IsekaiWelcomeMastermind", "IsekaiWelcomePhantomBlade", "IsekaiWelcomeHero", "IsekaiWelcomeGodEmperor", "IsekaiWelcomeOverlord" };
+
+	private static readonly HashSet<string> CavesSeelahAnswerGuids = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "7ce19f7c9cce54d458833a5d98f77e62", "9cd8308b0fc6506459bf1e98456b94bf", "b082a1f17a3219e4a8f842f87bed0be3", "99d18ab52a1e3a84f9e4b787eb02a743", "ac8a98a286c2d664fbf93297bc1d557a" };
+
+	private static readonly HashSet<string> CavesSeelahAnswerNames = new HashSet<string>(StringComparer.Ordinal) { "IsekaiSeelahGeneral", "IsekaiSeelahMastermind" };
+
+	private static readonly HashSet<string> CamelliaAnswerGuids = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "35d480d928e845a40a0661de241ceb79", "cbde3303de9b26f45918cbf33d60e1e3", "712417ce7cc82544b8902dc52e097651", "ff96f56ed6e58e143a269269c115e9bb", "691061ff298ee00459d486d5784d3d7f" };
+
+	private static readonly HashSet<string> CamelliaAnswerNames = new HashSet<string>(StringComparer.Ordinal) { "IsekaiCameliaGeneral", "IsekaiCameliaDevourer", "IsekaiCameliaShadowMonarch", "IsekaiCameliaMastermind", "IsekaiCameliaHero" };
+
+	private static readonly HashSet<string> LannAnswerGuids = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+	{
+		"e3d54aed9334b844ca2cfffcd2d6941a", "460bec2b366453f48b335e4bea7c5454", "016443f096fae154fbb42a1ea1decde4", "500630ef3d0dc1b408dba690b1462520", "16f0ddce85cc4dc4caa57c938829e853", "50b0fe3080ead9f4c85a12eb3c968f55", "0870b0f37b48cac43b69f334c5406dab", "5532bd4bc13d0074db8efabb50b2ae70", "2acf1d4b6015dbe48a32ffe6e7050d7a", "d649624cb27339f4b8a839dea4f47143",
+		"331f4144a144b6540bc7d1b5e21f0c07", "6f2dc8aeaed5bf642b5b34303f922292"
+	};
+
+	private static readonly HashSet<string> LannAnswerNames = new HashSet<string>(StringComparer.Ordinal) { "IsekaiLannGeneral", "IsekaiLannDevourer" };
+
+	private const string DeskariDialogName = "StitchGivesCrossbow_Dialogue";
+
+	internal const string MilestoneAwakening = "PrologueAwakening";
+
+	internal const string MilestoneHulrun = "PrologueHulrun";
+
+	internal const string MilestoneTerendelev = "PrologueTerendelev";
+
+	internal const string MilestoneDeskari = "PrologueDeskari";
+
+	internal const string MilestoneCavesSeelah = "PrologueCavesSeelah";
+
+	internal const string MilestoneCamellia = "PrologueCamellia";
+
+	internal const string MilestoneLann = "PrologueLann";
+
+	private static readonly Dictionary<string, string> TagDeitySeats = new Dictionary<string, string>(StringComparer.Ordinal)
+	{
+		{ "Desna", "The Song of the Spheres" },
+		{ "Gorum", "Our Lord in Iron" },
+		{ "Iomedae", "The Inheritor" },
+		{ "Calistria", "The Savored Sting" },
+		{ "Nethys", "The All-Seeing Eye" },
+		{ "Asmodeus", "The Prince of Darkness" },
+		{ "Pharasma", "The Lady of Graves" },
+		{ "Cayden Cailean", "The Lucky Drunk" },
+		{ "The Lantern King", "The Laughing King" },
+		{ "Yog-Sothoth", "The Key and the Gate" },
+		{ "Urgathoa", "The Pallid Princess" },
+		{ "Besmara", "The Pirate Queen" },
+		{ "Chaldira", "The Mischievous Friend" },
+		{ "Milani", "The Everbloom" },
+		{ "Black Butterfly", "The Silence Between the Stars" }
+	};
+
+	private static bool _warnedCheatingThisCombat = false;
+
+	internal const string AtheismFeatureGuid = "92c0d2da0a836ce418a267093c09ca54";
+
+	private static readonly Dictionary<string, string[]> SponsorVanillaDeities = new Dictionary<string, string[]>(StringComparer.Ordinal)
+	{
 		{
-			return _triggeredMilestones.Contains(milestone);
+			"The Lucky Drunk",
+			new string[1] { "300e212868bca984687c92bcb66d381b" }
+		},
+		{
+			"The Inheritor",
+			new string[1] { "88d5da04361b16746bf5b65795e0c38c" }
+		},
+		{
+			"The Prince of Darkness",
+			new string[1] { "a3a5ccc9c670e6f4ca4a686d23b89900" }
+		},
+		{
+			"The Song of the Spheres",
+			new string[1] { "2c0a3b9971327ba4d9d85354d16998c1" }
+		},
+		{
+			"The Lady of Graves",
+			new string[1] { "458750bc214ab2e44abdeae404ab22e9" }
+		},
+		{
+			"The Savored Sting",
+			new string[1] { "c7531715a3f046d4da129619be63f44c" }
+		},
+		{
+			"The All-Seeing Eye",
+			new string[1] { "6262cfce7c31626458325ca0909de997" }
+		},
+		{
+			"Our Lord in Iron",
+			new string[1] { "8f49a5d8528a82c44b8c117a89f6b68c" }
+		},
+		{
+			"The Pirate Queen",
+			new string[1] { "470d824767d34e2e9a59b6d70681af7a" }
+		},
+		{
+			"The Pallid Princess",
+			new string[1] { "812f6c07148088e41a9ac94b56ac2fc8" }
 		}
+	};
 
-		public static void MarkMilestoneTriggered(string milestone)
+	private static readonly Dictionary<string, string> SponsorModDeities = new Dictionary<string, string>(StringComparer.Ordinal)
+	{
+		{ "The Pirate Queen", "BesmaraFeature" },
+		{ "The Laughing King", "LanternKingFeature" },
+		{ "The Mischievous Friend", "ChaldiraFeature" },
+		{ "The Everbloom", "MilaniFeature" },
+		{ "The Silence Between the Stars", "BlackButterflyFeature" },
+		{ "The Key and the Gate", "YogSothothFeature" }
+	};
+
+	internal const string SceneKeyPrefix = "scene:";
+
+	private static readonly HashSet<string> ModOwnedDialogs = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "CosmicStoreDialog", "PlanarColiseumHeraldDialog", "AstralCoinEnvoyDialog", "VoidMarketSmugglerDialog", "ConstellationOracleDialog", "PlanarGatewayEmissaryDialog", "SylvanBloomBookEvent", "LanternKingCameoDialog" };
+
+	internal static readonly HashSet<string> SystemAnswerGuids = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "17cf846dddf09244a93b53eaf26c8539", "942b64c165b97cd47b66848c20047433", "8bd0ea4d576725548b936050567ae609", "0aa57d78541372e46bae2402e5f540a6" };
+
+	private static string _lastDialogName;
+
+	private static bool _neutralBroadcastInThisDialog;
+
+	public static void Init()
+	{
+		if (!_initialized && ConstellationSettings.Enabled)
 		{
-			_triggeredMilestones.Add(milestone);
+			_initialized = true;
+			EventBus.Subscribe(new ConstellationChatManager());
+			ConstellationChatOverlay.EnsureInstance();
 		}
+	}
 
-		public void OnAreaBeginUnloading()
+	public static void ResetPerPlaythroughState()
+	{
+		_warnedCheatingThisCombat = false;
+		_neutralBroadcastInThisDialog = false;
+		_lastDialogName = null;
+	}
+
+	private static Dictionary<string, string> RewardLedger(bool create)
+	{
+		EntityDataBase entity = SaveScopedStorage.CurrentPlayer();
+		if (!create)
 		{
+			return SaveScopedStorage.Find(entity, "IsekaiMod.BanterRewards");
 		}
+		return SaveScopedStorage.Ensure(entity, "IsekaiMod.BanterRewards");
+	}
 
-		public void OnAreaDidLoad()
+	internal static HashSet<string> MilestonesIn(IDictionary<string, string> ledger)
+	{
+		HashSet<string> hashSet = new HashSet<string>(StringComparer.Ordinal);
+		if (ledger == null)
 		{
-			try
+			return hashSet;
+		}
+		foreach (string key in ledger.Keys)
+		{
+			if (key != null && key.StartsWith("milestone:", StringComparison.Ordinal))
 			{
-				ConstellationChatOverlay.EnsureInstance();
-				DivineTokens.SyncInventoryCoins(DivineTokens.GetBalance());
-				BlueprintArea blueprintArea = Game.Instance?.CurrentlyLoadedArea;
-				if (blueprintArea == null)
-				{
-					return;
-				}
-				string name = blueprintArea.name;
-				if (string.IsNullOrEmpty(name) || _visitedAreasInCycle.Contains(name))
-				{
-					return;
-				}
-				int currentCycle = TimelineManager.GetCurrentCycle();
-				string playerDeityName = GetPlayerDeityName();
-				bool hasAvatar = DeityAvatarAscension.HasAnyAvatar(DivineTokens.GetPlayer());
-				if (!ConstellationDialogueBanter.TryGetAreaBanter(name, currentCycle, playerDeityName, hasAvatar, out var result))
-				{
-					return;
-				}
-				_visitedAreasInCycle.Add(name);
-				foreach (string line in result.Lines)
-				{
-					PostLog(line, result.Sponsor, result.Category, result.Coins, result.SceneContext);
-				}
-				if (result.Coins > 0)
-				{
-					DivineTokens.AddCoins(result.Coins, result.Sponsor);
-				}
+				hashSet.Add(key.Substring("milestone:".Length));
 			}
-			catch (Exception ex)
+		}
+		return hashSet;
+	}
+
+	internal static bool AnswerRewardedIn(IDictionary<string, string> ledger, string answerGuid)
+	{
+		if (ledger != null && !string.IsNullOrEmpty(answerGuid))
+		{
+			return ledger.ContainsKey("answer:" + answerGuid);
+		}
+		return false;
+	}
+
+	internal static string MatchPrologueMilestone(string dialogName, string answerGuid, string answerName, ICollection<string> alreadyTriggered)
+	{
+		dialogName = dialogName ?? string.Empty;
+		answerGuid = answerGuid ?? string.Empty;
+		answerName = answerName ?? string.Empty;
+		if (!Seen("PrologueAwakening") && In(AwakeningAnswerGuids, null))
+		{
+			return "PrologueAwakening";
+		}
+		if (!Seen("PrologueHulrun") && In(HulrunAnswerGuids, HulrunAnswerNames))
+		{
+			return "PrologueHulrun";
+		}
+		if (!Seen("PrologueTerendelev") && In(TerendelevAnswerGuids, TerendelevAnswerNames))
+		{
+			return "PrologueTerendelev";
+		}
+		if (!Seen("PrologueDeskari") && string.Equals(dialogName, "StitchGivesCrossbow_Dialogue", StringComparison.Ordinal))
+		{
+			return "PrologueDeskari";
+		}
+		if (!Seen("PrologueCavesSeelah") && In(CavesSeelahAnswerGuids, CavesSeelahAnswerNames))
+		{
+			return "PrologueCavesSeelah";
+		}
+		if (!Seen("PrologueCamellia") && In(CamelliaAnswerGuids, CamelliaAnswerNames))
+		{
+			return "PrologueCamellia";
+		}
+		if (!Seen("PrologueLann") && In(LannAnswerGuids, LannAnswerNames))
+		{
+			return "PrologueLann";
+		}
+		return null;
+		bool In(HashSet<string> guids, HashSet<string> names)
+		{
+			if (!guids.Contains(answerGuid))
 			{
-				Main.IsekaiContext.Logger.LogError("Error in ConstellationChatManager.OnAreaDidLoad: " + ex);
-			}
-		}
-
-		public static void Init()
-		{
-			if (!_initialized)
-			{
-				_initialized = true;
-				EventBus.Subscribe(new ConstellationChatManager());
-				ConstellationChatOverlay.EnsureInstance();
-				ConstellationBounties.Init();
-			}
-		}
-
-		public static void ResetMilestones()
-		{
-			_triggeredMilestones.Clear();
-			_visitedAreasInCycle.Clear();
-		}
-
-		public static void PostLog(string message, string sponsor = null, ConstellationCategory category = ConstellationCategory.Subclass, int coins = 0, string sceneContext = null)
-		{
-			EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
-			{
-				h.HandleLogMessage(message);
-			});
-			ConstellationEventHistory.RecordEvent(message, sponsor, category, coins, sceneContext);
-			ConstellationChatOverlay.AddMessage(message, sponsor, coins);
-		}
-
-		public static void PostSuperChat(string sponsor, int coins, string title, string message)
-		{
-			string text = "<color=#FFD700><b>[VIP SUPER-CHAT: " + title.ToUpper() + "]</b></color>";
-			string text2 = $"<color=#FFD700><b>★ {sponsor}</b></color> has sent a <b>VIP Super-Chat ({coins} Cosmic Coins)</b>!";
-			string formattedMessage = text + "\n" + text2 + "\n<i>\"" + message + "\"</i>";
-			EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
-			{
-				h.HandleLogMessage(formattedMessage);
-			});
-			ConstellationEventHistory.RecordEvent(formattedMessage, sponsor, ConstellationCategory.Quest, coins, title);
-			ConstellationChatOverlay.AddMessage(formattedMessage, sponsor, coins);
-		}
-
-		public static void ResetCombatWarning()
-		{
-			_warnedCheatingThisCombat = false;
-		}
-
-		public static void WarnRampantCheating(int count)
-		{
-			if (!_warnedCheatingThisCombat)
-			{
-				_warnedCheatingThisCombat = true;
-				string[] array = new string[4]
-				{
-					$"<color=#FF4500><b>[Cosmic Outrage: Rampant Cheating Detected!]</b></color> <color=#FFD700>The Lantern King:</color> \"Ohoho! One otherworld anomaly was an amusing comedy. <b>{count} of them</b> is shameless, brazen hacking! Let's see how you fare when the multiverse fights back!\"",
-					$"<color=#FF4500><b>[Cosmic Outrage: Soul Registry Error!]</b></color> <color=#9370DB>Pharasma:</color> \"The river of souls rejects this mockery. The cosmic registry is utterly corrupted with {count} illegal otherworlders. Cosmic balance demands immediate retribution!\"",
-					"<color=#FF4500><b>[Cosmic Outrage: Anomaly Overload!]</b></color> <color=#DC143C>Gorum:</color> \"A whole platoon of cheat gods?! Bah! True warriors fight with grit, not cheat codes! Come, beasts, tear them to pieces!\"",
-					$"<color=#FF4500><b>[Cosmic Outrage: Dimensional Collapse!]</b></color> <color=#00FFFF>Yog-Sothoth:</color> \"Dimensional boundary integrity collapsing. Excessive cheat density detected ({count} anomalies). Cosmic equilibrium enforcement protocols engaged!\""
-				};
-				Random random = new Random();
-				PostLog(array[random.Next(array.Length)], "Cosmic Threat", ConstellationCategory.Combat, 0, "Combat Retribution");
-				PostLog("<color=#DC143C><i>[Multiverse Retribution Active: All enemies have received heavily scaled combat stats, extra attacks, and hit points!]</i></color>", "Cosmic Threat", ConstellationCategory.Combat, 0, "Combat Retribution");
-			}
-		}
-
-		public static void WarnPlanarIncursion(int count)
-		{
-			PostLog($"<color=#FF4500><b>[Planar Incursion: Reality Distortion Critical!]</b></color> <color=#00FFFF>The Grand Arbiter:</color> \"Multiversal causality breach detected! Deploying {count} Planar Enforcers to enforce cosmic equilibrium!\"", "The Grand Arbiter", ConstellationCategory.Combat, 0, "Planar Incursion");
-		}
-
-		public static void WarnBossPhaseGate(string bossName)
-		{
-			PostLog("<color=#FF4500><b>[Cosmic Phase Gate: Dimensional Aegis Activated!]</b></color> <color=#FFD700>The Weaver:</color> \"The threads of fate deny a swift demise! " + bossName + " fractures the planar barrier, calling forth dimensional reinforcements!\"", "The Weaver", ConstellationCategory.Combat, 0, "Boss Phase Gate");
-		}
-
-		public static string GetPlayerDeityName()
-		{
-			UnitEntityData player = DivineTokens.GetPlayer();
-			if (player == null)
-			{
-				return null;
-			}
-			foreach (Feature feature in player.Descriptor.Progression.Features)
-			{
-				BlueprintFeature blueprint = feature.Blueprint;
-				if (!(blueprint is BlueprintFeatureSelection) && !(blueprint.name == "DeitySelection") && blueprint.Groups != null && Array.IndexOf(blueprint.Groups, FeatureGroup.Deities) >= 0)
-				{
-					string name = blueprint.Name;
-					if (!string.IsNullOrEmpty(name) && !name.Equals("Deity Selection", StringComparison.OrdinalIgnoreCase))
-					{
-						return name;
-					}
-				}
-			}
-			return null;
-		}
-
-		public static bool IsOneOf13(string deityName)
-		{
-			if (string.IsNullOrEmpty(deityName))
-			{
-				return false;
-			}
-			string text = deityName.ToLower();
-			if (!text.Contains("cayden") && !text.Contains("iomedae") && !text.Contains("asmodeus") && !text.Contains("desna") && !text.Contains("pharasma") && !text.Contains("calistria") && !text.Contains("nethys") && !text.Contains("gorum") && !text.Contains("besmara") && !text.Contains("lantern") && !text.Contains("chaldira") && !text.Contains("milani"))
-			{
-				return text.Contains("butterfly");
+				return names?.Contains(answerName) ?? false;
 			}
 			return true;
 		}
-
-		public static void TrackDisfavor(string deity, int amount)
+		bool Seen(string key)
 		{
-			if (!_deityDisfavor.ContainsKey(deity))
+			if (alreadyTriggered != null)
 			{
-				_deityDisfavor[deity] = 0;
+				return alreadyTriggered.Contains(key);
 			}
-			_deityDisfavor[deity] += amount;
-			if (_deityDisfavor[deity] >= 60)
+			return false;
+		}
+	}
+
+	internal static bool ReachesPanel(LogRoute route, bool constellationsEnabled)
+	{
+		return (route != LogRoute.Bookkeeping) & constellationsEnabled;
+	}
+
+	internal static bool ReachesCombatLog(LogRoute route, bool constellationsEnabled)
+	{
+		return (route != LogRoute.Voice) | constellationsEnabled;
+	}
+
+	public static void PostCombatLog(string message)
+	{
+		if (!string.IsNullOrEmpty(message))
+		{
+			string text = ConstellationText.LocalizeIfKnown(message);
+			EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
 			{
-				_deityDisfavor[deity] = 0;
-				PostLog("<color=#DC143C><b>[Planar Bounty Incursion!]</b></color> Your defiance has deeply offended <b>" + deity + "</b>! Hostile planar mercenaries and hunters have been summoned to test your survival!", deity, ConstellationCategory.DeityPatron, 0, "Deity Disfavor Incursion");
+				h.HandleLogMessage(text);
+			});
+		}
+	}
+
+	public static void PostRouted(LogRoute route, string message, string sponsor, ConstellationCategory category, string sceneContext = null, float duration = -1f)
+	{
+		if (!string.IsNullOrEmpty(message))
+		{
+			bool enabled = ConstellationSettings.Enabled;
+			if (ReachesPanel(route, enabled))
+			{
+				PostLog(message, sponsor ?? SponsorFromTag(message), category, 0, sceneContext, duration);
+			}
+			else if (ReachesCombatLog(route, enabled))
+			{
+				PostCombatLog(message);
 			}
 		}
+	}
 
-		public void HandleOnCueShow(CueShowData cueShowData)
+	internal static string SponsorFromTag(string message)
+	{
+		if (string.IsNullOrEmpty(message))
 		{
-			if (cueShowData?.Cue == null)
+			return null;
+		}
+		int num = message.IndexOf('[');
+		int num2 = ((num < 0) ? (-1) : message.IndexOf(']', num + 1));
+		if (num2 < 0)
+		{
+			return null;
+		}
+		string text = message.Substring(num + 1, num2 - num - 1).Trim();
+		if (text.StartsWith("Constellation - ", StringComparison.Ordinal))
+		{
+			text = text.Substring("Constellation - ".Length);
+		}
+		int num3 = text.IndexOf(" (", StringComparison.Ordinal);
+		if (num3 > 0)
+		{
+			text = text.Substring(0, num3);
+		}
+		if (!TagDeitySeats.TryGetValue(text, out var value))
+		{
+			return null;
+		}
+		return value;
+	}
+
+	public static void PostLog(string message, string sponsor = null, ConstellationCategory category = ConstellationCategory.Subclass, int coins = 0, string sceneContext = null, float duration = -1f)
+	{
+		if (ConstellationSettings.Enabled)
+		{
+			string text = ConstellationText.LocalizeIfKnown(message);
+			EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
+			{
+				h.HandleLogMessage(text);
+			});
+			ConstellationEventHistory.RecordEvent(text, sponsor, category, coins, sceneContext);
+			ConstellationChatOverlay.AddMessage(text, sponsor, coins, duration);
+		}
+	}
+
+	public static void PostLines(IEnumerable<string> lines, string sponsor, ConstellationCategory category, string sceneContext)
+	{
+		if (lines == null)
+		{
+			return;
+		}
+		foreach (string line in lines)
+		{
+			PostLog(line, sponsor, category, 0, sceneContext);
+		}
+	}
+
+	public static void ResetCombatWarning()
+	{
+		_warnedCheatingThisCombat = false;
+	}
+
+	public static void WarnRampantCheating(int count)
+	{
+		if (!_warnedCheatingThisCombat && ConstellationSettings.Enabled)
+		{
+			_warnedCheatingThisCombat = true;
+			string[] array = new string[4]
+			{
+				ConstellationText.LocalizedFormat("Constellation.Chat", "<color=#7A1010><b>[Cosmic Outrage: Rampant Cheating Detected!]</b></color> <color=#5B2A86>The Lantern King:</color> \"Ohoho! One otherworld anomaly was an amusing comedy. <b>{0} of them</b> is shameless, brazen hacking! Let's see how you fare when the multiverse fights back!\"", count),
+				ConstellationText.LocalizedFormat("Constellation.Chat", "<color=#7A1010><b>[Cosmic Outrage: Soul Registry Error!]</b></color> <color=#5B2A86>Pharasma:</color> \"The river of souls rejects this mockery. The cosmic registry is utterly corrupted with {0} illegal transmigrants. Cosmic balance demands immediate retribution!\"", count),
+				"<color=#7A1010><b>[Cosmic Outrage: Anomaly Overload!]</b></color> <color=#7A1010>Gorum:</color> \"A whole platoon of cheat gods?! Bah! True warriors fight with grit, not cheat codes! Come, beasts, tear them to pieces!\"",
+				ConstellationText.LocalizedFormat("Constellation.Chat", "<color=#7A1010><b>[Cosmic Outrage: Dimensional Collapse!]</b></color> <color=#133E71>Yog-Sothoth:</color> \"Dimensional boundary integrity collapsing. Excessive cheat density detected ({0} anomalies). Cosmic equilibrium enforcement protocols engaged!\"", count)
+			};
+			Random random = new Random();
+			PostLog(array[random.Next(array.Length)], "Cosmic Threat", ConstellationCategory.Combat, 0, "Combat Retribution");
+			PostLog("<color=#7A1010><i>[Multiverse Retribution Active: All enemies have received heavily scaled combat stats, extra attacks, and hit points!]</i></color>", "Cosmic Threat", ConstellationCategory.Combat, 0, "Combat Retribution");
+		}
+	}
+
+	internal static IEnumerable<string> SponsorNames()
+	{
+		HashSet<string> hashSet = new HashSet<string>(SponsorVanillaDeities.Keys, StringComparer.Ordinal);
+		hashSet.UnionWith(SponsorModDeities.Keys);
+		return hashSet;
+	}
+
+	private static string NormalizeGuid(string guid)
+	{
+		if (!string.IsNullOrEmpty(guid))
+		{
+			return guid.Replace("-", string.Empty).ToLowerInvariant();
+		}
+		return string.Empty;
+	}
+
+	internal static string SponsorForDeity(string deityGuid, Func<string, string> modDeityGuid)
+	{
+		string text = NormalizeGuid(deityGuid);
+		if (text.Length == 0)
+		{
+			return null;
+		}
+		foreach (KeyValuePair<string, string[]> sponsorVanillaDeity in SponsorVanillaDeities)
+		{
+			if (Array.IndexOf(sponsorVanillaDeity.Value, text) >= 0)
+			{
+				return sponsorVanillaDeity.Key;
+			}
+		}
+		if (modDeityGuid == null)
+		{
+			return null;
+		}
+		foreach (KeyValuePair<string, string> sponsorModDeity in SponsorModDeities)
+		{
+			if (NormalizeGuid(modDeityGuid(sponsorModDeity.Value)) == text)
+			{
+				return sponsorModDeity.Key;
+			}
+		}
+		return null;
+	}
+
+	private static string ModDeityGuid(string blueprintName)
+	{
+		try
+		{
+			return Main.IsekaiContext.Blueprints.GetGUID(blueprintName).ToString();
+		}
+		catch
+		{
+			return null;
+		}
+	}
+
+	internal static bool IsChosenDeityFeature(BlueprintFeature feat)
+	{
+		if (feat == null || feat is BlueprintFeatureSelection)
+		{
+			return false;
+		}
+		if (feat.Groups != null)
+		{
+			return Array.IndexOf(feat.Groups, FeatureGroup.Deities) >= 0;
+		}
+		return false;
+	}
+
+	internal static BlueprintFeature GetPlayerDeityFeature()
+	{
+		UnitEntityData player = DivineTokens.GetPlayer();
+		if (player == null)
+		{
+			return null;
+		}
+		foreach (Feature feature in player.Descriptor.Progression.Features)
+		{
+			if (IsChosenDeityFeature(feature.Blueprint))
+			{
+				return feature.Blueprint;
+			}
+		}
+		return null;
+	}
+
+	public static string GetPlayerDeityName()
+	{
+		return GetPlayerDeityFeature()?.Name;
+	}
+
+	public static string SponsorForPlayerDeity()
+	{
+		BlueprintFeature playerDeityFeature = GetPlayerDeityFeature();
+		if (playerDeityFeature != null)
+		{
+			return SponsorForDeity(playerDeityFeature.AssetGuid.ToString(), ModDeityGuid);
+		}
+		return null;
+	}
+
+	internal static bool RewardLedgerAvailable()
+	{
+		return RewardLedger(create: true) != null;
+	}
+
+	internal static bool SceneRewardedIn(IDictionary<string, string> ledger, string sceneKey)
+	{
+		if (ledger != null && !string.IsNullOrEmpty(sceneKey))
+		{
+			return ledger.ContainsKey("scene:" + sceneKey);
+		}
+		return false;
+	}
+
+	internal static bool SceneRewardClaimed(string sceneKey)
+	{
+		return SceneRewardedIn(RewardLedger(create: false), sceneKey);
+	}
+
+	internal static bool TryClaimSceneReward(string sceneKey)
+	{
+		if (string.IsNullOrEmpty(sceneKey))
+		{
+			return true;
+		}
+		return ClaimSceneRewardIn(RewardLedger(create: true), sceneKey);
+	}
+
+	internal static bool ClaimSceneRewardIn(IDictionary<string, string> ledger, string sceneKey)
+	{
+		if (string.IsNullOrEmpty(sceneKey))
+		{
+			return true;
+		}
+		if (ledger == null)
+		{
+			return true;
+		}
+		if (SceneRewardedIn(ledger, sceneKey))
+		{
+			return false;
+		}
+		ledger["scene:" + sceneKey] = "1";
+		return true;
+	}
+
+	private static IDictionary<string, string> DisfavorLedger(bool create)
+	{
+		EntityDataBase entity = SaveScopedStorage.CurrentPlayer();
+		if (!create)
+		{
+			return SaveScopedStorage.Find(entity, "IsekaiMod.Disfavor");
+		}
+		return SaveScopedStorage.Ensure(entity, "IsekaiMod.Disfavor");
+	}
+
+	internal static bool SeatIsOffended(string sponsor)
+	{
+		if (!ConstellationDisfavor.IsSeat(sponsor))
+		{
+			return false;
+		}
+		return ConstellationDisfavor.IsOffended(ConstellationDisfavor.Read(DisfavorLedger(create: false), sponsor));
+	}
+
+	internal static void TrackAlignmentStanding(AlignmentShiftDirection shift, string patronSponsor)
+	{
+		if (shift == AlignmentShiftDirection.TrueNeutral)
+		{
+			return;
+		}
+		IDictionary<string, string> dictionary = null;
+		foreach (KeyValuePair<string, AlignmentMaskType> item in ConstellationDisfavor.SeatAlignment)
+		{
+			int num = ConstellationDisfavor.Reaction(item.Value, shift);
+			if (num == 0)
+			{
+				continue;
+			}
+			dictionary = dictionary ?? DisfavorLedger(create: true);
+			if (dictionary == null)
+			{
+				break;
+			}
+			int num2 = ConstellationDisfavor.Read(dictionary, item.Key);
+			bool isPatron = string.Equals(item.Key, patronSponsor, StringComparison.Ordinal);
+			int num3 = ConstellationDisfavor.Apply(num2, num, isPatron);
+			if (num3 != num2)
+			{
+				ConstellationDisfavor.Write(dictionary, item.Key, num3);
+				bool flag = ConstellationDisfavor.IsOffended(num2);
+				bool flag2 = ConstellationDisfavor.IsOffended(num3);
+				if (!flag & flag2)
+				{
+					PostLog(ConstellationText.LocalizedFormat("Constellation.Chat", "<color=#7A1010><b>[Divine Displeasure]</b></color> Your defiance has deeply offended <b>{0}</b>. Until you make amends, that seat pays no patron bonus and halves every sponsorship it sends you.", item.Key), item.Key, ConstellationCategory.DeityPatron, 0, "Deity Disfavor");
+				}
+				else if (flag && !flag2)
+				{
+					PostLog(ConstellationText.LocalizedFormat("Constellation.Chat", "<color=#004604><b>[Amends Made]</b></color> <b>{0}</b> is satisfied. Full sponsorship, and its patron bonus, are restored.", item.Key), item.Key, ConstellationCategory.DeityPatron, 0, "Deity Disfavor");
+				}
+			}
+		}
+	}
+
+	internal static void TrackOuterCourtStanding(ConstellationDisfavor.OuterCourtDeed deed, string onlySeat = null)
+	{
+		IDictionary<string, string> dictionary = null;
+		string b = SponsorForPlayerDeity();
+		foreach (string outerCourtSeat in ConstellationDisfavor.OuterCourtSeats)
+		{
+			if (onlySeat != null && !string.Equals(outerCourtSeat, onlySeat, StringComparison.Ordinal))
+			{
+				continue;
+			}
+			int num = ConstellationDisfavor.OuterCourtReaction(outerCourtSeat, deed);
+			if (num == 0)
+			{
+				continue;
+			}
+			dictionary = dictionary ?? DisfavorLedger(create: true);
+			if (dictionary == null)
+			{
+				break;
+			}
+			int num2 = ConstellationDisfavor.Read(dictionary, outerCourtSeat);
+			bool isPatron = string.Equals(outerCourtSeat, b, StringComparison.Ordinal);
+			int num3 = ConstellationDisfavor.Apply(num2, num, isPatron);
+			if (num3 != num2)
+			{
+				ConstellationDisfavor.Write(dictionary, outerCourtSeat, num3);
+				bool flag = ConstellationDisfavor.IsOffended(num2);
+				bool flag2 = ConstellationDisfavor.IsOffended(num3);
+				if (!flag & flag2)
+				{
+					PostLog(ConstellationText.LocalizedFormat("Constellation.Chat", "<color=#7A1010><b>[The Outer Court Turns Away]</b></color> <b>{0}</b> did not want that. It cares nothing for your alignment, only for what it came to watch, and it has stopped being fed. Until you feed it again, that seat pays no patron bonus and halves every sponsorship it sends you.", outerCourtSeat), outerCourtSeat, ConstellationCategory.DeityPatron, 0, "Outer Court Standing");
+				}
+				else if (flag && !flag2)
+				{
+					PostLog(ConstellationText.LocalizedFormat("Constellation.Chat", "<color=#004604><b>[The Outer Court Leans In]</b></color> <b>{0}</b> is interested again. Full sponsorship, and its patron bonus, are restored.", outerCourtSeat), outerCourtSeat, ConstellationCategory.DeityPatron, 0, "Outer Court Standing");
+				}
+			}
+		}
+	}
+
+	public static void RecordLoopDefiance()
+	{
+		try
+		{
+			TrackOuterCourtStanding(ConstellationDisfavor.OuterCourtDeed.LoopDefiance);
+		}
+		catch (Exception ex)
+		{
+			Main.IsekaiContext.Logger.LogError("Error in ConstellationChatManager.RecordLoopDefiance: " + ex);
+		}
+	}
+
+	internal static bool IsModOwnedDialog(string dialogName)
+	{
+		if (!string.IsNullOrEmpty(dialogName))
+		{
+			return ModOwnedDialogs.Contains(dialogName);
+		}
+		return false;
+	}
+
+	private static bool IsSystemAnswer(BlueprintAnswer answer, string answerGuid)
+	{
+		if (SystemAnswerGuids.Contains(answerGuid))
+		{
+			return true;
+		}
+		DialogRoot dialogRoot = Game.Instance?.BlueprintRoot?.Dialog;
+		if (dialogRoot == null)
+		{
+			return false;
+		}
+		if (answer != dialogRoot.ContinueAnswer && answer != dialogRoot.ExitAnswer && answer != dialogRoot.InterchapterContinueAnswer)
+		{
+			return answer == dialogRoot.InterchapterExitAnswer;
+		}
+		return true;
+	}
+
+	internal static int DecideAnswerCoins(string dialogName, bool isMilestone, int banterCoins, bool answerAlreadyRewarded)
+	{
+		if (banterCoins <= 0)
+		{
+			return 0;
+		}
+		if (IsModOwnedDialog(dialogName))
+		{
+			return 0;
+		}
+		if (isMilestone)
+		{
+			return banterCoins;
+		}
+		if (!answerAlreadyRewarded)
+		{
+			return banterCoins;
+		}
+		return 0;
+	}
+
+	internal static int ComputeFinalCoins(int baseCoins, double multiplier, bool patronMatch)
+	{
+		return ComputeFinalCoins(baseCoins, multiplier, patronMatch, sponsorOffended: false);
+	}
+
+	internal static int ComputeFinalCoins(int baseCoins, double multiplier, bool patronMatch, bool sponsorOffended)
+	{
+		return ComputeFinalCoins(baseCoins, multiplier, patronMatch, sponsorOffended, innerCourtTithe: false);
+	}
+
+	internal static int ComputeFinalCoins(int baseCoins, double multiplier, bool patronMatch, bool sponsorOffended, bool innerCourtTithe)
+	{
+		if (baseCoins <= 0)
+		{
+			return 0;
+		}
+		if (multiplier <= 0.0)
+		{
+			multiplier = 1.0;
+		}
+		double num = ((patronMatch && !sponsorOffended) ? 1.25 : 1.0);
+		int num2 = (int)Math.Round((double)baseCoins * multiplier * num);
+		if (num2 < 0)
+		{
+			num2 = 0;
+		}
+		num2 = ConstellationDisfavor.AdjustPayout(num2, sponsorOffended);
+		return ConstellationDisfavor.ApplyInnerCourtTithe(num2, innerCourtTithe);
+	}
+
+	internal static bool InnerCourtTitheApplies(string patronSponsor, string sponsor)
+	{
+		if (ConstellationDisfavor.IsOuterCourtSeat(patronSponsor))
+		{
+			return !ConstellationDisfavor.IsOuterCourtSeat(sponsor);
+		}
+		return false;
+	}
+
+	internal static AlignmentShiftDirection EffectiveShift(AlignmentShiftDirection direction, int value)
+	{
+		if (value <= 0)
+		{
+			return AlignmentShiftDirection.TrueNeutral;
+		}
+		return direction;
+	}
+
+	public void HandleDialogStarted(BlueprintDialog dialog)
+	{
+		_lastDialogName = dialog?.name;
+		_neutralBroadcastInThisDialog = false;
+	}
+
+	public void HandleSelectAnswer(BlueprintAnswer answer)
+	{
+		if (answer == null || !ConstellationSettings.Enabled)
+		{
+			return;
+		}
+		try
+		{
+			if (!IsekaiTransmigrationQuest.PlayerCanStartTransmigration())
 			{
 				return;
 			}
-			try
-			{
-				ConstellationChatOverlay.EnsureInstance();
-				if (!(((cueShowData.Cue.AssetGuid != null) ? cueShowData.Cue.AssetGuid.ToString() : string.Empty) == "03715430fba15d141995a2f7e5d6cc3b") || _triggeredMilestones.Contains("DaeranDitchCue"))
-				{
-					return;
-				}
-				_triggeredMilestones.Add("DaeranDitchCue");
-				List<string> prologueDaeranDitchBanter = ConstellationDialogueBanter.GetPrologueDaeranDitchBanter(TimelineManager.GetCurrentCycle(), out var coinsAwarded, out var primarySponsor);
-				if (prologueDaeranDitchBanter != null)
-				{
-					foreach (string item in prologueDaeranDitchBanter)
-					{
-						PostLog(item, primarySponsor, ConstellationCategory.Prologue, 0, "Daeran Ditches the Convalescents");
-					}
-				}
-				if (coinsAwarded > 0)
-				{
-					DivineTokens.AddCoins(coinsAwarded, primarySponsor);
-				}
-			}
-			catch (Exception ex)
-			{
-				Main.IsekaiContext.Logger.LogError("Error in ConstellationChatManager.HandleOnCueShow: " + ex);
-			}
-		}
-
-		public void HandleSelectAnswer(BlueprintAnswer answer)
-		{
-			if (answer == null)
+			string text = ((answer.AssetGuid != null) ? answer.AssetGuid.ToString() : string.Empty);
+			if (IsSystemAnswer(answer, text))
 			{
 				return;
 			}
-			try
+			AlignmentShiftDirection alignmentShiftDirection = EffectiveShift(answer.AlignmentShift?.Direction ?? AlignmentShiftDirection.TrueNeutral, answer.AlignmentShift?.Value ?? 0);
+			string answerText = answer.DisplayText ?? answer.name;
+			string answerName = answer.name ?? string.Empty;
+			string dialogName = Game.Instance.DialogController?.Dialog?.name ?? _lastDialogName ?? string.Empty;
+			if (IsModOwnedDialog(dialogName))
 			{
-				ConstellationChatOverlay.EnsureInstance();
-				AlignmentShiftDirection alignmentShiftDirection = answer.AlignmentShift?.Direction ?? AlignmentShiftDirection.TrueNeutral;
-				string text = answer.DisplayText ?? answer.name;
-				string text2 = ((answer.AssetGuid != null) ? answer.AssetGuid.ToString() : string.Empty);
-				string text3 = answer.name ?? string.Empty;
-				string text4 = Game.Instance?.DialogController?.Dialog?.name ?? string.Empty;
-				UnitEntityData unitEntityData = Game.Instance?.DialogController?.CurrentSpeaker;
-				string text5 = unitEntityData?.CharacterName ?? unitEntityData?.Blueprint?.name ?? string.Empty;
-				string text6 = Game.Instance?.CurrentlyLoadedArea?.AreaDisplayName ?? Game.Instance?.CurrentlyLoadedArea?.name ?? string.Empty;
-				string playerDeityName = GetPlayerDeityName();
-				bool hasAvatar = DeityAvatarAscension.HasAnyAvatar(DivineTokens.GetPlayer());
-				int currentCycle = TimelineManager.GetCurrentCycle();
-				List<string> list = null;
-				int coinsAwarded = 0;
-				string primarySponsor = null;
-				string sceneContext = null;
-				ConstellationCategory category = ConstellationCategory.Subclass;
-				DialogueContext ctx = new DialogueContext(playerDeityName, hasAvatar, currentCycle, text4, text, text2, text3, text5, text6);
-				if (ConstellationDialogueBanter.TryGetAnswerBanter(in ctx, out var result))
+				return;
+			}
+			Dictionary<string, string> ledger = RewardLedger(create: false);
+			bool answerAlreadyRewarded = AnswerRewardedIn(ledger, text);
+			bool flag = false;
+			bool flag2 = false;
+			int coinsAwarded = 0;
+			string primarySponsor = null;
+			ConstellationCategory category = ConstellationCategory.Subclass;
+			string sceneContext = "Dialogue Choice";
+			List<string> list = null;
+			string text2 = MatchPrologueMilestone(dialogName, text, answerName, MilestonesIn(ledger));
+			if (text2 != null)
+			{
+				flag = true;
+				category = ConstellationCategory.Prologue;
+				switch (text2)
 				{
-					string item = ((!string.IsNullOrEmpty(ctx.AnswerGuid)) ? ctx.AnswerGuid : ctx.AnswerName);
-					if (!_triggeredMilestones.Contains(item))
-					{
-						_triggeredMilestones.Add(item);
-						list = result.Lines;
-						coinsAwarded = result.Coins;
-						primarySponsor = result.Sponsor;
-						category = result.Category;
-						sceneContext = result.SceneContext;
-					}
+				case "PrologueAwakening":
+					list = ConstellationDialogueBanter.GetPrologueAwakeningBanter(out coinsAwarded, out primarySponsor);
+					sceneContext = "Kenabres Square: The Awakening";
+					break;
+				case "PrologueHulrun":
+					list = ConstellationDialogueBanter.GetPrologueHulrunBanter(out coinsAwarded, out primarySponsor);
+					sceneContext = "Kenabres Square: Prelate Hulrun";
+					break;
+				case "PrologueTerendelev":
+					list = ConstellationDialogueBanter.GetPrologueTerendelevBanter(out coinsAwarded, out primarySponsor);
+					sceneContext = "Kenabres Square: Terendelev";
+					break;
+				case "PrologueDeskari":
+					list = ConstellationDialogueBanter.GetPrologueDeskariInvasionBanter(out coinsAwarded, out primarySponsor);
+					sceneContext = "Kenabres Square: Deskari Invasion";
+					break;
+				case "PrologueCavesSeelah":
+					list = ConstellationDialogueBanter.GetPrologueCavesAwakeningBanter(out coinsAwarded, out primarySponsor);
+					sceneContext = "Caves: Rescue Anevia";
+					break;
+				case "PrologueCamellia":
+					list = ConstellationDialogueBanter.GetPrologueCamelliaEncounterBanter(out coinsAwarded, out primarySponsor);
+					sceneContext = "Caves: Meeting Camellia";
+					break;
+				default:
+					list = ConstellationDialogueBanter.GetPrologueLannWenduagBanter(out coinsAwarded, out primarySponsor);
+					sceneContext = "Caves: Lann & Wenduag";
+					break;
 				}
-				else
+				Dictionary<string, string> dictionary = RewardLedger(create: true);
+				if (dictionary != null)
 				{
-					if (ConstellationDialogueBanter.IsExitOrInformationalAnswer(text, text3))
-					{
-						return;
-					}
-					if (ConstellationDialogueBanter.TryGetSceneBanter(text4, in ctx, out var result2))
-					{
-						string item2 = "Scene_" + (result2.SceneContext ?? text4);
-						if (!_triggeredMilestones.Contains(item2))
-						{
-							_triggeredMilestones.Add(item2);
-							list = result2.Lines;
-							coinsAwarded = result2.Coins;
-							primarySponsor = result2.Sponsor;
-							category = result2.Category;
-							sceneContext = result2.SceneContext;
-						}
-					}
-					else if (!_triggeredMilestones.Contains("PrologueStatusWindow") && text3 == "IsekaiPrologueSquareAwakening")
-					{
-						_triggeredMilestones.Add("PrologueStatusWindow");
-						list = ConstellationDialogueBanter.GetPrologueStatusWindowBanter(currentCycle, out coinsAwarded, out primarySponsor);
-						category = ConstellationCategory.Prologue;
-						sceneContext = "Kenabres Square: Status Window Protocol";
-					}
-					else
-					{
-						if (!_triggeredMilestones.Contains("PrologueAwakening"))
-						{
-							switch (text2)
-							{
-							case "eea5643f25d86dc43bb3024bbb83212f":
-							case "47cbc8ab5ca57a14684db2344d8057f4":
-							case "bad44b6d69be7b64e8db6a07dcdcd9fc":
-							case "db8320c0269ad9c4bb4408688adb8067":
-								goto IL_0320;
-							}
-							if (text3.StartsWith("IsekaiStretcher") || text4.Contains("WelcomeDialogue"))
-							{
-								goto IL_0320;
-							}
-						}
-						string compKey;
-						string npcKey;
-						string dlcKey;
-						if (!_triggeredMilestones.Contains("PrologueHulrun") && (text3.StartsWith("IsekaiHulrun") || text2 == "6898ccdc3dd26944c8e0ebb39d8c7777" || text2 == "820751da02c91d54481d8732082b4806" || text3.Contains("Hulrun")))
-						{
-							_triggeredMilestones.Add("PrologueHulrun");
-							list = ConstellationDialogueBanter.GetPrologueHulrunBanter(out coinsAwarded, out primarySponsor);
-							category = ConstellationCategory.Prologue;
-							sceneContext = "Kenabres Square: Prelate Hulrun";
-						}
-						else if (!_triggeredMilestones.Contains("PrologueTerendelev") && (text3.StartsWith("IsekaiWelcome") || (text4.Contains("WelcomeDialogue") && _triggeredMilestones.Contains("PrologueAwakening"))))
-						{
-							_triggeredMilestones.Add("PrologueTerendelev");
-							list = ConstellationDialogueBanter.GetPrologueTerendelevBanter(out coinsAwarded, out primarySponsor);
-							category = ConstellationCategory.Prologue;
-							sceneContext = "Kenabres Square: Terendelev";
-						}
-						else if (!_triggeredMilestones.Contains("PrologueDeskari") && (text4.Contains("StitchGivesCrossbow") || text3.Contains("Stitch") || text3.Contains("Crossbow")))
-						{
-							_triggeredMilestones.Add("PrologueDeskari");
-							list = ConstellationDialogueBanter.GetPrologueDeskariInvasionBanter(out coinsAwarded, out primarySponsor);
-							category = ConstellationCategory.Prologue;
-							sceneContext = "Kenabres Square: Deskari Invasion";
-						}
-						else if (!_triggeredMilestones.Contains("PrologueCavesSeelah") && (text4.Contains("MeetSeelahAnevia") || text3.StartsWith("IsekaiSeelah") || text3.Contains("IsekaiTalkBackStars")))
-						{
-							_triggeredMilestones.Add("PrologueCavesSeelah");
-							list = ConstellationDialogueBanter.GetPrologueCavesAwakeningBanter(out coinsAwarded, out primarySponsor);
-							category = ConstellationCategory.Prologue;
-							sceneContext = "Caves: Rescue Anevia";
-						}
-						else if (!_triggeredMilestones.Contains("PrologueCamellia") && (text4.Contains("MeetCamelia") || text3.StartsWith("IsekaiCamelia")))
-						{
-							_triggeredMilestones.Add("PrologueCamellia");
-							list = ConstellationDialogueBanter.GetPrologueCamelliaEncounterBanter(out coinsAwarded, out primarySponsor);
-							category = ConstellationCategory.Prologue;
-							sceneContext = "Caves: Meeting Camellia";
-						}
-						else if (!_triggeredMilestones.Contains("PrologueLann") && (text4.Contains("MeetLann") || text3.StartsWith("IsekaiLann")))
-						{
-							_triggeredMilestones.Add("PrologueLann");
-							list = ConstellationDialogueBanter.GetPrologueLannWenduagBanter(out coinsAwarded, out primarySponsor);
-							category = ConstellationCategory.Prologue;
-							sceneContext = "Caves: Lann & Wenduag";
-						}
-						else if (!_triggeredMilestones.Contains("Act1DefendersHeart") && (text3.Contains("DefendersHeartMessengerAlarm") || text3.StartsWith("IsekaiCouncil") || text2 == "ab362e5b1af4b354ea59d583376cf661" || text4.Contains("TavernAttack") || text4.Contains("DefendersHeart")))
-						{
-							_triggeredMilestones.Add("Act1DefendersHeart");
-							list = ConstellationDialogueBanter.GetAct1DefendersHeartBanter(currentCycle, out coinsAwarded, out primarySponsor);
-							category = ConstellationCategory.Quest;
-							sceneContext = "Defender's Heart: The Defense of Kenabres";
-						}
-						else if (!_triggeredMilestones.Contains("Act1WardstoneClimax") && (text3.StartsWith("IsekaiWardstoneMythic") || text2 == "be1fcfe08bbae9a46b5105c4d1e4be7c" || text4.Contains("Wardstone") || text3.Contains("WardstoneMythic")))
-						{
-							_triggeredMilestones.Add("Act1WardstoneClimax");
-							list = ConstellationDialogueBanter.GetWardstoneMythicAwakeningBanter(currentCycle, out coinsAwarded, out primarySponsor);
-							category = ConstellationCategory.Quest;
-							sceneContext = "Gray Garrison: Wardstone Mythic Climax";
-						}
-						else if (!_triggeredMilestones.Contains("Act2GalfreyAppointment") && (text3.StartsWith("IsekaiAct1QueenGalfrey") || text3.StartsWith("IsekaiWarCamp") || text2 == "8c7d0b0b6a1701d49835740d65d3d922" || text4.Contains("GalfreyPostGarrison") || text4.Contains("WarCampGalfrey")))
-						{
-							_triggeredMilestones.Add("Act2GalfreyAppointment");
-							list = ConstellationDialogueBanter.GetAct2GalfreyWarCampBanter(currentCycle, out coinsAwarded, out primarySponsor);
-							category = ConstellationCategory.Quest;
-							sceneContext = "Mantle of the Crusade: Appointing the Knight-Commander";
-						}
-						else if (!_triggeredMilestones.Contains("Act2DrezenLiberation") && (text3.StartsWith("IsekaiDrezenProclamation") || text2 == "44704bddb6223b84989dd26bcf20b601" || text4.Contains("DrezenCitadel") || text4.Contains("DrezenBanner")))
-						{
-							_triggeredMilestones.Add("Act2DrezenLiberation");
-							list = ConstellationDialogueBanter.GetAct2DrezenLiberationBanter(currentCycle, out coinsAwarded, out primarySponsor);
-							category = ConstellationCategory.Quest;
-							sceneContext = "Citadel of Drezen: Reclaimed & The Mythic Mantle";
-						}
-						else if (!_triggeredMilestones.Contains("Act3AreeluLabTruth") && (text3.StartsWith("IsekaiAreeluLabTruth") || text2 == "cd9c9facc3a8ded4e9683cde8958295e" || text4.Contains("AreeluLab")))
-						{
-							_triggeredMilestones.Add("Act3AreeluLabTruth");
-							list = ConstellationDialogueBanter.GetAct3AreeluLabTruthBanter(currentCycle, out coinsAwarded, out primarySponsor);
-							category = ConstellationCategory.Quest;
-							sceneContext = "Areelu's Laboratory: The Unscripted Soul";
-						}
-						else if (!_triggeredMilestones.Contains("Act4BaphometConfrontation") && (text3.StartsWith("IsekaiBaphomet") || text2 == "9ab9ad8f6e11d67499b48fd595e50972" || text4.Contains("Baphomet")))
-						{
-							_triggeredMilestones.Add("Act4BaphometConfrontation");
-							list = ConstellationDialogueBanter.GetAct4BaphometConfrontationBanter(currentCycle, out coinsAwarded, out primarySponsor);
-							category = ConstellationCategory.Quest;
-							sceneContext = "Colyphyr Mines: Defying the Lord of the Labyrinth";
-						}
-						else if (!_triggeredMilestones.Contains("Act5DivineSummit") && (text3.StartsWith("IsekaiGoddessesSummit") || text2 == "e3a71f123c7aae7409d08855827dbea5" || text4.Contains("GoddessesSummit") || text4.Contains("IomedaeSummit")))
-						{
-							_triggeredMilestones.Add("Act5DivineSummit");
-							list = ConstellationDialogueBanter.GetAct5DivineSummitBanter(currentCycle, out coinsAwarded, out primarySponsor);
-							category = ConstellationCategory.Quest;
-							sceneContext = "The Goddesses Summit: Heaven & Abyss Face the Wildcard";
-						}
-						else if (!_triggeredMilestones.Contains("Act5IzTerendelev") && (text3.StartsWith("IsekaiTerendelev") || text4.Contains("TerendelevIz") || text4.Contains("UndeadTerendelev")))
-						{
-							_triggeredMilestones.Add("Act5IzTerendelev");
-							list = ConstellationDialogueBanter.GetAct5IzTerendelevBanter(currentCycle, out coinsAwarded, out primarySponsor);
-							category = ConstellationCategory.Quest;
-							sceneContext = "City of Iz: The Dragon's Final Rest";
-						}
-						else if (!_triggeredMilestones.Contains("Act6ThresholdEnding") && (text3.StartsWith("IsekaiEnding") || text2 == "1dd910a1bafd4af4f818b65a5eed2a46" || text4.Contains("ThresholdEnding")))
-						{
-							_triggeredMilestones.Add("Act6ThresholdEnding");
-							string endingId = "UnwrittenDawn";
-							if (text3.Contains("InterdimensionalTraveler"))
-							{
-								endingId = "InterdimensionalTraveler";
-							}
-							else if (text3.Contains("EternalActor"))
-							{
-								endingId = "EternalActor";
-							}
-							list = ConstellationDialogueBanter.GetAct6ThresholdLoopBreakerBanter(endingId, out coinsAwarded, out primarySponsor);
-							category = ConstellationCategory.MetaLoop;
-							sceneContext = "The Threshold: Grand Multiverse Finale";
-						}
-						else if (!_triggeredMilestones.Contains("Act1EmberRescue") && (text3.StartsWith("IsekaiMeetEmber") || text2 == "4bba85261e5f2064989ebdc878c0228a" || text4.Contains("MeetEmber") || text4.Contains("EmberRescue")))
-						{
-							_triggeredMilestones.Add("Act1EmberRescue");
-							list = ConstellationDialogueBanter.GetAct1EmberRescueBanter(currentCycle, playerDeityName, hasAvatar, out coinsAwarded, out primarySponsor);
-							category = ConstellationCategory.Quest;
-							sceneContext = "Market Square: Rescuing Ember";
-						}
-						else if (!_triggeredMilestones.Contains("Act1HulrunRamien") && (text3.StartsWith("IsekaiMarketSquareFeud") || text2 == "cc0bf28eab0e60b429dac7b53ec8e4d2" || text2 == "e27807b731f3b1a4eb19c1a04fdfcf53" || (text4.Contains("Hulrun") && text4.Contains("Ramien"))))
-						{
-							_triggeredMilestones.Add("Act1HulrunRamien");
-							list = ConstellationDialogueBanter.GetAct1HulrunRamienBanter(currentCycle, playerDeityName, hasAvatar, out coinsAwarded, out primarySponsor);
-							category = ConstellationCategory.Quest;
-							sceneContext = "Market Square: Hulrun vs. Ramien";
-						}
-						else if (!_triggeredMilestones.Contains("Act1WoljifRecruit") && (text3.StartsWith("IsekaiWoljifCell") || text2 == "a9e697b9ad6fa1c4d9c2ae0895bd56d2" || text4.Contains("WoljifInPrison") || text4.Contains("WoljifCell")))
-						{
-							_triggeredMilestones.Add("Act1WoljifRecruit");
-							list = ConstellationDialogueBanter.GetAct1WoljifRecruitBanter(currentCycle, playerDeityName, hasAvatar, out coinsAwarded, out primarySponsor);
-							category = ConstellationCategory.Quest;
-							sceneContext = "Defender's Heart: Recruiting Woljif";
-						}
-						else if (!_triggeredMilestones.Contains("Act2LepersSmile") && (text3.StartsWith("IsekaiLepersSmile") || text2 == "7be206b993f3dea49a89a88ce5e6ce6f" || text4.Contains("LepersSmile") || text4.Contains("VescavorQueen")))
-						{
-							_triggeredMilestones.Add("Act2LepersSmile");
-							list = ConstellationDialogueBanter.GetAct2LepersSmileBanter(currentCycle, playerDeityName, hasAvatar, out coinsAwarded, out primarySponsor);
-							category = ConstellationCategory.Quest;
-							sceneContext = "Leper's Smile: Vescavor Swarm Purge";
-						}
-						else if (!_triggeredMilestones.Contains("Act2RegillRecruit") && (text3.StartsWith("IsekaiRegillFieldTriage") || text3.StartsWith("IsekaiRegillOverlord") || text2 == "ab4c009b7ff77da4fad0abe34ad79c08" || text4.Contains("RegillRescue") || text4.Contains("HellknightsCamp")))
-						{
-							_triggeredMilestones.Add("Act2RegillRecruit");
-							list = ConstellationDialogueBanter.GetAct2RegillRecruitBanter(currentCycle, playerDeityName, hasAvatar, out coinsAwarded, out primarySponsor);
-							category = ConstellationCategory.Quest;
-							sceneContext = "Reliable Redoubt: Regill & Hellknights";
-						}
-						else if (!_triggeredMilestones.Contains("Act2DaeranEstate") && (text3.StartsWith("IsekaiDaeranManor") || text2 == "583314478921a19419304d5f83b72109" || text4.Contains("DaeranParty") || text4.Contains("ArendaeEstate")))
-						{
-							_triggeredMilestones.Add("Act2DaeranEstate");
-							list = ConstellationDialogueBanter.GetAct2DaeranEstateBanter(currentCycle, playerDeityName, hasAvatar, out coinsAwarded, out primarySponsor);
-							category = ConstellationCategory.Quest;
-							sceneContext = "Arendae Manor: Daeran's Banquet";
-						}
-						else if (!_triggeredMilestones.Contains("Act3ArueshalaePrison") && (text4.Contains("MeetArueshalae") || text4.Contains("ArueshalaeRedoubt") || text4.Contains("ArueshalaePrison") || (text3.Contains("Arueshalae") && (text3.Contains("Prison") || text3.Contains("Lucid") || text3.Contains("Dream")))))
-						{
-							_triggeredMilestones.Add("Act3ArueshalaePrison");
-							list = ConstellationDialogueBanter.GetAct3ArueshalaePrisonBanter(currentCycle, playerDeityName, hasAvatar, out coinsAwarded, out primarySponsor);
-							category = ConstellationCategory.Quest;
-							sceneContext = "Drezen Prison: Arueshalae's Starlight";
-						}
-						else if (!_triggeredMilestones.Contains("Act3Wintersun") && (text3.StartsWith("IsekaiWintersun") || text2 == "f240afdd8595d2340aa18ecf5ed233a3" || text4.Contains("Jerribeth") || text4.Contains("Wintersun")))
-						{
-							_triggeredMilestones.Add("Act3Wintersun");
-							list = ConstellationDialogueBanter.GetAct3WintersunBanter(currentCycle, playerDeityName, hasAvatar, out coinsAwarded, out primarySponsor);
-							category = ConstellationCategory.Quest;
-							sceneContext = "Wintersun: Jerribeth's Illusion";
-						}
-						else if (!_triggeredMilestones.Contains("Act3IvorySanctum") && (text3.StartsWith("IsekaiIvorySanctum") || text3.StartsWith("IsekaiXanthir") || text2 == "cbe3b0c3ea8b47045b66c085c1a1b354" || text4.Contains("Xanthir")))
-						{
-							_triggeredMilestones.Add("Act3IvorySanctum");
-							list = ConstellationDialogueBanter.GetAct3IvorySanctumBanter(currentCycle, playerDeityName, hasAvatar, out coinsAwarded, out primarySponsor);
-							category = ConstellationCategory.Quest;
-							sceneContext = "Ivory Sanctum: Xanthir Vang";
-						}
-						else if (!_triggeredMilestones.Contains("Act4Fleshmarket") && (text3.StartsWith("IsekaiFleshmarket") || text2 == "c896137fe31c15445bba592672ebfbc9" || text4.Contains("Fleshmarket") || text4.Contains("Dyunk")))
-						{
-							_triggeredMilestones.Add("Act4Fleshmarket");
-							list = ConstellationDialogueBanter.GetAct4FleshmarketBanter(currentCycle, playerDeityName, hasAvatar, out coinsAwarded, out primarySponsor);
-							category = ConstellationCategory.Quest;
-							sceneContext = "Alushinyrra: Fleshmarket Liberation";
-						}
-						else if (!_triggeredMilestones.Contains("Act4NocticulaAudience") && (text3.StartsWith("IsekaiNocticula") || text2 == "75678bafb5e33854baaee17ee6eaf69c" || text4.Contains("Nocticula")))
-						{
-							_triggeredMilestones.Add("Act4NocticulaAudience");
-							list = ConstellationDialogueBanter.GetAct4NocticulaAudienceBanter(currentCycle, playerDeityName, hasAvatar, out coinsAwarded, out primarySponsor);
-							category = ConstellationCategory.Quest;
-							sceneContext = "House of Silken Shadows: Lady Nocticula";
-						}
-						else if (!_triggeredMilestones.Contains("Act5IzGalfreyFate") && (text3.StartsWith("IsekaiIz") || text2 == "ec740ac6a039d8c4b83a076cee6c1ff0" || text2 == "20a1be61aa7680e45890656b204e6fe8" || text4.Contains("IzGalfrey") || text4.Contains("IrabethIz")))
-						{
-							_triggeredMilestones.Add("Act5IzGalfreyFate");
-							list = ConstellationDialogueBanter.GetAct5IzGalfreyFateBanter(currentCycle, playerDeityName, hasAvatar, out coinsAwarded, out primarySponsor);
-							category = ConstellationCategory.Quest;
-							sceneContext = "City of Iz: The Triad Salvation";
-						}
-						else if (!_triggeredMilestones.Contains("Act6ThresholdEveCamp") && (text3.Contains("Farewell") || text4.Contains("CompanionFarewell") || text4.Contains("ThresholdCamp") || text2 == "bb3528754c7e741438acef95ec3b6430"))
-						{
-							_triggeredMilestones.Add("Act6ThresholdEveCamp");
-							list = ConstellationDialogueBanter.GetAct6ThresholdEveCampBanter(currentCycle, playerDeityName, hasAvatar, out coinsAwarded, out primarySponsor);
-							category = ConstellationCategory.Quest;
-							sceneContext = "The Threshold: Eve of the Breach";
-						}
-						else if (!string.IsNullOrEmpty(playerDeityName) && !IsOneOf13(playerDeityName) && !playerDeityName.Contains("Atheism") && !_triggeredMilestones.Contains("GuestDeity_" + playerDeityName))
-						{
-							_triggeredMilestones.Add("GuestDeity_" + playerDeityName);
-							list = ConstellationDialogueBanter.GetGuestDeityBanter(playerDeityName, out coinsAwarded, out primarySponsor);
-							category = ConstellationCategory.DeityPatron;
-							sceneContext = "Guest Constellation: " + playerDeityName;
-						}
-						else if (IsCompanionSpeaker(text5, text4, out compKey))
-						{
-							list = ConstellationDialogueBanter.GetCompanionDialogueBanter(compKey, text, currentCycle, playerDeityName, hasAvatar, out coinsAwarded, out primarySponsor);
-							category = ConstellationCategory.Subclass;
-							sceneContext = "Companion: " + text5;
-						}
-						else if (IsMajorNpcSpeaker(text5, text4, out npcKey))
-						{
-							list = ConstellationDialogueBanter.GetNpcDialogueBanter(npcKey, text, currentCycle, playerDeityName, hasAvatar, out coinsAwarded, out primarySponsor);
-							category = ConstellationCategory.Quest;
-							sceneContext = "NPC: " + text5;
-						}
-						else if (IsDlcContext(text6, text4, out dlcKey))
-						{
-							list = ConstellationDialogueBanter.GetDlcDialogueBanter(dlcKey, text, currentCycle, playerDeityName, hasAvatar, out coinsAwarded, out primarySponsor);
-							category = ConstellationCategory.Quest;
-							sceneContext = "DLC: " + text6;
-						}
-						else if (alignmentShiftDirection != AlignmentShiftDirection.TrueNeutral || text.IndexOf("isekai", StringComparison.OrdinalIgnoreCase) >= 0 || text.IndexOf("martial god", StringComparison.OrdinalIgnoreCase) >= 0 || text.IndexOf("god emperor", StringComparison.OrdinalIgnoreCase) >= 0 || text.IndexOf("overlord", StringComparison.OrdinalIgnoreCase) >= 0 || text.IndexOf("slime", StringComparison.OrdinalIgnoreCase) >= 0 || text.IndexOf("devourer", StringComparison.OrdinalIgnoreCase) >= 0 || text.IndexOf("shadow monarch", StringComparison.OrdinalIgnoreCase) >= 0 || text.IndexOf("mastermind", StringComparison.OrdinalIgnoreCase) >= 0 || text.IndexOf("hero", StringComparison.OrdinalIgnoreCase) >= 0 || text.IndexOf("villain", StringComparison.OrdinalIgnoreCase) >= 0 || text.IndexOf("retinue", StringComparison.OrdinalIgnoreCase) >= 0 || text.IndexOf("radiance", StringComparison.OrdinalIgnoreCase) >= 0 || (text.IndexOf("lann", StringComparison.OrdinalIgnoreCase) >= 0 && text.IndexOf("wenduag", StringComparison.OrdinalIgnoreCase) >= 0) || text.IndexOf("wardstone", StringComparison.OrdinalIgnoreCase) >= 0 || text.IndexOf("krebus", StringComparison.OrdinalIgnoreCase) >= 0)
-						{
-							list = ConstellationDialogueBanter.GetAlignmentBanter(alignmentShiftDirection, text, out coinsAwarded, out primarySponsor);
-							if (list != null && list.Count > 0)
-							{
-								category = ((alignmentShiftDirection == AlignmentShiftDirection.TrueNeutral) ? ConstellationCategory.Subclass : ConstellationCategory.AlignmentShift);
-								sceneContext = ((alignmentShiftDirection == AlignmentShiftDirection.TrueNeutral) ? "Archetype Roleplay" : $"Alignment Choice ({alignmentShiftDirection})");
-							}
-						}
-						else if (_rng.Next(100) < 50)
-						{
-							list = ConstellationDialogueBanter.GetContinuousDialogueBanter(text, text4, text6, currentCycle, playerDeityName, hasAvatar, out coinsAwarded, out primarySponsor);
-							category = ConstellationCategory.Subclass;
-							sceneContext = "Dialogue Choice";
-						}
-					}
+					dictionary["milestone:" + text2] = "1";
 				}
-				goto IL_1298;
-				IL_162e:
-				double num = 1.0;
-				goto IL_1642;
-				IL_1298:
-				double num2;
-				int num3;
+			}
+			else
+			{
+				list = ConstellationDialogueBanter.GetAlignmentBanter(alignmentShiftDirection, answerText, out coinsAwarded, out primarySponsor);
 				if (list != null && list.Count > 0)
 				{
-					foreach (string item3 in list)
+					category = ((alignmentShiftDirection == AlignmentShiftDirection.TrueNeutral) ? ConstellationCategory.Subclass : ConstellationCategory.AlignmentShift);
+					sceneContext = ((alignmentShiftDirection == AlignmentShiftDirection.TrueNeutral) ? "Archetype Roleplay" : $"Alignment Choice ({alignmentShiftDirection})");
+				}
+				else if (!_neutralBroadcastInThisDialog)
+				{
+					list = ConstellationDialogueBanter.GetNeutralDialogueBanter(answerText, out coinsAwarded, out primarySponsor);
+					category = ConstellationCategory.Subclass;
+					sceneContext = "Dialogue Choice";
+					flag2 = true;
+				}
+			}
+			coinsAwarded = DecideAnswerCoins(dialogName, flag, coinsAwarded, answerAlreadyRewarded);
+			if (list != null && list.Count > 0)
+			{
+				if (flag2)
+				{
+					_neutralBroadcastInThisDialog = true;
+				}
+				string shoutoutMsg = null;
+				string text3 = null;
+				string sponsor = null;
+				ConstellationCategory category2 = ConstellationCategory.DeityPatron;
+				int num = 0;
+				if (coinsAwarded > 0)
+				{
+					double multiplier = ConstellationDialogueBanter.RollMultiplier(primarySponsor, out shoutoutMsg);
+					BlueprintFeature playerDeityFeature = GetPlayerDeityFeature();
+					string text4 = playerDeityFeature?.AssetGuid.ToString();
+					string text5 = playerDeityFeature?.Name;
+					string text6 = SponsorForDeity(text4, ModDeityGuid);
+					bool flag3 = text6 != null && string.Equals(text6, primarySponsor, StringComparison.Ordinal);
+					bool flag4 = SeatIsOffended(primarySponsor);
+					bool flag5 = InnerCourtTitheApplies(text6, primarySponsor);
+					num = ComputeFinalCoins(coinsAwarded, multiplier, flag3, flag4, flag5);
+					if (flag4)
 					{
-						PostLog(item3, primarySponsor, category, coinsAwarded, sceneContext);
+						text3 = ConstellationText.LocalizedFormat("Constellation.Chat", "<color=#7A1010><b>[Divine Displeasure]</b></color> <b>{0}</b> is still offended, and sends half of what it might have.", primarySponsor);
+						sponsor = primarySponsor;
 					}
-					if (coinsAwarded > 0)
+					else if (flag3)
 					{
-						num2 = ConstellationDialogueBanter.RollMultiplier(primarySponsor, out var shoutoutMsg);
-						if (!string.IsNullOrEmpty(shoutoutMsg))
-						{
-							PostLog(shoutoutMsg, primarySponsor, category, 0, sceneContext);
-						}
-						if (!string.IsNullOrEmpty(playerDeityName))
-						{
-							if ((!primarySponsor.Contains("Lucky Drunk") || !playerDeityName.Contains("Cayden")) && (!primarySponsor.Contains("Inheritor") || !playerDeityName.Contains("Iomedae")) && (!primarySponsor.Contains("Prince of Darkness") || !playerDeityName.Contains("Asmodeus")) && (!primarySponsor.Contains("Song of the Spheres") || !playerDeityName.Contains("Desna")) && (!primarySponsor.Contains("Lady of Graves") || !playerDeityName.Contains("Pharasma")) && (!primarySponsor.Contains("Savored Sting") || !playerDeityName.Contains("Calistria")) && (!primarySponsor.Contains("All-Seeing Eye") || !playerDeityName.Contains("Nethys")) && (!primarySponsor.Contains("Lord in Iron") || !playerDeityName.Contains("Gorum")) && (!primarySponsor.Contains("Pirate Queen") || !playerDeityName.Contains("Besmara")) && (!primarySponsor.Contains("Laughing King") || !playerDeityName.Contains("Lantern King")) && (!primarySponsor.Contains("Mischievous Friend") || !playerDeityName.Contains("Chaldira")) && (!primarySponsor.Contains("Silence Between") || !playerDeityName.Contains("Black Butterfly")) && (!primarySponsor.Contains("Pallid Princess") || !playerDeityName.Contains("Urgathoa")) && (!primarySponsor.Contains("Key and the Gate") || !playerDeityName.Contains("Yog")) && (!primarySponsor.Contains("Father of Creation") || !playerDeityName.Contains("Torag")) && (!primarySponsor.Contains("Dawnflower") || !playerDeityName.Contains("Sarenrae")) && (!primarySponsor.Contains("Master of the First Vault") || !playerDeityName.Contains("Abadar")) && (!primarySponsor.Contains("Eternal Rose") || !playerDeityName.Contains("Shelyn")) && (!primarySponsor.Contains("Old Deadeye") || !playerDeityName.Contains("Erastil")) && (!primarySponsor.Contains("Master of Masters") || !playerDeityName.Contains("Irori")) && (!primarySponsor.Contains("Wind and the Waves") || !playerDeityName.Contains("Gozreh")) && (!primarySponsor.Contains("Midnight Lord") || !playerDeityName.Contains("Zon-Kuthon")) && (!primarySponsor.Contains("Shimmering Maiden") || !playerDeityName.Contains("Pulura")) && (!primarySponsor.Contains("Fivefold Order") || !playerDeityName.Contains("Godclaw")))
-							{
-								if (string.IsNullOrEmpty(primarySponsor))
-								{
-									num3 = 0;
-									goto IL_162e;
-								}
-								if (primarySponsor.IndexOf(playerDeityName, StringComparison.OrdinalIgnoreCase) < 0)
-								{
-									num3 = ((playerDeityName.IndexOf(primarySponsor, StringComparison.OrdinalIgnoreCase) >= 0) ? 1 : 0);
-									if (num3 == 0)
-									{
-										goto IL_162e;
-									}
-								}
-								else
-								{
-									num3 = 1;
-								}
-							}
-							else
-							{
-								num3 = 1;
-							}
-							num = 1.25;
-							goto IL_1642;
-						}
-						num3 = 0;
-						goto IL_162e;
+						text3 = ConstellationText.LocalizedFormat("Constellation.Chat", "<color=#5B2A86><b>[Patron Sponsor Bonus!]</b></color> <b>{0}</b> backs your decision with a +25% personal favor bonus!", text5);
+						sponsor = text5;
+					}
+					else if (flag5)
+					{
+						text3 = ConstellationText.LocalizedFormat("Constellation.Chat", "<color=#7A1010><b>[The Outer Court Takes Its Cut]</b></color> <b>{0}</b> sends a quarter less than it meant to. The thirteen do not much like who you sit with.", primarySponsor);
+						sponsor = primarySponsor;
+					}
+					else if (NormalizeGuid(text4) == "92c0d2da0a836ce418a267093c09ca54")
+					{
+						text3 = "<color=#5B2A86><b>[The Free Agent]</b></color> The watching deities scoff at your persistent refusal to kneel, tossing coins merely to see how long your blasphemy lasts!";
+						sponsor = "The Free Agent";
+					}
+					else if (playerDeityFeature != null && text6 == null)
+					{
+						text3 = ConstellationText.LocalizedFormat("Constellation.Chat", "<color=#5B2A86><b>[Guest Sponsor: {0}]</b></color> Your patron observes the broadcast from outside the Seats with quiet pride!", text5);
+						sponsor = text5;
 					}
 				}
-				goto IL_16d8;
-				IL_1642:
-				double num4 = num;
-				int amount = (int)Math.Round((double)coinsAwarded * num2 * num4);
-				if (num3 != 0)
+				int num2 = DivineTokens.ApplyLoopMultiplier(num, TimelineManager.GetCoinLoopMultiplier());
+				for (int i = 0; i < list.Count; i++)
 				{
-					PostLog("<color=#F5C542><b>[Patron Sponsor Bonus!]</b></color> <b>" + playerDeityName + "</b> backs your decision with a +25% personal favor bonus!", playerDeityName, ConstellationCategory.DeityPatron, 0, sceneContext);
+					PostLog(list[i], primarySponsor, category, (i == 0) ? num2 : 0, sceneContext);
 				}
-				else if (!string.IsNullOrEmpty(playerDeityName) && playerDeityName.Contains("Atheism"))
+				if (!string.IsNullOrEmpty(shoutoutMsg))
 				{
-					PostLog("<color=#F5C542><b>[The Free Agent]</b></color> The watching deities scoff at your persistent refusal to kneel, tossing coins merely to see how long your blasphemy lasts!", "The Free Agent", ConstellationCategory.DeityPatron, 0, sceneContext);
+					PostLog(shoutoutMsg, primarySponsor, category, 0, sceneContext);
 				}
-				else if (!string.IsNullOrEmpty(playerDeityName) && !IsOneOf13(playerDeityName))
+				if (!string.IsNullOrEmpty(text3))
 				{
-					PostLog("<color=#F5C542><b>[Guest Sponsor: " + playerDeityName + "]</b></color> Your patron observes the broadcast from outside the 13 Seats with quiet pride!", playerDeityName, ConstellationCategory.DeityPatron, 0, sceneContext);
+					PostLog(text3, sponsor, category2, 0, sceneContext);
 				}
-				DivineTokens.AddCoins(amount, primarySponsor);
-				goto IL_16d8;
-				IL_16d8:
-				switch (alignmentShiftDirection)
+				if (num > 0)
 				{
-				case AlignmentShiftDirection.Evil:
-					TrackDisfavor("The Inheritor", 15);
-					TrackDisfavor("The Song of the Spheres", 15);
-					break;
-				case AlignmentShiftDirection.Chaotic:
-					TrackDisfavor("The Prince of Darkness", 15);
-					break;
-				case AlignmentShiftDirection.Lawful:
-					TrackDisfavor("The Laughing King", 15);
-					break;
+					DivineTokens.AddCoins(num, primarySponsor);
+					if (!flag && !string.IsNullOrEmpty(text))
+					{
+						Dictionary<string, string> dictionary2 = RewardLedger(create: true);
+						if (dictionary2 != null)
+						{
+							dictionary2["answer:" + text] = "1";
+						}
+					}
 				}
-				if (answer.AssetGuid != null)
+				if (ConstellationDisfavor.IsOuterCourtSeat(primarySponsor))
 				{
-					TimelineManager.RecordChoice(answer.AssetGuid.ToString());
+					TrackOuterCourtStanding(ConstellationDisfavor.OuterCourtDeed.Appetite, primarySponsor);
 				}
-				return;
-				IL_0320:
-				_triggeredMilestones.Add("PrologueAwakening");
-				list = ConstellationDialogueBanter.GetPrologueAwakeningBanter(out coinsAwarded, out primarySponsor);
-				category = ConstellationCategory.Prologue;
-				sceneContext = "Kenabres Square: The Awakening";
-				goto IL_1298;
 			}
-			catch (Exception ex)
+			TrackAlignmentStanding(alignmentShiftDirection, SponsorForPlayerDeity());
+		}
+		catch (Exception ex)
+		{
+			Main.IsekaiContext.Logger.LogError("Error in ConstellationChatManager.HandleSelectAnswer: " + ex);
+		}
+	}
+
+	public static void OnDeathReload(int deathCount, string lastArea)
+	{
+		try
+		{
+			if (IsekaiTransmigrationQuest.PlayerCanStartTransmigration())
 			{
-				Main.IsekaiContext.Logger.LogError("Error in ConstellationChatManager.HandleSelectAnswer: " + ex);
+				PostLines(ConstellationDialogueBanter.GetDeathReloadBanter(deathCount, lastArea), "The Constellations", ConstellationCategory.MetaLoop, "Death & Loop Reload");
+				TrackOuterCourtStanding(ConstellationDisfavor.OuterCourtDeed.DeathUndone);
 			}
 		}
-
-		public static void OnDeathReload(int deathCount, string lastArea)
+		catch (Exception ex)
 		{
-			try
-			{
-				List<string> deathReloadBanter = ConstellationDialogueBanter.GetDeathReloadBanter(deathCount, lastArea);
-				if (deathReloadBanter == null)
-				{
-					return;
-				}
-				foreach (string item in deathReloadBanter)
-				{
-					PostLog(item, "The Constellations", ConstellationCategory.MetaLoop, 0, "Death & Loop Reload");
-				}
-			}
-			catch (Exception ex)
-			{
-				Main.IsekaiContext.Logger.LogError("Error in ConstellationChatManager.OnDeathReload: " + ex);
-			}
+			Main.IsekaiContext.Logger.LogError("Error in ConstellationChatManager.OnDeathReload: " + ex);
 		}
+	}
 
-		public static void OnNewRun(int runCount)
+	public static void OnNewRun(int runCount)
+	{
+		try
 		{
-			try
-			{
-				ResetMilestones();
-				List<string> metaLoopBanter = ConstellationDialogueBanter.GetMetaLoopBanter(runCount);
-				if (metaLoopBanter == null)
-				{
-					return;
-				}
-				foreach (string item in metaLoopBanter)
-				{
-					PostLog(item, "The Constellations", ConstellationCategory.MetaLoop, 0, "New Cycle Progression");
-				}
-			}
-			catch (Exception ex)
-			{
-				Main.IsekaiContext.Logger.LogError("Error in ConstellationChatManager.OnNewRun: " + ex);
-			}
+			PostLines(ConstellationDialogueBanter.GetMetaLoopBanter(runCount), "The Constellations", ConstellationCategory.MetaLoop, "New Cycle Progression");
 		}
-
-		public static void OnActProgression(int act)
+		catch (Exception ex)
 		{
-			try
-			{
-				List<string> actProgressionBanter = ConstellationDialogueBanter.GetActProgressionBanter(act);
-				if (actProgressionBanter == null)
-				{
-					return;
-				}
-				foreach (string item in actProgressionBanter)
-				{
-					PostLog(item, "The Constellations", ConstellationCategory.Quest, 0, $"Act {act} Progression");
-				}
-			}
-			catch (Exception ex)
-			{
-				Main.IsekaiContext.Logger.LogError("Error in ConstellationChatManager.OnActProgression: " + ex);
-			}
+			Main.IsekaiContext.Logger.LogError("Error in ConstellationChatManager.OnNewRun: " + ex);
 		}
+	}
 
-		private static bool IsCompanionSpeaker(string speakerName, string dialogName, out string compKey)
+	public static void OnActProgression(int act)
+	{
+		try
 		{
-			compKey = null;
-			string text = ((speakerName ?? string.Empty) + " " + (dialogName ?? string.Empty)).ToLower();
-			if (text.Contains("seelah"))
-			{
-				compKey = "seelah";
-			}
-			else if (text.Contains("camellia") || text.Contains("camelia"))
-			{
-				compKey = "camellia";
-			}
-			else if (text.Contains("lann"))
-			{
-				compKey = "lann";
-			}
-			else if (text.Contains("wenduag") || text.Contains("wendu"))
-			{
-				compKey = "wenduag";
-			}
-			else if (text.Contains("woljif"))
-			{
-				compKey = "woljif";
-			}
-			else if (text.Contains("daeran"))
-			{
-				compKey = "daeran";
-			}
-			else if (text.Contains("ember"))
-			{
-				compKey = "ember";
-			}
-			else if (text.Contains("nenio"))
-			{
-				compKey = "nenio";
-			}
-			else if (text.Contains("sosiel"))
-			{
-				compKey = "sosiel";
-			}
-			else if (text.Contains("regill"))
-			{
-				compKey = "regill";
-			}
-			else if (text.Contains("greybor"))
-			{
-				compKey = "greybor";
-			}
-			else if (text.Contains("arueshalae") || text.Contains("arue"))
-			{
-				compKey = "arueshalae";
-			}
-			else if (text.Contains("finnean"))
-			{
-				compKey = "finnean";
-			}
-			else if (text.Contains("trever"))
-			{
-				compKey = "trever";
-			}
-			else if (text.Contains("ulbrig"))
-			{
-				compKey = "ulbrig";
-			}
-			else if (text.Contains("rekarth"))
-			{
-				compKey = "rekarth";
-			}
-			else if (text.Contains("sendri"))
-			{
-				compKey = "sendri";
-			}
-			else if (text.Contains("penta"))
-			{
-				compKey = "penta";
-			}
-			return compKey != null;
+			PostLines(ConstellationDialogueBanter.GetActProgressionBanter(act), "The Constellations", ConstellationCategory.Quest, $"Act {act} Progression");
 		}
-
-		private static bool IsMajorNpcSpeaker(string speakerName, string dialogName, out string npcKey)
+		catch (Exception ex)
 		{
-			npcKey = null;
-			string text = ((speakerName ?? string.Empty) + " " + (dialogName ?? string.Empty)).ToLower();
-			if (text.Contains("galfrey"))
-			{
-				npcKey = "galfrey";
-			}
-			else if (text.Contains("irabeth"))
-			{
-				npcKey = "irabeth";
-			}
-			else if (text.Contains("anevia"))
-			{
-				npcKey = "anevia";
-			}
-			else if (text.Contains("storyteller"))
-			{
-				npcKey = "storyteller";
-			}
-			else if (text.Contains("horgus") || text.Contains("gwerm"))
-			{
-				npcKey = "horgus";
-			}
-			else if (text.Contains("minagho"))
-			{
-				npcKey = "minagho";
-			}
-			else if (text.Contains("staunton"))
-			{
-				npcKey = "staunton";
-			}
-			else if (text.Contains("herald") || text.Contains("handofinheritor") || text.Contains("hand of the inheritor"))
-			{
-				npcKey = "herald";
-			}
-			else if (text.Contains("areelu"))
-			{
-				npcKey = "areelu";
-			}
-			else if (text.Contains("nocticula"))
-			{
-				npcKey = "nocticula";
-			}
-			else if (text.Contains("shamira"))
-			{
-				npcKey = "shamira";
-			}
-			else if (text.Contains("jerribeth"))
-			{
-				npcKey = "jerribeth";
-			}
-			else if (text.Contains("baphomet"))
-			{
-				npcKey = "baphomet";
-			}
-			else if (text.Contains("deskari"))
-			{
-				npcKey = "deskari";
-			}
-			else if (text.Contains("hulrun"))
-			{
-				npcKey = "hulrun";
-			}
-			else if (text.Contains("zacharius"))
-			{
-				npcKey = "zacharius";
-			}
-			else if (text.Contains("xanthir"))
-			{
-				npcKey = "xanthir";
-			}
-			else if (text.Contains("valmallos"))
-			{
-				npcKey = "valmallos";
-			}
-			else if (text.Contains("sithhud"))
-			{
-				npcKey = "sithhud";
-			}
-			else if (text.Contains("razmir"))
-			{
-				npcKey = "razmir";
-			}
-			else if (text.Contains("mutasafen"))
-			{
-				npcKey = "mutasafen";
-			}
-			else if (text.Contains("nurah"))
-			{
-				npcKey = "nurah";
-			}
-			else if (text.Contains("terendelev"))
-			{
-				npcKey = "terendelev";
-			}
-			else if (text.Contains("suture"))
-			{
-				npcKey = "suture";
-			}
-			else if (text.Contains("liotr"))
-			{
-				npcKey = "liotr";
-			}
-			else if (text.Contains("vellexia"))
-			{
-				npcKey = "vellexia";
-			}
-			else if (text.Contains("khorramzadeh"))
-			{
-				npcKey = "khorramzadeh";
-			}
-			else if (text.Contains("alderpash"))
-			{
-				npcKey = "alderpash";
-			}
-			return npcKey != null;
-		}
-
-		private static bool IsDlcContext(string areaName, string dialogName, out string dlcKey)
-		{
-			dlcKey = null;
-			string text = ((areaName ?? string.Empty) + " " + (dialogName ?? string.Empty)).ToLower();
-			if (text.Contains("dlc1") || text.Contains("inevitable") || text.Contains("valmallos"))
-			{
-				dlcKey = "dlc1_inevitable";
-			}
-			else if (text.Contains("dlc2") || text.Contains("ashes") || text.Contains("survivors"))
-			{
-				dlcKey = "dlc2_ashes";
-			}
-			else if (text.Contains("dlc3") || text.Contains("isles") || text.Contains("steersman") || text.Contains("ship"))
-			{
-				dlcKey = "dlc3_isles";
-			}
-			else if (text.Contains("dlc4") || text.Contains("sarkorian") || text.Contains("ulbrig") || text.Contains("gundrun"))
-			{
-				dlcKey = "dlc4_sarkorians";
-			}
-			else if (text.Contains("dlc5") || text.Contains("nothing") || text.Contains("sithhud"))
-			{
-				dlcKey = "dlc5_nothing";
-			}
-			else if (text.Contains("dlc6") || text.Contains("masks") || text.Contains("festival") || text.Contains("arena"))
-			{
-				dlcKey = "dlc6_masks";
-			}
-			return dlcKey != null;
+			Main.IsekaiContext.Logger.LogError("Error in ConstellationChatManager.OnActProgression: " + ex);
 		}
 	}
 }

@@ -1,48 +1,49 @@
-﻿using Kingmaker.EntitySystem.Entities;
-using Kingmaker.PubSubSystem;
+using System.Collections.Generic;
+using IsekaiMod.Utilities;
+using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.JsonSystem;
+using Kingmaker.EntitySystem.Entities;
 using Kingmaker.UnitLogic;
-using Kingmaker.UnitLogic.Mechanics.Actions;
+using TabletopTweaks.Core.Utilities;
 
-namespace IsekaiMod.Content.Constellations
+namespace IsekaiMod.Content.Constellations;
+
+[TypeId("b30aa28bdaf542e78577a51653dd2952")]
+public class ContextActionRejuvenation : IsekaiContextAction
 {
-	public class ContextActionRejuvenation : ContextAction
+	public int Cost = 400;
+
+	internal const string GachaResourceName = "MerchantsGambleResource";
+
+	internal static List<BlueprintScriptableObject> RejuvenationExcludedResources()
 	{
-		public int Cost = 400;
-
-		public override string GetCaption()
+		List<BlueprintScriptableObject> list = new List<BlueprintScriptableObject>();
+		BlueprintAbilityResource modBlueprint = BlueprintTools.GetModBlueprint<BlueprintAbilityResource>(Main.IsekaiContext, "MerchantsGambleResource");
+		if (modBlueprint != null)
 		{
-			return "Restores all spell slots, resources, and cures negative conditions";
+			list.Add(modBlueprint);
 		}
+		return list;
+	}
 
-		public override void RunAction()
+	public override string GetCaption()
+	{
+		return "Restores hit points, spell slots and resources";
+	}
+
+	protected override void RunSafely()
+	{
+		UnitEntityData unitEntityData = DivineTokens.ResolveDialogTarget(base.Target, DivineTokens.GetPlayer);
+		if (unitEntityData == null || !DivineTokens.SpendCoins(Cost))
 		{
-			UnitEntityData unitEntityData = base.Target?.Unit ?? DivineTokens.GetPlayer();
-			if (unitEntityData == null)
-			{
-				return;
-			}
-			if (DivineTokens.SpendCoins(Cost))
-			{
-				foreach (Spellbook spellbook in unitEntityData.Descriptor.Spellbooks)
-				{
-					spellbook.Rest();
-				}
-				unitEntityData.Descriptor.Resources.FullRestoreAll();
-				unitEntityData.Descriptor.Damage = 0;
-				Main.Log(System.Text.RegularExpressions.Regex.Replace("<color=#FFD700>[Cosmic Elixir]</color> Rejuvenated body, mind, and soul! All spell slots and class abilities fully restored!", "<[^>]+>", ""));
-				EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
-				{
-					h.HandleLogMessage("<color=#FFD700>[Cosmic Elixir]</color> Rejuvenated body, mind, and soul! All spell slots and class abilities fully restored!");
-				});
-			}
-			else
-			{
-				Main.Log(System.Text.RegularExpressions.Regex.Replace($"<color=#DC143C>[Cosmic Store]</color> Insufficient Cosmic Coins! Required: {Cost}.", "<[^>]+>", ""));
-				EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
-				{
-					h.HandleLogMessage($"<color=#DC143C>[Cosmic Store]</color> Insufficient Cosmic Coins! Required: {Cost}.");
-				});
-			}
+			return;
 		}
+		foreach (Spellbook spellbook in unitEntityData.Descriptor.Spellbooks)
+		{
+			spellbook.Rest();
+		}
+		unitEntityData.Descriptor.Resources.FullRestoreAll(RejuvenationExcludedResources());
+		unitEntityData.Descriptor.Damage = 0;
+		DivineTokens.Log(CosmicStoreText.Rejuvenated);
 	}
 }

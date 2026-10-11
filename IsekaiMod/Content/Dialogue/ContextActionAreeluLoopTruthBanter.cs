@@ -1,35 +1,23 @@
-﻿using System.Collections.Generic;
 using IsekaiMod.Content.Constellations;
-using Kingmaker.UnitLogic.Mechanics.Actions;
+using IsekaiMod.Utilities;
+using Kingmaker.Blueprints.JsonSystem;
 
-namespace IsekaiMod.Content.Dialogue
+namespace IsekaiMod.Content.Dialogue;
+
+[TypeId("a94afb0deda44f6cbf0f8c2ff4e6ce96")]
+public class ContextActionAreeluLoopTruthBanter : IsekaiContextAction
 {
-	public class ContextActionAreeluLoopTruthBanter : ContextAction
+	public override string GetCaption()
 	{
-		public override string GetCaption()
-		{
-			return "Awards 500 Cosmic Coins and triggers Constellation reaction to the Loop Truth reveal";
-		}
+		return "Awards 500 Cosmic Coins and triggers Constellation reaction to the Loop Truth reveal";
+	}
 
-		public override void RunAction()
+	protected override void RunSafely()
+	{
+		if (ConstellationChatManager.TryClaimSceneReward("AreeluLoopTruth"))
 		{
-			if (ConstellationChatManager.HasTriggeredMilestone("Act3AreeluLabTruth"))
-			{
-				return;
-			}
-			ConstellationChatManager.MarkMilestoneTriggered("Act3AreeluLabTruth");
-			List<string> act3AreeluLabTruthBanter = ConstellationDialogueBanter.GetAct3AreeluLabTruthBanter(TimelineManager.GetCurrentCycle(), out var coinsAwarded, out var primarySponsor);
-			if (act3AreeluLabTruthBanter != null)
-			{
-				foreach (string item in act3AreeluLabTruthBanter)
-				{
-					ConstellationChatManager.PostLog(item, primarySponsor, ConstellationCategory.Quest, 0, "Areelu's Laboratory: The Unscripted Soul");
-				}
-			}
-			if (coinsAwarded > 0)
-			{
-				DivineTokens.AddCoins(coinsAwarded, primarySponsor);
-			}
+			DivineTokens.AddClaimedCoins(500, "The Key and the Gate");
 		}
+		ConstellationChatManager.PostLog(ConstellationText.Localized("Constellation.SubclassReaction", "<color=#5B2A86><b>[The Key and the Gate]</b></color>: <i>\"The veil of causality is pierced. Even the architect's servant now glimpses the infinite recurring corridors of the All-in-One.\"</i>"), "The Key and the Gate", ConstellationCategory.MetaLoop, 0, "Areelu's Laboratory");
 	}
 }

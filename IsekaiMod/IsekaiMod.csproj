@@ -1,577 +1,157 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(SolutionDir)packages\Aze.Publicise.MSBuild.Task.1.1.0\build\Aze.Publicise.MSBuild.Task.props" Condition="Exists('$(SolutionDir)packages\Aze.Publicise.MSBuild.Task.1.1.0\build\Aze.Publicise.MSBuild.Task.props')" />
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<?xml version='1.0' encoding='utf-8'?>
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <OutputType>Library</OutputType>
-    <ProjectGuid>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectGuid>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>IsekaiMod</RootNamespace>
+    <TargetFramework>net481</TargetFramework>
+    <LangVersion>14.0</LangVersion>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
     <AssemblyName>IsekaiMod</AssemblyName>
-    <TargetFrameworkVersion>v4.8.1</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <LangVersion>9</LangVersion>
+    <RootNamespace>IsekaiMod</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
+    <AutomaticallyUseReferenceAssemblyPackages>false</AutomaticallyUseReferenceAssemblyPackages>
     <Deterministic>true</Deterministic>
-    <TargetFrameworkProfile />
-    <NuGetPackageImportStamp>
-    </NuGetPackageImportStamp>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <WrathPath>C:\Program Files (x86)\Steam\steamapps\common\Pathfinder Second Adventure</WrathPath>
+    <GameReferencePath>$(MSBuildProjectDirectory)\..\lib\Assembly-CSharp.dll</GameReferencePath>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>portable</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <NoWarn>
-
-0649</NoWarn>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <NoWarn>
-
-0649</NoWarn>
-  </PropertyGroup>
-  <Target Name="RemoveLib" BeforeTargets="Clean" Condition="Exists('$(SolutionDir)lib')">
-    <!--left here as a reminder to remove this directive in all projects imported to a shared workspace, or else the clean targets of the projects screw each other up:
-	<RemoveDir Directories="$(SolutionDir)lib" />-->
-  </Target>
-  <Target Name="CreateLib" BeforeTargets="BeforeBuild" AfterTargets="RemoveLib" Condition="!Exists('$(SolutionDir)lib')">
-    <MakeDir Directories="$(SolutionDir)lib" />
-  </Target>
-  <Target Name="Publicise" AfterTargets="CreateLib" Condition="!Exists('$(SolutionDir)lib/Assembly-CSharp.dll')">
-    <ItemGroup>
-      <PubliciseAssemblyCSharp Include="$(WrathPath)\Wrath_Data\Managed\Assembly-CSharp.dll" />
-    </ItemGroup>
-    <Publicise InputAssemblies="@(PubliciseAssemblyCSharp)" OutputPath="$(SolutionDir)lib/" PubliciseCompilerGenerated="true" />
-  </Target>
-  <Target Name="RenameAssembly" AfterTargets="Publicise" Condition="Exists('$(SolutionDir)lib/Assembly-CSharp_public.dll')">
-    <Move SourceFiles="$(SolutionDir)lib/Assembly-CSharp_public.dll" DestinationFiles="$(SolutionDir)\lib\Assembly-CSharp.dll" />
-  </Target>
   <ItemGroup>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net481" Version="1.0.3">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <Reference Include="Assembly-CSharp">
-      <HintPath>$(SolutionDir)lib\Assembly-CSharp.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>$(GameReferencePath)</HintPath>
+      <Private>false</Private>
     </Reference>
-    <Reference Include="0Harmony, Version=2.0.4.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="0Harmony">
       <HintPath>$(WrathPath)\Wrath_Data\Managed\0Harmony.dll</HintPath>
-      <SpecificVersion>False</SpecificVersion>
+      <Private>false</Private>
     </Reference>
     <Reference Include="Owlcat.Runtime.UI">
       <HintPath>$(WrathPath)\Wrath_Data\Managed\Owlcat.Runtime.UI.dll</HintPath>
-      <Private>False</Private>
+      <Private>false</Private>
     </Reference>
     <Reference Include="Owlcat.Runtime.Visual">
       <HintPath>$(WrathPath)\Wrath_Data\Managed\Owlcat.Runtime.Visual.dll</HintPath>
-      <Private>False</Private>
+      <Private>false</Private>
     </Reference>
     <Reference Include="TabletopTweaks-Core">
       <HintPath>$(WrathPath)\mods\TabletopTweaks-Core\TabletopTweaks-Core.dll</HintPath>
-      <Private>False</Private>
+      <Private>false</Private>
     </Reference>
-    <Reference Include="Microsoft.Build.Framework" />
-    <Reference Include="Microsoft.Build.Utilities.v4.0" />
     <Reference Include="Owlcat.Runtime.Core">
       <HintPath>$(WrathPath)\Wrath_Data\Managed\Owlcat.Runtime.Core.dll</HintPath>
-      <Private>False</Private>
+      <Private>false</Private>
     </Reference>
     <Reference Include="Owlcat.Runtime.Validation">
       <HintPath>$(WrathPath)\Wrath_Data\Managed\Owlcat.Runtime.Validation.dll</HintPath>
-      <Private>False</Private>
+      <Private>false</Private>
     </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Data.Entity" />
-    <Reference Include="System.Net.Http" />
+    <Reference Include="System">
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="System.Core">
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="System.Net.Http">
+      <Private>false</Private>
+    </Reference>
     <Reference Include="System.IO.Compression">
       <HintPath>$(WrathPath)\Wrath_Data\Managed\System.IO.Compression.dll</HintPath>
-      <Private>False</Private>
+      <Private>false</Private>
     </Reference>
     <Reference Include="System.IO.Compression.FileSystem">
       <HintPath>$(WrathPath)\Wrath_Data\Managed\System.IO.Compression.FileSystem.dll</HintPath>
-      <Private>False</Private>
+      <Private>false</Private>
     </Reference>
-    <Reference Include="System.Web" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
+    <Reference Include="System.Web">
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="System.Xml.Linq">
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="System.Data.DataSetExtensions">
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Microsoft.CSharp">
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="System.Data">
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="System.Xml">
+      <Private>false</Private>
+    </Reference>
     <Reference Include="Unity.TextMeshPro">
       <HintPath>$(WrathPath)\Wrath_Data\Managed\Unity.TextMeshPro.dll</HintPath>
-      <Private>False</Private>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.AnimationModule">
-      <SpecificVersion>False</SpecificVersion>
       <HintPath>$(WrathPath)\Wrath_Data\Managed\UnityEngine.AnimationModule.dll</HintPath>
-      <Private>False</Private>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.AIModule">
-      <SpecificVersion>False</SpecificVersion>
       <HintPath>$(WrathPath)\Wrath_Data\Managed\UnityEngine.AIModule.dll</HintPath>
-      <Private>False</Private>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.AssetBundleModule">
-      <SpecificVersion>False</SpecificVersion>
       <HintPath>$(WrathPath)\Wrath_Data\Managed\UnityEngine.AssetBundleModule.dll</HintPath>
-      <Private>False</Private>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>$(WrathPath)\Wrath_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
-      <Private>False</Private>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.ImageConversionModule">
       <HintPath>$(WrathPath)\Wrath_Data\Managed\UnityEngine.ImageConversionModule.dll</HintPath>
-      <Private>False</Private>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.IMGUIModule">
       <HintPath>$(WrathPath)\Wrath_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
-      <Private>False</Private>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.TextRenderingModule">
       <HintPath>$(WrathPath)\Wrath_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
-      <Private>False</Private>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>$(WrathPath)\Wrath_Data\Managed\UnityEngine.UI.dll</HintPath>
-      <Private>False</Private>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.UIModule">
       <HintPath>$(WrathPath)\Wrath_Data\Managed\UnityEngine.UIModule.dll</HintPath>
-      <Private>False</Private>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityModManager">
       <HintPath>$(WrathPath)\Wrath_Data\Managed\UnityModManager\UnityModManager.dll</HintPath>
-      <Private>False</Private>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UniRx">
       <HintPath>$(WrathPath)\Wrath_Data\Managed\UniRx.dll</HintPath>
-      <Private>False</Private>
+      <Private>false</Private>
     </Reference>
     <Reference Include="AstarPathfindingProject">
       <HintPath>$(WrathPath)\Wrath_Data\Managed\AstarPathfindingProject.dll</HintPath>
-      <Private>False</Private>
+      <Private>false</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>$(WrathPath)\Wrath_Data\Managed\Newtonsoft.Json.dll</HintPath>
+      <Private>false</Private>
     </Reference>
-  </ItemGroup>
-  <ItemGroup>
-    <!-- any TTW Based Mod -->
-    <Compile Include="Main.cs" />
-    <Compile Include="UMMSettingsUI.cs" />
-    <Compile Include="SettingsTabs.cs" />
-    <Compile Include="Config\*.cs" />
-    <Compile Include="ModLogic\*.cs" />
-    <!-- mod specific -->
-    <Compile Include="Content\*.cs" />
-    <Compile Include="Content\*\*.cs" />
-    <Compile Include="Content\*\*\*.cs" />
-    <Compile Include="Content\*\*\*\*.cs" />
-    <Compile Include="Content\*\*\*\*\*.cs" />
-    <Compile Include="Content\*\*\*\*\*\*.cs" />
-    <Compile Include="Components\*.cs" />
-    <Compile Include="Utilities\ActionFlow.cs" />
-    <Compile Include="Utilities\AreaAbilityDiagnostics.cs" />
-    <Compile Include="Utilities\AreaLoadDiagnostics.cs" />
-    <Compile Include="Utilities\FactGainDiagnostics.cs" />
-    <Compile Include="Utilities\IslandMapDiagnostics.cs" />
-    <Compile Include="Utilities\ShadowSummonDiagnostics.cs" />
-    <Compile Include="Utilities\LevelUpSelectionDiagnostics.cs" />
-    <Compile Include="Utilities\LevelUpPreviewDiagnostics.cs" />
-    <Compile Include="Utilities\BlueprintInitDiagnostics.cs" />
-    <Compile Include="Utilities\AreaEffectActionSafety.cs" />
-    <Compile Include="Utilities\AssetLoaderExtension.cs" />
-    <Compile Include="Utilities\BlueprintSafetyExtensions.cs" />
-    <Compile Include="Utilities\CharGenSafetyPatch.cs" />
-    <Compile Include="Utilities\CombatPerformanceDiagnostics.cs" />
-    <Compile Include="Utilities\FrameStallDiagnostics.cs" />
-    <Compile Include="Utilities\ArmorRecalculationThrottle.cs" />
-    <Compile Include="Utilities\ComponentNullSafety.cs" />
-    <Compile Include="Utilities\DescriptionTools.cs" />
-    <Compile Include="Utilities\ExtensionMethods.cs" />
-    <Compile Include="Utilities\EyePortraitInjector.cs" />
-    <Compile Include="Utilities\IsekaiDlcManager.cs" />
-    <Compile Include="Utilities\LateSpellListMergePatch.cs" />
-    <Compile Include="Utilities\LevelUpPerformanceDiagnostics.cs" />
-    <Compile Include="Utilities\MirroredSelections.cs" />
-    <Compile Include="Utilities\ModItemFixer.cs" />
-    <Compile Include="Utilities\ModSupport.cs" />
-    <Compile Include="Utilities\PatchTools.cs" />
-    <Compile Include="Utilities\PrerequisiteSymmetry.cs" />
-    <Compile Include="Utilities\QuestObjectiveListSafety.cs" />
-    <Compile Include="Utilities\SpellbookOriginDiagnostics.cs" />
-    <Compile Include="Utilities\SwallowedExceptionDiagnostics.cs" />
-    <Compile Include="Utilities\StaticReferences.cs" />
-    <Compile Include="Utilities\TTCoreExtensions.cs" />
-    <Compile Include="Utilities\TextTemplateSafetyPatch.cs" />
-    <Compile Include="Utilities\Values.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include=".editorconfig" />
-    <EmbeddedResource Include="Config\Blueprints.json" />
-    <EmbeddedResource Include="Config\AddedContent.json" />
-    <None Include="Info.json">
+    <EmbeddedResource Include="Config\Blueprints.json" LogicalName="IsekaiMod.Config.Blueprints.json" />
+    <EmbeddedResource Include="Config\AddedContent.json" LogicalName="IsekaiMod.Config.AddedContent.json" />
+    <EmbeddedResource Include="Localization\LocalizationPack.json" LogicalName="IsekaiMod.Localization.LocalizationPack.json" />
+    <None Update="Info.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <EmbeddedResource Include="Localization\LocalizationPack.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Update="Assets\Deities\ICON_BESMARA.png">
+    <None Update="Config\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\Deities\ICON_BLACK_BUTTERFLY.png">
+    <None Update="Localization\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\Deities\ICON_CHALDIRA.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Deities\ICON_LANTERN_KING.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Deities\ICON_MILANI.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Deities\ICON_YOG_SOTHOTH.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Features\ICON_COSMIC_COIN.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Features\ICON_AURA_RIGHTEOUS_WRATH.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Features\ICON_CELESTIAL_REALM.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Features\ICON_CHARM.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Features\ICON_CORRUPT_AURA.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Features\ICON_ENERGY_ARRAY.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Features\ICON_EXCEPTIONAL_SUMMONING.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Features\ICON_FEROCIOUS_SUMMONING.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Features\ICON_FORBIDDEN_SUMMONING.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Features\ICON_AURA_MAJESTY.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Features\ICON_DARK_AURA.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Features\ICON_DUPE_GOLD.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Features\ICON_EXTRA_STRIKE.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Features\ICON_FRIENDLY_AURA.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Features\ICON_GODHOOD.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Features\ICON_INFINITE_SPACE.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Features\ICON_MIND_CONTROL.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Features\ICON_MIND_CONTROL_IMMUNE.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Features\ICON_AURA_GOLDEN_PROTECTION.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Features\ICON_REGENERATION.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Features\ICON_SECOND_FORM.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Features\ICON_SECOND_FORM_INACTIVE.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Features\ICON_SECOND_REINCARNATION.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Features\ICON_SIPHONING_AURA.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Features\ICON_SUPER_BUFF.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Features\ICON_HEROS_PRESENCE.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Features\ICON_SUPER_BUFF_DISMISS.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Features\ICON_UNLIMITED_POWER.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Heritages\ICON_ANGEL.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Heritages\ICON_DARK_ELF.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Heritages\ICON_SPRIGGAN.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Heritages\ICON_SUCCUBUS.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Heritages\ICON_VAMPIRE.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Heritages\ICON_WOOD_ELF.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Portraits\DeathsnatcherFull.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Portraits\DeathsnatcherMedium.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Portraits\DeathsnatcherPetEye.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Portraits\DeathsnatcherSmall.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Repository.json">
+    <None Update="Assets\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="Assets\Deities\ICON_BESMARA.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Deities\ICON_BLACK_BUTTERFLY.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Deities\ICON_CHALDIRA.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Deities\ICON_LANTERN_KING.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Deities\ICON_MILANI.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Deities\ICON_YOG_SOTHOTH.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_COSMIC_COIN.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_AURA_BARRIER_GOLD.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_AURA_BARRIER_VOID.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_AURA_CORRUPT.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_AURA_DARK.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_AURA_DIVINE.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_AURA_FRIENDLY.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_AURA_MAJESTIC.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_AURA_SIPHONING.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_AUTO_MAGIC.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_CHARM.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_CHUUNIBYOU.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_DEUS_EX_MACHINA.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_DUPE_GOLD.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_ENERGY_DARK.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_ENERGY_LIGHT.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_EXCALIBUR.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_EXCEPTIONAL_FEAT.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_EXCEPTIONAL_SUMMONING.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_FEROCIOUS_SUMMONING.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_FORBIDDEN_SUMMONING.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_GIFTED.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_GODHOOD.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_HAX.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_INFINITE_SPACE.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_MASTERPLAN.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_MIND_CONTROL.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_MIND_CONTROL_IMMUNE.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_OP_AURA_CHAOTIC_FRENZY.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_OP_AURA_MALEVOLENT_RAGE.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_OP_AURA_RIGHTEOUS_WRATH.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_REALM_CELESTIAL.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_REALM_SHADOW.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_REGENERATION.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_SECOND_FORM.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_SECOND_FORM_INACTIVE.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_SECOND_REINCARNATION.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_SECRET_POWER.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_START_BLUNT.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_START_RANGED.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_START_SWORD.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_SUPER_BUFF.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_SUPER_BUFF_DISMISS.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_UNJUST_PATH.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Features\ICON_UNLIMITED_POWER.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Heritages\ICON_ANGEL.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Heritages\ICON_DARK_ELF.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Heritages\ICON_FURRY.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Heritages\ICON_SPRIGGAN.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Heritages\ICON_SUCCUBUS.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Heritages\ICON_VAMPIRE.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Heritages\ICON_WOOD_ELF.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Portraits\Deathsnatcher\FullLength.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Portraits\Deathsnatcher\Medium.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Portraits\Deathsnatcher\PetEye.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Assets\Portraits\Deathsnatcher\Small.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="UserSettings\" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Target Name="EnsureNuGetPackageBuildImports" AfterTargets="BeforeClean">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('$(SolutionDir)packages\Aze.Publicise.MSBuild.Task.1.1.0\build\Aze.Publicise.MSBuild.Task.props')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)packages\Aze.Publicise.MSBuild.Task.1.1.0\build\Aze.Publicise.MSBuild.Task.props'))" />
-    <Error Condition="!Exists('..\packages\Aze.Publicise.MSBuild.Task.1.1.0\build\Aze.Publicise.MSBuild.Task.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Aze.Publicise.MSBuild.Task.1.1.0\build\Aze.Publicise.MSBuild.Task.props'))" />
-  </Target>
-  <PropertyGroup>
-    <PostBuildEvent>(robocopy "$(TargetDir) " "%25WrathPath%25\Mods\IsekaiMod\ " /s /e )^&amp; IF %25ERRORLEVEL%25 LEQ 1 exit 0</PostBuildEvent>
-  </PropertyGroup>
 </Project>

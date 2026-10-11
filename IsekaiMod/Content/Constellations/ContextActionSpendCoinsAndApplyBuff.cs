@@ -1,57 +1,41 @@
-﻿using System;
+using System;
+using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.JsonSystem;
 using Kingmaker.EntitySystem.Entities;
-using Kingmaker.PubSubSystem;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
-using Kingmaker.UnitLogic.Mechanics.Actions;
 
-namespace IsekaiMod.Content.Constellations
+namespace IsekaiMod.Content.Constellations;
+
+[TypeId("5af49d0248de48fb887ee48602936938")]
+public class ContextActionSpendCoinsAndApplyBuff : IsekaiContextAction
 {
-	public class ContextActionSpendCoinsAndApplyBuff : ContextAction
+	public int Cost;
+
+	public BlueprintBuffReference m_Buff;
+
+	public int DurationHours = 1;
+
+	public override string GetCaption()
 	{
-		public int Cost;
+		return $"Spends {Cost} Cosmic Coins and applies buff for {DurationHours} hours";
+	}
 
-		public BlueprintBuffReference m_Buff;
-
-		public int DurationHours = 1;
-
-		public override string GetCaption()
+	protected override void RunSafely()
+	{
+		UnitEntityData unitEntityData = DivineTokens.ResolveDialogTarget(base.Target, DivineTokens.GetPlayer);
+		BlueprintBuff blueprintBuff = m_Buff?.Get();
+		if (!(unitEntityData == null) && blueprintBuff != null && DivineTokens.SpendCoins(Cost))
 		{
-			return $"Spends {Cost} Cosmic Coins and applies buff for {DurationHours} hours";
-		}
-
-		public override void RunAction()
-		{
-			UnitEntityData unitEntityData = base.Target?.Unit ?? DivineTokens.GetPlayer();
-			BlueprintBuff buff = m_Buff?.Get();
-			if (unitEntityData == null || buff == null)
+			if (base.Context != null)
 			{
-				return;
-			}
-			if (DivineTokens.SpendCoins(Cost))
-			{
-				if (base.Context != null)
-				{
-					unitEntityData.Descriptor.Buffs.AddBuff(buff, base.Context, new TimeSpan(DurationHours, 0, 0));
-				}
-				else
-				{
-					unitEntityData.Descriptor.Buffs.AddBuff(buff, unitEntityData, new TimeSpan(DurationHours, 0, 0));
-				}
-				Main.Log(System.Text.RegularExpressions.Regex.Replace($"<color=#F5C542>[Cosmic Store]</color> Activated blessing: {buff.Name} ({DurationHours}h)!", "<[^>]+>", ""));
-				EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
-				{
-					h.HandleLogMessage($"<color=#F5C542>[Cosmic Store]</color> Activated blessing: {buff.Name} ({DurationHours}h)!");
-				});
+				unitEntityData.Descriptor.Buffs.AddBuff(blueprintBuff, base.Context, new TimeSpan(DurationHours, 0, 0));
 			}
 			else
 			{
-				Main.Log(System.Text.RegularExpressions.Regex.Replace($"<color=#DC143C>[Cosmic Store]</color> Insufficient Cosmic Coins! Required: {Cost}. Current: {DivineTokens.GetBalance()}.", "<[^>]+>", ""));
-				EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
-				{
-					h.HandleLogMessage($"<color=#DC143C>[Cosmic Store]</color> Insufficient Cosmic Coins! Required: {Cost}. Current: {DivineTokens.GetBalance()}.");
-				});
+				unitEntityData.Descriptor.Buffs.AddBuff(blueprintBuff, unitEntityData, new TimeSpan(DurationHours, 0, 0));
 			}
+			DivineTokens.Log(CosmicStoreText.BlessingActivated, blueprintBuff.Name, DurationHours);
 		}
 	}
 }

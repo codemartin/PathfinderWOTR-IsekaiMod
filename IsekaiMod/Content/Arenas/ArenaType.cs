@@ -1,20 +1,26 @@
-﻿namespace IsekaiMod.Content.Arenas
+namespace IsekaiMod.Content.Arenas;
+
+public enum ArenaType
 {
-	public enum ArenaType
-	{
-		BronzeCup,
-		SilverCup,
-		GoldCup,
-		PlatinumCup,
-		DiamondCup,
-		AstralCup,
-		GenesisCup,
-		TheCosmicChallenge,
-		StolenLandsLegacyCup,
-		Act1FaeGrove,
-		Act2LostLegions,
-		Act3MidnightColosseum,
-		Act4VoidRift,
-		Act5MultiverseThreshold
-	}
+	BronzeCup,
+	SilverCup,
+	GoldCup,
+	PlatinumCup,
+	DiamondCup,
+	AstralCup,
+	GenesisCup,
+	TheCosmicChallenge,
+	StolenLandsLegacyCup,
+	Act1FaeGrove,
+	Act2LostLegions,
+	Act3MidnightColosseum,
+	Act4VoidRift,
+	Act5MultiverseThreshold,
+	TrialPhantomSwordSaint,
+	TrialBladeSpirit,
+	TrialBoneCourt,
+	TrialCorrosiveWyrm,
+	TrialPrimordialBehemoth,
+	TrialFallenVanguard,
+	TrialThroneOfShadows
 }

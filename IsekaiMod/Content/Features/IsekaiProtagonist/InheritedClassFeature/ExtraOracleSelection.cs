@@ -1,88 +1,55 @@
-﻿using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
-using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Selection;
 using TabletopTweaks.Core.Utilities;
 
-namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature
+namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature;
+
+internal class ExtraOracleSelection
 {
-	internal class ExtraOracleSelection
+	public static void Configure()
 	{
-		private static BlueprintFeatureSelection CurseSelection;
-
-		private static BlueprintFeatureSelection MysterySelection;
-
-		public static void Configure()
+		BlueprintFeatureSelection CurseSelection = Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiOracleCurseSelection", delegate(BlueprintFeatureSelection bp)
 		{
-			CurseSelection = Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiOracleCurseSelection", delegate(BlueprintFeatureSelection bp)
+			bp.SetName(Main.IsekaiContext, "Divine Curse");
+			bp.SetDescription(Main.IsekaiContext, "Gain a curse, but some curses are blessings in disguise.");
+			bp.Ranks = 3;
+			bp.IsClassFeature = true;
+			bp.m_AllFeatures = FeatTools.Selections.OracleCurseSelection.m_AllFeatures;
+			bp.m_Features = (BlueprintFeatureReference[])bp.m_AllFeatures.Clone();
+		});
+		BlueprintFeatureSelection MysterySelection = Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiOracleMysterySelection", delegate(BlueprintFeatureSelection bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Divine Mystery");
+			bp.SetDescription(Main.IsekaiContext, "Master another part of reality...");
+			bp.Ranks = 3;
+			bp.IsClassFeature = true;
+			bp.m_AllFeatures = FeatTools.Selections.OracleMysterySelection.m_AllFeatures;
+			bp.m_Features = (BlueprintFeatureReference[])bp.m_AllFeatures.Clone();
+		});
+		Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiOracleSelection", delegate(BlueprintFeatureSelection bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Divine Inheritance");
+			bp.SetDescription(Main.IsekaiContext, "As you get closer and closer to the truth of divinity you gain a new Mystery, Revelation, or perhaps a curse from a jealous god?");
+			bp.Ranks = 7;
+			bp.IsClassFeature = true;
+			bp.m_AllFeatures = new BlueprintFeatureReference[4]
 			{
-				bp.SetName(Main.IsekaiContext, "Divine Curse");
-				bp.SetDescription(Main.IsekaiContext, "Gain a curse, but some curses are blessings in disguise.");
-				bp.Ranks = 3;
-				bp.IsClassFeature = true;
-				bp.m_AllFeatures = FeatTools.Selections.OracleCurseSelection.m_AllFeatures;
-				bp.m_Features = bp.m_AllFeatures;
-			});
-			MirroredSelections.Register(CurseSelection, FeatTools.Selections.OracleCurseSelection);
-			MysterySelection = Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiOracleMysterySelection", delegate(BlueprintFeatureSelection bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Divine Mystery");
-				bp.SetDescription(Main.IsekaiContext, "Master another part of reality...");
-				bp.Ranks = 3;
-				bp.IsClassFeature = true;
-				bp.m_AllFeatures = FeatTools.Selections.OracleMysterySelection.m_AllFeatures;
-				bp.m_Features = bp.m_AllFeatures;
-			});
-			MirroredSelections.Register(MysterySelection, FeatTools.Selections.OracleMysterySelection);
-			Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiOracleSelection", delegate(BlueprintFeatureSelection bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Divine Inheritance");
-				bp.SetDescription(Main.IsekaiContext, "As you get closer and closer to the truth of divinity you gain a new Mystery, Revelation, or perhaps a curse from a jealous god?");
-				bp.Ranks = 7;
-				bp.IsClassFeature = true;
-				bp.m_AllFeatures = new BlueprintFeatureReference[4]
-				{
-					CurseSelection.ToReference<BlueprintFeatureReference>(),
-					MysterySelection.ToReference<BlueprintFeatureReference>(),
-					FeatTools.Selections.OracleRevelationSelection.ToReference<BlueprintFeatureReference>(),
-					FeatTools.Selections.OracleCureOrInflictSelection.ToReference<BlueprintFeatureReference>()
-				};
-				bp.m_Features = bp.m_AllFeatures;
-			});
-		}
+				CurseSelection.ToReference<BlueprintFeatureReference>(),
+				MysterySelection.ToReference<BlueprintFeatureReference>(),
+				FeatTools.Selections.OracleRevelationSelection.ToReference<BlueprintFeatureReference>(),
+				FeatTools.Selections.OracleCureOrInflictSelection.ToReference<BlueprintFeatureReference>()
+			};
+			bp.m_Features = (BlueprintFeatureReference[])bp.m_AllFeatures.Clone();
+		});
+	}
 
-		public static void PatchPrerequisiteCompatibility()
-		{
-			PrerequisiteAlternatives.Add(BlueprintTools.GetBlueprint<BlueprintFeature>("2dda67424ee8e0b4d83ef01a73ca6bff"), FeatTools.Selections.OracleCurseSelection, GetCurse());
-			PrerequisiteAlternatives.Add(BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("277b0164740b97945a3f8022bd572f48"), FeatTools.Selections.OracleMysterySelection, GetMystery());
-		}
+	public static BlueprintFeatureSelection Get()
+	{
+		return BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "IsekaiOracleSelection");
+	}
 
-		public static BlueprintFeatureSelection GetCurse()
-		{
-			if (CurseSelection != null)
-			{
-				return CurseSelection;
-			}
-			return BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "IsekaiOracleCurseSelection");
-		}
-
-		public static BlueprintFeatureSelection GetMystery()
-		{
-			if (MysterySelection != null)
-			{
-				return MysterySelection;
-			}
-			return BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "IsekaiOracleMysterySelection");
-		}
-
-		public static BlueprintFeatureSelection Get()
-		{
-			return BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "IsekaiOracleSelection");
-		}
-
-		public static BlueprintFeatureReference GetReference()
-		{
-			return Get().ToReference<BlueprintFeatureReference>();
-		}
+	public static BlueprintFeatureReference GetReference()
+	{
+		return Get().ToReference<BlueprintFeatureReference>();
 	}
 }

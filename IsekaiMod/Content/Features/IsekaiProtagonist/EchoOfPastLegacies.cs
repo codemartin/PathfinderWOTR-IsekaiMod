@@ -1,9 +1,12 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
+using System.Linq;
 using IsekaiMod.Components;
+using IsekaiMod.Config;
+using IsekaiMod.Content.Classes.IsekaiProtagonist;
 using IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower;
-using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
+using Kingmaker.Blueprints.Classes.Prerequisites;
 using Kingmaker.Blueprints.Classes.Selection;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Designers.Mechanics.Facts;
@@ -13,432 +16,259 @@ using Kingmaker.UnitLogic.FactLogic;
 using TabletopTweaks.Core.Utilities;
 using UnityEngine;
 
-namespace IsekaiMod.Content.Features.IsekaiProtagonist
+namespace IsekaiMod.Content.Features.IsekaiProtagonist;
+
+internal class EchoOfPastLegacies
 {
-	internal class EchoOfPastLegacies
+	private static BlueprintFeatureSelection Selection;
+
+	internal const string DivineGrace = "8a5b5e272e5c34e41aa8b4facbb746d3";
+
+	internal const string MonkACBonus = "e241bdfd6333b9843a7bfd674d607ac4";
+
+	internal const string FlurryOfBlows = "332362f3bd39ebe46a740a36960fdcb4";
+
+	internal const string Evasion = "576933720c440aa4d8d42b0c54b77e80";
+
+	internal const string SpellStrikeFeature = "be50f4e97fff8a24ba92561f1694a945";
+
+	internal const string SageBloodlineArcana = "0d188736c79e85b44b3cc49ad8d1bb1e";
+
+	internal const string GatherPowerFeature = "0601925a028b788469365d5f8f39e14a";
+
+	internal const string GatherPowerAbilitiesFeature = "71f526b1d4b50b94582b0b9cbe12b0e0";
+
+	internal const string ArmorTraining = "3c380607706f209499d951b29d3c44f3";
+
+	internal const string WeaponMastery = "73c471386ce917c4c8c9f70d46b48eeb";
+
+	internal const string UncannyDodge = "3c08d842e802c3e4eb19d15496145709";
+
+	internal const string SoloTactics = "5602845cd22683840a6f28ec46331051";
+
+	internal const string MutagenFeature = "cee8f65448ce71c4b8b8ca13751dd8ea";
+
+	internal const string ShifterAspectBear = "73ef2c330ff14e4bb2f5b7300622c552";
+
+	internal const string ShifterClawsFeatureLevel1 = "512f845e29514539b1943b74633dba24";
+
+	internal const string ChannelEnergyFeature = "a79013ff4bcd4864cb669622a29ddafb";
+
+	internal const string ChannelEnergyResource = "5e2bba3e07c37be42909a12945c27de7";
+
+	internal static readonly string[] EchoNames = new string[12]
 	{
-		private static BlueprintFeatureSelection Selection;
+		"EchoPaladinDivineGraceFeature", "EchoMonkDefenseFeature", "EchoRogueEvasionFeature", "EchoMagusSpellstrikeFeature", "EchoSorcererArcanaFeature", "EchoKineticistGatherFeature", "EchoFighterMasteryFeature", "EchoBarbarianUncannyFeature", "EchoInquisitorSoloFeature", "EchoAlchemistMutagenFeature",
+		"EchoShifterBeastFeature", "EchoClericDomainFeature"
+	};
 
-		public static void Add()
-		{
-			Sprite iconPaladin = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintFeature>("8a5b5e272e5c34e41aa8b4facbb746d3"))?.m_Icon;
-			Sprite iconMonk = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintFeature>("e241bdfd6333b9843a7bfd674d607ac4"))?.m_Icon;
-			Sprite iconRogue = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintFeature>("576933720c440aa4d8d42b0c54b77e80"))?.m_Icon;
-			Sprite iconMagus = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintFeature>("be50f4e97fff8a24ba92561f1694a945"))?.m_Icon;
-			Sprite iconSorcerer = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintFeature>("0d188736c79e85b44b3cc49ad8d1bb1e"))?.m_Icon;
-			Sprite iconKineticist = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintFeature>("0601925a028b788469365d5f8f39e14a"))?.m_Icon;
-			Sprite iconFighter = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintFeature>("73c471386ce917c4c8c9f70d46b48eeb"))?.m_Icon;
-			Sprite iconBarbarian = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintFeature>("3c08d842e802c3e4eb19d15496145709"))?.m_Icon;
-			Sprite iconInquisitor = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintFeature>("5602845cd22683840a6f28ec46331051"))?.m_Icon;
-			Sprite iconAlchemist = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintFeature>("cee8f65448ce71c4b8b8ca13751dd8ea"))?.m_Icon;
-			Sprite iconShifter = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintFeature>("73ef2c330ff14e4bb2f5b7300622c552"))?.m_Icon;
-			Sprite iconCleric = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintFeature>("a79013ff4bcd4864cb669622a29ddafb"))?.m_Icon;
-			BlueprintFeature blueprintFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "EchoPaladinDivineGraceFeature", delegate(BlueprintFeature bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Echo of the Paladin - Divine Grace");
-				bp.SetDescription(Main.IsekaiContext, "Echoes of holy champions grant you Divine Grace, adding your Charisma bonus to all saving throws, plus a +2 sacred bonus on Fortitude, Reflex, and Will saves.");
-				((BlueprintUnitFact)bp).m_Icon = iconPaladin;
-				bp.Ranks = 1;
-				bp.IsClassFeature = true;
-				BlueprintFeature dg = BlueprintTools.GetBlueprint<BlueprintFeature>("8a5b5e272e5c34e41aa8b4facbb746d3");
-				if (dg != null)
-				{
-					bp.AddComponent(delegate(AddFacts c)
-					{
-						c.m_Facts = new BlueprintUnitFactReference[1] { dg.ToReference<BlueprintUnitFactReference>() };
-					});
-				}
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Sacred;
-					c.Stat = StatType.SaveFortitude;
-					c.Value = 2;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Sacred;
-					c.Stat = StatType.SaveReflex;
-					c.Value = 2;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Sacred;
-					c.Stat = StatType.SaveWill;
-					c.Value = 2;
-				});
-			});
-			BlueprintFeature blueprintFeature2 = Helpers.CreateBlueprint(Main.IsekaiContext, "EchoMonkDefenseFeature", delegate(BlueprintFeature bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Echo of the Monk - Canny Defense");
-				bp.SetDescription(Main.IsekaiContext, "Echoes of ascetic martial ascetics grant you the Monk AC bonus and Flurry of Blows, as well as 1 additional attack per round during full attacks.");
-				((BlueprintUnitFact)bp).m_Icon = iconMonk;
-				bp.Ranks = 1;
-				bp.IsClassFeature = true;
-				BlueprintFeature ac = BlueprintTools.GetBlueprint<BlueprintFeature>("e241bdfd6333b9843a7bfd674d607ac4");
-				BlueprintFeature flurry = BlueprintTools.GetBlueprint<BlueprintFeature>("332362f3bd39ebe46a740a36960fdcb4");
-				bp.AddComponent(delegate(AddFacts c)
-				{
-					List<BlueprintUnitFactReference> list = new List<BlueprintUnitFactReference>();
-					if (ac != null)
-					{
-						list.Add(ac.ToReference<BlueprintUnitFactReference>());
-					}
-					if (flurry != null)
-					{
-						list.Add(flurry.ToReference<BlueprintUnitFactReference>());
-					}
-					c.m_Facts = list.ToArray();
-				});
-				bp.AddComponent(delegate(AddExtraAttack c)
-				{
-					c.Number = 1;
-				});
-			});
-			BlueprintFeature blueprintFeature3 = Helpers.CreateBlueprint(Main.IsekaiContext, "EchoRogueEvasionFeature", delegate(BlueprintFeature bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Echo of the Rogue - Shadow Instinct");
-				bp.SetDescription(Main.IsekaiContext, "Echoes of elusive thieves grant you Evasion and +2d6 Sneak Attack damage.");
-				((BlueprintUnitFact)bp).m_Icon = iconRogue;
-				bp.Ranks = 1;
-				bp.IsClassFeature = true;
-				BlueprintFeature evasion = BlueprintTools.GetBlueprint<BlueprintFeature>("576933720c440aa4d8d42b0c54b77e80");
-				if (evasion != null)
-				{
-					bp.AddComponent(delegate(AddFacts c)
-					{
-						c.m_Facts = new BlueprintUnitFactReference[1] { evasion.ToReference<BlueprintUnitFactReference>() };
-					});
-				}
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.UntypedStackable;
-					c.Stat = StatType.SneakAttack;
-					c.Value = 2;
-				});
-			});
-			BlueprintFeature blueprintFeature4 = Helpers.CreateBlueprint(Main.IsekaiContext, "EchoMagusSpellstrikeFeature", delegate(BlueprintFeature bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Echo of the Magus - Spellstrike Resonance");
-				bp.SetDescription(Main.IsekaiContext, "Echoes of eldritch blade-masters grant you Spellstrike, a +2 bonus to spell difficulty classes, and a +2 bonus on melee attack rolls.");
-				((BlueprintUnitFact)bp).m_Icon = iconMagus;
-				bp.Ranks = 1;
-				bp.IsClassFeature = true;
-				BlueprintFeature ss = BlueprintTools.GetBlueprint<BlueprintFeature>("be50f4e97fff8a24ba92561f1694a945");
-				if (ss != null)
-				{
-					bp.AddComponent(delegate(AddFacts c)
-					{
-						c.m_Facts = new BlueprintUnitFactReference[1] { ss.ToReference<BlueprintUnitFactReference>() };
-					});
-				}
-				bp.AddComponent(delegate(IncreaseAllSpellsDC c)
-				{
-					c.Value = 2;
-					c.Descriptor = ModifierDescriptor.UntypedStackable;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.UntypedStackable;
-					c.Stat = StatType.AdditionalAttackBonus;
-					c.Value = 2;
-				});
-			});
-			BlueprintFeature blueprintFeature5 = Helpers.CreateBlueprint(Main.IsekaiContext, "EchoSorcererArcanaFeature", delegate(BlueprintFeature bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Echo of the Sorcerer - Bloodline Arcana");
-				bp.SetDescription(Main.IsekaiContext, "Echoes of primordial spellweavers infuse your magic. Your damaging spells deal +1 damage per die rolled, and you gain a +2 bonus on caster level checks to overcome spell resistance.");
-				((BlueprintUnitFact)bp).m_Icon = iconSorcerer;
-				bp.Ranks = 1;
-				bp.IsClassFeature = true;
-				bp.AddComponent(delegate(IncreaseSpellDamage c)
-				{
-					c.DamageBonus = 1;
-				});
-				bp.AddComponent(delegate(SpellPenetrationBonus c)
-				{
-					c.Value = 2;
-					c.Descriptor = ModifierDescriptor.UntypedStackable;
-				});
-			});
-			BlueprintFeature blueprintFeature6 = Helpers.CreateBlueprint(Main.IsekaiContext, "EchoKineticistGatherFeature", delegate(BlueprintFeature bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Echo of the Kineticist - Planar Conduit");
-				bp.SetDescription(Main.IsekaiContext, "Echoes of elemental wilders grant you Gather Power, a +2 bonus on attack rolls, and +2 bonus to damage rolls.");
-				((BlueprintUnitFact)bp).m_Icon = iconKineticist;
-				bp.Ranks = 1;
-				bp.IsClassFeature = true;
-				BlueprintFeature gp = BlueprintTools.GetBlueprint<BlueprintFeature>("0601925a028b788469365d5f8f39e14a");
-				if (gp != null)
-				{
-					bp.AddComponent(delegate(AddFacts c)
-					{
-						c.m_Facts = new BlueprintUnitFactReference[1] { gp.ToReference<BlueprintUnitFactReference>() };
-					});
-				}
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.UntypedStackable;
-					c.Stat = StatType.AdditionalAttackBonus;
-					c.Value = 2;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.UntypedStackable;
-					c.Stat = StatType.AdditionalDamage;
-					c.Value = 2;
-				});
-			});
-			BlueprintFeature blueprintFeature7 = Helpers.CreateBlueprint(Main.IsekaiContext, "EchoFighterMasteryFeature", delegate(BlueprintFeature bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Echo of the Fighter - Weapon & Armor Mastery");
-				bp.SetDescription(Main.IsekaiContext, "Echoes of frontline veterans grant you Armor Training and Weapon Mastery, adding a +2 competence bonus on attack and damage rolls with manufactured weapons.");
-				((BlueprintUnitFact)bp).m_Icon = iconFighter;
-				bp.Ranks = 1;
-				bp.IsClassFeature = true;
-				BlueprintFeature at = BlueprintTools.GetBlueprint<BlueprintFeature>("3c380607706f209499d951b29d3c44f3");
-				BlueprintFeature wm = BlueprintTools.GetBlueprint<BlueprintFeature>("73c471386ce917c4c8c9f70d46b48eeb");
-				bp.AddComponent(delegate(AddFacts c)
-				{
-					List<BlueprintUnitFactReference> list = new List<BlueprintUnitFactReference>();
-					if (at != null)
-					{
-						list.Add(at.ToReference<BlueprintUnitFactReference>());
-					}
-					if (wm != null)
-					{
-						list.Add(wm.ToReference<BlueprintUnitFactReference>());
-					}
-					c.m_Facts = list.ToArray();
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Competence;
-					c.Stat = StatType.AdditionalAttackBonus;
-					c.Value = 2;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Competence;
-					c.Stat = StatType.AdditionalDamage;
-					c.Value = 2;
-				});
-			});
-			BlueprintFeature blueprintFeature8 = Helpers.CreateBlueprint(Main.IsekaiContext, "EchoBarbarianUncannyFeature", delegate(BlueprintFeature bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Echo of the Barbarian - Primal Ferocity");
-				bp.SetDescription(Main.IsekaiContext, "Echoes of howling berserkers grant you Uncanny Dodge, +10 feet base movement speed, and a +2 untyped bonus to Fortitude saving throws.");
-				((BlueprintUnitFact)bp).m_Icon = iconBarbarian;
-				bp.Ranks = 1;
-				bp.IsClassFeature = true;
-				BlueprintFeature ud = BlueprintTools.GetBlueprint<BlueprintFeature>("3c08d842e802c3e4eb19d15496145709");
-				if (ud != null)
-				{
-					bp.AddComponent(delegate(AddFacts c)
-					{
-						c.m_Facts = new BlueprintUnitFactReference[1] { ud.ToReference<BlueprintUnitFactReference>() };
-					});
-				}
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.UntypedStackable;
-					c.Stat = StatType.Speed;
-					c.Value = 10;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.UntypedStackable;
-					c.Stat = StatType.SaveFortitude;
-					c.Value = 2;
-				});
-			});
-			BlueprintFeature blueprintFeature9 = Helpers.CreateBlueprint(Main.IsekaiContext, "EchoInquisitorSoloFeature", delegate(BlueprintFeature bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Echo of the Inquisitor - Solo Tactics");
-				bp.SetDescription(Main.IsekaiContext, "Echoes of relentless investigators grant you Solo Tactics, allowing you to reap the benefits of all teamwork feats as if all your allies possessed them, plus a +4 sacred bonus to Initiative.");
-				((BlueprintUnitFact)bp).m_Icon = iconInquisitor;
-				bp.Ranks = 1;
-				bp.IsClassFeature = true;
-				BlueprintFeature st = BlueprintTools.GetBlueprint<BlueprintFeature>("5602845cd22683840a6f28ec46331051");
-				if (st != null)
-				{
-					bp.AddComponent(delegate(AddFacts c)
-					{
-						c.m_Facts = new BlueprintUnitFactReference[1] { st.ToReference<BlueprintUnitFactReference>() };
-					});
-				}
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Sacred;
-					c.Stat = StatType.Initiative;
-					c.Value = 4;
-				});
-			});
-			BlueprintFeature blueprintFeature10 = Helpers.CreateBlueprint(Main.IsekaiContext, "EchoAlchemistMutagenFeature", delegate(BlueprintFeature bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Echo of the Alchemist - Alchemical Discovery");
-				bp.SetDescription(Main.IsekaiContext, "Echoes of apothecary masters grant you the ability to brew Mutagens, plus a permanent +2 alchemical bonus to Armor Class and physical ability scores.");
-				((BlueprintUnitFact)bp).m_Icon = iconAlchemist;
-				bp.Ranks = 1;
-				bp.IsClassFeature = true;
-				BlueprintFeature mut = BlueprintTools.GetBlueprint<BlueprintFeature>("cee8f65448ce71c4b8b8ca13751dd8ea");
-				if (mut != null)
-				{
-					bp.AddComponent(delegate(AddFacts c)
-					{
-						c.m_Facts = new BlueprintUnitFactReference[1] { mut.ToReference<BlueprintUnitFactReference>() };
-					});
-				}
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Alchemical;
-					c.Stat = StatType.Strength;
-					c.Value = 2;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Alchemical;
-					c.Stat = StatType.Dexterity;
-					c.Value = 2;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Alchemical;
-					c.Stat = StatType.Constitution;
-					c.Value = 2;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Alchemical;
-					c.Stat = StatType.AC;
-					c.Value = 2;
-				});
-			});
-			BlueprintFeature blueprintFeature11 = Helpers.CreateBlueprint(Main.IsekaiContext, "EchoShifterBeastFeature", delegate(BlueprintFeature bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Echo of the Shifter - Aspect of the Wild");
-				bp.SetDescription(Main.IsekaiContext, "Echoes of feral shapeshifters grant you Shifter Aspect and Shifter Claws, plus a +3 natural armor bonus to AC and +2 damage to natural attacks.");
-				((BlueprintUnitFact)bp).m_Icon = iconShifter;
-				bp.Ranks = 1;
-				bp.IsClassFeature = true;
-				BlueprintFeature asp = BlueprintTools.GetBlueprint<BlueprintFeature>("73ef2c330ff14e4bb2f5b7300622c552");
-				BlueprintFeature claw = BlueprintTools.GetBlueprint<BlueprintFeature>("512f845e29514539b1943b74633dba24");
-				bp.AddComponent(delegate(AddFacts c)
-				{
-					List<BlueprintUnitFactReference> list = new List<BlueprintUnitFactReference>();
-					if (asp != null)
-					{
-						list.Add(asp.ToReference<BlueprintUnitFactReference>());
-					}
-					if (claw != null)
-					{
-						list.Add(claw.ToReference<BlueprintUnitFactReference>());
-					}
-					c.m_Facts = list.ToArray();
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.NaturalArmor;
-					c.Stat = StatType.AC;
-					c.Value = 3;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.UntypedStackable;
-					c.Stat = StatType.AdditionalDamage;
-					c.Value = 2;
-				});
-			});
-			BlueprintFeature blueprintFeature12 = Helpers.CreateBlueprint(Main.IsekaiContext, "EchoClericDomainFeature", delegate(BlueprintFeature bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Echo of the Cleric - Sacred Conduit");
-				bp.SetDescription(Main.IsekaiContext, "Echoes of pious hierophants grant you Channel Energy, +2 extra channel uses per day, and a +2 sacred bonus to Will saving throws.");
-				((BlueprintUnitFact)bp).m_Icon = iconCleric;
-				bp.Ranks = 1;
-				bp.IsClassFeature = true;
-				BlueprintFeature ce = BlueprintTools.GetBlueprint<BlueprintFeature>("a79013ff4bcd4864cb669622a29ddafb");
-				if (ce != null)
-				{
-					bp.AddComponent(delegate(AddFacts c)
-					{
-						c.m_Facts = new BlueprintUnitFactReference[1] { ce.ToReference<BlueprintUnitFactReference>() };
-					});
-				}
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Sacred;
-					c.Stat = StatType.SaveWill;
-					c.Value = 2;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Sacred;
-					c.Stat = StatType.Wisdom;
-					c.Value = 2;
-				});
-			});
-			Selection = Helpers.CreateBlueprint(Main.IsekaiContext, "EchoOfPastLegaciesSelection", delegate(BlueprintFeatureSelection bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Echo of Past Legacies");
-				bp.SetDescription(Main.IsekaiContext, "Echoes of past-life training and archetypal memories crystallize into passive hallmarks. Select an echo from a class legacy to permanently bolster your otherworldly abilities.");
-				((BlueprintUnitFact)bp).m_Icon = iconPaladin;
-				bp.Ranks = 1;
-				bp.IsClassFeature = true;
-				bp.IgnorePrerequisites = false;
-				bp.m_AllFeatures = new BlueprintFeatureReference[0];
-				bp.m_Features = new BlueprintFeatureReference[0];
-			});
-			// The +2 extra channel uses named in the Cleric echo.
-			BlueprintAbilityResource channelResource = BlueprintTools.GetBlueprint<BlueprintAbilityResource>("5e2bba3e07c37be42909a12945c27de7");
-			if (channelResource != null)
-			{
-				blueprintFeature12.AddComponent(delegate(IncreaseResourceAmount c)
-				{
-					c.m_Resource = channelResource.ToReference<BlueprintAbilityResourceReference>();
-					c.Value = 2;
-				});
-			}
-			// The borrowed class features scale from their own class level (monk AC bonus, mutagen duration, aspect
-			// uses and bonuses, channel dice). Give them the Isekai class as well, the same way legacies are adapted.
-			BlueprintCharacterClassReference isekai = Classes.IsekaiProtagonist.IsekaiProtagonistClass.GetReference();
-			AdaptToIsekaiLevels(isekai, ClassTools.ClassReferences.PaladinClass, "8a5b5e272e5c34e41aa8b4facbb746d3");
-			AdaptToIsekaiLevels(isekai, ClassTools.ClassReferences.MonkClass, "e241bdfd6333b9843a7bfd674d607ac4", "332362f3bd39ebe46a740a36960fdcb4");
-			AdaptToIsekaiLevels(isekai, ClassTools.ClassReferences.RogueClass, "576933720c440aa4d8d42b0c54b77e80");
-			AdaptToIsekaiLevels(isekai, ClassTools.ClassReferences.MagusClass, "be50f4e97fff8a24ba92561f1694a945");
-			AdaptToIsekaiLevels(isekai, ClassTools.ClassReferences.KineticistClass, "0601925a028b788469365d5f8f39e14a");
-			AdaptToIsekaiLevels(isekai, ClassTools.ClassReferences.FighterClass, "3c380607706f209499d951b29d3c44f3", "73c471386ce917c4c8c9f70d46b48eeb");
-			AdaptToIsekaiLevels(isekai, ClassTools.ClassReferences.BarbarianClass, "3c08d842e802c3e4eb19d15496145709");
-			AdaptToIsekaiLevels(isekai, ClassTools.ClassReferences.InquisitorClass, "5602845cd22683840a6f28ec46331051");
-			AdaptToIsekaiLevels(isekai, ClassTools.ClassReferences.AlchemistClass, "cee8f65448ce71c4b8b8ca13751dd8ea");
-			AdaptToIsekaiLevels(isekai, ClassTools.ClassReferences.ShifterClass, "73ef2c330ff14e4bb2f5b7300622c552", "512f845e29514539b1943b74633dba24");
-			AdaptToIsekaiLevels(isekai, ClassTools.ClassReferences.ClericClass, "a79013ff4bcd4864cb669622a29ddafb");
-			Selection.AddFeatures(blueprintFeature, blueprintFeature2, blueprintFeature3, blueprintFeature4, blueprintFeature5, blueprintFeature6, blueprintFeature7, blueprintFeature8, blueprintFeature9, blueprintFeature10, blueprintFeature11, blueprintFeature12);
-			SpecialPowerSelection.AddToSelection(Selection);
-			FeatTools.Selections.BasicFeatSelection.AddToSelection(Selection);
-		}
+	private static Sprite IconOf(string guid)
+	{
+		return ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintFeature>(guid))?.m_Icon;
+	}
 
-		private static void AdaptToIsekaiLevels(BlueprintCharacterClassReference isekai, BlueprintCharacterClassReference sourceClass, params string[] featureGuids)
+	private static void GrantFacts(BlueprintFeature bp, params string[] guids)
+	{
+		List<BlueprintUnitFactReference> refs = new List<BlueprintUnitFactReference>();
+		for (int i = 0; i < guids.Length; i++)
 		{
-			if (isekai == null || sourceClass == null || sourceClass.Get() == null)
+			BlueprintFeature blueprint = BlueprintTools.GetBlueprint<BlueprintFeature>(guids[i]);
+			if (blueprint != null)
 			{
-				return;
-			}
-			foreach (string guid in featureGuids)
-			{
-				BlueprintFeature feature = BlueprintTools.GetBlueprint<BlueprintFeature>(guid);
-				if (feature != null)
-				{
-					PatchTools.PatchClassIntoFeatureOfReferenceClass(feature, isekai, sourceClass);
-				}
+				refs.Add(blueprint.ToReference<BlueprintUnitFactReference>());
 			}
 		}
-
-		public static BlueprintFeatureSelection Get()
+		if (refs.Count != 0)
 		{
-			if (Selection != null)
+			bp.AddComponent(delegate(AddFacts c)
 			{
-				return Selection;
-			}
-			return BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "EchoOfPastLegaciesSelection");
+				c.m_Facts = refs.ToArray();
+			});
 		}
+	}
+
+	private static void Bonus(BlueprintFeature bp, StatType stat, int value, ModifierDescriptor descriptor)
+	{
+		bp.AddComponent(delegate(AddStatBonus c)
+		{
+			c.Stat = stat;
+			c.Value = value;
+			c.Descriptor = descriptor;
+		});
+	}
+
+	private static void Setup(BlueprintFeature bp, string iconGuid)
+	{
+		((BlueprintUnitFact)bp).m_Icon = IconOf(iconGuid);
+		bp.Ranks = 1;
+		bp.IsClassFeature = true;
+	}
+
+	public static void Add()
+	{
+		List<BlueprintFeature> list = new List<BlueprintFeature>();
+		list.Add(Helpers.CreateBlueprint(Main.IsekaiContext, "EchoPaladinDivineGraceFeature", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Echo of the Paladin - Divine Grace");
+			bp.SetDescription(Main.IsekaiContext, "Echoes of holy champions grant you Divine Grace, adding your Charisma bonus to all saving throws, plus a +2 sacred bonus on Fortitude, Reflex, and Will saves.");
+			Setup(bp, "8a5b5e272e5c34e41aa8b4facbb746d3");
+			GrantFacts(bp, "8a5b5e272e5c34e41aa8b4facbb746d3");
+			Bonus(bp, StatType.SaveFortitude, 2, ModifierDescriptor.Sacred);
+			Bonus(bp, StatType.SaveReflex, 2, ModifierDescriptor.Sacred);
+			Bonus(bp, StatType.SaveWill, 2, ModifierDescriptor.Sacred);
+		}));
+		list.Add(Helpers.CreateBlueprint(Main.IsekaiContext, "EchoMonkDefenseFeature", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Echo of the Monk - Canny Defense");
+			bp.SetDescription(Main.IsekaiContext, "Echoes of ascetic martial ascetics grant you the Monk AC bonus and Flurry of Blows, as well as 1 additional attack per round during full attacks.");
+			Setup(bp, "e241bdfd6333b9843a7bfd674d607ac4");
+			GrantFacts(bp, "e241bdfd6333b9843a7bfd674d607ac4", "332362f3bd39ebe46a740a36960fdcb4");
+			bp.AddComponent(delegate(AddExtraAttack c)
+			{
+				c.Number = 1;
+			});
+		}));
+		list.Add(Helpers.CreateBlueprint(Main.IsekaiContext, "EchoRogueEvasionFeature", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Echo of the Rogue - Shadow Instinct");
+			bp.SetDescription(Main.IsekaiContext, "Echoes of elusive thieves grant you Evasion and +2d6 Sneak Attack damage.");
+			Setup(bp, "576933720c440aa4d8d42b0c54b77e80");
+			GrantFacts(bp, "576933720c440aa4d8d42b0c54b77e80");
+			Bonus(bp, StatType.SneakAttack, 2, ModifierDescriptor.UntypedStackable);
+		}));
+		list.Add(Helpers.CreateBlueprint(Main.IsekaiContext, "EchoMagusSpellstrikeFeature", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Echo of the Magus - Spellstrike Resonance");
+			bp.SetDescription(Main.IsekaiContext, "Echoes of eldritch blade-masters grant you Spellstrike, a +2 bonus to spell difficulty classes, and a +2 bonus on melee attack rolls.");
+			Setup(bp, "be50f4e97fff8a24ba92561f1694a945");
+			GrantFacts(bp, "be50f4e97fff8a24ba92561f1694a945");
+			bp.AddComponent(delegate(IncreaseAllSpellsDC c)
+			{
+				c.Value = 2;
+				c.Descriptor = ModifierDescriptor.UntypedStackable;
+			});
+			Bonus(bp, StatType.AdditionalAttackBonus, 2, ModifierDescriptor.UntypedStackable);
+		}));
+		list.Add(Helpers.CreateBlueprint(Main.IsekaiContext, "EchoSorcererArcanaFeature", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Echo of the Sorcerer - Bloodline Arcana");
+			bp.SetDescription(Main.IsekaiContext, "Echoes of primordial spellweavers infuse your magic. Your damaging spells deal +1 damage per die rolled, and you gain a +2 bonus on caster level checks to overcome spell resistance.");
+			Setup(bp, "0d188736c79e85b44b3cc49ad8d1bb1e");
+			bp.AddComponent(delegate(IncreaseSpellDamagePerDie c)
+			{
+				c.BonusPerDie = 1;
+			});
+			bp.AddComponent(delegate(SpellPenetrationBonus c)
+			{
+				c.Value = 2;
+				c.Descriptor = ModifierDescriptor.UntypedStackable;
+			});
+		}));
+		list.Add(Helpers.CreateBlueprint(Main.IsekaiContext, "EchoKineticistGatherFeature", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Echo of the Kineticist - Planar Conduit");
+			bp.SetDescription(Main.IsekaiContext, "Echoes of elemental wilders grant you Gather Power, a +2 bonus on attack rolls, and +2 bonus to damage rolls.");
+			Setup(bp, "0601925a028b788469365d5f8f39e14a");
+			GrantFacts(bp, "71f526b1d4b50b94582b0b9cbe12b0e0");
+			Bonus(bp, StatType.AdditionalAttackBonus, 2, ModifierDescriptor.UntypedStackable);
+			Bonus(bp, StatType.AdditionalDamage, 2, ModifierDescriptor.UntypedStackable);
+		}));
+		list.Add(Helpers.CreateBlueprint(Main.IsekaiContext, "EchoFighterMasteryFeature", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Echo of the Fighter - Weapon & Armor Mastery");
+			bp.SetDescription(Main.IsekaiContext, "Echoes of frontline veterans grant you Armor Training and a +2 competence bonus on attack and damage rolls.");
+			Setup(bp, "73c471386ce917c4c8c9f70d46b48eeb");
+			GrantFacts(bp, "3c380607706f209499d951b29d3c44f3", "73c471386ce917c4c8c9f70d46b48eeb");
+			Bonus(bp, StatType.AdditionalAttackBonus, 2, ModifierDescriptor.Competence);
+			Bonus(bp, StatType.AdditionalDamage, 2, ModifierDescriptor.Competence);
+		}));
+		list.Add(Helpers.CreateBlueprint(Main.IsekaiContext, "EchoBarbarianUncannyFeature", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Echo of the Barbarian - Primal Ferocity");
+			bp.SetDescription(Main.IsekaiContext, "Echoes of howling berserkers grant you Uncanny Dodge, +10 feet base movement speed, and a +2 untyped bonus to Fortitude saving throws.");
+			Setup(bp, "3c08d842e802c3e4eb19d15496145709");
+			GrantFacts(bp, "3c08d842e802c3e4eb19d15496145709");
+			Bonus(bp, StatType.Speed, 10, ModifierDescriptor.UntypedStackable);
+			Bonus(bp, StatType.SaveFortitude, 2, ModifierDescriptor.UntypedStackable);
+		}));
+		list.Add(Helpers.CreateBlueprint(Main.IsekaiContext, "EchoInquisitorSoloFeature", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Echo of the Inquisitor - Solo Tactics");
+			bp.SetDescription(Main.IsekaiContext, "Echoes of relentless investigators grant you Solo Tactics, allowing you to reap the benefits of all teamwork feats as if all your allies possessed them, plus a +4 sacred bonus to Initiative.");
+			Setup(bp, "5602845cd22683840a6f28ec46331051");
+			GrantFacts(bp, "5602845cd22683840a6f28ec46331051");
+			Bonus(bp, StatType.Initiative, 4, ModifierDescriptor.Sacred);
+		}));
+		list.Add(Helpers.CreateBlueprint(Main.IsekaiContext, "EchoAlchemistMutagenFeature", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Echo of the Alchemist - Alchemical Discovery");
+			bp.SetDescription(Main.IsekaiContext, "Echoes of apothecary masters grant you the ability to brew Mutagens, plus a permanent +2 alchemical bonus to Armor Class and physical ability scores.");
+			Setup(bp, "cee8f65448ce71c4b8b8ca13751dd8ea");
+			GrantFacts(bp, "cee8f65448ce71c4b8b8ca13751dd8ea");
+			Bonus(bp, StatType.Strength, 2, ModifierDescriptor.Alchemical);
+			Bonus(bp, StatType.Dexterity, 2, ModifierDescriptor.Alchemical);
+			Bonus(bp, StatType.Constitution, 2, ModifierDescriptor.Alchemical);
+			Bonus(bp, StatType.AC, 2, ModifierDescriptor.Alchemical);
+		}));
+		list.Add(Helpers.CreateBlueprint(Main.IsekaiContext, "EchoShifterBeastFeature", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Echo of the Shifter - Aspect of the Wild");
+			bp.SetDescription(Main.IsekaiContext, "Echoes of feral shapeshifters grant you Shifter Aspect and Shifter Claws, plus a +3 natural armor bonus to AC and +2 damage to natural attacks.");
+			Setup(bp, "73ef2c330ff14e4bb2f5b7300622c552");
+			GrantFacts(bp, "73ef2c330ff14e4bb2f5b7300622c552", "512f845e29514539b1943b74633dba24");
+			Bonus(bp, StatType.AC, 3, ModifierDescriptor.NaturalArmor);
+			Bonus(bp, StatType.AdditionalDamage, 2, ModifierDescriptor.UntypedStackable);
+		}));
+		list.Add(Helpers.CreateBlueprint(Main.IsekaiContext, "EchoClericDomainFeature", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Echo of the Cleric - Sacred Conduit");
+			bp.SetDescription(Main.IsekaiContext, "Echoes of pious hierophants grant you Channel Energy, +2 extra channel uses per day, and a +2 sacred bonus to Will saving throws and to Wisdom.");
+			Setup(bp, "a79013ff4bcd4864cb669622a29ddafb");
+			GrantFacts(bp, "a79013ff4bcd4864cb669622a29ddafb");
+			BlueprintAbilityResource resource = BlueprintTools.GetBlueprint<BlueprintAbilityResource>("5e2bba3e07c37be42909a12945c27de7");
+			if (resource != null)
+			{
+				bp.AddComponent(delegate(IncreaseResourceAmount c)
+				{
+					c.m_Resource = resource.ToReference<BlueprintAbilityResourceReference>();
+					c.Value = 2;
+				});
+			}
+			Bonus(bp, StatType.SaveWill, 2, ModifierDescriptor.Sacred);
+			Bonus(bp, StatType.Wisdom, 2, ModifierDescriptor.Sacred);
+		}));
+		Sprite selectionIcon = IconOf("8a5b5e272e5c34e41aa8b4facbb746d3");
+		Selection = Helpers.CreateBlueprint(Main.IsekaiContext, "EchoOfPastLegaciesSelection", delegate(BlueprintFeatureSelection bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Echo of Past Legacies");
+			bp.SetDescription(Main.IsekaiContext, "Echoes of past-life training and archetypal memories crystallize into passive hallmarks. Select an echo from a class legacy to permanently bolster your otherworldly abilities.");
+			((BlueprintUnitFact)bp).m_Icon = selectionIcon;
+			bp.Ranks = 1;
+			bp.AddComponent(delegate(PrerequisiteFeatureRankBelow c)
+			{
+				c.MaxRank = 1;
+			});
+			bp.AddComponent(delegate(PrerequisiteClassLevel c)
+			{
+				c.m_CharacterClass = IsekaiProtagonistClass.Get().ToReference<BlueprintCharacterClassReference>();
+				c.Level = 1;
+			});
+			bp.IsClassFeature = true;
+			bp.IgnorePrerequisites = false;
+			bp.m_AllFeatures = new BlueprintFeatureReference[0];
+			bp.m_Features = new BlueprintFeatureReference[0];
+		});
+		Selection.AddFeatures(list.Where((BlueprintFeature e) => e != null).ToArray());
+		SpecialPowerSelection.AddToSelection(Selection);
+		ContentOffering.OfferInSelection(FeatTools.Selections.BasicFeatSelection, Selection, OfferedContent.IsekaiProtagonist);
+	}
+
+	public static BlueprintFeatureSelection Get()
+	{
+		if (Selection != null)
+		{
+			return Selection;
+		}
+		return BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "EchoOfPastLegaciesSelection");
 	}
 }

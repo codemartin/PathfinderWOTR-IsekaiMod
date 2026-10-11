@@ -1,27 +1,18 @@
-﻿using Kingmaker;
-using Kingmaker.Blueprints.Area;
-using Kingmaker.ElementsSystem;
-using Kingmaker.EntitySystem.Persistence;
-using TabletopTweaks.Core.Utilities;
+using IsekaiMod.Utilities;
+using Kingmaker.Blueprints.JsonSystem;
 
-namespace IsekaiMod.Content.Arenas
+namespace IsekaiMod.Content.Arenas;
+
+[TypeId("b3a7a6f648db423c94a79e76bd96cd4b")]
+public class ActionReturnToGolarion : IsekaiGameAction
 {
-	public class ActionReturnToGolarion : GameAction
+	public override string GetCaption()
 	{
-		public override string GetCaption()
-		{
-			return "Return to Golarion";
-		}
+		return "Return to Golarion";
+	}
 
-		public override void RunAction()
-		{
-			BlueprintAreaEnterPoint blueprintAreaEnterPoint = BlueprintTools.GetBlueprint<BlueprintAreaEnterPoint>(PlanarColiseumHubManager.ColiseumReturnEnterPointGuid) ?? BlueprintTools.GetBlueprint<BlueprintAreaEnterPoint>("cdaba43118a82ff429b803ae846b35b0");
-			if (blueprintAreaEnterPoint != null)
-			{
-				Game.Instance.LoadArea(blueprintAreaEnterPoint, AutoSaveMode.None, delegate
-				{
-				});
-			}
-		}
+	protected override void RunSafely()
+	{
+		PlanarColiseumHubManager.ReturnToGolarion();
 	}
 }

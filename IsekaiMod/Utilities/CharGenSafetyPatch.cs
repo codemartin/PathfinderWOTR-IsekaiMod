@@ -1,17 +1,12 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
-using IsekaiMod.Content.Constellations;
+using IsekaiMod.Content.Guardians;
 using Kingmaker;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
-using Kingmaker.Blueprints.Classes.Prerequisites;
-using Kingmaker.Blueprints.Classes.Selection;
-using Kingmaker.DLC;
 using Kingmaker.EntitySystem.Entities;
-using Kingmaker.ResourceLinks;
-using Kingmaker.UI.MVVM._VM.CharGen.Phases.Class;
 using Kingmaker.UI.Selection;
 using Kingmaker.UI.ServiceWindow;
 using Kingmaker.UnitLogic;
@@ -19,1040 +14,724 @@ using Kingmaker.UnitLogic.Buffs;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.UnitLogic.Class.LevelUp;
 using Kingmaker.UnitLogic.Class.LevelUp.Actions;
+using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.View;
 using Kingmaker.Visual.Animation.Kingmaker;
 using Kingmaker.Visual.CharacterSystem;
 using TabletopTweaks.Core.Utilities;
 using UnityEngine;
 
-namespace IsekaiMod.Utilities
+namespace IsekaiMod.Utilities;
+
+[HarmonyPatch]
+internal static class CharGenSafetyPatch
 {
-	[HarmonyPatch]
-	internal static class CharGenSafetyPatch
+	internal const int DollRoomLayer = 15;
+
+	private static bool s_ReportedMissingOverlordPrefab;
+
+	private static bool s_ReportedMissingSlimePrefab;
+
+	private static bool s_ReportedBlankOverlordBody;
+
+	private static bool s_ReportedBlankSlimeBody;
+
+	[HarmonyPrepare]
+	private static bool Prepare()
 	{
-		private struct FeatureOwnerKey : IEquatable<FeatureOwnerKey>
+		return PatchGuard.ResolvesAll(typeof(CharGenSafetyPatch), (typeof(DollRoom), "UpdateDoll"));
+	}
+
+	[HarmonyPatch(typeof(LevelUpController), "FindPet")]
+	[HarmonyPrefix]
+	public static bool LevelUpController_FindPet_Prefix(LevelUpController __instance, BlueprintFeature feature, ref UnitEntityData __result)
+	{
+		if (__instance == null || __instance.Unit == null || feature == null)
 		{
-			public readonly BlueprintFeature Feature;
-
-			public readonly BlueprintScriptableObject Owner;
-
-			public FeatureOwnerKey(BlueprintFeature feature, BlueprintScriptableObject owner)
-			{
-				Feature = feature;
-				Owner = owner;
-			}
-
-			public bool Equals(FeatureOwnerKey other)
-			{
-				if (Feature == other.Feature)
-				{
-					return Owner == other.Owner;
-				}
-				return false;
-			}
-
-			public override bool Equals(object obj)
-			{
-				if (obj is FeatureOwnerKey other)
-				{
-					return Equals(other);
-				}
-				return false;
-			}
-
-			public override int GetHashCode()
-			{
-				return (((Feature != null) ? Feature.GetHashCode() : 0) * 397) ^ ((Owner != null) ? Owner.GetHashCode() : 0);
-			}
+			__result = null;
+			return false;
 		}
+		return true;
+	}
 
-		private struct ArchetypeOwnerKey : IEquatable<ArchetypeOwnerKey>
+	[HarmonyPatch(typeof(LevelUpController), "ApplyLevelUpActions")]
+	[HarmonyPostfix]
+	public static void LevelUpController_ApplyLevelUpActions_Postfix(LevelUpController __instance, UnitEntityData unit)
+	{
+		if (__instance != null && !(unit == null) && !(unit != __instance.Preview) && IsPreviewMode(__instance.State))
 		{
-			public readonly BlueprintArchetype Archetype;
-
-			public readonly BlueprintScriptableObject Owner;
-
-			public ArchetypeOwnerKey(BlueprintArchetype archetype, BlueprintScriptableObject owner)
-			{
-				Archetype = archetype;
-				Owner = owner;
-			}
-
-			public bool Equals(ArchetypeOwnerKey other)
-			{
-				if (Archetype == other.Archetype)
-				{
-					return Owner == other.Owner;
-				}
-				return false;
-			}
-
-			public override bool Equals(object obj)
-			{
-				if (obj is ArchetypeOwnerKey other)
-				{
-					return Equals(other);
-				}
-				return false;
-			}
-
-			public override int GetHashCode()
-			{
-				return (((Archetype != null) ? Archetype.GetHashCode() : 0) * 397) ^ ((Owner != null) ? Owner.GetHashCode() : 0);
-			}
-		}
-
-		private static readonly AccessTools.FieldRef<DollRoom, UnitEntityView> SimpleAvatarRef = AccessTools.FieldRefAccess<DollRoom, UnitEntityView>("m_SimpleAvatar");
-
-		private static readonly AccessTools.FieldRef<DollRoom, Transform> PlaceholderRef = AccessTools.FieldRefAccess<DollRoom, Transform>("m_CharacterPlaceholder");
-
-		private static readonly AccessTools.FieldRef<DollRoom, Character> AvatarRef = AccessTools.FieldRefAccess<DollRoom, Character>("m_Avatar");
-
-		private static readonly AccessTools.FieldRef<DollRoom, DollRoomCharacterController> ControllerRef = AccessTools.FieldRefAccess<DollRoom, DollRoomCharacterController>("m_CharacterController");
-
-		private static readonly AccessTools.FieldRef<DollRoom, DollCamera> CameraRef = AccessTools.FieldRefAccess<DollRoom, DollCamera>("m_Camera");
-
-		private static readonly FastInvokeHandler SetupAnimationManagerInvoke = MethodInvoker.GetHandler(AccessTools.Method(typeof(DollRoom), "SetupAnimationManager", new Type[1] { typeof(UnitAnimationManager) }));
-
-		private static BlueprintFeature _overlordHeritage;
-
-		private static BlueprintFeature _overlordForm;
-
-		private static BlueprintFeature _slimeHeritage;
-
-		private static BlueprintFeature _slimeForm;
-
-		private static BlueprintBuff _overlordBuff;
-
-		private static BlueprintBuff _slimeBuff;
-
-		private static readonly HashSet<string> OtherSubclassesForSlime = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "OverlordArchetype", "GodEmperorArchetype", "HeroArchetype", "MartialGodArchetype", "MastermindArchetype", "ShadowMonarchArchetype" };
-
-		private static readonly HashSet<string> OtherSubclassesForOverlord = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "DevourerArchetype", "GodEmperorArchetype", "HeroArchetype", "MartialGodArchetype", "MastermindArchetype", "ShadowMonarchArchetype" };
-
-		private static readonly Dictionary<FeatureOwnerKey, bool> _relevantFeatureCache = new Dictionary<FeatureOwnerKey, bool>();
-
-		private static readonly Dictionary<ArchetypeOwnerKey, bool> _relevantArchetypeCache = new Dictionary<ArchetypeOwnerKey, bool>();
-
-		private static BlueprintFeature OverlordHeritage => _overlordHeritage ?? (_overlordHeritage = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "HeteromorphicOverlordHeritage"));
-
-		private static BlueprintFeature OverlordForm => _overlordForm ?? (_overlordForm = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "SkeletalOverlordFormFeature"));
-
-		private static BlueprintFeature SlimeHeritage => _slimeHeritage ?? (_slimeHeritage = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "SlimeReincarnateHeritage"));
-
-		private static BlueprintFeature SlimeForm => _slimeForm ?? (_slimeForm = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "SlimeFormFeature"));
-
-		private static BlueprintBuff OverlordBuff => _overlordBuff ?? (_overlordBuff = BlueprintTools.GetModBlueprint<BlueprintBuff>(Main.IsekaiContext, "SkeletalOverlordFormBuff"));
-
-		private static BlueprintBuff SlimeBuff => _slimeBuff ?? (_slimeBuff = BlueprintTools.GetModBlueprint<BlueprintBuff>(Main.IsekaiContext, "SlimeFormBuff"));
-
-		[HarmonyPatch(typeof(LevelUpController), "FindPet")]
-		[HarmonyPrefix]
-		public static bool LevelUpController_FindPet_Prefix(LevelUpController __instance, BlueprintFeature feature, ref UnitEntityData __result)
-		{
-			if (__instance == null || __instance.Unit == null || feature == null)
-			{
-				__result = null;
-				return false;
-			}
-			return true;
-		}
-
-		[HarmonyPatch(typeof(LevelUpController), "ApplyLevelUpActions")]
-		[HarmonyPostfix]
-		public static void LevelUpController_ApplyLevelUpActions_Postfix(LevelUpController __instance, UnitEntityData unit)
-		{
-			if (__instance != null && unit?.Descriptor != null && __instance.State != null && (__instance.State.Mode == LevelUpState.CharBuildMode.CharGen || __instance.State.Mode == LevelUpState.CharBuildMode.Respec))
-			{
-				if (__instance.State.Mode == LevelUpState.CharBuildMode.CharGen)
-				{
-					TimelineManager.ClearActiveRunArchetype();
-				}
-				DollRoom dollRoom = Game.Instance?.UI?.Common?.DollRoom;
-				if (dollRoom != null)
-				{
-					UpdateDollRoomPreview(dollRoom);
-				}
-			}
-		}
-
-		[HarmonyPatch(typeof(CharGenClassPhaseVM), "OnBeginDetailedView")]
-		[HarmonyPostfix]
-		public static void CharGenClassPhaseVM_OnBeginDetailedView_Postfix(CharGenClassPhaseVM __instance)
-		{
-			if (__instance != null && __instance.Mode == LevelUpState.CharBuildMode.CharGen)
-			{
-				TimelineManager.ClearActiveRunArchetype();
-			}
-		}
-
-		[HarmonyPatch(typeof(DollRoom), "UpdateDoll")]
-		[HarmonyPostfix]
-		public static void DollRoom_UpdateDoll_Postfix(DollRoom __instance)
-		{
-			UpdateDollRoomPreview(__instance);
-		}
-
-		[HarmonyPatch(typeof(DollRoom), "SetupInfo")]
-		[HarmonyPostfix]
-		public static void DollRoom_SetupInfo_Postfix(DollRoom __instance)
-		{
-			UpdateDollRoomPreview(__instance);
-		}
-
-		[HarmonyPatch(typeof(DollRoom), "UpdateCharacter")]
-		[HarmonyPostfix]
-		public static void DollRoom_UpdateCharacter_Postfix(DollRoom __instance)
-		{
-			UpdateDollRoomPreview(__instance);
-		}
-
-		[HarmonyPatch(typeof(DollRoom), "Cleanup")]
-		[HarmonyPrefix]
-		public static void DollRoom_Cleanup_Prefix(DollRoom __instance)
-		{
-			try
-			{
-				UnitEntityView unitEntityView = SimpleAvatarRef(__instance);
-				if (unitEntityView != null && (unitEntityView.name == "OverlordPreviewAvatar" || unitEntityView.name == "SlimePreviewAvatar"))
-				{
-					UnityEngine.Object.Destroy(unitEntityView.gameObject);
-					SimpleAvatarRef(__instance) = null;
-				}
-				Transform transform = PlaceholderRef(__instance);
-				if (transform != null)
-				{
-					transform.localScale = Vector3.one;
-				}
-			}
-			catch (Exception arg)
-			{
-				Main.Log($"DollRoom_Cleanup_Prefix exception: {arg}");
-			}
-		}
-
-		[HarmonyPatch(typeof(LevelUpController), "Commit")]
-		[HarmonyPostfix]
-		public static void LevelUpController_Commit_Postfix(LevelUpController __instance)
-		{
-			if (__instance?.Unit?.Descriptor == null || (__instance.State != null && __instance.State.Mode != LevelUpState.CharBuildMode.CharGen && __instance.State.Mode != LevelUpState.CharBuildMode.Respec))
-			{
-				return;
-			}
-			UnitDescriptor descriptor = __instance.Unit.Descriptor;
-			if (OverlordBuff != null && descriptor.Buffs.HasFact(OverlordBuff))
-			{
-				descriptor.Buffs.RemoveFact(OverlordBuff);
-			}
-			if (SlimeBuff != null && descriptor.Buffs.HasFact(SlimeBuff))
-			{
-				descriptor.Buffs.RemoveFact(SlimeBuff);
-			}
 			DollRoom dollRoom = Game.Instance?.UI?.Common?.DollRoom;
 			if (dollRoom != null)
 			{
-				UnitEntityView unitEntityView = SimpleAvatarRef(dollRoom);
-				if (unitEntityView != null && (unitEntityView.name == "OverlordPreviewAvatar" || unitEntityView.name == "SlimePreviewAvatar"))
+				UpdateDollRoomPreview(dollRoom);
+			}
+		}
+	}
+
+	[HarmonyPatch(typeof(DollRoom), "UpdateDoll")]
+	[HarmonyPostfix]
+	public static void DollRoom_UpdateDoll_Postfix(DollRoom __instance)
+	{
+		UpdateDollRoomPreview(__instance);
+	}
+
+	[HarmonyPatch(typeof(DollRoom), "SetupInfo")]
+	[HarmonyPostfix]
+	public static void DollRoom_SetupInfo_Postfix(DollRoom __instance)
+	{
+		UpdateDollRoomPreview(__instance);
+	}
+
+	[HarmonyPatch(typeof(DollRoom), "UpdateCharacter")]
+	[HarmonyPostfix]
+	public static void DollRoom_UpdateCharacter_Postfix(DollRoom __instance)
+	{
+		UpdateDollRoomPreview(__instance);
+	}
+
+	[HarmonyPatch(typeof(DollRoom), "Cleanup")]
+	[HarmonyPrefix]
+	public static void DollRoom_Cleanup_Prefix(DollRoom __instance)
+	{
+		try
+		{
+			UnitEntityView value = Traverse.Create(__instance).Field("m_SimpleAvatar").GetValue<UnitEntityView>();
+			if (IsModPreview(value))
+			{
+				UnityEngine.Object.Destroy(value.gameObject);
+				Traverse.Create(__instance).Field("m_SimpleAvatar").SetValue(null);
+			}
+		}
+		catch (Exception arg)
+		{
+			Main.Log($"DollRoom_Cleanup_Prefix exception: {arg}");
+		}
+	}
+
+	private static DollRoomPreviewLayerKeeper PreviewMarkerOf(UnitEntityView view)
+	{
+		if (view == null)
+		{
+			return null;
+		}
+		try
+		{
+			return view.GetComponent<DollRoomPreviewLayerKeeper>();
+		}
+		catch
+		{
+			return null;
+		}
+	}
+
+	private static bool IsModPreview(UnitEntityView view)
+	{
+		return PreviewMarkerOf(view) != null;
+	}
+
+	[HarmonyPatch(typeof(LevelUpController), "Commit")]
+	[HarmonyFinalizer]
+	public static void LevelUpController_Commit_Finalizer(LevelUpController __instance)
+	{
+		RemoveCharGenPreview(__instance);
+	}
+
+	public static void RemoveCharGenPreview(LevelUpController controller)
+	{
+		try
+		{
+			if (controller?.Unit?.Descriptor != null && (controller.State == null || controller.State.Mode == LevelUpState.CharBuildMode.CharGen || controller.State.Mode == LevelUpState.CharBuildMode.Respec))
+			{
+				RemoveCharGenPreviewForms(controller);
+			}
+		}
+		catch (Exception arg)
+		{
+			Main.Log($"RemoveCharGenPreview exception: {arg}");
+		}
+	}
+
+	private static void RemoveCharGenPreviewForms(LevelUpController controller)
+	{
+		UnitDescriptor descriptor = controller.Unit.Descriptor;
+		BlueprintBuff modBlueprint = BlueprintTools.GetModBlueprint<BlueprintBuff>(Main.IsekaiContext, "SkeletalOverlordFormBuff");
+		BlueprintBuff modBlueprint2 = BlueprintTools.GetModBlueprint<BlueprintBuff>(Main.IsekaiContext, "SlimeFormBuff");
+		if (modBlueprint != null && descriptor.Buffs.HasFact(modBlueprint))
+		{
+			descriptor.Buffs.RemoveFact(modBlueprint);
+		}
+		if (modBlueprint2 != null && descriptor.Buffs.HasFact(modBlueprint2))
+		{
+			descriptor.Buffs.RemoveFact(modBlueprint2);
+		}
+		DollRoom dollRoom = Game.Instance?.UI?.Common?.DollRoom;
+		if (dollRoom != null)
+		{
+			UnitEntityView value = Traverse.Create(dollRoom).Field("m_SimpleAvatar").GetValue<UnitEntityView>();
+			if (IsModPreview(value))
+			{
+				UnityEngine.Object.Destroy(value.gameObject);
+				Traverse.Create(dollRoom).Field("m_SimpleAvatar").SetValue(null);
+			}
+		}
+	}
+
+	public static bool IsOverlord(LevelUpController controller, UnitDescriptor d, LevelUpState state)
+	{
+		if (d != null)
+		{
+			BlueprintFeature modBlueprint = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "HeteromorphicOverlordHeritage");
+			BlueprintFeature modBlueprint2 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "SkeletalOverlordFormFeature");
+			if (modBlueprint != null && d.HasFact(modBlueprint))
+			{
+				return true;
+			}
+			if (modBlueprint2 != null && d.HasFact(modBlueprint2))
+			{
+				return true;
+			}
+			if (d.Progression.Classes.Any((ClassData c) => c.Archetypes.Any((BlueprintArchetype a) => a.name == "OverlordArchetype")))
+			{
+				return true;
+			}
+		}
+		if (controller?.TryGetSeletedArchetype()?.name == "OverlordArchetype")
+		{
+			return true;
+		}
+		if (state?.Selections != null)
+		{
+			foreach (FeatureSelectionState selection in state.Selections)
+			{
+				FeatureSelectionState featureSelectionState = selection;
+				while (featureSelectionState != null)
 				{
-					UnityEngine.Object.Destroy(unitEntityView.gameObject);
-					SimpleAvatarRef(dollRoom) = null;
-				}
-				Transform transform = PlaceholderRef(dollRoom);
-				if (transform != null)
-				{
-					transform.localScale = Vector3.one;
+					string text = featureSelectionState.SelectedItem?.Feature?.name;
+					if (text == "HeteromorphicOverlordHeritage" || text == "SkeletalOverlordFormFeature")
+					{
+						return true;
+					}
+					featureSelectionState = featureSelectionState.Next;
 				}
 			}
 		}
-
-		public static bool IsOtherIsekaiArchetype(LevelUpController controller, UnitDescriptor d, LevelUpState state)
+		if (controller?.LevelUpActions != null)
 		{
-			if (d != null && d.Progression.Classes.Any((ClassData c) => c.Archetypes.Any((BlueprintArchetype a) => OtherSubclassesForSlime.Contains(a.name))))
+			foreach (ILevelUpAction levelUpAction in controller.LevelUpActions)
 			{
-				return true;
-			}
-			string text = controller?.TryGetSeletedArchetype()?.name;
-			if (!string.IsNullOrEmpty(text) && OtherSubclassesForSlime.Contains(text))
-			{
-				return true;
-			}
-			if (controller?.LevelUpActions != null)
-			{
-				foreach (ILevelUpAction levelUpAction in controller.LevelUpActions)
+				if (levelUpAction is SelectFeature selectFeature)
 				{
-					if (levelUpAction is AddArchetype { Archetype: not null } addArchetype && OtherSubclassesForSlime.Contains(addArchetype.Archetype.name))
+					string text2 = selectFeature.Item?.Feature?.name;
+					if (text2 == "HeteromorphicOverlordHeritage" || text2 == "SkeletalOverlordFormFeature")
 					{
 						return true;
 					}
 				}
-			}
-			return false;
-		}
-
-		public static bool IsOtherIsekaiArchetypeForOverlord(LevelUpController controller, UnitDescriptor d, LevelUpState state)
-		{
-			if (d != null && d.Progression.Classes.Any((ClassData c) => c.Archetypes.Any((BlueprintArchetype a) => OtherSubclassesForOverlord.Contains(a.name))))
-			{
-				return true;
-			}
-			string text = controller?.TryGetSeletedArchetype()?.name;
-			if (!string.IsNullOrEmpty(text) && OtherSubclassesForOverlord.Contains(text))
-			{
-				return true;
-			}
-			if (controller?.LevelUpActions != null)
-			{
-				foreach (ILevelUpAction levelUpAction in controller.LevelUpActions)
+				if (levelUpAction is AddArchetype addArchetype && addArchetype.Archetype?.name == "OverlordArchetype")
 				{
-					if (levelUpAction is AddArchetype { Archetype: not null } addArchetype && OtherSubclassesForOverlord.Contains(addArchetype.Archetype.name))
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	public static bool IsSlime(LevelUpController controller, UnitDescriptor d, LevelUpState state)
+	{
+		if (d != null)
+		{
+			BlueprintFeature modBlueprint = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "SlimeReincarnateHeritage");
+			BlueprintFeature modBlueprint2 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "SlimeFormFeature");
+			if (modBlueprint != null && d.HasFact(modBlueprint))
+			{
+				return true;
+			}
+			if (modBlueprint2 != null && d.HasFact(modBlueprint2))
+			{
+				return true;
+			}
+			if (d.Progression.Classes.Any((ClassData c) => c.Archetypes.Any((BlueprintArchetype a) => a.name == "DevourerArchetype")))
+			{
+				return true;
+			}
+		}
+		if (controller?.TryGetSeletedArchetype()?.name == "DevourerArchetype")
+		{
+			return true;
+		}
+		if (state?.Selections != null)
+		{
+			foreach (FeatureSelectionState selection in state.Selections)
+			{
+				FeatureSelectionState featureSelectionState = selection;
+				while (featureSelectionState != null)
+				{
+					string text = featureSelectionState.SelectedItem?.Feature?.name;
+					if (text == "SlimeReincarnateHeritage" || text == "SlimeFormFeature")
+					{
+						return true;
+					}
+					featureSelectionState = featureSelectionState.Next;
+				}
+			}
+		}
+		if (controller?.LevelUpActions != null)
+		{
+			foreach (ILevelUpAction levelUpAction in controller.LevelUpActions)
+			{
+				if (levelUpAction is SelectFeature selectFeature)
+				{
+					string text2 = selectFeature.Item?.Feature?.name;
+					if (text2 == "SlimeReincarnateHeritage" || text2 == "SlimeFormFeature")
 					{
 						return true;
 					}
 				}
+				if (levelUpAction is AddArchetype addArchetype && addArchetype.Archetype?.name == "DevourerArchetype")
+				{
+					return true;
+				}
 			}
+		}
+		return false;
+	}
+
+	internal static bool IsPreviewMode(LevelUpState state)
+	{
+		if (state == null)
+		{
 			return false;
 		}
-
-		public static bool IsOverlord(LevelUpController controller, UnitDescriptor d, LevelUpState state)
+		if (state.Mode != LevelUpState.CharBuildMode.CharGen && state.Mode != LevelUpState.CharBuildMode.Respec)
 		{
-			if (d != null)
-			{
-				if (OverlordHeritage != null && d.HasFact(OverlordHeritage))
-				{
-					return true;
-				}
-				if (OverlordForm != null && d.HasFact(OverlordForm))
-				{
-					return true;
-				}
-				if (d.Progression.Classes.Any((ClassData c) => c.Archetypes.Any((BlueprintArchetype a) => a.name == "OverlordArchetype")))
-				{
-					return true;
-				}
-			}
-			if (controller?.TryGetSeletedArchetype()?.name == "OverlordArchetype")
-			{
-				return true;
-			}
-			if (state?.Selections != null)
-			{
-				foreach (FeatureSelectionState selection in state.Selections)
-				{
-					FeatureSelectionState featureSelectionState = selection;
-					while (featureSelectionState != null)
-					{
-						string text = featureSelectionState.SelectedItem?.Feature?.name;
-						if (text == "HeteromorphicOverlordHeritage" || text == "SkeletalOverlordFormFeature")
-						{
-							return true;
-						}
-						featureSelectionState = featureSelectionState.Next;
-					}
-				}
-			}
-			if (controller?.LevelUpActions != null)
-			{
-				foreach (ILevelUpAction levelUpAction in controller.LevelUpActions)
-				{
-					if (levelUpAction is SelectFeature selectFeature)
-					{
-						string text2 = selectFeature.Item?.Feature?.name;
-						if (text2 == "HeteromorphicOverlordHeritage" || text2 == "SkeletalOverlordFormFeature")
-						{
-							return true;
-						}
-					}
-					if (levelUpAction is AddArchetype addArchetype && addArchetype.Archetype?.name == "OverlordArchetype")
-					{
-						return true;
-					}
-				}
-			}
-			return false;
+			return state.Mode == LevelUpState.CharBuildMode.LevelUp;
 		}
+		return true;
+	}
 
-		public static bool IsSlime(LevelUpController controller, UnitDescriptor d, LevelUpState state)
+	internal static string PreviewPolymorphBuffGuid(bool overlord)
+	{
+		if (!overlord)
 		{
-			if (d != null)
-			{
-				if (SlimeHeritage != null && d.HasFact(SlimeHeritage))
-				{
-					return true;
-				}
-				if (SlimeForm != null && d.HasFact(SlimeForm))
-				{
-					return true;
-				}
-				if (d.Progression.Classes.Any((ClassData c) => c.Archetypes.Any((BlueprintArchetype a) => a.name == "DevourerArchetype")))
-				{
-					return true;
-				}
-			}
-			if (controller?.TryGetSeletedArchetype()?.name == "DevourerArchetype")
-			{
-				return true;
-			}
-			if (state?.Selections != null)
-			{
-				foreach (FeatureSelectionState selection in state.Selections)
-				{
-					FeatureSelectionState featureSelectionState = selection;
-					while (featureSelectionState != null)
-					{
-						string text = featureSelectionState.SelectedItem?.Feature?.name;
-						if (text == "SlimeReincarnateHeritage" || text == "SlimeFormFeature")
-						{
-							return true;
-						}
-						featureSelectionState = featureSelectionState.Next;
-					}
-				}
-			}
-			if (controller?.LevelUpActions != null)
-			{
-				foreach (ILevelUpAction levelUpAction in controller.LevelUpActions)
-				{
-					if (levelUpAction is SelectFeature selectFeature)
-					{
-						string text2 = selectFeature.Item?.Feature?.name;
-						if (text2 == "SlimeReincarnateHeritage" || text2 == "SlimeFormFeature")
-						{
-							return true;
-						}
-					}
-					if (levelUpAction is AddArchetype addArchetype && addArchetype.Archetype?.name == "DevourerArchetype")
-					{
-						return true;
-					}
-				}
-			}
-			return false;
+			return "81bf22b0af505554f806b18822da197a";
 		}
+		return "e2013ae282a346c0b368559107b52f5b";
+	}
 
-		public static void UpdateDollRoomPreview(DollRoom dollRoom)
+	internal static string PreviewFormBuffName(bool overlord)
+	{
+		if (!overlord)
 		{
-			if (dollRoom == null)
-			{
-				return;
-			}
-			try
-			{
-				LevelUpController levelUpController = Game.Instance?.LevelUpController;
-				if (levelUpController == null || levelUpController.State == null || (levelUpController.State.Mode != LevelUpState.CharBuildMode.CharGen && levelUpController.State.Mode != LevelUpState.CharBuildMode.Respec))
-				{
-					return;
-				}
-				UnitEntityView unitEntityView = SimpleAvatarRef(dollRoom);
-				bool flag = IsOverlord(levelUpController, levelUpController.Preview?.Descriptor, levelUpController.State) || IsOverlord(levelUpController, levelUpController.Unit?.Descriptor, levelUpController.State);
-				bool flag2 = !flag && (IsSlime(levelUpController, levelUpController.Preview?.Descriptor, levelUpController.State) || IsSlime(levelUpController, levelUpController.Unit?.Descriptor, levelUpController.State));
-				if (!flag && !flag2)
-				{
-					if (!(unitEntityView == null))
-					{
-						if (unitEntityView.name == "OverlordPreviewAvatar" || unitEntityView.name == "SlimePreviewAvatar")
-						{
-							UnityEngine.Object.Destroy(unitEntityView.gameObject);
-							SimpleAvatarRef(dollRoom) = null;
-						}
-						Transform transform = PlaceholderRef(dollRoom);
-						if (transform != null)
-						{
-							transform.localScale = Vector3.one;
-						}
-						Character character = AvatarRef(dollRoom);
-						if (character != null && !character.gameObject.activeSelf)
-						{
-							character.gameObject.SetActive(value: true);
-						}
-					}
-				}
-				else
-				{
-					if ((levelUpController.Preview ?? levelUpController.Unit)?.Descriptor == null)
-					{
-						return;
-					}
-					Transform transform2 = PlaceholderRef(dollRoom);
-					if (transform2 == null)
-					{
-						return;
-					}
-					Character character2 = AvatarRef(dollRoom);
-					string text = (flag ? "OverlordPreviewAvatar" : "SlimePreviewAvatar");
-					if (unitEntityView != null && unitEntityView.name == text && unitEntityView.gameObject.activeSelf)
-					{
-						if (character2 != null && character2.gameObject.activeSelf)
-						{
-							character2.gameObject.SetActive(value: false);
-						}
-						return;
-					}
-					if (unitEntityView != null && (unitEntityView.name == "OverlordPreviewAvatar" || unitEntityView.name == "SlimePreviewAvatar"))
-					{
-						UnityEngine.Object.Destroy(unitEntityView.gameObject);
-						SimpleAvatarRef(dollRoom) = null;
-					}
-					UnitEntityView unitEntityView2 = null;
-					if (flag)
-					{
-						Polymorph polymorph = OverlordBuff?.GetComponent<Polymorph>();
-						if (polymorph != null)
-						{
-							try
-							{
-								unitEntityView2 = polymorph.m_Prefab?.Load();
-							}
-							catch
-							{
-							}
-						}
-						if (unitEntityView2 == null)
-						{
-							try
-							{
-								unitEntityView2 = new UnitViewLink
-								{
-									AssetId = "faff8234f920503479d069ce93800862"
-								}.Load();
-							}
-							catch
-							{
-							}
-						}
-						if (unitEntityView2 == null)
-						{
-							BlueprintUnit blueprintUnit = BlueprintSafetyExtensions.SafeGetBlueprint<BlueprintUnit>("50baa156cd334bbd8cd6deef65b1c12d") ?? BlueprintSafetyExtensions.SafeGetBlueprint<BlueprintUnit>("babbc46e076b78f408d8d87643daea3e");
-							if (blueprintUnit?.Prefab != null)
-							{
-								try
-								{
-									unitEntityView2 = blueprintUnit.Prefab.Load();
-								}
-								catch
-								{
-								}
-							}
-						}
-					}
-					else if (flag2)
-					{
-						Polymorph polymorph2 = SlimeBuff?.GetComponent<Polymorph>();
-						if (polymorph2 != null)
-						{
-							try
-							{
-								unitEntityView2 = polymorph2.m_Prefab?.Load();
-							}
-							catch
-							{
-							}
-						}
-						if (unitEntityView2 == null)
-						{
-							try
-							{
-								unitEntityView2 = new UnitViewLink
-								{
-									AssetId = "230a6b88cd620d04d811f0b8cefc4e42"
-								}.Load();
-							}
-							catch
-							{
-							}
-						}
-						if (unitEntityView2 == null)
-						{
-							BlueprintUnit blueprintUnit2 = BlueprintSafetyExtensions.SafeGetBlueprint<BlueprintUnit>("a2c5957b102919d45851d45903b4eb8d") ?? BlueprintSafetyExtensions.SafeGetBlueprint<BlueprintUnit>("46f09f7a14c1e084bb091d18ab385db6");
-							if (blueprintUnit2?.Prefab != null)
-							{
-								try
-								{
-									unitEntityView2 = blueprintUnit2.Prefab.Load();
-								}
-								catch
-								{
-								}
-							}
-						}
-					}
-					if (unitEntityView2 == null)
-					{
-						return;
-					}
-					if (character2 != null)
-					{
-						character2.gameObject.SetActive(value: false);
-					}
-					UnitEntityView unitEntityView3 = UnityEngine.Object.Instantiate(unitEntityView2);
-					unitEntityView3.name = text;
-					unitEntityView3.IsInDollRoom = true;
-					unitEntityView3.SetupCreaturesTerrainAlignment();
-					CharacterUIDecal componentInChildren = unitEntityView3.GetComponentInChildren<CharacterUIDecal>();
-					if (componentInChildren != null)
-					{
-						UnityEngine.Object.Destroy(componentInChildren.gameObject);
-					}
-					if (unitEntityView3.BloodyController != null)
-					{
-						if (unitEntityView3.BloodyController.MaterialController != null)
-						{
-							UnityEngine.Object.DestroyImmediate(unitEntityView3.BloodyController.MaterialController);
-						}
-						UnityEngine.Object.DestroyImmediate(unitEntityView3.BloodyController);
-						unitEntityView3.BloodyController = null;
-					}
-					if (transform2 != null)
-					{
-						transform2.localScale = Vector3.one;
-						unitEntityView3.transform.SetParent(transform2, worldPositionStays: false);
-					}
-					unitEntityView3.transform.localPosition = Vector3.zero;
-					unitEntityView3.transform.localRotation = Quaternion.identity;
-					if (flag2)
-					{
-						unitEntityView3.transform.localScale = new Vector3(0.75f, 0.75f, 0.75f);
-					}
-					else if (unitEntityView2.OverrideDollRoomScale != Vector3.zero)
-					{
-						unitEntityView3.transform.localScale = unitEntityView2.OverrideDollRoomScale;
-					}
-					else
-					{
-						unitEntityView3.transform.localScale = Vector3.one;
-					}
-					SetLayerRecursively(unitEntityView3.gameObject, 15);
-					unitEntityView3.gameObject.SetActive(value: true);
-					Renderer[] componentsInChildren = unitEntityView3.GetComponentsInChildren<Renderer>(includeInactive: true);
-					foreach (Renderer renderer in componentsInChildren)
-					{
-						if (renderer != null)
-						{
-							renderer.enabled = true;
-							renderer.gameObject.layer = 15;
-							if (renderer is SkinnedMeshRenderer skinnedMeshRenderer)
-							{
-								skinnedMeshRenderer.updateWhenOffscreen = true;
-							}
-						}
-					}
-					foreach (Behaviour vfxBehaviour in unitEntityView3.VfxBehaviours)
-					{
-						if (vfxBehaviour != null)
-						{
-							vfxBehaviour.enabled = true;
-							vfxBehaviour.gameObject.layer = 15;
-						}
-					}
-					SimpleAvatarRef(dollRoom) = unitEntityView3;
-					DollRoomCharacterController dollRoomCharacterController = ControllerRef(dollRoom);
-					if (dollRoomCharacterController != null && transform2 != null)
-					{
-						dollRoomCharacterController.Character = transform2;
-					}
-					DollCamera dollCamera = CameraRef(dollRoom);
-					if (dollCamera != null)
-					{
-						string text2 = unitEntityView3.CharacterAvatar?.Skeleton?.DollRoomZoomPreset?.TargetBoneName;
-						Transform transform3 = ((!string.IsNullOrEmpty(text2)) ? FindChildRecursive(unitEntityView3.transform, text2) : null);
-						if (transform3 != null)
-						{
-							dollCamera.LookAt(transform3, unitEntityView3.CharacterAvatar?.Skeleton?.DollRoomZoomPreset);
-						}
-						else
-						{
-							dollCamera.LookAt(unitEntityView3.transform);
-						}
-					}
-					UnitAnimationManager componentInChildren2 = unitEntityView3.GetComponentInChildren<UnitAnimationManager>();
-					if (componentInChildren2 != null)
-					{
-						try
-						{
-							SetupAnimationManagerInvoke?.Invoke(dollRoom, componentInChildren2);
-							return;
-						}
-						catch (Exception arg)
-						{
-							Main.Log($"SetupAnimationManager exception: {arg}");
-							return;
-						}
-					}
-				}
-			}
-			catch (Exception arg2)
-			{
-				Main.Log($"UpdateDollRoomPreview exception: {arg2}");
-			}
+			return "SlimeFormBuff";
 		}
+		return "SkeletalOverlordFormBuff";
+	}
 
-		private static Transform FindChildRecursive(Transform parent, string name)
+	internal static Polymorph PreviewPolymorph(bool overlord)
+	{
+		return ModelPolymorphOf(FactTreeSearch.FirstMatch(overlord ? BlueprintTools.GetModBlueprint<BlueprintBuff>(Main.IsekaiContext, "SkeletalOverlordFormBuff") : BlueprintTools.GetModBlueprint<BlueprintBuff>(Main.IsekaiContext, "SlimeFormBuff"), GrantedBuffs, (BlueprintBuff buff) => ModelPolymorphOf(buff) != null)) ?? ModelPolymorphOf(BlueprintTools.GetBlueprint<BlueprintBuff>(PreviewPolymorphBuffGuid(overlord)));
+	}
+
+	internal static float PreviewModelScale(bool overlord, Gender gender)
+	{
+		try
 		{
-			if (parent == null || string.IsNullOrEmpty(name))
+			return GuardianVisualScale.PolymorphFactor(PreviewPolymorph(overlord), gender);
+		}
+		catch
+		{
+			return 1f;
+		}
+	}
+
+	private static Polymorph ModelPolymorphOf(BlueprintBuff buff)
+	{
+		try
+		{
+			Polymorph polymorph = buff?.GetComponent<Polymorph>();
+			if (polymorph == null)
 			{
 				return null;
 			}
-			if (parent.name == name)
-			{
-				return parent;
-			}
-			for (int i = 0; i < parent.childCount; i++)
-			{
-				Transform transform = FindChildRecursive(parent.GetChild(i), name);
-				if (transform != null)
-				{
-					return transform;
-				}
-			}
+			return (polymorph.m_Prefab != null && polymorph.m_Prefab.Exists()) ? polymorph : null;
+		}
+		catch
+		{
 			return null;
 		}
+	}
 
-		private static void SetLayerRecursively(GameObject obj, int layer)
+	private static IEnumerable<BlueprintBuff> GrantedBuffs(BlueprintBuff buff)
+	{
+		List<BlueprintBuff> list = new List<BlueprintBuff>();
+		BlueprintComponent[] array = buff?.ComponentsArray ?? new BlueprintComponent[0];
+		for (int i = 0; i < array.Length; i++)
 		{
-			if (obj == null)
+			AddFacts addFacts = array[i] as AddFacts;
+			if (addFacts?.m_Facts == null)
 			{
-				return;
+				continue;
 			}
-			obj.layer = layer;
-			for (int i = 0; i < obj.transform.childCount; i++)
+			BlueprintUnitFactReference[] facts = addFacts.m_Facts;
+			foreach (BlueprintUnitFactReference blueprintUnitFactReference in facts)
 			{
-				Transform child = obj.transform.GetChild(i);
-				if (child != null)
+				if (blueprintUnitFactReference != null && !(blueprintUnitFactReference.Guid == BlueprintGuid.Empty))
 				{
-					SetLayerRecursively(child.gameObject, layer);
+					BlueprintBuff blueprintBuff;
+					try
+					{
+						blueprintBuff = ResourcesLibrary.TryGetBlueprint(blueprintUnitFactReference.Guid) as BlueprintBuff;
+					}
+					catch
+					{
+						blueprintBuff = null;
+					}
+					if (blueprintBuff != null)
+					{
+						list.Add(blueprintBuff);
+					}
 				}
 			}
 		}
+		return list;
+	}
 
-		[HarmonyPatch(typeof(CharGenClassPhaseVM), "MeetsPrerequisites", new Type[]
+	private static UnitEntityView LoadPreviewPrefab(bool overlord, UnitEntityData unit)
+	{
+		Polymorph polymorph = PreviewPolymorph(overlord);
+		UnitEntityView unitEntityView = GuardianVisualScale.PrefabFor(polymorph, unit?.Gender ?? Gender.Male)?.Load();
+		if (unitEntityView == null && (overlord ? (!s_ReportedMissingOverlordPrefab) : (!s_ReportedMissingSlimePrefab)))
 		{
-			typeof(LevelUpController),
-			typeof(BlueprintCharacterClass)
-		})]
-		[HarmonyPrefix]
-		public static bool CharGenClassPhaseVM_MeetsPrerequisites_Prefix(LevelUpController controller, BlueprintCharacterClass characterClass, ref bool __result)
-		{
-			if (controller == null || characterClass == null)
+			Main.Log("[CharGenPreview] No " + (overlord ? "Overlord" : "Slime") + " preview model: neither " + PreviewFormBuffName(overlord) + " nor anything it grants, nor the fallback buff " + PreviewPolymorphBuffGuid(overlord) + ", " + ((polymorph == null) ? "carries a Polymorph naming a model." : "has a Polymorph whose prefab did not load."));
+			if (overlord)
 			{
-				__result = false;
-				return false;
+				s_ReportedMissingOverlordPrefab = true;
 			}
-			UnitEntityData unitEntityData = controller.Unit ?? controller.Preview;
-			if (unitEntityData == null || unitEntityData.Descriptor == null || controller.State == null)
+			else
 			{
-				__result = false;
-				return false;
+				s_ReportedMissingSlimePrefab = true;
+			}
+		}
+		return unitEntityView;
+	}
+
+	public static void UpdateDollRoomPreview(DollRoom dollRoom)
+	{
+		if (dollRoom == null)
+		{
+			return;
+		}
+		UnitEntityView failedPreview = null;
+		Character doll = null;
+		try
+		{
+			LevelUpController levelUpController = Game.Instance?.LevelUpController;
+			UnitEntityData unitEntityData = ((levelUpController != null && IsPreviewMode(levelUpController.State) && !levelUpController.Committed && !levelUpController.Stopped) ? (levelUpController.Preview ?? levelUpController.Unit) : null);
+			bool flag = unitEntityData?.Descriptor != null && (IsOverlord(levelUpController, levelUpController.Preview?.Descriptor, levelUpController.State) || IsOverlord(levelUpController, levelUpController.Unit?.Descriptor, levelUpController.State));
+			bool flag2 = unitEntityData?.Descriptor != null && !flag && (IsSlime(levelUpController, levelUpController.Preview?.Descriptor, levelUpController.State) || IsSlime(levelUpController, levelUpController.Unit?.Descriptor, levelUpController.State));
+			Transform value = Traverse.Create(dollRoom).Field("m_CharacterPlaceholder").GetValue<Transform>();
+			if (value == null)
+			{
+				return;
+			}
+			UnitEntityView value2 = Traverse.Create(dollRoom).Field("m_SimpleAvatar").GetValue<UnitEntityView>();
+			Character value3 = Traverse.Create(dollRoom).Field("m_Avatar").GetValue<Character>();
+			if (!flag && !flag2)
+			{
+				if (IsModPreview(value2))
+				{
+					UnityEngine.Object.Destroy(value2.gameObject);
+					Traverse.Create(dollRoom).Field("m_SimpleAvatar").SetValue(null);
+					if (value3 != null && !value3.gameObject.activeSelf)
+					{
+						value3.gameObject.SetActive(value: true);
+					}
+				}
+				return;
+			}
+			string text = (flag ? "OverlordPreviewAvatar" : "SlimePreviewAvatar");
+			DollRoomPreviewLayerKeeper dollRoomPreviewLayerKeeper = PreviewMarkerOf(value2);
+			if (dollRoomPreviewLayerKeeper != null && dollRoomPreviewLayerKeeper.FormName == text && value2.gameObject.activeSelf)
+			{
+				if (value3 != null && value3.gameObject.activeSelf)
+				{
+					value3.gameObject.SetActive(value: false);
+				}
+				return;
+			}
+			if (dollRoomPreviewLayerKeeper != null)
+			{
+				UnityEngine.Object.Destroy(value2.gameObject);
+				Traverse.Create(dollRoom).Field("m_SimpleAvatar").SetValue(null);
+			}
+			if (value3 != null && !value3.gameObject.activeSelf)
+			{
+				doll = value3;
+			}
+			if (GaveUpOnBody(flag))
+			{
+				RestoreDoll(ref failedPreview, ref doll);
+				return;
+			}
+			UnitEntityView unitEntityView = LoadPreviewPrefab(flag, unitEntityData);
+			if (unitEntityView == null)
+			{
+				RestoreDoll(ref failedPreview, ref doll);
+				return;
+			}
+			if (value3 != null)
+			{
+				value3.gameObject.SetActive(value: false);
+				doll = value3;
+			}
+			UnitEntityView unitEntityView2 = UnityEngine.Object.Instantiate(unitEntityView, value, worldPositionStays: false);
+			failedPreview = unitEntityView2;
+			unitEntityView2.name = text;
+			unitEntityView2.gameObject.AddComponent<DollRoomPreviewLayerKeeper>().FormName = text;
+			unitEntityView2.IsInDollRoom = true;
+			unitEntityView2.SetupCreaturesTerrainAlignment();
+			BorrowedModelFixes.RepairDanglingBones(unitEntityView2.gameObject);
+			CharacterUIDecal componentInChildren = unitEntityView2.GetComponentInChildren<CharacterUIDecal>();
+			if (componentInChildren != null)
+			{
+				UnityEngine.Object.Destroy(componentInChildren.gameObject);
+			}
+			if (unitEntityView2.BloodyController != null)
+			{
+				if (unitEntityView2.BloodyController.MaterialController != null)
+				{
+					UnityEngine.Object.DestroyImmediate(unitEntityView2.BloodyController.MaterialController);
+				}
+				UnityEngine.Object.DestroyImmediate(unitEntityView2.BloodyController);
+				unitEntityView2.BloodyController = null;
+			}
+			unitEntityView2.transform.localPosition = Vector3.zero;
+			unitEntityView2.transform.localRotation = Quaternion.identity;
+			Vector3 vector = unitEntityView.transform.localScale;
+			if (unitEntityView.OverrideDollRoomScale != Vector3.zero)
+			{
+				vector = Vector3.Scale(vector, unitEntityView.OverrideDollRoomScale);
+			}
+			vector *= PreviewModelScale(flag, unitEntityData?.Gender ?? Gender.Male);
+			unitEntityView2.transform.localScale = vector;
+			unitEntityView2.gameObject.SetActive(value: true);
+			bool flag3 = PrepareDollRoomBody(unitEntityView2, text, unitEntityData, out var failure);
+			Character componentInChildren2 = unitEntityView2.GetComponentInChildren<Character>(includeInactive: true);
+			SetLayerRecursively(unitEntityView2.gameObject, 15);
+			DollRoom.UnscaleFxTimes(unitEntityView2.gameObject);
+			Renderer[] componentsInChildren = unitEntityView2.GetComponentsInChildren<Renderer>(includeInactive: true);
+			foreach (Renderer renderer in componentsInChildren)
+			{
+				if (renderer != null)
+				{
+					renderer.enabled = true;
+				}
+			}
+			foreach (Behaviour vfxBehaviour in unitEntityView2.VfxBehaviours)
+			{
+				if (vfxBehaviour != null)
+				{
+					vfxBehaviour.enabled = true;
+				}
+			}
+			if (!flag3)
+			{
+				ReportBlankBody(flag, failure);
+				RestoreDoll(ref failedPreview, ref doll);
+				return;
+			}
+			Traverse.Create(dollRoom).Field("m_SimpleAvatar").SetValue(unitEntityView2);
+			failedPreview = null;
+			doll = null;
+			DollRoomCharacterController value4 = Traverse.Create(dollRoom).Field("m_CharacterController").GetValue<DollRoomCharacterController>();
+			if (value4 != null)
+			{
+				value4.Character = value;
+			}
+			DollCamera value5 = Traverse.Create(dollRoom).Field("m_Camera").GetValue<DollCamera>();
+			DollRoomCameraZoomPreset dollRoomCameraZoomPreset = componentInChildren2?.Skeleton?.DollRoomZoomPreset;
+			if (value5 != null && dollRoomCameraZoomPreset != null)
+			{
+				Transform transform = ((!string.IsNullOrEmpty(dollRoomCameraZoomPreset.TargetBoneName)) ? FindChildRecursive(unitEntityView2.transform, dollRoomCameraZoomPreset.TargetBoneName) : null);
+				value5.LookAt(transform ?? unitEntityView2.transform, dollRoomCameraZoomPreset);
+			}
+			UnitAnimationManager unitAnimationManager = componentInChildren2?.AnimationManager ?? unitEntityView2.GetComponentInChildren<UnitAnimationManager>();
+			if (!(unitAnimationManager != null) || !unitAnimationManager.PlayableGraph.IsValid())
+			{
+				return;
 			}
 			try
 			{
-				__result = characterClass.MeetsPrerequisites(unitEntityData.Descriptor, controller.State);
+				Traverse.Create(dollRoom).Method("SetupAnimationManager", unitAnimationManager).GetValue();
 			}
-			catch (Exception ex)
+			catch (Exception arg)
 			{
-				Main.Log("CharGenClassPhaseVM.MeetsPrerequisites safe catch for " + characterClass.name + ": " + ex.Message);
-				__result = false;
+				Main.Log($"SetupAnimationManager exception: {arg}");
 			}
+		}
+		catch (Exception arg2)
+		{
+			Main.Log($"UpdateDollRoomPreview exception: {arg2}");
+			RestoreDoll(ref failedPreview, ref doll);
+		}
+	}
+
+	internal static bool PrepareDollRoomBody(UnitEntityView view, string dollName, UnitEntityData unit, out string failure)
+	{
+		failure = null;
+		if (view == null)
+		{
+			failure = "there is no view to prepare";
 			return false;
 		}
-
-		[HarmonyPatch(typeof(CharGenClassPhaseVM), "IsClassAvailable", new Type[]
+		try
 		{
-			typeof(LevelUpController),
-			typeof(BlueprintCharacterClass),
-			typeof(bool)
-		})]
-		[HarmonyPrefix]
-		public static bool CharGenClassPhaseVM_IsClassAvailable_Prefix(LevelUpController controller, BlueprintCharacterClass charClass, bool ignoreAlignment, ref bool __result)
+			view.IsInDollRoom = true;
+			Character componentInChildren = view.GetComponentInChildren<Character>(includeInactive: true);
+			if (componentInChildren != null)
+			{
+				componentInChildren.PreventUpdate = false;
+				componentInChildren.IsInDollRoom = true;
+				componentInChildren.gameObject.name = "Doll [" + dollName + "]";
+				componentInChildren.SetRaceAndGender(unit?.Gender ?? Gender.Male, (unit?.Descriptor?.Progression?.Race?.RaceId).GetValueOrDefault());
+				componentInChildren.Start();
+				if (componentInChildren.Renderers.Count == 0)
+				{
+					componentInChildren.UpdateMesh();
+				}
+			}
+		}
+		catch (Exception ex)
 		{
-			if (controller == null || charClass == null)
-			{
-				__result = false;
-				return false;
-			}
-			UnitEntityData unitEntityData = controller.Unit ?? controller.Preview;
-			if (unitEntityData == null || unitEntityData.Descriptor == null || controller.State == null)
-			{
-				__result = false;
-				return false;
-			}
-			try
-			{
-				bool flag = !charClass.IsDlcRestricted();
-				bool flag2 = charClass.MeetsPrerequisites(unitEntityData.Descriptor, controller.State, ignoreAlignment);
-				__result = flag & flag2;
-			}
-			catch (Exception ex)
-			{
-				Main.Log("CharGenClassPhaseVM.IsClassAvailable safe catch for " + charClass.name + ": " + ex.Message);
-				__result = false;
-			}
+			failure = "building the body threw " + ex.GetType().Name + ": " + ex.Message;
 			return false;
 		}
-
-		private static bool IsRelevantPrereqFeature(BlueprintFeature feat, BlueprintScriptableObject owner)
+		if (HasBodyGeometry(view.gameObject))
 		{
-			if (feat == null)
-			{
-				return false;
-			}
-			FeatureOwnerKey key = new FeatureOwnerKey(feat, owner);
-			if (_relevantFeatureCache.TryGetValue(key, out var value))
-			{
-				return value;
-			}
-			string text = feat.name ?? "";
-			string text2 = owner?.name ?? "";
-			value = text.StartsWith("Isekai", StringComparison.OrdinalIgnoreCase) || text.StartsWith("GodEmperor", StringComparison.OrdinalIgnoreCase) || text.StartsWith("Overlord", StringComparison.OrdinalIgnoreCase) || text.StartsWith("Hero", StringComparison.OrdinalIgnoreCase) || text.StartsWith("Martial", StringComparison.OrdinalIgnoreCase) || text.StartsWith("Mastermind", StringComparison.OrdinalIgnoreCase) || text.StartsWith("ShadowMonarch", StringComparison.OrdinalIgnoreCase) || text.StartsWith("Slime", StringComparison.OrdinalIgnoreCase) || text.StartsWith("Devourer", StringComparison.OrdinalIgnoreCase) || text.StartsWith("Heteromorphic", StringComparison.OrdinalIgnoreCase) || text.IndexOf("Legacy", StringComparison.OrdinalIgnoreCase) >= 0 || text2.StartsWith("Isekai", StringComparison.OrdinalIgnoreCase) || text2.StartsWith("GodEmperor", StringComparison.OrdinalIgnoreCase) || text2.StartsWith("Overlord", StringComparison.OrdinalIgnoreCase) || text2.StartsWith("Hero", StringComparison.OrdinalIgnoreCase) || text2.StartsWith("Martial", StringComparison.OrdinalIgnoreCase) || text2.StartsWith("Mastermind", StringComparison.OrdinalIgnoreCase) || text2.StartsWith("ShadowMonarch", StringComparison.OrdinalIgnoreCase) || text2.StartsWith("Slime", StringComparison.OrdinalIgnoreCase) || text2.StartsWith("Devourer", StringComparison.OrdinalIgnoreCase);
-			_relevantFeatureCache[key] = value;
-			return value;
-		}
-
-		private static bool IsRelevantPrereqArchetype(BlueprintArchetype arch, BlueprintScriptableObject owner)
-		{
-			if (arch == null)
-			{
-				return false;
-			}
-			ArchetypeOwnerKey key = new ArchetypeOwnerKey(arch, owner);
-			if (_relevantArchetypeCache.TryGetValue(key, out var value))
-			{
-				return value;
-			}
-			string text = arch.name ?? "";
-			string text2 = owner?.name ?? "";
-			value = text.StartsWith("GodEmperor", StringComparison.OrdinalIgnoreCase) || text.StartsWith("Overlord", StringComparison.OrdinalIgnoreCase) || text.StartsWith("Hero", StringComparison.OrdinalIgnoreCase) || text.StartsWith("Martial", StringComparison.OrdinalIgnoreCase) || text.StartsWith("Mastermind", StringComparison.OrdinalIgnoreCase) || text.StartsWith("ShadowMonarch", StringComparison.OrdinalIgnoreCase) || text.StartsWith("Slime", StringComparison.OrdinalIgnoreCase) || text.StartsWith("Devourer", StringComparison.OrdinalIgnoreCase) || text2.StartsWith("Isekai", StringComparison.OrdinalIgnoreCase);
-			_relevantArchetypeCache[key] = value;
-			return value;
-		}
-
-		[HarmonyPatch(typeof(PrerequisiteNoFeature), "CheckInternal")]
-		[HarmonyPostfix]
-		public static void PrerequisiteNoFeature_CheckInternal_Postfix(PrerequisiteNoFeature __instance, ref bool __result, FeatureSelectionState selectionState, UnitDescriptor unit, LevelUpState state)
-		{
-			if (!__result || __instance?.Feature == null || !IsRelevantPrereqFeature(__instance.Feature, __instance.OwnerBlueprint))
-			{
-				return;
-			}
-			// A rule that names its own owner means "not already owned". The pending level-up actions and the
-			// preview always contain the feature being selected, so treating them as ownership would refuse
-			// every re-selection. Other mods attach such rules to entries in the background list, which is
-			// how the Isekai background group became unselectable after a change of mind.
-			if (__instance.Feature == __instance.OwnerBlueprint)
-			{
-				return;
-			}
-			try
-			{
-				LevelUpController levelUpController = Game.Instance?.LevelUpController;
-				if (levelUpController != null)
-				{
-					if (levelUpController.Preview?.Descriptor != null && levelUpController.Preview.Descriptor.HasFact(__instance.Feature))
-					{
-						__result = false;
-						return;
-					}
-					if (levelUpController.LevelUpActions != null)
-					{
-						foreach (ILevelUpAction levelUpAction in levelUpController.LevelUpActions)
-						{
-							if (levelUpAction is SelectFeature selectFeature && selectFeature.Item?.Feature == __instance.Feature)
-							{
-								__result = false;
-								return;
-							}
-						}
-					}
-				}
-				if (state?.Selections == null)
-				{
-					return;
-				}
-				foreach (FeatureSelectionState selection in state.Selections)
-				{
-					FeatureSelectionState featureSelectionState = selection;
-					while (featureSelectionState != null)
-					{
-						if (featureSelectionState.SelectedItem?.Feature == __instance.Feature)
-						{
-							__result = false;
-							return;
-						}
-						featureSelectionState = featureSelectionState.Next;
-					}
-				}
-			}
-			catch (Exception ex)
-			{
-				Main.Log("PrerequisiteNoFeature_CheckInternal_Postfix safe catch: " + ex.Message);
-			}
-		}
-
-		[HarmonyPatch(typeof(PrerequisiteNoArchetype), "CheckInternal")]
-		[HarmonyPostfix]
-		public static void PrerequisiteNoArchetype_CheckInternal_Postfix(PrerequisiteNoArchetype __instance, ref bool __result, FeatureSelectionState selectionState, UnitDescriptor unit, LevelUpState state)
-		{
-			if (!__result || __instance?.Archetype == null || !IsRelevantPrereqArchetype(__instance.Archetype, __instance.OwnerBlueprint))
-			{
-				return;
-			}
-			try
-			{
-				LevelUpController levelUpController = Game.Instance?.LevelUpController;
-				if (levelUpController == null)
-				{
-					return;
-				}
-				if (levelUpController.TryGetSeletedArchetype() == __instance.Archetype)
-				{
-					__result = false;
-					return;
-				}
-				if (levelUpController.Preview?.Descriptor?.Progression?.Classes != null)
-				{
-					foreach (ClassData @class in levelUpController.Preview.Descriptor.Progression.Classes)
-					{
-						if (@class?.Archetypes != null && @class.Archetypes.Contains(__instance.Archetype))
-						{
-							__result = false;
-							return;
-						}
-					}
-				}
-				if (levelUpController.LevelUpActions == null)
-				{
-					return;
-				}
-				foreach (ILevelUpAction levelUpAction in levelUpController.LevelUpActions)
-				{
-					if (levelUpAction is AddArchetype addArchetype && addArchetype.Archetype == __instance.Archetype)
-					{
-						__result = false;
-						break;
-					}
-				}
-			}
-			catch (Exception ex)
-			{
-				Main.Log("PrerequisiteNoArchetype_CheckInternal_Postfix safe catch: " + ex.Message);
-			}
-		}
-
-		[HarmonyPatch(typeof(LevelUpController), "AddArchetype", new Type[] { typeof(BlueprintArchetype) })]
-		[HarmonyPrefix]
-		public static bool LevelUpController_AddArchetype1_Prefix(LevelUpController __instance, BlueprintArchetype archetype)
-		{
-			return ValidateArchetypeSelection(__instance, archetype);
-		}
-
-		[HarmonyPatch(typeof(LevelUpController), "AddArchetype", new Type[]
-		{
-			typeof(BlueprintCharacterClass),
-			typeof(BlueprintArchetype)
-		})]
-		[HarmonyPrefix]
-		public static bool LevelUpController_AddArchetype2_Prefix(LevelUpController __instance, BlueprintCharacterClass characterClass, BlueprintArchetype archetype)
-		{
-			return ValidateArchetypeSelection(__instance, archetype);
-		}
-
-		private static bool ValidateArchetypeSelection(LevelUpController controller, BlueprintArchetype archetype)
-		{
-			if (controller == null || archetype == null)
-			{
-				return true;
-			}
-			try
-			{
-				if (OtherSubclassesForSlime.Contains(archetype.name) && (IsSlime(controller, controller.Preview?.Descriptor, controller.State) || IsSlime(controller, controller.Unit?.Descriptor, controller.State)))
-				{
-					Main.Log("LevelUpController: Blocked " + archetype.name + " selection because Slime is active.");
-					return false;
-				}
-				if (OtherSubclassesForOverlord.Contains(archetype.name) && (IsOverlord(controller, controller.Preview?.Descriptor, controller.State) || IsOverlord(controller, controller.Unit?.Descriptor, controller.State)))
-				{
-					Main.Log("LevelUpController: Blocked " + archetype.name + " selection because Overlord is active.");
-					return false;
-				}
-			}
-			catch
-			{
-				return true;
-			}
 			return true;
 		}
+		failure = "the model produced no mesh to draw";
+		return false;
+	}
 
-		[HarmonyPatch(typeof(LevelUpController), "SelectFeature")]
-		[HarmonyPrefix]
-		public static bool LevelUpController_SelectFeature_Prefix(LevelUpController __instance, FeatureSelectionState selection, IFeatureSelectionItem item)
+	internal static bool HasBodyGeometry(GameObject root)
+	{
+		if (root == null)
 		{
-			if (__instance == null || item?.Feature == null)
-			{
-				return true;
-			}
-			try
-			{
-				switch (item.Feature.name)
-				{
-				case "SlimeReincarnateHeritage":
-				case "SlimeFormFeature":
-					if (IsOtherIsekaiArchetype(__instance, __instance.Preview?.Descriptor, __instance.State) || IsOtherIsekaiArchetype(__instance, __instance.Unit?.Descriptor, __instance.State))
-					{
-						Main.Log("LevelUpController: Blocked Slime selection because another Isekai archetype is active.");
-						return false;
-					}
-					break;
-				case "HeteromorphicOverlordHeritage":
-				case "SkeletalOverlordFormFeature":
-					if (IsOtherIsekaiArchetypeForOverlord(__instance, __instance.Preview?.Descriptor, __instance.State) || IsOtherIsekaiArchetypeForOverlord(__instance, __instance.Unit?.Descriptor, __instance.State))
-					{
-						Main.Log("LevelUpController: Blocked Overlord selection because another Isekai archetype is active.");
-						return false;
-					}
-					break;
-				}
-			}
-			catch
-			{
-				return true;
-			}
-			return true;
+			return false;
 		}
-
-		[HarmonyPatch(typeof(BlueprintFeatureSelection), "ExtractSelectionItems")]
-		[HarmonyPostfix]
-		public static void BlueprintFeatureSelection_ExtractSelectionItems_Postfix(BlueprintFeatureSelection __instance, ref IEnumerable<IFeatureSelectionItem> __result, UnitDescriptor beforeLevelUpUnit, UnitDescriptor previewUnit)
+		Renderer[] componentsInChildren = root.GetComponentsInChildren<Renderer>(includeInactive: true);
+		foreach (Renderer renderer in componentsInChildren)
 		{
-			if (__result == null)
+			if (renderer == null)
 			{
-				return;
+				continue;
 			}
-			try
+			SkinnedMeshRenderer skinnedMeshRenderer = renderer as SkinnedMeshRenderer;
+			if (skinnedMeshRenderer != null)
 			{
-				LevelUpController levelUpController = Game.Instance?.LevelUpController;
-				UnitDescriptor d = previewUnit ?? beforeLevelUpUnit ?? levelUpController?.Preview?.Descriptor ?? levelUpController?.Unit?.Descriptor;
-				LevelUpState state = levelUpController?.State;
-				bool flag = IsOtherIsekaiArchetype(levelUpController, d, state);
-				bool flag2 = IsOtherIsekaiArchetypeForOverlord(levelUpController, d, state);
-				if (flag | flag2)
+				if (skinnedMeshRenderer.sharedMesh != null)
 				{
-					List<IFeatureSelectionItem> list = (__result as List<IFeatureSelectionItem>) ?? __result.ToList();
-					bool flag3 = false;
-					if (flag && list.RemoveAll((IFeatureSelectionItem item) => item?.Feature?.name == "SlimeReincarnateHeritage" || item?.Feature?.name == "SlimeFormFeature") > 0)
-					{
-						flag3 = true;
-					}
-					if (flag2 && list.RemoveAll((IFeatureSelectionItem item) => item?.Feature?.name == "HeteromorphicOverlordHeritage" || item?.Feature?.name == "SkeletalOverlordFormFeature") > 0)
-					{
-						flag3 = true;
-					}
-					if (flag3)
-					{
-						__result = list;
-					}
+					return true;
 				}
 			}
-			catch (Exception ex)
+			else if (renderer is MeshRenderer)
 			{
-				Main.Log("BlueprintFeatureSelection_ExtractSelectionItems_Postfix safe catch: " + ex.Message);
+				MeshFilter component = renderer.GetComponent<MeshFilter>();
+				if (component != null && component.sharedMesh != null)
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	private static void RestoreDoll(ref UnitEntityView failedPreview, ref Character doll)
+	{
+		try
+		{
+			if (failedPreview != null)
+			{
+				UnityEngine.Object.Destroy(failedPreview.gameObject);
+			}
+		}
+		catch
+		{
+		}
+		try
+		{
+			if (doll != null && !doll.gameObject.activeSelf)
+			{
+				doll.gameObject.SetActive(value: true);
+			}
+		}
+		catch
+		{
+		}
+		failedPreview = null;
+		doll = null;
+	}
+
+	private static bool GaveUpOnBody(bool overlord)
+	{
+		if (!overlord)
+		{
+			return s_ReportedBlankSlimeBody;
+		}
+		return s_ReportedBlankOverlordBody;
+	}
+
+	private static void ReportBlankBody(bool overlord, string failure)
+	{
+		if (!GaveUpOnBody(overlord))
+		{
+			if (overlord)
+			{
+				s_ReportedBlankOverlordBody = true;
+			}
+			else
+			{
+				s_ReportedBlankSlimeBody = true;
+			}
+			Main.Log("[CharGenPreview] The " + (overlord ? "Overlord" : "Slime") + " model loaded but cannot be shown: " + (failure ?? "unknown reason") + ". Showing the character's own body instead of an empty doll room.");
+		}
+	}
+
+	private static Transform FindChildRecursive(Transform parent, string name)
+	{
+		if (parent == null || string.IsNullOrEmpty(name))
+		{
+			return null;
+		}
+		if (parent.name == name)
+		{
+			return parent;
+		}
+		for (int i = 0; i < parent.childCount; i++)
+		{
+			Transform transform = FindChildRecursive(parent.GetChild(i), name);
+			if (transform != null)
+			{
+				return transform;
+			}
+		}
+		return null;
+	}
+
+	private static void SetLayerRecursively(GameObject obj, int layer)
+	{
+		if (obj == null)
+		{
+			return;
+		}
+		obj.layer = layer;
+		for (int i = 0; i < obj.transform.childCount; i++)
+		{
+			Transform child = obj.transform.GetChild(i);
+			if (child != null)
+			{
+				SetLayerRecursively(child.gameObject, layer);
 			}
 		}
 	}

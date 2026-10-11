@@ -1,187 +1,76 @@
-﻿using IsekaiMod.Components;
 using IsekaiMod.Content.Classes.IsekaiProtagonist;
-using IsekaiMod.Content.Classes.IsekaiProtagonist.Archetypes;
 using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Prerequisites;
 using Kingmaker.Blueprints.Classes.Spells;
 using Kingmaker.Blueprints.Facts;
+using Kingmaker.Designers.Mechanics.Buffs;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.Enums;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
-using Kingmaker.UnitLogic.Abilities.Components.AreaEffects;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.UnitLogic.Buffs.Components;
 using Kingmaker.UnitLogic.FactLogic;
-using Kingmaker.UnitLogic.Mechanics.Actions;
-using Kingmaker.UnitLogic.Mechanics.Components;
-using Kingmaker.Utility;
 using TabletopTweaks.Core.Utilities;
 using UnityEngine;
 
-namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
-{
-	internal class PowerOfFriendship
-	{
-		private static readonly Sprite Icon_Friendship = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintFeature>("90e59f4a4ada87243b7b3535a06d0638"))?.m_Icon;
+namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility;
 
-		public static void Add()
+internal class PowerOfFriendship
+{
+	private static readonly Sprite Icon_Friendship = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintAbility>("90e59f4a4ada87243b7b3535a06d0638"))?.m_Icon;
+
+	public static void Add()
+	{
+		BlueprintBuff buff = TTCoreExtensions.CreateBuff("PowerOfFriendshipBuff", delegate(BlueprintBuff bp)
 		{
-			BlueprintBuff PowerOfFriendshipBuff = TTCoreExtensions.CreateBuff("PowerOfFriendshipBuff", delegate(BlueprintBuff bp)
+			bp.SetName(Main.IsekaiContext, "Unbreakable Bond of Friendship");
+			bp.SetDescription(Main.IsekaiContext, "Fueled by the power of friendship, you receive a +4 sacred bonus to Armor Class, attack rolls, damage rolls, and saving throws, an extra attack on a full attack, Fast Healing 10, and immunity to fatigue, exhaustion, and hostile fear and emotion effects.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Friendship;
+			bp.IsClassFeature = true;
+			StatType[] acAttackDamageSaves = PortedAuras.AcAttackDamageSaves;
+			foreach (StatType stat in acAttackDamageSaves)
 			{
-				bp.SetName(Main.IsekaiContext, "Unbreakable Bond of Friendship");
-				bp.SetDescription(Main.IsekaiContext, "Fueled by the power of friendship, you receive a sacred bonus to Armor Class, attack rolls, damage rolls, and saving throws (+2 at levels 1--9, +3 at levels 10--14, and +4 at level 15+), Fast Healing (2 at levels 1--9, 4 at levels 10--14, and 6 at level 15+), an extra attack on a full attack (unlocking at level 10), and immunity to fatigue, exhaustion, and fear.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Friendship;
-				bp.IsClassFeature = true;
-				bp.AddComponent(delegate(ContextRankConfig c)
-				{
-					c.m_Type = AbilityRankType.StatBonus;
-					c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
-					c.m_Progression = ContextRankProgression.Custom;
-					c.m_CustomProgression = new ContextRankConfig.CustomProgressionItem[3]
-					{
-						new ContextRankConfig.CustomProgressionItem
-						{
-							BaseValue = 9,
-							ProgressionValue = 2
-						},
-						new ContextRankConfig.CustomProgressionItem
-						{
-							BaseValue = 14,
-							ProgressionValue = 3
-						},
-						new ContextRankConfig.CustomProgressionItem
-						{
-							BaseValue = 100,
-							ProgressionValue = 4
-						}
-					};
-				});
-				bp.AddComponent(delegate(AddContextStatBonus c)
+				bp.AddComponent(delegate(AddStatBonus c)
 				{
 					c.Descriptor = ModifierDescriptor.Sacred;
-					c.Stat = StatType.AC;
-					c.Value = Values.CreateContextRankValue(AbilityRankType.StatBonus);
+					c.Stat = stat;
+					c.Value = 4;
 				});
-				bp.AddComponent(delegate(AddContextStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Sacred;
-					c.Stat = StatType.AdditionalAttackBonus;
-					c.Value = Values.CreateContextRankValue(AbilityRankType.StatBonus);
-				});
-				bp.AddComponent(delegate(AddContextStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Sacred;
-					c.Stat = StatType.AdditionalDamage;
-					c.Value = Values.CreateContextRankValue(AbilityRankType.StatBonus);
-				});
-				bp.AddComponent(delegate(AddContextStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Sacred;
-					c.Stat = StatType.SaveFortitude;
-					c.Value = Values.CreateContextRankValue(AbilityRankType.StatBonus);
-				});
-				bp.AddComponent(delegate(AddContextStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Sacred;
-					c.Stat = StatType.SaveReflex;
-					c.Value = Values.CreateContextRankValue(AbilityRankType.StatBonus);
-				});
-				bp.AddComponent(delegate(AddContextStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Sacred;
-					c.Stat = StatType.SaveWill;
-					c.Value = Values.CreateContextRankValue(AbilityRankType.StatBonus);
-				});
-				bp.AddComponent(delegate(ContextRankConfig c)
-				{
-					c.m_Type = AbilityRankType.Default;
-					c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
-					c.m_Progression = ContextRankProgression.Custom;
-					c.m_CustomProgression = new ContextRankConfig.CustomProgressionItem[3]
-					{
-						new ContextRankConfig.CustomProgressionItem
-						{
-							BaseValue = 9,
-							ProgressionValue = 2
-						},
-						new ContextRankConfig.CustomProgressionItem
-						{
-							BaseValue = 14,
-							ProgressionValue = 4
-						},
-						new ContextRankConfig.CustomProgressionItem
-						{
-							BaseValue = 100,
-							ProgressionValue = 6
-						}
-					};
-				});
-				bp.AddComponent(delegate(AddEffectFastHealing c)
-				{
-					c.Heal = 0;
-					c.Bonus = Values.CreateContextRankValue(AbilityRankType.Default);
-				});
-				bp.AddComponent(delegate(BuffExtraAttackScaled c)
-				{
-					c.Number = 1;
-					c.Haste = false;
-					c.MinCharacterLevel = 10;
-				});
-				bp.AddComponent(delegate(AddConditionImmunity c)
-				{
-					c.Condition = UnitCondition.Fatigued;
-				});
-				bp.AddComponent(delegate(AddConditionImmunity c)
-				{
-					c.Condition = UnitCondition.Exhausted;
-				});
-				// Condition immunity alone leaves the delivering buff in place; blocking the descriptor stops it, as the game's own immunities do.
-				bp.AddComponent(delegate(BuffDescriptorImmunity c)
-				{
-					c.Descriptor = SpellDescriptor.Fatigue | SpellDescriptor.Exhausted;
-				});
-				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
-				{
-					c.Descriptor = SpellDescriptor.Fatigue | SpellDescriptor.Exhausted;
-				});
-				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
-				{
-					c.Descriptor = SpellDescriptor.Fear | SpellDescriptor.Emotion;
-				});
-			});
-			BlueprintFeature blueprintFeature = TTCoreExtensions.CreateToggleAuraFeature("PowerOfFriendship", Helpers.CreateString(Main.IsekaiContext, "PowerOfFriendship.Name", "Overpowered Ability - Power of Friendship"), Helpers.CreateString(Main.IsekaiContext, "PowerOfFriendship.Description", "Exclusive to the Hero archetype. Drawing upon the ultimate heroic anime trope, the bonds you forge with your companions empower everyone with miraculous might.\nBenefit: You emit an aura within 50 feet. Allies within the aura gain a sacred bonus to Armor Class, attack rolls, damage rolls, and saving throws (+2 at levels 1--9, +3 at levels 10--14, and +4 at level 15+), Fast Healing (2 at levels 1--9, 4 at levels 10--14, and 6 at level 15+), one extra attack on a full attack (unlocking at level 10), and immunity to fatigue, exhaustion, and fear effects."), Icon_Friendship, delegate(BlueprintAbilityAreaEffect bp)
+			}
+			bp.AddComponent(delegate(BuffExtraAttack c)
 			{
-				bp.m_TargetType = BlueprintAbilityAreaEffect.TargetType.Ally;
-				bp.SpellResistance = false;
-				bp.AggroEnemies = false;
-				bp.AffectEnemies = false;
-				bp.Shape = AreaEffectShape.Cylinder;
-				bp.Size = new Feet(50f);
-				bp.AddComponent(delegate(AbilityAreaEffectRunAction c)
-				{
-					c.UnitEnter = ActionFlow.DoSingle(delegate(ContextActionApplyBuff a)
-					{
-						a.m_Buff = PowerOfFriendshipBuff.ToReference<BlueprintBuffReference>();
-						a.Permanent = true;
-					});
-					c.UnitExit = ActionFlow.DoSingle(delegate(ContextActionRemoveBuff r)
-					{
-						r.m_Buff = PowerOfFriendshipBuff.ToReference<BlueprintBuffReference>();
-					});
-					c.UnitMove = ActionFlow.DoNothing();
-					c.Round = ActionFlow.DoNothing();
-				});
+				c.Number = 1;
+				c.Haste = false;
 			});
-			blueprintFeature.AddComponent(delegate(PrerequisiteArchetypeLevel c)
+			bp.AddComponent(delegate(AddEffectFastHealing c)
 			{
-				c.m_CharacterClass = IsekaiProtagonistClass.GetReference();
-				c.m_Archetype = HeroArchetype.GetReference();
-				c.Level = 1;
+				c.Heal = 10;
+				c.Bonus = 0;
 			});
-			OverpoweredAbilitySelection.AddToSelection(blueprintFeature);
-		}
+			bp.AddComponent(delegate(AddConditionImmunity c)
+			{
+				c.Condition = UnitCondition.Fatigued;
+			});
+			bp.AddComponent(delegate(AddConditionImmunity c)
+			{
+				c.Condition = UnitCondition.Exhausted;
+			});
+			PortedImmunities.AddFearImmunity(bp);
+			PortedImmunities.AddHostileImmunity(bp, SpellDescriptor.Emotion);
+		});
+		BlueprintFeature blueprintFeature = TTCoreExtensions.CreateToggleAuraFeature("PowerOfFriendship", Helpers.CreateString(Main.IsekaiContext, "PowerOfFriendship.Name", "Overpowered Ability - Power of Friendship"), Helpers.CreateString(Main.IsekaiContext, "PowerOfFriendship.Description", "Exclusive to the Hero archetype. Drawing upon the ultimate heroic anime trope, the bonds you forge with your companions empower everyone with miraculous might.\nBenefit: You emit an aura within 50 feet. Allies within the aura gain a +4 sacred bonus to Armor Class, attack rolls, damage rolls, and saving throws, one extra attack on a full attack, Fast Healing 10, and immunity to fatigue, exhaustion, and hostile fear and emotion effects."), Icon_Friendship, delegate(BlueprintAbilityAreaEffect area)
+		{
+			PortedAuras.ConfigureAllyAura(area, buff, 50);
+		});
+		blueprintFeature.AddComponent(delegate(PrerequisiteArchetypeLevel c)
+		{
+			c.m_CharacterClass = IsekaiProtagonistClass.GetReference();
+			c.m_Archetype = BlueprintTools.GetModBlueprintReference<BlueprintArchetypeReference>(Main.IsekaiContext, "HeroArchetype");
+			c.Level = 1;
+		});
+		OverpoweredAbilitySelection.AddToSelection(blueprintFeature);
 	}
 }

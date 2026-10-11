@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
+using IsekaiMod.Config;
 using IsekaiMod.Utilities;
-using Kingmaker.Assets.UnitLogic.Mechanics.Properties;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Spells;
@@ -21,266 +21,222 @@ using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Mechanics.Actions;
 using Kingmaker.UnitLogic.Mechanics.Components;
-using Kingmaker.UnitLogic.Mechanics.Properties;
 using Kingmaker.Utility;
 using Kingmaker.Visual.Animation.Kingmaker.Actions;
 using TabletopTweaks.Core.Utilities;
 using UnityEngine;
 
-namespace IsekaiMod.Content.Heritages
+namespace IsekaiMod.Content.Heritages;
+
+internal class DemonLordHeritage
 {
-	internal class DemonLordHeritage
+	private static readonly BlueprintAbilityResource TieflingSpellLikeResource = BlueprintTools.GetBlueprint<BlueprintAbilityResource>("803d7e39e05fa2a47a7e2424d0e4b623");
+
+	public static void Add()
 	{
-		public static void Add()
+		Sprite Icon_Succubus = AssetLoader.LoadInternal(Main.IsekaiContext, "Heritages", "ICON_SUCCUBUS.png");
+		BlueprintActivatableAbility DevilWingsAbility = BlueprintTools.GetModBlueprint<BlueprintActivatableAbility>(Main.IsekaiContext, "DevilWingsAbility");
+		BlueprintActivatableAbility DemonWingsAbility = BlueprintTools.GetModBlueprint<BlueprintActivatableAbility>(Main.IsekaiContext, "DemonWingsAbility");
+		BlueprintActivatableAbility BlackWingsAbility = BlueprintTools.GetModBlueprint<BlueprintActivatableAbility>(Main.IsekaiContext, "BlackWingsAbility");
+		BlueprintAbility AbyssalHellfireAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "AbyssalHellfireAbility", delegate(BlueprintAbility bp)
 		{
-			Sprite Icon_Succubus = AssetLoader.LoadInternal(Main.IsekaiContext, "Heritages", "ICON_SUCCUBUS.png");
-			BlueprintActivatableAbility DevilWingsAbility = BlueprintTools.GetModBlueprint<BlueprintActivatableAbility>(Main.IsekaiContext, "DevilWingsAbility");
-			BlueprintActivatableAbility DemonWingsAbility = BlueprintTools.GetModBlueprint<BlueprintActivatableAbility>(Main.IsekaiContext, "DemonWingsAbility");
-			BlueprintActivatableAbility BlackWingsAbility = BlueprintTools.GetModBlueprint<BlueprintActivatableAbility>(Main.IsekaiContext, "BlackWingsAbility");
-			BlueprintAbilityResource AbyssalHellfireResource = Helpers.CreateBlueprint(Main.IsekaiContext, "AbyssalHellfireResource", delegate(BlueprintAbilityResource bp)
+			bp.SetName(Main.IsekaiContext, "Abyssal Hellfire");
+			bp.SetDescription(Main.IsekaiContext, "Exhale a 30 ft cone of pure Abyssal hellfire, once per day. Deals 1d6 unholy damage per 2 character levels. Reflex save halves (DC 10 + 1/2 character level (at most +9) + Charisma modifier).");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Succubus;
+			bp.Type = AbilityType.Special;
+			bp.Range = AbilityRange.Projectile;
+			bp.CanTargetPoint = true;
+			bp.CanTargetEnemies = true;
+			bp.CanTargetFriends = true;
+			bp.CanTargetSelf = true;
+			bp.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.BreathWeapon;
+			bp.ActionType = UnitCommand.CommandType.Standard;
+			bp.AddComponent(delegate(SpellDescriptorComponent c)
 			{
-				bp.m_MaxAmount = new BlueprintAbilityResource.Amount
-				{
-					BaseValue = 3,
-					IncreasedByLevel = false,
-					IncreasedByStat = false
-				};
+				c.Descriptor = SpellDescriptor.BreathWeapon;
 			});
-			BlueprintUnitProperty AbyssalHellfireUnitProperty = Helpers.CreateBlueprint(Main.IsekaiContext, "AbyssalHellfireUnitProperty", delegate(BlueprintUnitProperty bp)
+			bp.AddComponent(delegate(AbilityDeliverProjectile c)
 			{
-				bp.name = "AbyssalHellfireUnitProperty";
-				bp.AddComponent(delegate(ComplexPropertyGetter c)
-				{
-					c.Property = UnitProperty.Level;
-					c.Denominator = 2;
-					c.Multiplier = 1;
-					c.Bonus = 0;
-				});
-				bp.AddComponent(delegate(SimplePropertyGetter c)
-				{
-					c.Property = UnitProperty.StatBonusCharisma;
-				});
-				bp.BaseValue = 10;
-				bp.OperationOnComponents = BlueprintUnitProperty.MathOperation.Sum;
+				c.m_Projectiles = new BlueprintProjectileReference[1] { BlueprintTools.GetBlueprint<BlueprintProjectile>("52c3a84f628ddde4dbfb38e4a581b01a")?.ToReference<BlueprintProjectileReference>() };
+				c.Type = AbilityProjectileType.Cone;
+				c.m_Length = 30.Feet();
+				c.m_LineWidth = 5.Feet();
+				c.NeedAttackRoll = false;
 			});
-			BlueprintAbility AbyssalHellfireAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "AbyssalHellfireAbility", delegate(BlueprintAbility bp)
+			bp.AddComponent(delegate(AbilityEffectRunAction c)
 			{
-				bp.SetName(Main.IsekaiContext, "Abyssal Hellfire");
-				bp.SetDescription(Main.IsekaiContext, "Exhale a 30 ft cone of pure Abyssal hellfire. Deals 1d6 damage per 2 character levels (half fire, half unholy). Reflex save halves (DC 10 + 1/2 character level + Charisma modifier).");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Succubus;
-				bp.Type = AbilityType.Special;
-				bp.Range = AbilityRange.Close;
-				bp.CanTargetPoint = true;
-				bp.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.BreathWeapon;
-				bp.ActionType = UnitCommand.CommandType.Standard;
-				bp.AddComponent(delegate(AbilityTargetsAround c)
+				c.Actions = Helpers.CreateActionList(new ContextActionSavingThrow
 				{
-					c.m_Radius = 30.Feet();
-					c.m_TargetType = TargetType.Enemy;
-					c.m_IncludeDead = false;
-				});
-				bp.AddComponent(delegate(AbilityEffectRunAction c)
-				{
-					// The description promises a Reflex save for half; HalfIfSaved only works inside a saving throw action.
-					c.Actions = Helpers.CreateActionList(new ContextActionSavingThrow
+					Type = SavingThrowType.Reflex,
+					Actions = Helpers.CreateActionList(new ContextActionDealDamage
 					{
-						Type = SavingThrowType.Reflex,
-						Actions = Helpers.CreateActionList(new ContextActionDealDamage
+						DamageType = new DamageTypeDescription
 						{
-							DamageType = new DamageTypeDescription
-							{
-								Type = DamageType.Energy,
-								Energy = DamageEnergyType.Unholy
-							},
-							Duration = new ContextDurationValue
-							{
-								Rate = DurationRate.Rounds,
-								DiceType = DiceType.Zero
-							},
-							Value = new ContextDiceValue
-							{
-								DiceType = DiceType.D6,
-								DiceCountValue = Values.CreateContextRankValue(AbilityRankType.Default),
-								BonusValue = 0
-							},
-							IsAoE = true,
-							HalfIfSaved = true
-						})
-					});
-				});
-				bp.AddComponent(delegate(ContextRankConfig c)
-				{
-					c.m_Type = AbilityRankType.Default;
-					c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
-					c.m_Progression = ContextRankProgression.Div2;
-				});
-				bp.AddComponent(delegate(ContextSetAbilityParams c)
-				{
-					c.DC = Values.CreateContextCasterCustomPropertyValue(AbyssalHellfireUnitProperty);
-				});
-				bp.AddComponent(delegate(AbilityResourceLogic c)
-				{
-					c.m_RequiredResource = AbyssalHellfireResource.ToReference<BlueprintAbilityResourceReference>();
-					c.m_IsSpendResource = true;
-					c.Amount = 1;
+							Type = DamageType.Energy,
+							Energy = DamageEnergyType.Unholy
+						},
+						Duration = new ContextDurationValue
+						{
+							Rate = DurationRate.Rounds,
+							DiceType = DiceType.Zero
+						},
+						Value = new ContextDiceValue
+						{
+							DiceType = DiceType.D6,
+							DiceCountValue = Values.CreateContextRankValue(AbilityRankType.Default),
+							BonusValue = 0
+						},
+						IsAoE = true,
+						HalfIfSaved = true
+					})
 				});
 			});
-			BlueprintBuff DemonLordAuraBuff = TTCoreExtensions.CreateBuff("DemonLordAuraBuff", delegate(BlueprintBuff bp)
+			bp.AddComponent(delegate(ContextRankConfig c)
 			{
-				bp.SetName(Main.IsekaiContext, "Demon Lord's Dominance");
-				bp.SetDescription(Main.IsekaiContext, "Crushed by the oppressive presence of an Abyssal Sovereign, enemies suffer a -2 penalty to Will saving throws.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Succubus;
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Penalty;
-					c.Stat = StatType.SaveWill;
-					c.Value = -2;
-				});
-				bp.m_Flags = BlueprintBuff.Flags.Harmful;
+				c.m_Type = AbilityRankType.Default;
+				c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
+				c.m_Progression = ContextRankProgression.Div2;
 			});
-			BlueprintFeature DemonLordAuraFeature = TTCoreExtensions.CreateToggleAuraFeature("DemonLordAuraFeature", Helpers.CreateString(Main.IsekaiContext, "DemonLordAura.Name", "Demon Lord's Presence"), Helpers.CreateString(Main.IsekaiContext, "DemonLordAura.Desc", "Enemies within 30 ft suffer a -2 penalty to Will saving throws."), Icon_Succubus, delegate(BlueprintAbilityAreaEffect bp)
+			bp.AddComponent(delegate(ContextCalculateAbilityParams c)
 			{
-				bp.m_TargetType = BlueprintAbilityAreaEffect.TargetType.Enemy;
-				bp.Size = new Feet(30f);
-				bp.AddComponent(delegate(AbilityAreaEffectRunAction c)
-				{
-					c.UnitEnter = ActionFlow.DoSingle(delegate(ContextActionApplyBuff a)
-					{
-						a.m_Buff = DemonLordAuraBuff.ToReference<BlueprintBuffReference>();
-						a.Permanent = true;
-					});
-					c.UnitExit = ActionFlow.DoSingle(delegate(ContextActionRemoveBuff r)
-					{
-						r.m_Buff = DemonLordAuraBuff.ToReference<BlueprintBuffReference>();
-					});
-				});
+				c.StatType = StatType.Charisma;
+				c.ReplaceCasterLevel = false;
+				c.ReplaceSpellLevel = false;
 			});
-			BlueprintFeature feature = Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiDemonLordHeritage", delegate(BlueprintFeature bp)
+			bp.AddComponent(delegate(AbilityResourceLogic c)
 			{
-				bp.SetName(Main.IsekaiContext, "Isekai Demon Lord");
-				bp.SetDescription(Main.IsekaiContext, "Reincarnated into Golarion as an authentic Demon Lord, you command the dread might and arcane majesty of the Abyss. You suffer no physical penalties and tower over mortal fiends.\nThe Isekai Demon Lord has a +4 racial bonus to Strength and Charisma, a +2 racial bonus to Constitution and Intelligence, and a +2 racial bonus on Persuasion and Perception checks.\nThey possess DR 10/Cold Iron or Good, Spell Resistance 11 + character level, immunity to fire, electricity, and poison, acid and cold resistance 20, the Abyssal Hellfire breath, Demon Lord's Presence aura, and fiendish wings.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Succubus;
-				bp.AddComponent(delegate(AddStatBonus c)
+				c.m_RequiredResource = TieflingSpellLikeResource.ToReference<BlueprintAbilityResourceReference>();
+				c.m_IsSpendResource = true;
+				c.CostIsCustom = false;
+				c.Amount = 1;
+				c.ResourceCostIncreasingFacts = new List<BlueprintUnitFactReference>();
+				c.ResourceCostDecreasingFacts = new List<BlueprintUnitFactReference>();
+			});
+		});
+		BlueprintBuff DemonLordAuraBuff = TTCoreExtensions.CreateBuff("DemonLordAuraBuff", delegate(BlueprintBuff bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Demon Lord's Dominance");
+			bp.SetDescription(Main.IsekaiContext, "Crushed by the oppressive presence of an Abyssal Sovereign, enemies suffer a -2 penalty to Will saving throws.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Succubus;
+			bp.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Penalty;
+				c.Stat = StatType.SaveWill;
+				c.Value = -2;
+			});
+			bp.m_Flags = BlueprintBuff.Flags.Harmful;
+		});
+		BlueprintFeature DemonLordAuraFeature = TTCoreExtensions.CreateToggleAuraFeature("DemonLordAuraFeature", Helpers.CreateString(Main.IsekaiContext, "DemonLordAura.Name", "Demon Lord's Presence"), Helpers.CreateString(Main.IsekaiContext, "DemonLordAura.Desc", "Enemies within 30 ft suffer a -2 penalty to Will saving throws."), Icon_Succubus, delegate(BlueprintAbilityAreaEffect bp)
+		{
+			bp.m_TargetType = BlueprintAbilityAreaEffect.TargetType.Enemy;
+			bp.Size = new Feet(30f);
+			bp.AddComponent(delegate(AbilityAreaEffectRunAction c)
+			{
+				c.UnitEnter = ActionFlow.DoSingle(delegate(ContextActionApplyBuff a)
 				{
-					c.Descriptor = ModifierDescriptor.Racial;
-					c.Stat = StatType.Strength;
-					c.Value = 4;
+					a.m_Buff = DemonLordAuraBuff.ToReference<BlueprintBuffReference>();
+					a.Permanent = true;
 				});
-				bp.AddComponent(delegate(AddStatBonus c)
+				c.UnitExit = ActionFlow.DoSingle(delegate(ContextActionRemoveBuff r)
 				{
-					c.Descriptor = ModifierDescriptor.Racial;
-					c.Stat = StatType.Charisma;
-					c.Value = 4;
+					r.m_Buff = DemonLordAuraBuff.ToReference<BlueprintBuffReference>();
 				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Racial;
-					c.Stat = StatType.Constitution;
-					c.Value = 2;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Racial;
-					c.Stat = StatType.Intelligence;
-					c.Value = 2;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Racial;
-					c.Stat = StatType.SkillPerception;
-					c.Value = 2;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Racial;
-					c.Stat = StatType.SkillPersuasion;
-					c.Value = 2;
-				});
-				bp.AddComponent(delegate(AddDamageResistancePhysical c)
-				{
-					c.Or = true;
-					c.Value = 10;
-					c.BypassedByMaterial = true;
-					c.BypassedByAlignment = true;
-					c.Material = PhysicalDamageMaterial.ColdIron;
-					c.Alignment = DamageAlignment.Good;
-				});
-				bp.AddComponent(delegate(AddSpellResistance c)
-				{
-					c.Value = Values.CreateContextRankValue(AbilityRankType.StatBonus);
-				});
-				bp.AddComponent(delegate(ContextRankConfig c)
-				{
-					c.m_Type = AbilityRankType.StatBonus;
-					c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
-					c.m_Progression = ContextRankProgression.BonusValue;
-					c.m_StepLevel = 11;
-				});
-				bp.AddComponent(delegate(AddDamageResistanceEnergy c)
-				{
-					c.Type = DamageEnergyType.Acid;
-					c.Value = 20;
-				});
-				bp.AddComponent(delegate(AddDamageResistanceEnergy c)
-				{
-					c.Type = DamageEnergyType.Cold;
-					c.Value = 20;
-				});
-				bp.AddComponent(delegate(AddEnergyImmunity c)
-				{
-					c.Type = DamageEnergyType.Electricity;
-				});
-				bp.AddComponent(delegate(AddEnergyImmunity c)
-				{
-					c.Type = DamageEnergyType.Fire;
-				});
-				bp.AddComponent(delegate(BuffDescriptorImmunity c)
-				{
-					c.Descriptor = SpellDescriptor.Fire | SpellDescriptor.Electricity | SpellDescriptor.Poison;
-				});
-				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
-				{
-					c.Descriptor = SpellDescriptor.Fire | SpellDescriptor.Electricity | SpellDescriptor.Poison;
-				});
-				List<BlueprintUnitFactReference> facts = new List<BlueprintUnitFactReference>();
-				if (AbyssalHellfireAbility != null)
-				{
-					facts.Add(AbyssalHellfireAbility.ToReference<BlueprintUnitFactReference>());
-				}
-				if (DemonLordAuraFeature != null)
-				{
-					facts.Add(DemonLordAuraFeature.ToReference<BlueprintUnitFactReference>());
-				}
-				if (DevilWingsAbility != null)
-				{
-					facts.Add(DevilWingsAbility.ToReference<BlueprintUnitFactReference>());
-				}
-				if (DemonWingsAbility != null)
-				{
-					facts.Add(DemonWingsAbility.ToReference<BlueprintUnitFactReference>());
-				}
-				if (BlackWingsAbility != null)
-				{
-					facts.Add(BlackWingsAbility.ToReference<BlueprintUnitFactReference>());
-				}
-				bp.AddComponent(delegate(AddFacts c)
-				{
-					c.m_Facts = facts.ToArray();
-				});
+				c.UnitMove = Helpers.CreateActionList();
+				c.Round = Helpers.CreateActionList();
+			});
+		});
+		BlueprintFeature feature = Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiDemonLordHeritage", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Isekai Demon Lord");
+			bp.SetDescription(Main.IsekaiContext, "Reincarnated into Golarion as an authentic Demon Lord, you command the dread might and arcane majesty of the Abyss. You suffer no physical penalties and tower over mortal fiends.\nThe Isekai Demon Lord has a +4 racial bonus to Strength, a +2 racial bonus to Charisma, and a +2 racial bonus on Persuasion and Perception checks.\nThey have DR 10/cold iron or good, immunity to poison, and fire resistance 10.\nAbyssal Hellfire: once per day, a 30-foot cone deals 1d6 unholy damage per 2 character levels (Reflex half, DC 10 + 1/2 character level (at most +9) + Charisma modifier).\nDemon Lord's Presence: a toggled aura that gives enemies within 30 feet a -2 penalty on Will saves.\nThey can also spread devil, demon or black wings for a +3 dodge bonus to AC against melee attacks.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Succubus;
+			bp.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Racial;
+				c.Stat = StatType.Strength;
+				c.Value = 4;
+			});
+			bp.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Racial;
+				c.Stat = StatType.Charisma;
+				c.Value = 2;
+			});
+			bp.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Racial;
+				c.Stat = StatType.SkillPerception;
+				c.Value = 2;
+			});
+			bp.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Racial;
+				c.Stat = StatType.SkillPersuasion;
+				c.Value = 2;
+			});
+			bp.AddComponent(delegate(AddDamageResistancePhysical c)
+			{
+				c.Or = true;
+				c.Value = 10;
+				c.BypassedByMaterial = true;
+				c.BypassedByAlignment = true;
+				c.Material = PhysicalDamageMaterial.ColdIron;
+				c.Alignment = DamageAlignment.Good;
+			});
+			bp.AddComponent(delegate(AddDamageResistanceEnergy c)
+			{
+				c.Type = DamageEnergyType.Fire;
+				c.Value = 10;
+			});
+			bp.AddComponent(delegate(BuffDescriptorImmunity c)
+			{
+				c.Descriptor = SpellDescriptor.Poison;
+			});
+			bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+			{
+				c.Descriptor = SpellDescriptor.Poison;
+			});
+			List<BlueprintUnitFactReference> facts = new List<BlueprintUnitFactReference>();
+			if (AbyssalHellfireAbility != null)
+			{
+				facts.Add(AbyssalHellfireAbility.ToReference<BlueprintUnitFactReference>());
+			}
+			if (DemonLordAuraFeature != null)
+			{
+				facts.Add(DemonLordAuraFeature.ToReference<BlueprintUnitFactReference>());
+			}
+			if (DevilWingsAbility != null)
+			{
+				facts.Add(DevilWingsAbility.ToReference<BlueprintUnitFactReference>());
+			}
+			if (DemonWingsAbility != null)
+			{
+				facts.Add(DemonWingsAbility.ToReference<BlueprintUnitFactReference>());
+			}
+			if (BlackWingsAbility != null)
+			{
+				facts.Add(BlackWingsAbility.ToReference<BlueprintUnitFactReference>());
+			}
+			bp.AddComponent(delegate(AddFacts c)
+			{
+				c.m_Facts = facts.ToArray();
+			});
+			if (TieflingSpellLikeResource != null)
+			{
 				bp.AddComponent(delegate(AddAbilityResources c)
 				{
-					c.m_Resource = AbyssalHellfireResource.ToReference<BlueprintAbilityResourceReference>();
+					c.m_Resource = TieflingSpellLikeResource.ToReference<BlueprintAbilityResourceReference>();
 					c.RestoreAmount = true;
 				});
-				bp.Groups = new FeatureGroup[2]
-				{
-					FeatureGroup.Racial,
-					FeatureGroup.TieflingHeritage
-				};
-				bp.ReapplyOnLevelUp = true;
-			});
-			FeatTools.Selections.TieflingHeritageSelection.AddToSelection(feature);
-			HumanHeritageSelection.Register(feature);
-		}
+			}
+			bp.Groups = new FeatureGroup[2]
+			{
+				FeatureGroup.Racial,
+				FeatureGroup.TieflingHeritage
+			};
+			bp.ReapplyOnLevelUp = true;
+		});
+		ContentOffering.OfferInSelection(FeatTools.Selections.TieflingHeritageSelection, feature, OfferedContent.IsekaiHeritages);
+		HumanHeritageSelection.Register(feature);
 	}
 }

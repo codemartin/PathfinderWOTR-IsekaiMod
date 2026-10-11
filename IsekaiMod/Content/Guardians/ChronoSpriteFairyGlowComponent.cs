@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.JsonSystem;
@@ -8,63 +8,77 @@ using Kingmaker.UnitLogic;
 using Kingmaker.View;
 using UnityEngine;
 
-namespace IsekaiMod.Content.Guardians
+namespace IsekaiMod.Content.Guardians;
+
+[TypeId("b6c33cda4b124806a382103fca500271")]
+[ComponentName("Hides skull mesh for Chrono Sprite fairy")]
+[AllowMultipleComponents]
+[AllowedOn(typeof(BlueprintUnitFact), false)]
+public class ChronoSpriteFairyGlowComponent : UnitFactComponentDelegate, IUnitViewAttachedHandler, ISubscriber, IUnitSubscriber, IUnitSpawnHandler, IGlobalSubscriber
 {
-	[TypeId("b6c33cda4b124806a382103fca500271")]
-	[ComponentName("Hides skull mesh for Chrono Sprite fairy")]
-	[AllowMultipleComponents]
-	[AllowedOn(typeof(BlueprintUnitFact), false)]
-	public class ChronoSpriteFairyGlowComponent : UnitFactComponentDelegate, IUnitViewAttachedHandler, ISubscriber, IUnitSubscriber, IUnitSpawnHandler, IGlobalSubscriber
+	public void HandleUnitViewAttached()
 	{
-		public void HandleUnitViewAttached()
+		HideSkull();
+	}
+
+	public void HandleUnitSpawned(UnitEntityData unit)
+	{
+		if (unit == base.Owner)
 		{
 			HideSkull();
 		}
+	}
 
-		public void HandleUnitSpawned(UnitEntityData unit)
+	public override void OnActivate()
+	{
+		HideSkull();
+	}
+
+	public override void OnTurnOn()
+	{
+		HideSkull();
+	}
+
+	private void HideSkull()
+	{
+		try
 		{
-			if (unit == base.Owner)
+			UnitEntityView unitEntityView = base.Owner?.View;
+			if (unitEntityView == null)
 			{
-				HideSkull();
+				return;
 			}
-		}
-
-		public override void OnActivate()
-		{
-			HideSkull();
-		}
-
-		public override void OnTurnOn()
-		{
-			HideSkull();
-		}
-
-		private void HideSkull()
-		{
-			try
+			Renderer[] componentsInChildren = unitEntityView.GetComponentsInChildren<Renderer>(includeInactive: true);
+			foreach (Renderer renderer in componentsInChildren)
 			{
-				UnitEntityView unitEntityView = base.Owner?.View;
-				if (unitEntityView == null)
+				if ((renderer is SkinnedMeshRenderer || renderer is MeshRenderer) && IsSkullPart(renderer.transform, unitEntityView.transform))
 				{
-					return;
-				}
-				Renderer[] componentsInChildren = unitEntityView.GetComponentsInChildren<Renderer>(includeInactive: true);
-				foreach (Renderer renderer in componentsInChildren)
-				{
-					if (renderer is SkinnedMeshRenderer || renderer is MeshRenderer)
-					{
-						renderer.enabled = false;
-						if (renderer.gameObject != unitEntityView.gameObject)
-						{
-							renderer.gameObject.SetActive(value: false);
-						}
-					}
+					renderer.enabled = false;
 				}
 			}
-			catch (Exception ex)
-			{
-				Main.Log(ex.ToString());
-			}
 		}
+		catch (Exception ex)
+		{
+			Main.Log(ex.ToString());
+		}
+	}
+
+	private static bool IsSkullPart(Transform node, Transform root)
+	{
+		Transform transform = node;
+		while (transform != null)
+		{
+			string text = transform.name;
+			if (!string.IsNullOrEmpty(text) && text.IndexOf("skull", StringComparison.OrdinalIgnoreCase) >= 0)
+			{
+				return true;
+			}
+			if (transform == root)
+			{
+				break;
+			}
+			transform = transform.parent;
+		}
+		return false;
 	}
 }

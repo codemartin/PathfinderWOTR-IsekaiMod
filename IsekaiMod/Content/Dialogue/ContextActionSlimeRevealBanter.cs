@@ -1,28 +1,23 @@
-﻿using System.Collections.Generic;
 using IsekaiMod.Content.Constellations;
-using Kingmaker.UnitLogic.Mechanics.Actions;
+using IsekaiMod.Utilities;
+using Kingmaker.Blueprints.JsonSystem;
 
-namespace IsekaiMod.Content.Dialogue
+namespace IsekaiMod.Content.Dialogue;
+
+[TypeId("8d9dfc64a9304484a4ff664290416bd1")]
+public class ContextActionSlimeRevealBanter : IsekaiContextAction
 {
-	public class ContextActionSlimeRevealBanter : ContextAction
+	public override string GetCaption()
 	{
-		public override string GetCaption()
-		{
-			return "Awards 250 Cosmic Coins and triggers Slime Reveal Banter";
-		}
+		return "Awards 250 Cosmic Coins and triggers Slime Reveal Banter";
+	}
 
-		public override void RunAction()
+	protected override void RunSafely()
+	{
+		if (ConstellationChatManager.TryClaimSceneReward("SlimeReveal"))
 		{
-			DivineTokens.AddCoins(250, "The Laughing King");
-			List<string> slimeRevealBanter = ConstellationDialogueBanter.GetSlimeRevealBanter();
-			if (slimeRevealBanter == null)
-			{
-				return;
-			}
-			foreach (string item in slimeRevealBanter)
-			{
-				ConstellationChatManager.PostLog(item, "The Laughing King", ConstellationCategory.Subclass, 0, "Slime Reveal");
-			}
+			DivineTokens.AddClaimedCoins(250, "The Laughing King");
 		}
+		ConstellationChatManager.PostLines(ConstellationDialogueBanter.GetSlimeRevealBanter(), "The Laughing King", ConstellationCategory.Subclass, "Caves: Rescue Anevia");
 	}
 }

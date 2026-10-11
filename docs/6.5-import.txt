@@ -1,0 +1,13 @@
+Isekai Reimagined 6.5 baseline import
+
+Origin: user-supplied IsekaiMod Pre-Alpha 6.5 ZIP dated 2026-10-01.
+ZIP SHA256: 4100c2e0ce6219482bd412fe49a3f27b83488f746e43c3893be0f4d0624beb27
+Original DLL SHA256: 5111d4d5540ba039b3472951993c49e64d604dcc12bfab0eff2df2a7a7d58fce
+Source reconstructed using ILSpyCmd 11.0.0.9375 with installed game, UnityModManager and TabletopTweaks-Core dependencies. This is not an upstream source checkout.
+Namespace directories normalized to the repository's IsekaiMod/Content, Components, Utilities layout.
+One decompiler reconstruction repair: name the tuple elements in SelfTestWindowLevelUpChecks.LevelUpWindow's six-item array so item.Name compiles. No intentional baseline gameplay changes.
+SDK-style project targets net481 using .NET SDK 10 / C# 14. References existing publicized lib/Assembly-CSharp.dll and installed game/mod dependencies. Override WrathPath and GameReferencePath for another machine. Reference assembly NuGet package 1.0.3 is required.
+Build: dotnet build IsekaiMod/IsekaiMod.csproj -c Release
+Build does not deploy automatically. This removes the old implicit post-build robocopy deployment.
+Baseline validation: compilation passed with 0 errors and 12 warnings (unused/decompiler-generated members). No game launch or in-game self-test executed. A rebuilt decompilation is not assumed binary-equivalent to the release DLL.
+Existing repository changelog and older docs are historical and do not describe every 6.5 change.

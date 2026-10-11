@@ -1,35 +1,24 @@
-﻿using System.Collections.Generic;
 using IsekaiMod.Content.Constellations;
-using Kingmaker.UnitLogic.Mechanics.Actions;
+using IsekaiMod.Utilities;
+using Kingmaker.Blueprints.JsonSystem;
 
-namespace IsekaiMod.Content.Dialogue
+namespace IsekaiMod.Content.Dialogue;
+
+[TypeId("05dfcccabe78484e9c947aeae5b41bb9")]
+public class ContextActionGoddessesChatBanter : IsekaiContextAction
 {
-	public class ContextActionGoddessesChatBanter : ContextAction
+	public override string GetCaption()
 	{
-		public override string GetCaption()
-		{
-			return "Triggers Constellation Banter at the Goddesses Summit";
-		}
+		return "Triggers Constellation Live Chat Banter at the Goddesses Summit";
+	}
 
-		public override void RunAction()
+	protected override void RunSafely()
+	{
+		if (ConstellationChatManager.TryClaimSceneReward("GoddessesChat"))
 		{
-			if (ConstellationChatManager.HasTriggeredMilestone("Act5DivineSummit"))
-			{
-				return;
-			}
-			ConstellationChatManager.MarkMilestoneTriggered("Act5DivineSummit");
-			List<string> act5DivineSummitBanter = ConstellationDialogueBanter.GetAct5DivineSummitBanter(TimelineManager.GetCurrentCycle(), out var coinsAwarded, out var primarySponsor);
-			if (act5DivineSummitBanter != null)
-			{
-				foreach (string item in act5DivineSummitBanter)
-				{
-					ConstellationChatManager.PostLog(item, primarySponsor, ConstellationCategory.Quest, 0, "The Goddesses Summit");
-				}
-			}
-			if (coinsAwarded > 0)
-			{
-				DivineTokens.AddCoins(coinsAwarded, primarySponsor);
-			}
+			DivineTokens.AddClaimedCoins(500, "The Laughing King");
 		}
+		ConstellationChatManager.PostLog(ConstellationText.Localized("Constellation.SubclassReaction", "<color=#5B2A86><b>[The Laughing King]</b></color>: <i>\"HAHAHA! Standing between the Inheritor and the Demon Queen and checking the chat poll! Maximum ratings unlocked!\"</i>"), "The Laughing King", ConstellationCategory.Subclass, 0, "Drezen: The Goddesses Summit");
+		ConstellationChatManager.PostLog(ConstellationText.Localized("Constellation.SubclassReaction", "<color=#133E71><b>[The Song of the Spheres]</b></color>: <i>\"Freedom is never chosen from someone else's menu. Dance on your own stage, starlight!\"</i>"), "The Song of the Spheres", ConstellationCategory.Subclass, 0, "Drezen: The Goddesses Summit");
 	}
 }

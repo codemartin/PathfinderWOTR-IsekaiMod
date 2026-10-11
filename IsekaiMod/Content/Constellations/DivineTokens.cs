@@ -1,384 +1,590 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
 using IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower;
 using IsekaiMod.Utilities;
 using Kingmaker;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.Items.Equipment;
+using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.Items;
+using Kingmaker.Localization;
 using Kingmaker.PubSubSystem;
 using Kingmaker.UnitLogic;
+using Kingmaker.Utility;
 using TabletopTweaks.Core.Utilities;
 using UnityEngine;
 
-namespace IsekaiMod.Content.Constellations
+namespace IsekaiMod.Content.Constellations;
+
+public static class DivineTokens
 {
-	public static class DivineTokens
+	internal enum LedgerAction
 	{
-		public static BlueprintFeature CosmicTokensFeature;
+		Nothing,
+		Seed,
+		Mirror
+	}
 
-		public static BlueprintItemEquipmentUsable ItemCosmicCoin;
-
-		public static void Add()
+	private sealed class OwedCoinsHandler : IAreaActivationHandler, ISubscriber, IGlobalSubscriber
+	{
+		public void OnAreaActivated()
 		{
-			Sprite Icon_CosmicCoin = AssetLoader.LoadInternal(Main.IsekaiContext, "Features", "ICON_COSMIC_COIN.png");
-			CosmicTokensFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "CosmicTokensFeature", delegate(BlueprintFeature bp)
+			PayOwed();
+		}
+	}
+
+	private sealed class CoinLedgerHandler : IAreaActivationHandler, ISubscriber, IGlobalSubscriber, IUnitChangedAfterRespecHandler
+	{
+		public void OnAreaActivated()
+		{
+			RefreshLedger();
+		}
+
+		public void HandleUnitChangedAfterRespec(UnitEntityData unit)
+		{
+			if (unit != null && unit == GetPlayer())
 			{
-				bp.SetName(Main.IsekaiContext, "Cosmic Coins");
-				bp.SetDescription(Main.IsekaiContext, "Tokens of cosmic favor bestowed upon you by observing deities and higher planar entities.\nThese tokens are awarded when deities celebrate your choices, audacious swagger, or heroic triumphs.\nThey can be redeemed through the Cosmic Sponsorship Exchange for divine boons, sacred elixirs, and otherworldly relics.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_CosmicCoin;
-				bp.Ranks = 999999;
-				bp.HideInCharacterSheetAndLevelUp = false;
-				bp.IsClassFeature = true;
+				RefreshLedger();
+			}
+		}
+	}
+
+	public static BlueprintFeature CosmicTokensFeature;
+
+	public static BlueprintItemEquipmentUsable ItemCosmicCoin;
+
+	internal static LocalizedString SponsoredText;
+
+	internal static LocalizedString ReceivedText;
+
+	internal static LocalizedString LoopMultiplierText;
+
+	internal static LocalizedString InsufficientText;
+
+	internal static LocalizedString HaggledText;
+
+	internal static LocalizedString SpentText;
+
+	internal static LocalizedString OwedArrivedText;
+
+	internal const string CoinStorageName = "IsekaiMod.CosmicCoins";
+
+	internal const string BalanceKey = "Balance";
+
+	private static bool s_ledgerSubscribed;
+
+	private static bool s_owedSubscribed;
+
+	internal const string OwedStorageName = "IsekaiMod.OwedCoins";
+
+	internal const string OwedWithLoopKey = "WithLoopMultiplier";
+
+	internal const string OwedExactKey = "Exact";
+
+	public static void CreateBlueprints()
+	{
+		Sprite Icon_CosmicCoin = AssetLoader.LoadInternal(Main.IsekaiContext, "Features", "ICON_COSMIC_COIN.png");
+		SponsoredText = Helpers.CreateString(Main.IsekaiContext, "CosmicCoins.Log.Sponsored", "<color=#5B2A86><b>[Cosmic Sponsorship]</b></color> <b>{0}</b> has sponsored you <b><color=#5B2A86>+{1} Cosmic Coins</color></b>{2}! (Balance: <b>{3}</b>)");
+		ReceivedText = Helpers.CreateString(Main.IsekaiContext, "CosmicCoins.Log.Received", "<color=#5B2A86><b>[Cosmic Sponsorship]</b></color> You received <b><color=#5B2A86>+{0} Cosmic Coins</color></b>{1}! (Balance: <b>{2}</b>)");
+		LoopMultiplierText = Helpers.CreateString(Main.IsekaiContext, "CosmicCoins.Log.LoopMultiplier", " <color=#133E71>[NG+ x{0}]</color>");
+		InsufficientText = Helpers.CreateString(Main.IsekaiContext, "CosmicCoins.Log.Insufficient", "<color=#7A1010><b>[Cosmic Sponsorship]</b></color> Insufficient Cosmic Coins! Required: <b>{0}</b>, Current: <b>{1}</b>");
+		HaggledText = Helpers.CreateString(Main.IsekaiContext, "CosmicCoins.Log.Haggled", "<color=#004604><b>[Haggler Discount]</b></color> Haggled price reduced from <b>{0}</b> to <b>{1} Cosmic Coins</b> (-{2}%, Saved: {3})!");
+		SpentText = Helpers.CreateString(Main.IsekaiContext, "CosmicCoins.Log.Spent", "<color=#5B2A86><b>[Cosmic Sponsorship]</b></color> Spent <b>{0} Cosmic Coins</b>. (Remaining Balance: <b>{1}</b>)");
+		OwedArrivedText = Helpers.CreateString(Main.IsekaiContext, "CosmicCoins.Log.OwedArrived", "<color=#5B2A86><b>[Cosmic Sponsorship]</b></color> The Cosmic Coins you earned while the Constellations were switched off arrive at last.");
+		CosmicTokensFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "CosmicTokensFeature", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Cosmic Coins");
+			bp.SetDescription(Main.IsekaiContext, "Tokens of cosmic favor bestowed upon you by observing deities and higher planar entities.\nThese tokens are awarded when deities celebrate your choices, audacious swagger, or heroic triumphs.\nThey can be redeemed through the Cosmic Sponsorship Exchange for divine boons, sacred elixirs, and otherworldly relics.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_CosmicCoin;
+			bp.Ranks = 999999;
+			bp.HideInCharacterSheetAndLevelUp = false;
+			bp.IsClassFeature = true;
+		});
+	}
+
+	internal static string FormatSafely(string template, params object[] args)
+	{
+		if (string.IsNullOrEmpty(template))
+		{
+			return template ?? string.Empty;
+		}
+		if (args == null || args.Length == 0)
+		{
+			return template;
+		}
+		try
+		{
+			return string.Format(CultureInfo.InvariantCulture, template, args);
+		}
+		catch (FormatException)
+		{
+			return template;
+		}
+	}
+
+	internal static string Say(LocalizedString text, params object[] args)
+	{
+		if (text == null)
+		{
+			return string.Empty;
+		}
+		return FormatSafely(text, args);
+	}
+
+	internal static void Log(LocalizedString text, params object[] args)
+	{
+		string message = Say(text, args);
+		if (!string.IsNullOrEmpty(message))
+		{
+			EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
+			{
+				h.HandleLogMessage(message);
 			});
 		}
+	}
 
-		public static UnitEntityData GetPlayer()
+	internal static UnitEntityData ResolveDialogTarget(TargetWrapper target, Func<UnitEntityData> fallback)
+	{
+		UnitEntityData unitEntityData = target?.Unit;
+		if (unitEntityData != null)
 		{
-			return BlueprintSafetyExtensions.SafeGetMainCharacter();
+			return unitEntityData;
 		}
+		return fallback?.Invoke();
+	}
 
-		public static int GetBalance()
+	public static UnitEntityData GetPlayer()
+	{
+		return (Game.Instance?.Player)?.MainCharacter.Value;
+	}
+
+	internal static int? RecordedBalance(IDictionary<string, string> storage)
+	{
+		if (!int.TryParse(SaveScopedStorage.Get(storage, "Balance"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var result) || result < 0)
 		{
-			UnitEntityData player = GetPlayer();
-			int cosmicCoins = TimelineManager.Data.CosmicCoins;
-			if (player == null || CosmicTokensFeature == null)
-			{
-				return cosmicCoins;
-			}
-			int rank = player.Descriptor.Progression.Features.GetRank(CosmicTokensFeature);
-			int num = Math.Max(rank, cosmicCoins);
-			if (rank < num)
-			{
-				FeatureCollection features = player.Descriptor.Progression.Features;
-				Feature fact = features.GetFact(CosmicTokensFeature);
-				if (fact == null && num > 0)
-				{
-					fact = features.AddFeature(CosmicTokensFeature);
-				}
-				// Coins are the rank of a feature. AddRank/RemoveRank deactivate and reactivate the feature each
-				// call (a few ms every time), so walking thousands of ranks one by one froze the game for
-				// 5 to 30 seconds per purchase. SetRank does the same reapply once.
-				fact?.SetRank(num);
-			}
-			else if (rank > cosmicCoins)
-			{
-				TimelineManager.Data.CosmicCoins = rank;
-				TimelineManager.Save();
-			}
-			SyncInventoryCoins(num);
-			return num;
+			return null;
 		}
+		return result;
+	}
 
-		public static int GetCoins()
+	internal static int ReadBalance(IDictionary<string, string> storage, int featureRank)
+	{
+		return RecordedBalance(storage) ?? Math.Max(0, featureRank);
+	}
+
+	internal static void WriteBalance(IDictionary<string, string> storage, int balance)
+	{
+		if (storage != null)
 		{
-			return GetBalance();
+			storage["Balance"] = Math.Max(0, balance).ToString(CultureInfo.InvariantCulture);
 		}
+	}
 
-		public static bool SpendCoins(int amount, string reason)
+	internal static LedgerAction DecideLedger(int? recordedBalance, int featureRank)
+	{
+		if (!recordedBalance.HasValue)
 		{
-			bool applyHagglerDiscount = reason != "Cosmic Vendor Purchase";
-			return SpendCoins(amount, applyHagglerDiscount);
+			if (featureRank <= 0)
+			{
+				return LedgerAction.Nothing;
+			}
+			return LedgerAction.Seed;
 		}
-
-		public static void SyncInventoryCoins(int targetCount)
+		if (recordedBalance.Value != Math.Max(0, featureRank))
 		{
-			try
-			{
-				ItemsCollection itemsCollection = Game.Instance?.Player?.Inventory;
-				if (itemsCollection != null && ItemCosmicCoin != null)
-				{
-					int num = itemsCollection.Count(ItemCosmicCoin);
-					if (num < targetCount)
-					{
-						itemsCollection.Add(ItemCosmicCoin, targetCount - num);
-					}
-					else if (num > targetCount)
-					{
-						itemsCollection.Remove(ItemCosmicCoin, num - targetCount);
-					}
-				}
-			}
-			catch (Exception ex)
-			{
-				Main.IsekaiContext.Logger.LogError("Error in SyncInventoryCoins: " + ex);
-			}
+			return LedgerAction.Mirror;
 		}
+		return LedgerAction.Nothing;
+	}
 
-		public static bool IsPlayerPatron(UnitEntityData player, string sponsor)
+	public static int GetBalance()
+	{
+		UnitEntityData player = GetPlayer();
+		if (player == null || CosmicTokensFeature == null)
 		{
-			if (string.IsNullOrEmpty(sponsor))
-			{
-				return false;
-			}
-			string playerDeityName = ConstellationChatManager.GetPlayerDeityName();
-			if (string.IsNullOrEmpty(playerDeityName))
-			{
-				return false;
-			}
-			string text = sponsor.ToLower();
-			string text2 = playerDeityName.ToLower();
-			if (text2.Contains("cayden") && (text.Contains("cayden") || text.Contains("lucky drunk")))
-			{
-				return true;
-			}
-			if (text2.Contains("iomedae") && (text.Contains("iomedae") || text.Contains("inheritor")))
-			{
-				return true;
-			}
-			if (text2.Contains("asmodeus") && (text.Contains("asmodeus") || text.Contains("archfiend") || text.Contains("lord of the pit")))
-			{
-				return true;
-			}
-			if (text2.Contains("desna") && (text.Contains("desna") || text.Contains("song of the spheres") || text.Contains("starwatcher")))
-			{
-				return true;
-			}
-			if (text2.Contains("pharasma") && (text.Contains("pharasma") || text.Contains("lady of graves") || text.Contains("astral court")))
-			{
-				return true;
-			}
-			if (text2.Contains("calistria") && (text.Contains("calistria") || text.Contains("savored sting") || text.Contains("wasp")))
-			{
-				return true;
-			}
-			if (text2.Contains("nethys") && (text.Contains("nethys") || text.Contains("all-seeing eye") || text.Contains("two-faced")))
-			{
-				return true;
-			}
-			if (text2.Contains("gorum") && (text.Contains("gorum") || text.Contains("lord in iron") || text.Contains("warlord")))
-			{
-				return true;
-			}
-			if (text2.Contains("besmara") && (text.Contains("besmara") || text.Contains("pirate queen") || text.Contains("corsair")))
-			{
-				return true;
-			}
-			if ((text2.Contains("lantern") || text2.Contains("laughing")) && (text.Contains("lantern") || text.Contains("laughing king")))
-			{
-				return true;
-			}
-			if (text2.Contains("chaldira") && (text.Contains("chaldira") || text.Contains("calamity star") || text.Contains("little spark")))
-			{
-				return true;
-			}
-			if (text2.Contains("milani") && (text.Contains("milani") || text.Contains("everbloom") || text.Contains("rose of devotion")))
-			{
-				return true;
-			}
-			if (text2.Contains("butterfly") && (text.Contains("butterfly") || text.Contains("pale shadow")))
-			{
-				return true;
-			}
-			if (text2.Contains("sarenrae") && (text.Contains("sarenrae") || text.Contains("dawnflower") || text.Contains("healing flame")))
-			{
-				return true;
-			}
-			if (text2.Contains("torag") && (text.Contains("torag") || text.Contains("father of creation") || text.Contains("iron shaper")))
-			{
-				return true;
-			}
-			if (text2.Contains("urgathoa") && (text.Contains("urgathoa") || text.Contains("pallid princess") || text.Contains("feast giver")))
-			{
-				return true;
-			}
-			if (text2.Contains("pulura") && (text.Contains("pulura") || text.Contains("shimmering maiden") || text.Contains("northern lights")))
-			{
-				return true;
-			}
-			if (text2.Contains("shelyn") && (text.Contains("shelyn") || text.Contains("eternal rose") || text.Contains("songbird")))
-			{
-				return true;
-			}
-			if (text2.Contains("abadar") && (text.Contains("abadar") || text.Contains("first vault") || text.Contains("golden scale")))
-			{
-				return true;
-			}
-			if (text2.Contains("rovagug") && (text.Contains("rovagug") || text.Contains("rough beast") || text.Contains("destroyer")))
-			{
-				return true;
-			}
-			if (text2.Contains("irori") && (text.Contains("irori") || text.Contains("master of masters") || text.Contains("enlightened")))
-			{
-				return true;
-			}
-			if (text2.Contains("erastil") && (text.Contains("erastil") || text.Contains("old deadeye") || text.Contains("huntsman")))
-			{
-				return true;
-			}
-			if (text2.Contains("lamashtu") && (text.Contains("lamashtu") || text.Contains("mother of monsters") || text.Contains("mother of beasts")))
-			{
-				return true;
-			}
-			if (text2.Contains("nocticula") && (text.Contains("nocticula") || text.Contains("lady in shadow")))
-			{
-				return true;
-			}
-			if (text2.Contains("baphomet") && (text.Contains("baphomet") || text.Contains("lord of the labyrinth")))
-			{
-				return true;
-			}
-			if (text2.Contains("deskari") && (text.Contains("deskari") || text.Contains("locust host")))
-			{
-				return true;
-			}
-			if (text2.Contains("yog-sothoth") && (text.Contains("yog-sothoth") || text.Contains("key and the gate")))
-			{
-				return true;
-			}
-			if (!text.Contains(text2))
-			{
-				return text2.Contains(text);
-			}
-			return true;
+			return 0;
 		}
+		return ReadBalance(SaveScopedStorage.Find(SaveScopedStorage.CurrentPlayer(), "IsekaiMod.CosmicCoins"), player.Descriptor.Progression.Features.GetRank(CosmicTokensFeature));
+	}
 
-		public static void AddCoins(int amount, string sponsor = null)
+	private static void SetBalance(UnitEntityData player, int balance)
+	{
+		WriteBalance(SaveScopedStorage.Ensure(SaveScopedStorage.CurrentPlayer(), "IsekaiMod.CosmicCoins"), balance);
+		MirrorFeature(player, balance);
+		SyncInventoryCoins(balance);
+	}
+
+	private static void MirrorFeature(UnitEntityData player, int balance)
+	{
+		FeatureCollection features = player.Descriptor.Progression.Features;
+		Feature feature = features.GetFact(CosmicTokensFeature);
+		if (feature == null)
 		{
-			if (amount <= 0)
+			if (balance <= 0)
 			{
 				return;
 			}
+			feature = features.AddFeature(CosmicTokensFeature);
+		}
+		SetCoinRank(feature, ClampRank(0, balance, CosmicTokensFeature.Ranks));
+	}
+
+	internal static void RefreshLedger()
+	{
+		try
+		{
 			UnitEntityData player = GetPlayer();
-			if (player == null || CosmicTokensFeature == null)
+			if (!(player == null) && CosmicTokensFeature != null)
 			{
-				return;
+				int rank = player.Descriptor.Progression.Features.GetRank(CosmicTokensFeature);
+				int? recordedBalance = RecordedBalance(SaveScopedStorage.Find(SaveScopedStorage.CurrentPlayer(), "IsekaiMod.CosmicCoins"));
+				switch (DecideLedger(recordedBalance, rank))
+				{
+				case LedgerAction.Seed:
+					WriteBalance(SaveScopedStorage.Ensure(SaveScopedStorage.CurrentPlayer(), "IsekaiMod.CosmicCoins"), rank);
+					break;
+				case LedgerAction.Mirror:
+					MirrorFeature(player, recordedBalance.Value);
+					break;
+				}
 			}
-			double coinLoopMultiplier = TimelineManager.GetCoinLoopMultiplier();
-			bool flag = IsPlayerPatron(player, sponsor);
-			double num = (flag ? 1.25 : 1.0);
-			int num2 = (int)Math.Round((double)amount * coinLoopMultiplier * num);
-			if (num2 <= 0)
+		}
+		catch (Exception ex)
+		{
+			Main.IsekaiContext.Logger.LogError("Error refreshing the Cosmic Coin record: " + ex);
+		}
+	}
+
+	public static void Init()
+	{
+		if (!s_owedSubscribed)
+		{
+			s_owedSubscribed = true;
+			EventBus.Subscribe(new OwedCoinsHandler());
+		}
+		if (ConstellationSettings.Enabled && !s_ledgerSubscribed)
+		{
+			s_ledgerSubscribed = true;
+			EventBus.Subscribe(new CoinLedgerHandler());
+		}
+	}
+
+	internal static int OwedIn(IDictionary<string, string> storage, bool withLoopMultiplier)
+	{
+		if (!int.TryParse(SaveScopedStorage.Get(storage, withLoopMultiplier ? "WithLoopMultiplier" : "Exact"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var result) || result <= 0)
+		{
+			return 0;
+		}
+		return result;
+	}
+
+	internal static void Owe(IDictionary<string, string> storage, int amount, bool withLoopMultiplier)
+	{
+		if (storage != null && amount > 0)
+		{
+			long num = (long)OwedIn(storage, withLoopMultiplier) + (long)amount;
+			if (num > int.MaxValue)
 			{
-				num2 = amount;
+				num = 2147483647L;
 			}
-			FeatureCollection features = player.Descriptor.Progression.Features;
-			Feature fact = features.GetFact(CosmicTokensFeature);
-			if (fact == null)
+			storage[withLoopMultiplier ? "WithLoopMultiplier" : "Exact"] = ((int)num).ToString(CultureInfo.InvariantCulture);
+		}
+	}
+
+	public static void AddClaimedCoins(int amount, string sponsor)
+	{
+		if (amount > 0)
+		{
+			if (ConstellationSettings.Enabled)
 			{
-				fact = features.AddFeature(CosmicTokensFeature);
-				fact?.SetRank(num2);
+				AddCoins(amount, sponsor);
 			}
 			else
 			{
-				fact.SetRank(fact.GetRank() + num2);
-			}
-			int rank = features.GetRank(CosmicTokensFeature);
-			TimelineManager.Data.CosmicCoins = rank;
-			TimelineManager.Save();
-			SyncInventoryCoins(rank);
-			string text = ((coinLoopMultiplier > 1.0) ? $" <color=#00FFFF>[NG+ x{coinLoopMultiplier:0.##}]</color>" : "");
-			string text2 = (flag ? " <color=#FFD700><b>[Patron Favor +25%]</b></color>" : "");
-			string msg = ((sponsor != null) ? $"<color=#F5C542><b>[Cosmic Sponsorship]</b></color> <b>{sponsor}</b> has sponsored you <b><color=#F5C542>+{num2} Cosmic Coins</color></b>{text}{text2}! (Balance: <b>{rank}</b>)" : $"<color=#F5C542><b>[Cosmic Sponsorship]</b></color> You received <b><color=#F5C542>+{num2} Cosmic Coins</color></b>{text}{text2}! (Balance: <b>{rank}</b>)");
-			EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
-			{
-				h.HandleLogMessage(msg);
-			});
-			ConstellationChatOverlay.AddMessage(msg, sponsor, num2);
-			try
-			{
-				EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
-				{
-					h.HandleWarning(msg, addToLog: false);
-				});
-			}
-			catch
-			{
+				Owe(SaveScopedStorage.Ensure(SaveScopedStorage.CurrentPlayer(), "IsekaiMod.OwedCoins"), amount, withLoopMultiplier: true);
 			}
 		}
+	}
 
-		public static bool SpendCoins(int amount)
+	public static void AddClaimedCoinsWithoutLoopMultiplier(int amount, string sponsor)
+	{
+		if (amount > 0)
 		{
-			return SpendCoins(amount, applyHagglerDiscount: true);
+			if (ConstellationSettings.Enabled)
+			{
+				AddCoinsWithoutLoopMultiplier(amount, sponsor);
+			}
+			else
+			{
+				Owe(SaveScopedStorage.Ensure(SaveScopedStorage.CurrentPlayer(), "IsekaiMod.OwedCoins"), amount, withLoopMultiplier: false);
+			}
 		}
+	}
 
-		public static bool SpendCoins(int amount, bool applyHagglerDiscount)
+	internal static void PayOwed()
+	{
+		try
 		{
-			if (amount <= 0)
+			if (!ConstellationSettings.Enabled)
 			{
-				return true;
+				return;
 			}
-			UnitEntityData player = GetPlayer();
-			if (player == null || CosmicTokensFeature == null)
+			EntityDataBase entity = SaveScopedStorage.CurrentPlayer();
+			Dictionary<string, string> dictionary = SaveScopedStorage.Find(entity, "IsekaiMod.OwedCoins");
+			if (dictionary == null)
 			{
-				return false;
+				return;
 			}
-			int finalAmount = amount;
-			if (applyHagglerDiscount)
+			int num = OwedIn(dictionary, withLoopMultiplier: true);
+			int num2 = OwedIn(dictionary, withLoopMultiplier: false);
+			if (num <= 0 && num2 <= 0)
 			{
-				int discountPercent = Haggler.GetDiscountPercent(player);
-				if (discountPercent > 0)
+				SaveScopedStorage.Drop(entity, "IsekaiMod.OwedCoins");
+			}
+			else if (!(GetPlayer() == null) && CosmicTokensFeature != null)
+			{
+				SaveScopedStorage.Drop(entity, "IsekaiMod.OwedCoins");
+				Log(OwedArrivedText);
+				if (num > 0)
 				{
-					finalAmount = Math.Max(1, (int)Math.Round((double)amount * (1.0 - (double)discountPercent / 100.0)));
-					int saved = amount - finalAmount;
-					if (saved > 0)
-					{
-						EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
-						{
-							h.HandleLogMessage($"<color=#00FF7F><b>[Haggler Discount]</b></color> Haggled price reduced from <b>{amount}</b> to <b>{finalAmount} Cosmic Coins</b> (-{discountPercent}%, Saved: {saved})!");
-						});
-					}
+					AddCoins(num);
+				}
+				if (num2 > 0)
+				{
+					AddCoinsWithoutLoopMultiplier(num2, null);
 				}
 			}
-			FeatureCollection features = player.Descriptor.Progression.Features;
-			int rank = features.GetRank(CosmicTokensFeature);
-			if (rank < finalAmount)
+		}
+		catch (Exception ex)
+		{
+			Main.IsekaiContext.Logger.LogError("Error paying the Cosmic Coins owed from while the Constellations were off: " + ex);
+		}
+	}
+
+	public static int GetCoins()
+	{
+		return GetBalance();
+	}
+
+	public static bool SpendCoins(int amount, string reason)
+	{
+		return SpendCoins(amount, applyHagglerDiscount: true);
+	}
+
+	public static void SyncInventoryCoins(int targetCount)
+	{
+		try
+		{
+			ItemsCollection itemsCollection = Game.Instance?.Player?.Inventory;
+			if (itemsCollection != null && ItemCosmicCoin != null)
 			{
-				string failMsg = $"<color=#DC143C><b>[Cosmic Sponsorship]</b></color> Insufficient Cosmic Coins! Required: <b>{finalAmount}</b>, Current: <b>{rank}</b>";
-				EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
+				int num = itemsCollection.Count(ItemCosmicCoin);
+				if (num < targetCount)
 				{
-					h.HandleLogMessage(failMsg);
-				});
-				ConstellationChatOverlay.AddMessage(failMsg, "Cosmic Exchange");
-				try
-				{
-					EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
-					{
-						h.HandleWarning(failMsg, addToLog: false);
-					});
+					itemsCollection.Add(ItemCosmicCoin, targetCount - num);
 				}
-				catch
+				else if (num > targetCount)
 				{
-				}
-				return false;
-			}
-			Feature fact = features.GetFact(CosmicTokensFeature);
-			if (fact != null)
-			{
-				int newRank = fact.GetRank() - finalAmount;
-				if (newRank <= 0)
-				{
-					// SetRank clamps at 1, so an empty balance is represented by not having the feature at all
-					// (GetRank then reports 0, which is what the old RemoveRank loop reached).
-					features.RemoveFact(fact);
-				}
-				else
-				{
-					fact.SetRank(newRank);
+					itemsCollection.Remove(ItemCosmicCoin, num - targetCount);
 				}
 			}
-			int rank2 = features.GetRank(CosmicTokensFeature);
-			TimelineManager.Data.CosmicCoins = rank2;
-			TimelineManager.Save();
-			SyncInventoryCoins(rank2);
-			string spendMsg = $"<color=#F5C542><b>[Cosmic Sponsorship]</b></color> Spent <b>{finalAmount} Cosmic Coins</b>. (Remaining Balance: <b>{rank2}</b>)";
-			EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
+		}
+		catch (Exception ex)
+		{
+			Main.IsekaiContext.Logger.LogError("Error in SyncInventoryCoins: " + ex);
+		}
+	}
+
+	internal static int ShownCoins(int baseCoins)
+	{
+		if (baseCoins > 0)
+		{
+			return ApplyLoopMultiplier(baseCoins, TimelineManager.GetCoinLoopMultiplier());
+		}
+		return 0;
+	}
+
+	internal static int ApplyLoopMultiplier(int amount, double loopMultiplier)
+	{
+		if (amount <= 0)
+		{
+			return 0;
+		}
+		if (loopMultiplier <= 0.0)
+		{
+			return amount;
+		}
+		int num = (int)Math.Round((double)amount * loopMultiplier);
+		if (num > 0)
+		{
+			return num;
+		}
+		return amount;
+	}
+
+	internal static int ClampRank(int currentRank, int delta, int maxRanks)
+	{
+		long num = (long)currentRank + (long)delta;
+		if (num < 0)
+		{
+			num = 0L;
+		}
+		if (maxRanks > 0 && num > maxRanks)
+		{
+			num = maxRanks;
+		}
+		return (int)num;
+	}
+
+	private static void SetCoinRank(Feature fact, int target)
+	{
+		if (fact != null)
+		{
+			if (target <= 0)
 			{
-				h.HandleLogMessage(spendMsg);
-			});
-			ConstellationChatOverlay.AddMessage(spendMsg, "Cosmic Exchange");
-			try
-			{
-				EventBus.RaiseEvent(delegate(IWarningNotificationUIHandler h)
-				{
-					h.HandleWarning(spendMsg, addToLog: false);
-				});
+				fact.SetRank(1);
+				fact.RemoveRank();
 			}
-			catch
+			else
 			{
+				fact.SetRank(target);
 			}
+		}
+	}
+
+	public static void AddCoinsWithoutLoopMultiplier(int amount, string sponsor)
+	{
+		if (amount <= 0 || !ConstellationSettings.Enabled)
+		{
+			return;
+		}
+		UnitEntityData player = GetPlayer();
+		if (!(player == null) && CosmicTokensFeature != null)
+		{
+			int balance = GetBalance();
+			int num = ClampRank(balance, amount, CosmicTokensFeature.Ranks);
+			SetBalance(player, num);
+			int num2 = Math.Max(0, num - balance);
+			if (sponsor != null)
+			{
+				Log(SponsoredText, sponsor, num2, "", num);
+			}
+			else
+			{
+				Log(ReceivedText, num2, "", num);
+			}
+		}
+	}
+
+	public static void AddCoins(int amount, string sponsor = null)
+	{
+		if (amount <= 0 || !ConstellationSettings.Enabled)
+		{
+			return;
+		}
+		UnitEntityData player = GetPlayer();
+		if (player == null || CosmicTokensFeature == null)
+		{
+			return;
+		}
+		double coinLoopMultiplier = TimelineManager.GetCoinLoopMultiplier();
+		int num = ApplyLoopMultiplier(amount, coinLoopMultiplier);
+		if (num > 0)
+		{
+			int balance = GetBalance();
+			int num2 = ClampRank(balance, num, CosmicTokensFeature.Ranks);
+			SetBalance(player, num2);
+			int num3 = Math.Max(0, num2 - balance);
+			string text = ((coinLoopMultiplier > 1.0) ? Say(LoopMultiplierText, coinLoopMultiplier.ToString("0.##", CultureInfo.InvariantCulture)) : "");
+			if (sponsor != null)
+			{
+				Log(SponsoredText, sponsor, num3, text, num2);
+			}
+			else
+			{
+				Log(ReceivedText, num3, text, num2);
+			}
+		}
+	}
+
+	public static bool SpendCoins(int amount)
+	{
+		return SpendCoins(amount, applyHagglerDiscount: true);
+	}
+
+	internal static int DiscountedCost(int amount, int discountPercent)
+	{
+		if (amount <= 0)
+		{
+			return 0;
+		}
+		if (discountPercent <= 0)
+		{
+			return amount;
+		}
+		return Math.Max(1, (int)Math.Round((double)amount * (1.0 - (double)discountPercent / 100.0)));
+	}
+
+	internal static bool CanAfford(int balance, int amount, int discountPercent)
+	{
+		return DiscountedCost(amount, discountPercent) <= Math.Max(0, balance);
+	}
+
+	public static int PurchasePrice(int amount)
+	{
+		UnitEntityData player = GetPlayer();
+		if (player == null || amount <= 0)
+		{
+			return Math.Max(0, amount);
+		}
+		return DiscountedCost(amount, Haggler.GetDiscountPercent(player));
+	}
+
+	public static bool CanAffordPurchase(int amount)
+	{
+		UnitEntityData player = GetPlayer();
+		if (player == null || CosmicTokensFeature == null)
+		{
+			return amount <= 0;
+		}
+		int discountPercent = Haggler.GetDiscountPercent(player);
+		return CanAfford(GetBalance(), amount, discountPercent);
+	}
+
+	public static bool SpendCoins(int amount, bool applyHagglerDiscount)
+	{
+		if (amount <= 0)
+		{
 			return true;
 		}
+		if (!ConstellationSettings.Enabled)
+		{
+			return false;
+		}
+		UnitEntityData player = GetPlayer();
+		if (player == null || CosmicTokensFeature == null)
+		{
+			return false;
+		}
+		int num = (applyHagglerDiscount ? Haggler.GetDiscountPercent(player) : 0);
+		int num2 = DiscountedCost(amount, num);
+		int balance = GetBalance();
+		if (balance < num2)
+		{
+			Log(InsufficientText, num2, balance);
+			return false;
+		}
+		int num3 = ClampRank(balance, -num2, CosmicTokensFeature.Ranks);
+		SetBalance(player, num3);
+		int num4 = amount - num2;
+		if (num4 > 0)
+		{
+			Log(HaggledText, amount, num2, num, num4);
+		}
+		Log(SpentText, num2, num3);
+		return true;
 	}
 }

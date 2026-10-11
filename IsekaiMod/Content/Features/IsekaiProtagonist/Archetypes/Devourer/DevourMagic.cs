@@ -1,7 +1,7 @@
-﻿using Kingmaker.Blueprints;
+using IsekaiMod.Utilities;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Facts;
-using Kingmaker.Designers.Mechanics.Facts;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.RuleSystem;
 using Kingmaker.RuleSystem.Rules;
@@ -15,53 +15,44 @@ using Kingmaker.Visual.Animation.Kingmaker.Actions;
 using TabletopTweaks.Core.Utilities;
 using UnityEngine;
 
-namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Devourer
-{
-	internal class DevourMagic
-	{
-		private static readonly Sprite Icon_DevourMagic = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintAbility>("f0f761b808dc4b149b08eaf44b99f633"))?.m_Icon;
+namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Devourer;
 
-		public static void Add()
+internal class DevourMagic
+{
+	private static readonly Sprite Icon_DevourMagic = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintAbility>("f0f761b808dc4b149b08eaf44b99f633"))?.m_Icon;
+
+	public static void Add()
+	{
+		BlueprintAbilityResource DevourMagicResource = Helpers.CreateBlueprint(Main.IsekaiContext, "DevourMagicResource", delegate(BlueprintAbilityResource bp)
 		{
-			BlueprintAbilityResource DevourMagicResource = Helpers.CreateBlueprint(Main.IsekaiContext, "DevourMagicResource", delegate(BlueprintAbilityResource bp)
+			bp.m_MaxAmount = DailyUses.Amount(3, StatType.Constitution);
+		});
+		BlueprintAbility DevourMagicAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "DevourMagicAbility", delegate(BlueprintAbility bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Devour Magic");
+			bp.SetDescription(Main.IsekaiContext, "As a standard action, the Slime consumes the magical energies wreathing an enemy target. Strikes the target with a targeted Greater Dispel Magic. If an active effect is successfully consumed, the Slime heals 30 hit points and takes a copy of that effect onto itself. Usable 3 + Constitution modifier times per day.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_DevourMagic;
+			bp.Type = AbilityType.Supernatural;
+			bp.Range = AbilityRange.Close;
+			bp.CanTargetEnemies = true;
+			bp.ActionType = UnitCommand.CommandType.Standard;
+			bp.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Directional;
+			DailyUses.Limit(bp, DevourMagicResource);
+			bp.AddComponent(delegate(AbilityEffectRunAction c)
 			{
-				bp.m_MaxAmount = new BlueprintAbilityResource.Amount
+				c.Actions = ActionFlow.DoSingle(delegate(ContextActionDispelMagic d)
 				{
-					BaseValue = 3,
-					IncreasedByLevel = false,
-					IncreasedByStat = true,
-					ResourceBonusStat = StatType.Constitution
-				};
-			});
-			BlueprintAbility DevourMagicAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "DevourMagicAbility", delegate(BlueprintAbility bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Devour Magic");
-				bp.SetDescription(Main.IsekaiContext, "As a standard action, the Slime consumes the magical energies wreathing an enemy target. Strikes the target with a targeted Greater Dispel Magic. Whenever an active spell is successfully consumed, the Slime heals 10 hit points per spell level and gains 5 temporary hit points. Usable 3 + Constitution modifier times per day.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_DevourMagic;
-				bp.Type = AbilityType.Supernatural;
-				bp.Range = AbilityRange.Close;
-				bp.CanTargetEnemies = true;
-				bp.ActionType = UnitCommand.CommandType.Standard;
-				bp.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Directional;
-				bp.AddComponent(delegate(AbilityResourceLogic c)
-				{
-					c.m_RequiredResource = DevourMagicResource.ToReference<BlueprintAbilityResourceReference>();
-					c.m_IsSpendResource = true;
-					c.Amount = 1;
-				});
-				bp.AddComponent(delegate(AbilityEffectRunAction c)
-				{
-					c.Actions = Helpers.CreateActionList(new ContextActionDispelMagic
-					{
-						m_BuffType = ContextActionDispelMagic.BuffType.All,
-						OnlyTargetEnemyBuffs = true,
-						m_CheckType = RuleDispelMagic.CheckType.CasterLevel,
-						OneRollForAll = true,
-						m_StopAfterCountRemoved = true,
-						m_CountToRemove = 1,
-						m_MaxSpellLevel = 10,
-						m_CloneBuffsToCaster = true
-					}, new ContextActionOnContextCaster
+					d.m_BuffType = ContextActionDispelMagic.BuffType.All;
+					d.OnlyTargetEnemyBuffs = true;
+					d.m_CheckType = RuleDispelMagic.CheckType.CasterLevel;
+					d.OneRollForAll = true;
+					d.m_StopAfterCountRemoved = true;
+					d.m_CountToRemove = 1;
+					d.m_MaxSpellLevel = 10;
+					d.m_CloneBuffsToCaster = true;
+					d.ContextBonus = 0;
+					d.OnFail = Helpers.CreateActionList();
+					d.OnSuccess = Helpers.CreateActionList(new ContextActionOnContextCaster
 					{
 						Actions = Helpers.CreateActionList(new ContextActionHealTarget
 						{
@@ -75,22 +66,18 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Devourer
 					});
 				});
 			});
-			Helpers.CreateBlueprint(Main.IsekaiContext, "DevourMagicFeature", delegate(BlueprintFeature bp)
+		});
+		Helpers.CreateBlueprint(Main.IsekaiContext, "DevourMagicFeature", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Devour Magic");
+			bp.SetDescription(Main.IsekaiContext, "At 11th level, the Slime gains the ability to feast upon hostile magical enchantments, dispelling enemy buffs while restoring health, 3 + Constitution modifier times per day.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_DevourMagic;
+			bp.IsClassFeature = true;
+			DailyUses.Grant(bp, DevourMagicResource);
+			bp.AddComponent(delegate(AddFacts c)
 			{
-				bp.SetName(Main.IsekaiContext, "Devour Magic");
-				bp.SetDescription(Main.IsekaiContext, "At 11th level, the Slime gains the ability to feast upon hostile magical enchantments, dispelling enemy buffs while restoring health (3 + Constitution modifier uses per day).");
-				((BlueprintUnitFact)bp).m_Icon = Icon_DevourMagic;
-				bp.IsClassFeature = true;
-				bp.AddComponent(delegate(AddAbilityResources c)
-				{
-					c.m_Resource = DevourMagicResource.ToReference<BlueprintAbilityResourceReference>();
-					c.RestoreAmount = true;
-				});
-				bp.AddComponent(delegate(AddFacts c)
-				{
-					c.m_Facts = new BlueprintUnitFactReference[1] { DevourMagicAbility.ToReference<BlueprintUnitFactReference>() };
-				});
+				c.m_Facts = new BlueprintUnitFactReference[1] { DevourMagicAbility.ToReference<BlueprintUnitFactReference>() };
 			});
-		}
+		});
 	}
 }

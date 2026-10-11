@@ -1,19 +1,29 @@
-﻿using Kingmaker.ElementsSystem;
+using IsekaiMod.Utilities;
+using Kingmaker.Blueprints.JsonSystem;
 
-namespace IsekaiMod.Content.Arenas
+namespace IsekaiMod.Content.Arenas;
+
+[TypeId("e7077f1104db4ace95106ee319c873f2")]
+public class ActionStartColiseumCup : IsekaiGameAction
 {
-	public class ActionStartColiseumCup : GameAction
+	public string CupId;
+
+	public override string GetCaption()
 	{
-		public ArenaType Cup;
+		return "Start Planar Coliseum cup " + CupId;
+	}
 
-		public override string GetCaption()
+	protected override void RunSafely()
+	{
+		if (!PlanarColiseumHubManager.IsInColiseum())
 		{
-			return $"Start Planar Coliseum Cup: {Cup}";
+			PlanarColiseumHubManager.PostLog("<color=#7A1010><b>[Planar Coliseum]</b></color> Tournament cups are fought only on the arena sands.");
+			return;
 		}
-
-		public override void RunAction()
+		string cupId = CupId;
+		GuardedSchedule.Next("Starting Planar Coliseum cup " + cupId, delegate
 		{
-			DimensionalArenaManager.StartArena(Cup);
-		}
+			DimensionalArenaManager.StartArena(cupId);
+		});
 	}
 }

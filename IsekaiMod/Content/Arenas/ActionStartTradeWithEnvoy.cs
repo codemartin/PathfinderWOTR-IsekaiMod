@@ -1,28 +1,18 @@
-﻿using System.Linq;
-using Kingmaker;
-using Kingmaker.ElementsSystem;
-using Kingmaker.EntitySystem.Entities;
-using Kingmaker.PubSubSystem;
+using IsekaiMod.Utilities;
+using Kingmaker.Blueprints.JsonSystem;
 
-namespace IsekaiMod.Content.Arenas
+namespace IsekaiMod.Content.Arenas;
+
+[TypeId("7b00e877e1aa4861a4b920db3e5d9c2d")]
+public class ActionStartTradeWithEnvoy : IsekaiGameAction
 {
-	public class ActionStartTradeWithEnvoy : GameAction
+	public override string GetCaption()
 	{
-		public override string GetCaption()
-		{
-			return "Start trade with Astral Coin Envoy";
-		}
+		return "Start trade with Astral Coin Envoy";
+	}
 
-		public override void RunAction()
-		{
-			UnitEntityData envoy = Game.Instance?.LoadedAreaState?.AllEntityData?.OfType<UnitEntityData>()?.FirstOrDefault((UnitEntityData u) => u.Blueprint?.name == "AstralCoinEnvoyUnit") ?? Game.Instance?.DialogController?.CurrentSpeaker;
-			if (envoy != null)
-			{
-				EventBus.RaiseEvent(delegate(IVendorUIHandler h)
-				{
-					h.HandleTradeStarted(envoy);
-				});
-			}
-		}
+	protected override void RunSafely()
+	{
+		HubTrade.Start("AstralCoinEnvoyUnit", CosmicRelicsVendorTable.Table);
 	}
 }

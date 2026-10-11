@@ -1,29 +1,21 @@
 {
   "Id": "IsekaiMod",
-  "DisplayName": "Isekai Mod",
-  "Author": "Gekko Lionheart",
-  "Version": "6.3.0",
+  "DisplayName": "Isekai Reimagined",
+  "Author": "JohN100x1",
+  "Version": "6.5.0",
   "ManagerVersion": "0.24.0",
-  "Requirements": [ "TabletopTweaks-Core-0.6.2" ],
+  "Requirements": [ "TabletopTweaks-Core-0.7.14" ],
   "AssemblyName": "IsekaiMod.dll",
   "EntryMethod": "IsekaiMod.Main.Load",
   "LoadAfter": [
-    "ExpandedContent",
-    "MythicArcanist",
-    "MysticalMayhem",
-    "SpellbookMerge",
     "TabletopTweaks-Core",
     "TabletopTweaks-Base",
-    "TabletopTweaks-Reworks",
-    "TomeOfTheFirebird",
-    "AddedFeats",
-    "CharacterOptionsPlus",
-    "DarkCodex",
+    "ExpandedContent",
     "KineticistElementsExpanded",
-    "MartialExcellence",
-    "HomebrewArchetypes",
-    "MicroscopicContentExpansion",
-    "SparsSorcerousSundries"
+    "MysticalMayhem",
+    "SpellbookMerge",
+    "TomeOfTheFirebird"
   ],
-  "HomePage": "https://www.nexusmods.com/pathfinderwrathoftherighteous/mods/734"
+  "HomePage": "https://www.nexusmods.com/pathfinderwrathoftherighteous/mods/734",
+  "Repository": "https://raw.githubusercontent.com/LionheartGames/PathfinderWOTR-IsekaiMod/master/Repository.json"
 }

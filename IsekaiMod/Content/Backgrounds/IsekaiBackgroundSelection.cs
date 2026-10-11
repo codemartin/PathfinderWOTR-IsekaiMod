@@ -1,29 +1,29 @@
-﻿using IsekaiMod.Utilities;
+using IsekaiMod.Config;
+using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Selection;
 using TabletopTweaks.Core.Utilities;
 
-namespace IsekaiMod.Content.Backgrounds
-{
-	internal class IsekaiBackgroundSelection
-	{
-		public static void Add()
-		{
-			BlueprintFeatureSelection feature = Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiBackgroundSelection", delegate(BlueprintFeatureSelection bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Isekai");
-				bp.SetDescription(Main.IsekaiContext, "Before you were summoned across the cosmic rift into Golarion, in your past life you were a...");
-				bp.HideInUI = true;
-				bp.Groups = new FeatureGroup[1] { FeatureGroup.BackgroundSelection };
-				bp.m_AllFeatures = new BlueprintFeatureReference[0];
-			});
-			FeatTools.Selections.BackgroundsBaseSelection.AddToSelection(feature);
-		}
+namespace IsekaiMod.Content.Backgrounds;
 
-		public static void AddToSelection(BlueprintFeature background)
+internal class IsekaiBackgroundSelection
+{
+	public static void Add()
+	{
+		BlueprintFeatureSelection feature = Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiBackgroundSelection", delegate(BlueprintFeatureSelection bp)
 		{
-			BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "IsekaiBackgroundSelection").AddToSelection(background);
-		}
+			bp.SetName(Main.IsekaiContext, "Isekai");
+			bp.SetDescription(Main.IsekaiContext, "Before you were transmigrated across the cosmic rift into Golarion, in your past life you were a...");
+			bp.HideInUI = true;
+			bp.Groups = new FeatureGroup[1] { FeatureGroup.BackgroundSelection };
+			bp.m_AllFeatures = new BlueprintFeatureReference[0];
+		});
+		ContentOffering.OfferInSelection(FeatTools.Selections.BackgroundsBaseSelection, feature, OfferedContent.IsekaiBackgrounds);
+	}
+
+	public static void AddToSelection(BlueprintFeature background)
+	{
+		BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "IsekaiBackgroundSelection").AddToSelection(background);
 	}
 }

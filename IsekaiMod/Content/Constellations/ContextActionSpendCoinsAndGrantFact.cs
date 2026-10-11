@@ -1,70 +1,55 @@
-﻿using Kingmaker.Blueprints;
+using IsekaiMod.Utilities;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Facts;
+using Kingmaker.Blueprints.JsonSystem;
 using Kingmaker.EntitySystem.Entities;
-using Kingmaker.Enums;
-using Kingmaker.PubSubSystem;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Alignments;
-using Kingmaker.UnitLogic.Mechanics.Actions;
 
-namespace IsekaiMod.Content.Constellations
+namespace IsekaiMod.Content.Constellations;
+
+[TypeId("5dc97e48ea784ed0b2cf961f6c3c3a71")]
+public class ContextActionSpendCoinsAndGrantFact : IsekaiContextAction
 {
-	public class ContextActionSpendCoinsAndGrantFact : ContextAction
+	public int Cost;
+
+	public BlueprintUnitFactReference m_Fact;
+
+	public BlueprintFeatureReference m_KeyOfInfinitePathways;
+
+	public AlignmentMaskType AllowedAlignment = AlignmentMaskType.Any;
+
+	public bool RecordForRespec;
+
+	public override string GetCaption()
 	{
-		public int Cost;
+		return $"Spends {Cost} Cosmic Coins and grants permanent fact";
+	}
 
-		public BlueprintUnitFactReference m_Fact;
-
-		public BlueprintFeatureReference m_KeyOfInfinitePathways;
-
-		public AlignmentMaskType AllowedAlignment = AlignmentMaskType.Any;
-
-		public override string GetCaption()
+	protected override void RunSafely()
+	{
+		UnitEntityData unitEntityData = DivineTokens.ResolveDialogTarget(base.Target, DivineTokens.GetPlayer);
+		BlueprintUnitFact blueprintUnitFact = m_Fact?.Get();
+		if (unitEntityData == null || blueprintUnitFact == null)
 		{
-			return $"Spends {Cost} Cosmic Coins and grants permanent fact";
+			return;
 		}
-
-		public override void RunAction()
+		if (unitEntityData.Descriptor.Progression.Features.HasFact(blueprintUnitFact))
 		{
-			UnitEntityData unitEntityData = base.Target?.Unit ?? DivineTokens.GetPlayer();
-			BlueprintUnitFact fact = m_Fact?.Get();
-			if (unitEntityData == null || fact == null)
+			DivineTokens.Log(CosmicStoreText.AlreadyOwned);
+		}
+		else if ((m_KeyOfInfinitePathways == null || !unitEntityData.Descriptor.Progression.Features.HasFact(m_KeyOfInfinitePathways.Get())) && !DivineSponsorshipStore.AlignmentAllows(AllowedAlignment, unitEntityData.Descriptor.Alignment.ValueRaw))
+		{
+			DivineTokens.Log(CosmicStoreText.WrongAlignment, DivineSponsorshipStore.AlignmentName(AllowedAlignment));
+		}
+		else if (DivineTokens.SpendCoins(Cost))
+		{
+			unitEntityData.Descriptor.AddFact(blueprintUnitFact);
+			if (RecordForRespec)
 			{
-				return;
+				ForbiddenCheatRecord.RecordPurchase(unitEntityData, blueprintUnitFact);
 			}
-			if (unitEntityData.Descriptor.Progression.Features.HasFact(fact))
-			{
-				Main.Log(System.Text.RegularExpressions.Regex.Replace("<color=#DC143C>[Cosmic Store]</color> You already possess this permanent cosmic boon!", "<[^>]+>", ""));
-				EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
-				{
-					h.HandleLogMessage("<color=#DC143C>[Cosmic Store]</color> You already possess this permanent cosmic boon!");
-				});
-			}
-			else if ((m_KeyOfInfinitePathways == null || !unitEntityData.Descriptor.Progression.Features.HasFact(m_KeyOfInfinitePathways.Get())) && AllowedAlignment != AlignmentMaskType.Any && (AllowedAlignment & unitEntityData.Descriptor.Alignment.ValueRaw.ToMask()) == 0)
-			{
-				Main.Log(System.Text.RegularExpressions.Regex.Replace("<color=#DC143C>[Cosmic Store]</color> Your alignment does not align with this mythic path! (Requires Key of Infinite Pathways to bypass)", "<[^>]+>", ""));
-				EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
-				{
-					h.HandleLogMessage("<color=#DC143C>[Cosmic Store]</color> Your alignment does not align with this mythic path! (Requires Key of Infinite Pathways to bypass)");
-				});
-			}
-			else if (DivineTokens.SpendCoins(Cost))
-			{
-				unitEntityData.Descriptor.AddFact(fact);
-				Main.Log(System.Text.RegularExpressions.Regex.Replace("<color=#FFD700>[Cosmic Store]</color> Acquired permanent boon: " + fact.Name + "!", "<[^>]+>", ""));
-				EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
-				{
-					h.HandleLogMessage("<color=#FFD700>[Cosmic Store]</color> Acquired permanent boon: " + fact.Name + "!");
-				});
-			}
-			else
-			{
-				Main.Log(System.Text.RegularExpressions.Regex.Replace($"<color=#DC143C>[Cosmic Store]</color> Insufficient Cosmic Coins! Required: {Cost}. Current: {DivineTokens.GetBalance()}.", "<[^>]+>", ""));
-				EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
-				{
-					h.HandleLogMessage($"<color=#DC143C>[Cosmic Store]</color> Insufficient Cosmic Coins! Required: {Cost}. Current: {DivineTokens.GetBalance()}.");
-				});
-			}
+			DivineTokens.Log(CosmicStoreText.BoonAcquired, blueprintUnitFact.Name);
 		}
 	}
 }

@@ -1,4 +1,4 @@
-﻿using IsekaiMod.Utilities;
+using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Items.Armors;
@@ -6,43 +6,42 @@ using Kingmaker.Designers.Mechanics.Facts;
 using Kingmaker.UnitLogic.FactLogic;
 using TabletopTweaks.Core.Utilities;
 
-namespace IsekaiMod.Content.Features.IsekaiProtagonist
+namespace IsekaiMod.Content.Features.IsekaiProtagonist;
+
+internal class IsekaiProficiencies
 {
-	internal class IsekaiProficiencies
+	public static void Add()
 	{
-		public static void Add()
+		Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiProficiencies", delegate(BlueprintFeature bp)
 		{
-			Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiProficiencies", delegate(BlueprintFeature bp)
+			bp.SetName(Main.IsekaiContext, "Isekai Protagonist Proficiences");
+			bp.SetDescription(Main.IsekaiContext, "Isekai Protagonists are proficient with all simple and {g|Encyclopedia:Weapon_Proficiency}martial weapons{/g} and with all armor (heavy, light, and medium) and shields (including tower shields). They can cast {g|Encyclopedia:Spell}spells{/g} from this class while wearing armor and shields (including tower shields) without incurring the normal {g|Encyclopedia:Spell_Fail_Chance}arcane spell failure chance{/g}, but they incur the normal arcane spell failure chance for arcane spells received from other classes.");
+			bp.AddComponent(delegate(AddFacts c)
 			{
-				bp.SetName(Main.IsekaiContext, "Isekai Protagonist Proficiences");
-				bp.SetDescription(Main.IsekaiContext, "Isekai Protagonists are proficient with all simple and {g|Encyclopedia:Weapon_Proficiency}martial weapons{/g} and with all armor (heavy, light, and medium) and shields (including tower shields). They can cast {g|Encyclopedia:Spell}spells{/g} from this class while wearing armor and shields (including tower shields) without incurring the normal {g|Encyclopedia:Spell_Fail_Chance}arcane spell failure chance{/g}, but they incur the normal arcane spell failure chance for arcane spells received from other classes.");
-				bp.AddComponent(delegate(AddFacts c)
+				c.m_Facts = new BlueprintUnitFactReference[7]
 				{
-					c.m_Facts = new BlueprintUnitFactReference[7]
-					{
-						StaticReferences.Proficiencies.LightArmorProficiency.ToReference<BlueprintUnitFactReference>(),
-						StaticReferences.Proficiencies.MediumArmorProficiency.ToReference<BlueprintUnitFactReference>(),
-						StaticReferences.Proficiencies.HeavyArmorProficiency.ToReference<BlueprintUnitFactReference>(),
-						StaticReferences.Proficiencies.SimpleWeaponProficiency.ToReference<BlueprintUnitFactReference>(),
-						StaticReferences.Proficiencies.MartialWeaponProficiency.ToReference<BlueprintUnitFactReference>(),
-						StaticReferences.Proficiencies.ShieldsProficiency.ToReference<BlueprintUnitFactReference>(),
-						StaticReferences.Proficiencies.TowerShieldProficiency.ToReference<BlueprintUnitFactReference>()
-					};
-				});
-				bp.AddComponent(delegate(ArcaneArmorProficiency c)
-				{
-					c.Armor = new ArmorProficiencyGroup[7]
-					{
-						ArmorProficiencyGroup.Light,
-						ArmorProficiencyGroup.Medium,
-						ArmorProficiencyGroup.Heavy,
-						ArmorProficiencyGroup.Buckler,
-						ArmorProficiencyGroup.LightShield,
-						ArmorProficiencyGroup.HeavyShield,
-						ArmorProficiencyGroup.TowerShield
-					};
-				});
+					StaticReferences.Proficiencies.LightArmorProficiency.ToReference<BlueprintUnitFactReference>(),
+					StaticReferences.Proficiencies.MediumArmorProficiency.ToReference<BlueprintUnitFactReference>(),
+					StaticReferences.Proficiencies.HeavyArmorProficiency.ToReference<BlueprintUnitFactReference>(),
+					StaticReferences.Proficiencies.SimpleWeaponProficiency.ToReference<BlueprintUnitFactReference>(),
+					StaticReferences.Proficiencies.MartialWeaponProficiency.ToReference<BlueprintUnitFactReference>(),
+					StaticReferences.Proficiencies.ShieldsProficiency.ToReference<BlueprintUnitFactReference>(),
+					StaticReferences.Proficiencies.TowerShieldProficiency.ToReference<BlueprintUnitFactReference>()
+				};
 			});
-		}
+			bp.AddComponent(delegate(ArcaneArmorProficiency c)
+			{
+				c.Armor = new ArmorProficiencyGroup[7]
+				{
+					ArmorProficiencyGroup.Light,
+					ArmorProficiencyGroup.Medium,
+					ArmorProficiencyGroup.Heavy,
+					ArmorProficiencyGroup.Buckler,
+					ArmorProficiencyGroup.LightShield,
+					ArmorProficiencyGroup.HeavyShield,
+					ArmorProficiencyGroup.TowerShield
+				};
+			});
+		});
 	}
 }

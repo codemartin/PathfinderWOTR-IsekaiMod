@@ -1,69 +1,63 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
+using System.Linq;
+using IsekaiMod.Utilities;
 using Kingmaker;
-using Kingmaker.Corruption;
+using Kingmaker.Blueprints.JsonSystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Buffs;
-using Kingmaker.UnitLogic.Mechanics.Actions;
 
-namespace IsekaiMod.Content.Constellations
+namespace IsekaiMod.Content.Constellations;
+
+[TypeId("9d3e2c61b0a44f7e8c5a1b2d3e4f5a71")]
+public class ContextActionWishstoneRestoration : IsekaiContextAction
 {
-	public class ContextActionWishstoneRestoration : ContextAction
+	public override string GetCaption()
 	{
-		public override string GetCaption()
-		{
-			return "Miracle of Restoration: Party True Resurrection, full spell slots, and condition cleanse";
-		}
+		return "Miracle of Restoration: party true resurrection, full spell slots and resources, condition cleanse";
+	}
 
-		public override void RunAction()
+	protected override void RunSafely()
+	{
+		Player player = Game.Instance?.Player;
+		if (player == null)
 		{
-			List<UnitEntityData> list = Game.Instance?.Player?.Party;
-			if (list == null)
-			{
-				return;
-			}
-			foreach (UnitEntityData item in list)
-			{
-				if (item == null)
-				{
-					continue;
-				}
-				if (item.Descriptor.State.IsDead)
-				{
-					item.Descriptor.ResurrectAndFullRestore(item);
-				}
-				item.Descriptor.Damage = 0;
-				foreach (Spellbook spellbook in item.Descriptor.Spellbooks)
-				{
-					spellbook.Rest();
-				}
-				item.Descriptor.Resources.FullRestoreAll();
-				List<Buff> list2 = new List<Buff>();
-				foreach (Buff buff in item.Descriptor.Buffs)
-				{
-					if (buff.Blueprint.Harmful)
-					{
-						list2.Add(buff);
-					}
-				}
-				foreach (Buff item2 in list2)
-				{
-					item.Descriptor.RemoveFact(item2);
-				}
-			}
-			if (Game.Instance?.Player?.Corruption != null)
-			{
-				CorruptionManager corruptionManager = Game.Instance?.Player?.Corruption;
-				if (corruptionManager != null)
-				{
-					corruptionManager.CurrentValue = 0;
-				}
-			}
-			EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
-			{
-				h.HandleLogMessage("<color=#FFD700><b>[Cosmic Wishstone] Miracle of Restoration!</b></color> Divine starlight floods your entire company: all fallen allies rise fully restored, all spell slots and class abilities return to maximum, and all corruption dissolves into the cosmos!");
-			});
+			return;
 		}
+		foreach (UnitEntityData item in player.Party.ToList())
+		{
+			if (item == null)
+			{
+				continue;
+			}
+			if (item.Descriptor.State.IsDead)
+			{
+				item.Descriptor.ResurrectAndFullRestore(item);
+			}
+			item.Descriptor.Damage = 0;
+			foreach (Spellbook spellbook in item.Descriptor.Spellbooks)
+			{
+				spellbook.Rest();
+			}
+			item.Descriptor.Resources.FullRestoreAll(ContextActionRejuvenation.RejuvenationExcludedResources());
+			List<Buff> list = new List<Buff>();
+			foreach (Buff buff in item.Descriptor.Buffs)
+			{
+				if (buff.Blueprint.Harmful)
+				{
+					list.Add(buff);
+				}
+			}
+			foreach (Buff item2 in list)
+			{
+				item2.Remove();
+			}
+		}
+		player.Corruption?.Clear();
+		EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
+		{
+			h.HandleLogMessage(ConstellationText.Localized("CosmicWishstone.Miracle", "<color=#5B2A86><b>[Cosmic Wishstone] Miracle of Restoration!</b></color> Divine starlight floods your entire company: all fallen allies rise fully restored, all spell slots and class abilities return to maximum (Merchant's Gamble pulls excepted), and all corruption dissolves into the cosmos!"));
+		});
 	}
 }

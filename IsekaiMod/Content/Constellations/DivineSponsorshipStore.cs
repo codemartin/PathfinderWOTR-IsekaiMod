@@ -1,14 +1,18 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using IsekaiMod.Components;
+using IsekaiMod.Config;
+using IsekaiMod.Content.Arenas;
 using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
+using Kingmaker.Blueprints.Classes.Prerequisites;
 using Kingmaker.Blueprints.Classes.Spells;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.Items;
 using Kingmaker.Blueprints.Items.Equipment;
-using Kingmaker.Designers.EventConditionActionSystem.Actions;
 using Kingmaker.Designers.EventConditionActionSystem.Conditions;
 using Kingmaker.Designers.EventConditionActionSystem.Evaluators;
 using Kingmaker.Designers.Mechanics.Buffs;
@@ -16,10 +20,11 @@ using Kingmaker.Designers.Mechanics.Facts;
 using Kingmaker.DialogSystem;
 using Kingmaker.DialogSystem.Blueprints;
 using Kingmaker.ElementsSystem;
+using Kingmaker.EntitySystem.Entities;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.Enums;
 using Kingmaker.Enums.Damage;
-using Kingmaker.RuleSystem;
+using Kingmaker.TextTools;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Abilities.Components;
@@ -28,679 +33,1682 @@ using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.UnitLogic.Buffs.Components;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.FactLogic;
-using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Mechanics.Actions;
-using Kingmaker.UnitLogic.Mechanics.Components;
 using Kingmaker.Visual.Animation.Kingmaker.Actions;
 using TabletopTweaks.Core.Utilities;
 using UnityEngine;
 
-namespace IsekaiMod.Content.Constellations
-{
-	internal class DivineSponsorshipStore
-	{
-		public static BlueprintFeature CosmicSponsorshipExchangeFeature;
+namespace IsekaiMod.Content.Constellations;
 
-		public static void Add()
+internal class DivineSponsorshipStore
+{
+	internal enum PatronSwitchBlocker
+	{
+		None,
+		ForbidsSpellbook,
+		RefusesCharacter
+	}
+
+	internal const string VanillaBesmaraFeatureGuid = "470d824767d34e2e9a59b6d70681af7a";
+
+	public static BlueprintFeature CosmicSponsorshipExchangeFeature;
+
+	public const int CosmicWishChargeCap = 10;
+
+	internal const string BalanceTemplateTag = "isekai_cosmic_coins";
+
+	internal const string BalanceLine = "\n\n<b>Your balance:</b> {isekai_cosmic_coins} Cosmic Coins";
+
+	internal static readonly IReadOnlyDictionary<string, AlignmentMaskType> MythicBoonAlignment = new Dictionary<string, AlignmentMaskType>(StringComparer.Ordinal)
+	{
 		{
-			Sprite Icon_Coin = AssetLoader.LoadInternal(Main.IsekaiContext, "Features", "ICON_COSMIC_COIN.png");
-			BlueprintItem ResurrectionScroll = BlueprintTools.GetBlueprint<BlueprintItem>("6169a9e10d32c524ea44edb47ebd93cf");
-			List<BlueprintAbility> storeAbilities = new List<BlueprintAbility>();
-			BlueprintFeature KeyOfInfinitePathwaysFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "KeyOfInfinitePathwaysFeature", delegate(BlueprintFeature blueprintFeature2)
+			"BoonOfHeavenlyHost",
+			AlignmentMaskType.Good
+		},
+		{
+			"BoonOfAbyssalRage",
+			AlignmentMaskType.ChaoticEvil
+		},
+		{
+			"BoonOfLordOfBones",
+			AlignmentMaskType.Evil
+		},
+		{
+			"BoonOfWildWonder",
+			AlignmentMaskType.ChaoticGood
+		},
+		{
+			"BoonOfCosmicJester",
+			AlignmentMaskType.Chaotic
+		},
+		{
+			"BoonOfMonadicOrder",
+			AlignmentMaskType.Lawful
+		},
+		{
+			"BoonOfHellfireContract",
+			AlignmentMaskType.LawfulEvil
+		},
+		{
+			"BoonOfGoldenDragon",
+			AlignmentMaskType.Good
+		},
+		{
+			"BoonOfPrimevalSwarm",
+			AlignmentMaskType.Evil
+		},
+		{
+			"BoonOfUnboundMortal",
+			AlignmentMaskType.Any
+		}
+	};
+
+	internal const int TranscendenceCost = 1200;
+
+	internal const string AtheismPatronName = "Atheism";
+
+	internal const int AvatarCost = 10000;
+
+	internal const string LanternKingDiscountAnswerName = "AnswerAscendAvatarLanternKingDiscount";
+
+	private static bool s_BalanceTemplateRegistered;
+
+	internal static bool AlignmentAllows(AlignmentMaskType allowed, Alignment alignment)
+	{
+		if (allowed == AlignmentMaskType.Any)
+		{
+			return true;
+		}
+		return (allowed & alignment.ToMask()) != 0;
+	}
+
+	internal static string AlignmentName(AlignmentMaskType mask)
+	{
+		return mask switch
+		{
+			AlignmentMaskType.Any => "any", 
+			AlignmentMaskType.Good => "Good", 
+			AlignmentMaskType.Evil => "Evil", 
+			AlignmentMaskType.Lawful => "Lawful", 
+			AlignmentMaskType.Chaotic => "Chaotic", 
+			AlignmentMaskType.LawfulGood => "Lawful Good", 
+			AlignmentMaskType.NeutralGood => "Neutral Good", 
+			AlignmentMaskType.ChaoticGood => "Chaotic Good", 
+			AlignmentMaskType.LawfulNeutral => "Lawful Neutral", 
+			AlignmentMaskType.TrueNeutral => "True Neutral", 
+			AlignmentMaskType.ChaoticNeutral => "Chaotic Neutral", 
+			AlignmentMaskType.LawfulEvil => "Lawful Evil", 
+			AlignmentMaskType.NeutralEvil => "Neutral Evil", 
+			AlignmentMaskType.ChaoticEvil => "Chaotic Evil", 
+			_ => mask.ToString(), 
+		};
+	}
+
+	internal static string FormatCoins(int amount)
+	{
+		return amount.ToString("N0", CultureInfo.InvariantCulture);
+	}
+
+	internal static string OfferLabel(int cost, string displayName, string description)
+	{
+		return "(" + FormatCoins(cost) + " Coins) [" + displayName + "] " + description;
+	}
+
+	internal static string MythicOfferLabel(int cost, string displayName, string description, AlignmentMaskType alignment)
+	{
+		if (alignment != AlignmentMaskType.Any)
+		{
+			return "(" + FormatCoins(cost) + " Coins, " + AlignmentName(alignment) + " only) [" + displayName + "] " + description;
+		}
+		return OfferLabel(cost, displayName, description);
+	}
+
+	internal static string TranscendenceLabel(string archetype, string displayName, string description)
+	{
+		return "(" + FormatCoins(1200) + " Coins) [" + archetype + "] " + displayName + ": " + description;
+	}
+
+	internal static string PatronLabel(string deityName)
+	{
+		if (!(deityName == "Atheism"))
+		{
+			return "(" + FormatCoins(500) + " Coins) [Switch Patron] Align your soul with " + deityName;
+		}
+		return "(" + FormatCoins(500) + " Coins) [Switch Patron] Renounce all patrons (Atheism)";
+	}
+
+	internal static string AvatarLabel(string avatarName, string summary)
+	{
+		return "<color=#5B2A86>[Ascend]</color> Embody the " + avatarName + " (" + FormatCoins(10000) + " Coins): " + summary;
+	}
+
+	internal static string DiscountedAvatarLabel(string avatarName, string summary)
+	{
+		return "<color=#5B2A86>[Ascend]</color> Embody the " + avatarName + " (" + FormatCoins(LanternKingReveal.DiscountedAvatarCost) + " Coins, the Lantern King's half-price deal for winning every cup): " + summary;
+	}
+
+	internal static List<BlueprintFeature> OwnedFeatures(UnitEntityData unit)
+	{
+		List<BlueprintFeature> list = new List<BlueprintFeature>();
+		if (unit?.Descriptor?.Progression?.Features == null)
+		{
+			return list;
+		}
+		foreach (Feature feature in unit.Descriptor.Progression.Features)
+		{
+			if (feature?.Blueprint != null)
 			{
-				blueprintFeature2.SetName(Main.IsekaiContext, "Key of Infinite Pathways");
-				blueprintFeature2.SetDescription(Main.IsekaiContext, "A metaphysical skeleton key that transcends dimensional timelines and cosmic law. Unlocks all alignment and mythic path restrictions within the Cosmic Sponsorship Store, allowing you to acquire boons from any mythic path simultaneously.");
-				((BlueprintUnitFact)blueprintFeature2).m_Icon = Icon_Coin;
-				blueprintFeature2.IsClassFeature = true;
+				list.Add(feature.Blueprint);
+			}
+		}
+		return list;
+	}
+
+	internal static bool SpellbookWouldBeForbidden(AlignmentMaskType deityAlignment, Alignment characterAlignment, bool ignoreFactConfigured, bool hasIgnoreFact, bool castsFromListedSpellbook)
+	{
+		if (!castsFromListedSpellbook)
+		{
+			return false;
+		}
+		if (((characterAlignment.ToMask() & deityAlignment) == 0) & ignoreFactConfigured)
+		{
+			return !hasIgnoreFact;
+		}
+		return false;
+	}
+
+	internal static PatronSwitchBlocker PatronSwitchBlock(UnitEntityData unit, BlueprintFeature deity)
+	{
+		if (unit?.Descriptor == null || deity == null)
+		{
+			return PatronSwitchBlocker.None;
+		}
+		UnitDescriptor descriptor = unit.Descriptor;
+		BlueprintComponent[] source = deity.ComponentsArray ?? new BlueprintComponent[0];
+		foreach (ForbidSpellbookOnAlignmentDeviation item in source.OfType<ForbidSpellbookOnAlignmentDeviation>())
+		{
+			BlueprintSpellbookReference[] listed = item.m_Spellbooks ?? new BlueprintSpellbookReference[0];
+			bool castsFromListedSpellbook = descriptor.Spellbooks.Any((Spellbook book) => book?.Blueprint != null && listed.Any((BlueprintSpellbookReference r) => r != null && r.Get() == book.Blueprint));
+			BlueprintUnitFact ignoreFact = item.IgnoreFact;
+			if (SpellbookWouldBeForbidden(item.Alignment, descriptor.Alignment.ValueRaw, ignoreFact != null, ignoreFact != null && descriptor.HasFact(ignoreFact), castsFromListedSpellbook))
+			{
+				return PatronSwitchBlocker.ForbidsSpellbook;
+			}
+		}
+		foreach (Prerequisite item2 in source.OfType<Prerequisite>())
+		{
+			if (item2.Group == Prerequisite.GroupType.All && (item2 is PrerequisiteNoClassLevel || item2 is PrerequisiteNoArchetype || item2 is PrerequisiteNoFeature) && !item2.CheckRaw(null, descriptor, null))
+			{
+				return PatronSwitchBlocker.RefusesCharacter;
+			}
+		}
+		return PatronSwitchBlocker.None;
+	}
+
+	private static void RegisterBalanceTemplate()
+	{
+		if (s_BalanceTemplateRegistered)
+		{
+			return;
+		}
+		try
+		{
+			TextTemplateEngine.AddTemplate("isekai_cosmic_coins", (TextTemplate)new CosmicCoinBalanceTemplate());
+			s_BalanceTemplateRegistered = true;
+		}
+		catch (Exception ex)
+		{
+			Main.IsekaiContext.Logger.LogError("Cosmic Store: could not register the balance text template: " + ex);
+		}
+	}
+
+	public static void Add()
+	{
+		Sprite Icon_Coin = AssetLoader.LoadInternal(Main.IsekaiContext, "Features", "ICON_COSMIC_COIN.png");
+		Sprite Icon_CosmicWish = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintAbility>("1325e698f4a3f224b880e3b83a551228"))?.m_Icon;
+		Sprite Icon_WishWealth = BlueprintTools.GetBlueprint<BlueprintItem>("6f0b2c6a856175e469224e102d41b90b")?.m_Icon;
+		Sprite variantIcon = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintAbility>("9f476da1aa712284d8e652fc387ce5bb"))?.m_Icon;
+		Sprite variantIcon2 = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintAbility>("ce020c1de7b2eb74f9f56053aaec419c"))?.m_Icon;
+		Sprite variantIcon3 = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintAbility>("8942396687d6ce543a33d4d7424211ca"))?.m_Icon;
+		Sprite variantIcon4 = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintAbility>("776683d03cb1fd341b488d09fd4c5290"))?.m_Icon;
+		Sprite variantIcon5 = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintAbility>("0f4eaadeb5c9a2749b7d3aaf78058a93"))?.m_Icon;
+		Sprite variantIcon6 = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintAbility>("e0c5386bbdbf36346b0dfebe098e9b26"))?.m_Icon;
+		RegisterBalanceTemplate();
+		BlueprintCue CueStoreBlessings = TTCoreExtensions.CreateCue("CueStoreBlessings", delegate(BlueprintCue blueprintCue6)
+		{
+			blueprintCue6.SetText(Main.IsekaiContext, "<color=#5B2A86><b>[Deity Blessings Catalog]</b></color>\n\nThe constellations offer their divine favor in exchange for Cosmic Coins. Blessings last for 1 hour and persist through death.\n\nSelect a blessing to invoke:\n\n<b>Your balance:</b> {isekai_cosmic_coins} Cosmic Coins");
+			blueprintCue6.Answers = new List<BlueprintAnswerBaseReference>();
+		});
+		BlueprintCue CueStoreMythic = TTCoreExtensions.CreateCue("CueStoreMythic", delegate(BlueprintCue blueprintCue6)
+		{
+			blueprintCue6.SetText(Main.IsekaiContext, "<color=#5B2A86><b>[Mythic Path Boons Catalog]</b></color>\n\nEchoes of legendary planar destinies crystallized into permanent personal enhancements. Each boon asks for the alignment shown beside its price; the Key of Infinite Pathways, offered among the Infusions, lifts that requirement.\n\nSelect a mythic path boon to acquire:\n\n<b>Your balance:</b> {isekai_cosmic_coins} Cosmic Coins");
+			blueprintCue6.Answers = new List<BlueprintAnswerBaseReference>();
+		});
+		BlueprintCue blueprintCue = TTCoreExtensions.CreateCue("CueStoreConsumables", delegate(BlueprintCue blueprintCue6)
+		{
+			blueprintCue6.SetText(Main.IsekaiContext, "<color=#5B2A86><b>[Web Novel Consumables & Cosmic Wishes]</b></color>\n\nEmergency trump cards and reality-warping miracles drafted by senior transmigrators.\n\nSelect an offering to acquire:\n\n<b>Your balance:</b> {isekai_cosmic_coins} Cosmic Coins");
+			blueprintCue6.Answers = new List<BlueprintAnswerBaseReference>();
+		});
+		BlueprintCue CueStoreInfusions = TTCoreExtensions.CreateCue("CueStoreInfusions", delegate(BlueprintCue blueprintCue6)
+		{
+			blueprintCue6.SetText(Main.IsekaiContext, "<color=#5B2A86><b>[Permanent Infusions & Subclass Transcendence]</b></color>\n\nInscribe cosmic truth directly into your flesh, blood, and class techniques. Each transcendence is offered only to the archetype it belongs to.\n\nSelect an infusion or transcendence to acquire:\n\n<b>Your balance:</b> {isekai_cosmic_coins} Cosmic Coins");
+			blueprintCue6.Answers = new List<BlueprintAnswerBaseReference>();
+		});
+		BlueprintCue blueprintCue2 = TTCoreExtensions.CreateCue("CueStoreForbiddenCheats", delegate(BlueprintCue blueprintCue6)
+		{
+			blueprintCue6.SetText(Main.IsekaiContext, "<color=#7A1010><b>[Forbidden Otherworldly Cheats (Protagonist Hacks)]</b></color>\n\n<i>\"H-Hey! How did you get access to the developer console?! The cosmic balance will collapse!\"</i>\n\nThe observing constellations erupt into chaotic panic as you tap into the raw architectural code of reality. For an exorbitant fee of accumulated Cosmic Coins, they are willing to turn a blind eye and grant you truly game-breaking otherworldly cheats.\n\nSelect a forbidden cheat below:\n\n<b>Your balance:</b> {isekai_cosmic_coins} Cosmic Coins");
+			blueprintCue6.Answers = new List<BlueprintAnswerBaseReference>();
+		});
+		BlueprintCue blueprintCue3 = TTCoreExtensions.CreateCue("CueStoreCosmicRelics", delegate(BlueprintCue blueprintCue6)
+		{
+			blueprintCue6.SetText(Main.IsekaiContext, "<color=#133E71><b>[Cosmic Relics & Sovereign Boons]</b></color>\n\nThe constellations draw back the celestial veil, presenting legendary stellar relics, ancient companions, and mythic rulebreaker pacts forged from the heart of dying stars.\n\nSelect a cosmic relic or boon:\n\n<b>Your balance:</b> {isekai_cosmic_coins} Cosmic Coins");
+			blueprintCue6.Answers = new List<BlueprintAnswerBaseReference>();
+		});
+		BlueprintCue blueprintCue4 = TTCoreExtensions.CreateCue("CueStoreFealty", delegate(BlueprintCue blueprintCue6)
+		{
+			blueprintCue6.SetText(Main.IsekaiContext, "<color=#5B2A86><b>[Constellation Fealty & Avatar Ascension]</b></color>\n\nPledge to a sponsor deity for +25% patron donations (500 Cosmic Coins, once per week of travel), or ascend as your patron's Avatar (10,000 Cosmic Coins). You hold one avatar at a time: switching patron removes it with no refund. A patron who would forbid your divine spellbook or refuses your class is not offered. A seat you have deeply offended pays no patron bonus and halves its sponsorship until you make amends.\n\n<b>Your balance:</b> {isekai_cosmic_coins} Cosmic Coins");
+			blueprintCue6.Answers = new List<BlueprintAnswerBaseReference>();
+		});
+		BlueprintCue blueprintCue5 = TTCoreExtensions.CreateCue("CueStoreGodDefier", delegate(BlueprintCue blueprintCue6)
+		{
+			blueprintCue6.SetText(Main.IsekaiContext, "<color=#5B2A86><b>[Path of the God Defier]</b></color>\n\n<i>\"We bow to no throne and worship no star. Our fate belongs only to us.\"</i>\n\nReject all divine authority and constellation patronage. Gain a +4 bonus to all ability scores, immunity to curses and death effects, and a +8 bonus to damage rolls.\n\n<b>Requirements:</b> Atheism & 10,000 Cosmic Coins. You embody one avatar at a time, so this is refused while you hold another; switching patron gives an avatar up, with no refund.\n\n<b>Your balance:</b> {isekai_cosmic_coins} Cosmic Coins");
+			blueprintCue6.Answers = new List<BlueprintAnswerBaseReference>();
+		});
+		BlueprintCue CosmicStoreRootCue = TTCoreExtensions.CreateCue("CosmicStoreRootCue", delegate(BlueprintCue blueprintCue6)
+		{
+			blueprintCue6.SetText(Main.IsekaiContext, "<color=#5B2A86><b>[The Cosmic Constellation Exchange]</b></color>\n\nSoft starlight crystallizes around you into a shimmering celestial interface. The observing constellations watch with eager anticipation as your accumulated Cosmic Coins hum with multiversal energy.\n\nSelect a catalog category below:\n\n<b>Your balance:</b> {isekai_cosmic_coins} Cosmic Coins");
+			blueprintCue6.Answers = new List<BlueprintAnswerBaseReference>();
+		});
+		BlueprintDialog CosmicStoreDialog = Helpers.CreateBlueprint(Main.IsekaiContext, "CosmicStoreDialog", delegate(BlueprintDialog blueprintDialog)
+		{
+			blueprintDialog.FirstCue = new CueSelection
+			{
+				Cues = new List<BlueprintCueBaseReference> { CosmicStoreRootCue.ToReference<BlueprintCueBaseReference>() },
+				Strategy = Strategy.First
+			};
+			blueprintDialog.Type = DialogType.Common;
+			blueprintDialog.TurnPlayer = false;
+			blueprintDialog.TurnFirstSpeaker = false;
+			blueprintDialog.Conditions = ActionFlow.EmptyCondition();
+			blueprintDialog.StartActions = ActionFlow.DoNothing();
+			blueprintDialog.FinishActions = ActionFlow.DoNothing();
+			blueprintDialog.ReplaceActions = ActionFlow.DoNothing();
+		});
+		BlueprintFeature KeyOfInfinitePathwaysFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "KeyOfInfinitePathwaysFeature", delegate(BlueprintFeature blueprintFeature3)
+		{
+			blueprintFeature3.SetName(Main.IsekaiContext, "Key of Infinite Pathways");
+			blueprintFeature3.SetDescription(Main.IsekaiContext, "A metaphysical skeleton key that transcends dimensional timelines and cosmic law. Unlocks all alignment and mythic path restrictions within the Cosmic Sponsorship Store, allowing you to acquire boons from any mythic path simultaneously.");
+			((BlueprintUnitFact)blueprintFeature3).m_Icon = Icon_Coin;
+			blueprintFeature3.IsClassFeature = false;
+		});
+		AddBlessing("CaydenReserveBrew", "AnswerBuyBlessingCayden", "Cayden's Reserve Brew", "Grants immunity to fatigue and exhaustion, and a +2 morale bonus to attack and damage rolls.", 100, delegate(BlueprintBuff obj2)
+		{
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Morale;
+				c.Stat = StatType.AdditionalAttackBonus;
+				c.Value = 2;
 			});
-			BlueprintAbility item = Helpers.CreateBlueprint(Main.IsekaiContext, "BuyKeyOfInfinitePathwaysAbility", delegate(BlueprintAbility blueprintAbility)
+			obj2.AddComponent(delegate(AddStatBonus c)
 			{
-				blueprintAbility.SetName(Main.IsekaiContext, "Meta-Boon: Key of Infinite Pathways");
-				blueprintAbility.SetDescription(Main.IsekaiContext, "Spend 5,000 Cosmic Coins to permanently shatter all alignment and mythic path prerequisites in the Cosmic Store.");
-				((BlueprintUnitFact)blueprintAbility).m_Icon = Icon_Coin;
-				blueprintAbility.Type = AbilityType.Special;
-				blueprintAbility.Range = AbilityRange.Personal;
-				blueprintAbility.CanTargetSelf = true;
-				blueprintAbility.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Self;
-				blueprintAbility.ActionType = UnitCommand.CommandType.Standard;
-				blueprintAbility.AddComponent(delegate(AbilityEffectRunAction c)
-				{
-					c.Actions = ActionFlow.DoSingle(delegate(ContextActionSpendCoinsAndGrantFact a)
-					{
-						a.Cost = 5000;
-						a.m_Fact = KeyOfInfinitePathwaysFeature.ToReference<BlueprintUnitFactReference>();
-					});
-				});
+				c.Descriptor = ModifierDescriptor.Morale;
+				c.Stat = StatType.AdditionalDamage;
+				c.Value = 2;
 			});
-			storeAbilities.Add(item);
-			List<(string name, BlueprintBuff buff, int cost, string displayName, string desc)> blessingBuffs = new List<(string, BlueprintBuff, int, string, string)>();
-			AddBlessing("CaydenReserveBrew", "Cayden's Reserve Brew", "Grants immunity to fatigue/exhaustion, and a +2 morale bonus to attack and damage rolls.", 100, delegate(BlueprintBuff obj)
+			obj2.AddComponent(delegate(AddConditionImmunity c)
 			{
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Morale;
-					c.Stat = StatType.AdditionalAttackBonus;
-					c.Value = 2;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Morale;
-					c.Stat = StatType.AdditionalDamage;
-					c.Value = 2;
-				});
-				obj.AddComponent(delegate(AddConditionImmunity c)
-				{
-					c.Condition = UnitCondition.Fatigued;
-				});
-				obj.AddComponent(delegate(AddConditionImmunity c)
-				{
-					c.Condition = UnitCondition.Exhausted;
-				});
+				c.Condition = UnitCondition.Fatigued;
 			});
-			AddBlessing("StarlightAegis", "Starlight Aegis of Desna", "Grants a +2 luck bonus to AC and all saving throws.", 250, delegate(BlueprintBuff obj)
+			obj2.AddComponent(delegate(AddConditionImmunity c)
 			{
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Luck;
-					c.Stat = StatType.AC;
-					c.Value = 2;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Luck;
-					c.Stat = StatType.SaveFortitude;
-					c.Value = 2;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Luck;
-					c.Stat = StatType.SaveReflex;
-					c.Value = 2;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Luck;
-					c.Stat = StatType.SaveWill;
-					c.Value = 2;
-				});
+				c.Condition = UnitCondition.Exhausted;
 			});
-			AddBlessing("EssenceOfLurker", "Essence of the Lurker", "Grants a +2 profane bonus to the DC of Conjuration, Transmutation, and Illusion spells.", 500, delegate(BlueprintBuff obj)
+		});
+		AddBlessing("StarlightAegis", "AnswerBuyBlessingDesna", "Starlight Aegis of Desna", "Grants a +2 bonus to AC and all saving throws that stacks with everything, including Plot Armor.", 250, delegate(BlueprintBuff obj2)
+		{
+			obj2.AddComponent(delegate(AddStatBonus c)
 			{
-				obj.AddComponent(delegate(IncreaseSpellSchoolDC c)
-				{
-					c.School = SpellSchool.Conjuration;
-					c.BonusDC = 2;
-					c.Descriptor = ModifierDescriptor.Profane;
-				});
-				obj.AddComponent(delegate(IncreaseSpellSchoolDC c)
-				{
-					c.School = SpellSchool.Transmutation;
-					c.BonusDC = 2;
-					c.Descriptor = ModifierDescriptor.Profane;
-				});
-				obj.AddComponent(delegate(IncreaseSpellSchoolDC c)
-				{
-					c.School = SpellSchool.Illusion;
-					c.BonusDC = 2;
-					c.Descriptor = ModifierDescriptor.Profane;
-				});
+				c.Descriptor = ModifierDescriptor.UntypedStackable;
+				c.Stat = StatType.AC;
+				c.Value = 2;
 			});
-			AddBlessing("LanternTricksterGlow", "Lantern King's Prankster Veil", "Grants a +3 competence bonus to Trickery and Stealth, plus 20% concealment.", 300, delegate(BlueprintBuff obj)
+			obj2.AddComponent(delegate(AddStatBonus c)
 			{
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Competence;
-					c.Stat = StatType.SkillThievery;
-					c.Value = 3;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Competence;
-					c.Stat = StatType.SkillStealth;
-					c.Value = 3;
-				});
-				obj.AddComponent(delegate(AddConcealment c)
-				{
-					c.Concealment = Concealment.Partial;
-				});
+				c.Descriptor = ModifierDescriptor.UntypedStackable;
+				c.Stat = StatType.SaveFortitude;
+				c.Value = 2;
 			});
-			AddBlessing("QueenOfTheSeasFavor", "Favor of the Pirate Queen", "Grants +10 ft movement speed, freedom of movement, and +2 attack against staggered or flat-footed foes.", 300, delegate(BlueprintBuff obj)
+			obj2.AddComponent(delegate(AddStatBonus c)
 			{
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Enhancement;
-					c.Stat = StatType.Speed;
-					c.Value = 10;
-				});
-				obj.AddComponent(delegate(AddConditionImmunity c)
-				{
-					c.Condition = UnitCondition.Paralyzed;
-				});
-				// Condition immunity alone leaves the delivering buff in place; blocking the descriptor stops it, as the game's own immunities do.
-				obj.AddComponent(delegate(BuffDescriptorImmunity c)
-				{
-					c.Descriptor = SpellDescriptor.Fatigue | SpellDescriptor.Exhausted | SpellDescriptor.Paralysis;
-				});
-				obj.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
-				{
-					c.Descriptor = SpellDescriptor.Fatigue | SpellDescriptor.Exhausted | SpellDescriptor.Paralysis;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Morale;
-					c.Stat = StatType.AdditionalAttackBonus;
-					c.Value = 2;
-				});
+				c.Descriptor = ModifierDescriptor.UntypedStackable;
+				c.Stat = StatType.SaveReflex;
+				c.Value = 2;
 			});
-			AddBlessing("ChaldiraHeartyLuck", "Chaldira's Audacious Fortune", "Grants a +2 luck bonus to critical confirmation rolls, initiative, and all saving throws.", 350, delegate(BlueprintBuff obj)
+			obj2.AddComponent(delegate(AddStatBonus c)
 			{
-				obj.AddComponent(delegate(CriticalConfirmationBonus c)
-				{
-					c.Bonus = 2;
-					c.Value = 0; // the component reads Value unconditionally, so a missing one throws on every attack roll
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Luck;
-					c.Stat = StatType.Initiative;
-					c.Value = 2;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Luck;
-					c.Stat = StatType.SaveFortitude;
-					c.Value = 2;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Luck;
-					c.Stat = StatType.SaveReflex;
-					c.Value = 2;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Luck;
-					c.Stat = StatType.SaveWill;
-					c.Value = 2;
-				});
+				c.Descriptor = ModifierDescriptor.UntypedStackable;
+				c.Stat = StatType.SaveWill;
+				c.Value = 2;
 			});
-			AddBlessing("IronLordFury", "Fury of Our Lord in Iron", "Grants a +4 morale bonus to melee weapon damage rolls and +2 to Combat Maneuver Bonus.", 400, delegate(BlueprintBuff obj)
+		});
+		AddBlessing("EssenceOfLurker", "AnswerBuyBlessingYogSothoth", "Essence of the Lurker", "Grants a +2 profane bonus to the DC of Conjuration, Transmutation, and Illusion spells.", 500, delegate(BlueprintBuff obj2)
+		{
+			obj2.AddComponent(delegate(IncreaseSpellSchoolDC c)
 			{
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Morale;
-					c.Stat = StatType.AdditionalDamage;
-					c.Value = 4;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Morale;
-					c.Stat = StatType.AdditionalCMB;
-					c.Value = 2;
-				});
+				c.School = SpellSchool.Conjuration;
+				c.BonusDC = 2;
+				c.Descriptor = ModifierDescriptor.Profane;
 			});
-			AddBlessing("AllSeeingGlyph", "All-Seeing Glyph of Nethys", "Grants a +2 caster level bonus to all spells and +4 bonus to Spell Penetration.", 500, delegate(BlueprintBuff obj)
+			obj2.AddComponent(delegate(IncreaseSpellSchoolDC c)
 			{
-				obj.AddComponent(delegate(SpellPenetrationBonus c)
-				{
-					c.Value = 4;
-					c.Descriptor = ModifierDescriptor.Insight;
-				});
+				c.School = SpellSchool.Transmutation;
+				c.BonusDC = 2;
+				c.Descriptor = ModifierDescriptor.Profane;
 			});
-			AddBlessing("KissOfTheSavoredSting", "Kiss of the Savored Sting", "Grants a +3 bonus on attack rolls with Attacks of Opportunity and adds +1d6 acid damage to melee hits.", 350, delegate(BlueprintBuff obj)
+			obj2.AddComponent(delegate(IncreaseSpellSchoolDC c)
 			{
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Profane;
-					c.Stat = StatType.AttackOfOpportunityCount;
-					c.Value = 3;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Profane;
-					c.Stat = StatType.AdditionalDamage;
-					c.Value = 4;
-				});
+				c.School = SpellSchool.Illusion;
+				c.BonusDC = 2;
+				c.Descriptor = ModifierDescriptor.Profane;
 			});
-			AddBlessing("LadyOfGravesWarding", "Warding of the Lady of Graves", "Grants complete immunity to death effects, negative energy damage, and energy drain.", 450, delegate(BlueprintBuff obj)
+		});
+		AddBlessing("LanternTricksterGlow", "AnswerBuyBlessingLanternKing", "Lantern King's Prankster Veil", "Grants a +3 competence bonus to Trickery and Stealth, plus 20% concealment.", 300, delegate(BlueprintBuff obj2)
+		{
+			obj2.AddComponent(delegate(AddStatBonus c)
 			{
-				obj.AddComponent(delegate(BuffDescriptorImmunity c)
-				{
-					c.Descriptor = SpellDescriptor.Curse | SpellDescriptor.Death;
-				});
-				obj.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
-				{
-					c.Descriptor = SpellDescriptor.Curse | SpellDescriptor.Death;
-				});
+				c.Descriptor = ModifierDescriptor.Competence;
+				c.Stat = StatType.SkillThievery;
+				c.Value = 3;
 			});
-			AddBlessing("InheritorVanguard", "Vanguard of the Inheritor", "Grants a +3 sacred bonus to AC and saving throws against evil creatures.", 450, delegate(BlueprintBuff obj)
+			obj2.AddComponent(delegate(AddStatBonus c)
 			{
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Sacred;
-					c.Stat = StatType.AC;
-					c.Value = 3;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Sacred;
-					c.Stat = StatType.SaveFortitude;
-					c.Value = 3;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Sacred;
-					c.Stat = StatType.SaveReflex;
-					c.Value = 3;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Sacred;
-					c.Stat = StatType.SaveWill;
-					c.Value = 3;
-				});
+				c.Descriptor = ModifierDescriptor.Competence;
+				c.Stat = StatType.SkillStealth;
+				c.Value = 3;
 			});
-			AddBlessing("ArchfiendsCovenant", "Covenant of the Archfiend", "Grants a +2 profane bonus to all spell DCs and a +4 profane bonus to Persuasion checks.", 500, delegate(BlueprintBuff obj)
+			obj2.AddComponent(delegate(AddConcealment c)
 			{
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Profane;
-					c.Stat = StatType.SkillPersuasion;
-					c.Value = 4;
-				});
+				c.Concealment = Concealment.Partial;
 			});
-			AddBlessing("RoseGuardsResolve", "Resolve of the Rose Guard", "Grants immunity to fear, charm, and compulsion, plus a +2 bonus to attack when adjacent to allies.", 300, delegate(BlueprintBuff obj)
+		});
+		AddBlessing("QueenOfTheSeasFavor", "AnswerBuyBlessingBesmara", "Favor of the Pirate Queen", "Grants a +10 ft enhancement bonus to speed, immunity to paralysis, and a +2 morale bonus on attack rolls.", 300, delegate(BlueprintBuff obj2)
+		{
+			obj2.AddComponent(delegate(AddStatBonus c)
 			{
-				obj.AddComponent(delegate(BuffDescriptorImmunity c)
-				{
-					c.Descriptor = SpellDescriptor.Fear | SpellDescriptor.Compulsion | SpellDescriptor.Charm;
-				});
-				obj.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
-				{
-					c.Descriptor = SpellDescriptor.Fear | SpellDescriptor.Compulsion | SpellDescriptor.Charm;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Morale;
-					c.Stat = StatType.AdditionalAttackBonus;
-					c.Value = 2;
-				});
+				c.Descriptor = ModifierDescriptor.Enhancement;
+				c.Stat = StatType.Speed;
+				c.Value = 10;
 			});
-			AddBlessing("SilentShroud", "Silent Shroud of the Butterfly", "Grants True Seeing, blindsense 30 ft, and immunity to silence and gaze attacks.", 400, delegate(BlueprintBuff obj)
+			obj2.AddComponent(delegate(AddConditionImmunity c)
 			{
-				obj.AddComponent(delegate(BuffDescriptorImmunity c)
-				{
-					c.Descriptor = SpellDescriptor.SightBased | SpellDescriptor.GazeAttack;
-				});
+				c.Condition = UnitCondition.Paralyzed;
 			});
-			List<(string name, BlueprintFeature feat, int cost, AlignmentMaskType alignment, string displayName, string desc)> mythicBoonList = new List<(string, BlueprintFeature, int, AlignmentMaskType, string, string)>();
-			AddMythicBoon("BoonOfHeavenlyHost", "Boon of the Heavenly Host (Angel)", "Grants a permanent +4 sacred bonus to AC and all weapon attacks deal +2d6 holy damage.", 1500, AlignmentMaskType.Good | AlignmentMaskType.LawfulNeutral | AlignmentMaskType.LawfulEvil, delegate(BlueprintFeature obj)
+			obj2.AddComponent(delegate(AddStatBonus c)
 			{
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Sacred;
-					c.Stat = StatType.AC;
-					c.Value = 4;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Sacred;
-					c.Stat = StatType.AdditionalDamage;
-					c.Value = 7;
-				});
+				c.Descriptor = ModifierDescriptor.Morale;
+				c.Stat = StatType.AdditionalAttackBonus;
+				c.Value = 2;
 			});
-			AddMythicBoon("BoonOfAbyssalRage", "Boon of Abyssal Rage (Demon)", "Grants a permanent +4 profane bonus to Strength and Constitution.", 1500, AlignmentMaskType.Evil | AlignmentMaskType.ChaoticGood | AlignmentMaskType.ChaoticNeutral, delegate(BlueprintFeature obj)
+		});
+		AddBlessing("ChaldiraHeartyLuck", "AnswerBuyBlessingChaldira", "Chaldira's Audacious Fortune", "Grants a +2 bonus on critical confirmation rolls, a +2 luck bonus to initiative, and a +2 bonus to all saving throws that stacks with everything, including Plot Armor.", 350, delegate(BlueprintBuff obj2)
+		{
+			obj2.AddComponent(delegate(CriticalConfirmationBonus c)
 			{
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Profane;
-					c.Stat = StatType.Strength;
-					c.Value = 4;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Profane;
-					c.Stat = StatType.Constitution;
-					c.Value = 4;
-				});
+				c.Value = 0;
+				c.Bonus = 2;
 			});
-			AddMythicBoon("BoonOfLordOfBones", "Boon of the Lord of Bones (Lich)", "Grants permanent DR 10/Bludgeoning and Magic, and negative energy affinity.", 1500, AlignmentMaskType.Evil, delegate(BlueprintFeature obj)
+			obj2.AddComponent(delegate(AddStatBonus c)
 			{
-				obj.AddComponent(delegate(AddDamageResistancePhysical c)
-				{
-					c.Value = 10;
-					c.BypassedByMaterial = true;
-					c.Material = PhysicalDamageMaterial.Adamantite;
-				});
+				c.Descriptor = ModifierDescriptor.Luck;
+				c.Stat = StatType.Initiative;
+				c.Value = 2;
 			});
-			AddMythicBoon("BoonOfWildWonder", "Boon of Wild Wonder (Azata)", "Grants a permanent +3 morale bonus to all saving throws and +1 extra attack per round as if under Haste.", 1500, AlignmentMaskType.Good | AlignmentMaskType.ChaoticNeutral | AlignmentMaskType.ChaoticEvil, delegate(BlueprintFeature obj)
+			obj2.AddComponent(delegate(AddStatBonus c)
 			{
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Morale;
-					c.Stat = StatType.SaveFortitude;
-					c.Value = 3;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Morale;
-					c.Stat = StatType.SaveReflex;
-					c.Value = 3;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Morale;
-					c.Stat = StatType.SaveWill;
-					c.Value = 3;
-				});
-				obj.AddComponent(delegate(BuffExtraAttack c)
-				{
-					c.Number = 1;
-					c.Haste = true;
-				});
+				c.Descriptor = ModifierDescriptor.UntypedStackable;
+				c.Stat = StatType.SaveFortitude;
+				c.Value = 2;
 			});
-			AddMythicBoon("BoonOfCosmicJester", "Boon of the Cosmic Jester (Trickster)", "Increases critical threat range of all weapons by 1 and grants +2d6 Sneak Attack.", 1500, AlignmentMaskType.Chaotic, delegate(BlueprintFeature obj)
+			obj2.AddComponent(delegate(AddStatBonus c)
 			{
-				BlueprintFeature sneak = BlueprintTools.GetBlueprint<BlueprintFeature>("9b9eac6709e1c084cb18c3a366e0ec87");
-				obj.AddComponent(delegate(AddFacts c)
-				{
-					c.m_Facts = new BlueprintUnitFactReference[2]
-					{
-						sneak.ToReference<BlueprintUnitFactReference>(),
-						sneak.ToReference<BlueprintUnitFactReference>()
-					};
-				});
+				c.Descriptor = ModifierDescriptor.UntypedStackable;
+				c.Stat = StatType.SaveReflex;
+				c.Value = 2;
 			});
-			AddMythicBoon("BoonOfMonadicOrder", "Boon of Monadic Order (Aeon)", "Grants a permanent +4 insight bonus to attack rolls and AC, plus immunity to mind-affecting effects.", 1500, AlignmentMaskType.Lawful, delegate(BlueprintFeature obj)
+			obj2.AddComponent(delegate(AddStatBonus c)
 			{
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Insight;
-					c.Stat = StatType.AdditionalAttackBonus;
-					c.Value = 4;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Insight;
-					c.Stat = StatType.AC;
-					c.Value = 4;
-				});
-				obj.AddComponent(delegate(BuffDescriptorImmunity c)
-				{
-					c.Descriptor = SpellDescriptor.MindAffecting;
-				});
+				c.Descriptor = ModifierDescriptor.UntypedStackable;
+				c.Stat = StatType.SaveWill;
+				c.Value = 2;
 			});
-			AddMythicBoon("BoonOfHellfireContract", "Boon of Hellfire Contract (Devil)", "Grants fire immunity and a +3 profane bonus to the DC of mind-affecting and evil spells.", 1500, AlignmentMaskType.Evil | AlignmentMaskType.LawfulGood | AlignmentMaskType.LawfulNeutral, delegate(BlueprintFeature obj)
+		});
+		AddBlessing("IronLordFury", "AnswerBuyBlessingGorum", "Fury of Our Lord in Iron", "Grants a +4 morale bonus to damage rolls and a +2 morale bonus to Combat Maneuver Bonus.", 400, delegate(BlueprintBuff obj2)
+		{
+			obj2.AddComponent(delegate(AddStatBonus c)
 			{
-				obj.AddComponent(delegate(AddDamageResistanceEnergy c)
-				{
-					c.Type = DamageEnergyType.Fire;
-					c.Value = 100;
-				});
+				c.Descriptor = ModifierDescriptor.Morale;
+				c.Stat = StatType.AdditionalDamage;
+				c.Value = 4;
 			});
-			AddMythicBoon("BoonOfGoldenDragon", "Boon of the Golden Dragon (Gold Dragon)", "Grants a permanent +4 inherent bonus to all 6 ability scores and +10 hit points per character level.", 2000, AlignmentMaskType.Good, delegate(BlueprintFeature obj)
+			obj2.AddComponent(delegate(AddStatBonus c)
 			{
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Inherent;
-					c.Stat = StatType.Strength;
-					c.Value = 4;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Inherent;
-					c.Stat = StatType.Dexterity;
-					c.Value = 4;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Inherent;
-					c.Stat = StatType.Constitution;
-					c.Value = 4;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Inherent;
-					c.Stat = StatType.Intelligence;
-					c.Value = 4;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Inherent;
-					c.Stat = StatType.Wisdom;
-					c.Value = 4;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Inherent;
-					c.Stat = StatType.Charisma;
-					c.Value = 4;
-				});
+				c.Descriptor = ModifierDescriptor.Morale;
+				c.Stat = StatType.AdditionalCMB;
+				c.Value = 2;
 			});
-			AddMythicBoon("BoonOfPrimevalSwarm", "Boon of the Primeval Swarm (Swarm)", "Grants permanent DR 10/-, immunity to flanking, and 20% swarm concealment.", 1500, AlignmentMaskType.Evil, delegate(BlueprintFeature obj)
+		});
+		AddBlessing("AllSeeingGlyph", "AnswerBuyBlessingNethys", "All-Seeing Glyph of Nethys", "Grants a +4 insight bonus on caster level checks to overcome spell resistance.", 500, delegate(BlueprintBuff obj2)
+		{
+			obj2.AddComponent(delegate(SpellPenetrationBonus c)
 			{
-				obj.AddComponent(delegate(AddDamageResistancePhysical c)
-				{
-					c.Value = 10;
-				});
-				obj.AddComponent(delegate(AddConcealment c)
-				{
-					c.Concealment = Concealment.Partial;
-				});
+				c.Value = 4;
+				c.Descriptor = ModifierDescriptor.Insight;
 			});
-			AddMythicBoon("BoonOfUnboundMortal", "Boon of the Unbound Mortal (Legend)", "Grants a permanent +4 bonus to all base saving throws and +4 to all ability scores.", 2000, AlignmentMaskType.Any, delegate(BlueprintFeature obj)
+		});
+		AddBlessing("KissOfTheSavoredSting", "AnswerBuyBlessingCalistria", "Kiss of the Savored Sting", "Grants 3 extra attacks of opportunity per round and a +4 profane bonus to damage rolls.", 350, delegate(BlueprintBuff obj2)
+		{
+			obj2.AddComponent(delegate(AddStatBonus c)
 			{
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Other;
-					c.Stat = StatType.SaveFortitude;
-					c.Value = 4;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Other;
-					c.Stat = StatType.SaveReflex;
-					c.Value = 4;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Other;
-					c.Stat = StatType.SaveWill;
-					c.Value = 4;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Other;
-					c.Stat = StatType.Strength;
-					c.Value = 4;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Other;
-					c.Stat = StatType.Dexterity;
-					c.Value = 4;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Other;
-					c.Stat = StatType.Constitution;
-					c.Value = 4;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Other;
-					c.Stat = StatType.Intelligence;
-					c.Value = 4;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Other;
-					c.Stat = StatType.Wisdom;
-					c.Value = 4;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Other;
-					c.Stat = StatType.Charisma;
-					c.Value = 4;
-				});
+				c.Descriptor = ModifierDescriptor.Profane;
+				c.Stat = StatType.AttackOfOpportunityCount;
+				c.Value = 3;
 			});
-			BlueprintAbility item2 = Helpers.CreateBlueprint(Main.IsekaiContext, "ElixirOfInstantRejuvenationAbility", delegate(BlueprintAbility blueprintAbility)
+			obj2.AddComponent(delegate(AddStatBonus c)
 			{
-				blueprintAbility.SetName(Main.IsekaiContext, "Consumable: Elixir of Instant Rejuvenation");
-				blueprintAbility.SetDescription(Main.IsekaiContext, "Spend 400 Cosmic Coins to immediately cure all fatigue, exhaustion, blindness, and deafness, and fully restore all daily spell slots and class ability uses.");
-				((BlueprintUnitFact)blueprintAbility).m_Icon = Icon_Coin;
-				blueprintAbility.Type = AbilityType.Special;
-				blueprintAbility.Range = AbilityRange.Personal;
-				blueprintAbility.CanTargetSelf = true;
-				blueprintAbility.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Self;
-				blueprintAbility.ActionType = UnitCommand.CommandType.Standard;
-				blueprintAbility.AddComponent(delegate(AbilityEffectRunAction c)
-				{
-					c.Actions = ActionFlow.DoSingle<ContextActionRejuvenation>();
-				});
+				c.Descriptor = ModifierDescriptor.Profane;
+				c.Stat = StatType.AdditionalDamage;
+				c.Value = 4;
 			});
-			storeAbilities.Add(item2);
-			BlueprintBuff PaperFigurineBuff = TTCoreExtensions.CreateBuff("PaperFigurineBuff", delegate(BlueprintBuff blueprintBuff)
+		});
+		AddBlessing("LadyOfGravesWarding", "AnswerBuyBlessingPharasma", "Warding of the Lady of Graves", "Grants immunity to death effects and curses.", 450, delegate(BlueprintBuff obj2)
+		{
+			obj2.AddComponent(delegate(BuffDescriptorImmunity c)
 			{
-				blueprintBuff.SetName(Main.IsekaiContext, "Paper Figurine of Substitute Life");
-				blueprintBuff.SetDescription(Main.IsekaiContext, "A mystical talisman woven from otherworldly talisman paper. Absorbs damage that would kill you and immediately wards you with +100 temporary hit points.");
-				((BlueprintUnitFact)blueprintBuff).m_Icon = Icon_Coin;
-				blueprintBuff.AddComponent(delegate(TemporaryHitPointsFromAbilityValue c)
-				{
-					c.Value = 100;
-				});
-				blueprintBuff.m_Flags = BlueprintBuff.Flags.StayOnDeath;
+				c.Descriptor = SpellDescriptor.Curse | SpellDescriptor.Death;
 			});
-			BlueprintAbility item3 = Helpers.CreateBlueprint(Main.IsekaiContext, "PaperFigurineOfSubstituteLifeAbility", delegate(BlueprintAbility blueprintAbility)
+			obj2.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
 			{
-				blueprintAbility.SetName(Main.IsekaiContext, "Talisman: Paper Figurine of Substitute Life");
-				blueprintAbility.SetDescription(Main.IsekaiContext, "Spend 750 Cosmic Coins to attune a paper substitute figurine. Grants +100 temporary hit points.");
-				((BlueprintUnitFact)blueprintAbility).m_Icon = Icon_Coin;
-				blueprintAbility.Type = AbilityType.Special;
-				blueprintAbility.Range = AbilityRange.Personal;
-				blueprintAbility.CanTargetSelf = true;
-				blueprintAbility.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Self;
-				blueprintAbility.ActionType = UnitCommand.CommandType.Standard;
-				blueprintAbility.AddComponent(delegate(AbilityEffectRunAction c)
-				{
-					c.Actions = ActionFlow.DoSingle(delegate(ContextActionSpendCoinsAndApplyBuff a)
-					{
-						a.Cost = 750;
-						a.m_Buff = PaperFigurineBuff.ToReference<BlueprintBuffReference>();
-						a.DurationHours = 24;
-					});
-				});
+				c.Descriptor = SpellDescriptor.Curse | SpellDescriptor.Death;
 			});
-			storeAbilities.Add(item3);
-			BlueprintBuff SoulAnchorBuff = TTCoreExtensions.CreateBuff("DraughtOfAbsoluteSoulAnchorBuff", delegate(BlueprintBuff blueprintBuff)
+		});
+		AddBlessing("InheritorVanguard", "AnswerBuyBlessingIomedae", "Vanguard of the Inheritor", "Grants a +3 sacred bonus to AC and all saving throws. Sacred bonuses do not stack: Iomedae's avatar overwrites this blessing.", 450, delegate(BlueprintBuff obj2)
+		{
+			obj2.AddComponent(delegate(AddStatBonus c)
 			{
-				blueprintBuff.SetName(Main.IsekaiContext, "Absolute Soul Anchor");
-				blueprintBuff.SetDescription(Main.IsekaiContext, "Anchors your astral soul firmly to your physical vessel. Immune to death effects, negative levels, and mental compulsion for 24 hours.");
-				((BlueprintUnitFact)blueprintBuff).m_Icon = Icon_Coin;
-				blueprintBuff.AddComponent(delegate(BuffDescriptorImmunity c)
-				{
-					c.Descriptor = SpellDescriptor.MindAffecting | SpellDescriptor.Curse | SpellDescriptor.Death;
-				});
-				blueprintBuff.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
-				{
-					c.Descriptor = SpellDescriptor.MindAffecting | SpellDescriptor.Curse | SpellDescriptor.Death;
-				});
-				blueprintBuff.m_Flags = BlueprintBuff.Flags.StayOnDeath;
+				c.Descriptor = ModifierDescriptor.Sacred;
+				c.Stat = StatType.AC;
+				c.Value = 3;
 			});
-			BlueprintAbility item4 = Helpers.CreateBlueprint(Main.IsekaiContext, "DraughtOfAbsoluteSoulAnchorAbility", delegate(BlueprintAbility blueprintAbility)
+			obj2.AddComponent(delegate(AddStatBonus c)
 			{
-				blueprintAbility.SetName(Main.IsekaiContext, "Consumable: Draught of Absolute Soul Anchor");
-				blueprintAbility.SetDescription(Main.IsekaiContext, "Spend 500 Cosmic Coins to gain complete immunity to death effects, negative levels, and mental compulsion for 24 hours.");
-				((BlueprintUnitFact)blueprintAbility).m_Icon = Icon_Coin;
-				blueprintAbility.Type = AbilityType.Special;
-				blueprintAbility.Range = AbilityRange.Personal;
-				blueprintAbility.CanTargetSelf = true;
-				blueprintAbility.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Self;
-				blueprintAbility.ActionType = UnitCommand.CommandType.Standard;
-				blueprintAbility.AddComponent(delegate(AbilityEffectRunAction c)
-				{
-					c.Actions = ActionFlow.DoSingle(delegate(ContextActionSpendCoinsAndApplyBuff a)
-					{
-						a.Cost = 500;
-						a.m_Buff = SoulAnchorBuff.ToReference<BlueprintBuffReference>();
-						a.DurationHours = 24;
-					});
-				});
+				c.Descriptor = ModifierDescriptor.Sacred;
+				c.Stat = StatType.SaveFortitude;
+				c.Value = 3;
 			});
-			storeAbilities.Add(item4);
-			BlueprintFeature OtherworlderMasteryFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "OtherworlderMasteryFeature", delegate(BlueprintFeature blueprintFeature2)
+			obj2.AddComponent(delegate(AddStatBonus c)
 			{
-				blueprintFeature2.SetName(Main.IsekaiContext, "Otherworlder's Martial Mastery");
-				blueprintFeature2.SetDescription(Main.IsekaiContext, "Grants a permanent +2 competence bonus to all attack and damage rolls and +2 to all save DCs.");
-				((BlueprintUnitFact)blueprintFeature2).m_Icon = Icon_Coin;
-				blueprintFeature2.IsClassFeature = true;
-				blueprintFeature2.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Competence;
-					c.Stat = StatType.AdditionalAttackBonus;
-					c.Value = 2;
-				});
-				blueprintFeature2.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Competence;
-					c.Stat = StatType.AdditionalDamage;
-					c.Value = 2;
-				});
+				c.Descriptor = ModifierDescriptor.Sacred;
+				c.Stat = StatType.SaveReflex;
+				c.Value = 3;
 			});
-			BlueprintAbility item5 = Helpers.CreateBlueprint(Main.IsekaiContext, "TomeOfOtherworlderMasteryAbility", delegate(BlueprintAbility blueprintAbility)
+			obj2.AddComponent(delegate(AddStatBonus c)
 			{
-				blueprintAbility.SetName(Main.IsekaiContext, "Grimoire: Tome of Otherworlder's Mastery");
-				blueprintAbility.SetDescription(Main.IsekaiContext, "Spend 1,000 Cosmic Coins to absorb otherworlder wisdom. Grants a permanent +2 competence bonus to attack rolls, damage rolls, and save DCs.");
-				((BlueprintUnitFact)blueprintAbility).m_Icon = Icon_Coin;
-				blueprintAbility.Type = AbilityType.Special;
-				blueprintAbility.Range = AbilityRange.Personal;
-				blueprintAbility.CanTargetSelf = true;
-				blueprintAbility.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Self;
-				blueprintAbility.ActionType = UnitCommand.CommandType.Standard;
-				blueprintAbility.AddComponent(delegate(AbilityEffectRunAction c)
-				{
-					c.Actions = ActionFlow.DoSingle(delegate(ContextActionSpendCoinsAndGrantFact a)
-					{
-						a.Cost = 1000;
-						a.m_Fact = OtherworlderMasteryFeature.ToReference<BlueprintUnitFactReference>();
-					});
-				});
+				c.Descriptor = ModifierDescriptor.Sacred;
+				c.Stat = StatType.SaveWill;
+				c.Value = 3;
 			});
-			storeAbilities.Add(item5);
-			BlueprintAbilityResource CosmicWishResource = Helpers.CreateBlueprint(Main.IsekaiContext, "CosmicWishResource", delegate(BlueprintAbilityResource blueprintAbilityResource)
+		});
+		AddBlessing("ArchfiendsCovenant", "AnswerBuyBlessingAsmodeus", "Covenant of the Archfiend", "Grants a +4 profane bonus to Persuasion checks.", 500, delegate(BlueprintBuff obj2)
+		{
+			obj2.AddComponent(delegate(AddStatBonus c)
 			{
-				// A resource restore is clamped to the maximum, so with a maximum of 0 the purchased charge was
-				// thrown away and Cosmic Wish could never be cast. The maximum is now 99; the resource starts at 0
-				// (RestoreAmount is false where it is granted) and resting is stopped from refilling it by
-				// CosmicWishRestGuard, so charges only ever come from the store.
-				blueprintAbilityResource.m_MaxAmount = new BlueprintAbilityResource.Amount
+				c.Descriptor = ModifierDescriptor.Profane;
+				c.Stat = StatType.SkillPersuasion;
+				c.Value = 4;
+			});
+		});
+		AddBlessing("RoseGuardsResolve", "AnswerBuyBlessingMilani", "Resolve of the Rose Guard", "Grants immunity to fear, charm, and compulsion effects, plus a +2 morale bonus on attack rolls.", 300, delegate(BlueprintBuff obj2)
+		{
+			obj2.AddComponent(delegate(BuffDescriptorImmunity c)
+			{
+				c.Descriptor = SpellDescriptor.Fear | SpellDescriptor.Compulsion | SpellDescriptor.Charm;
+			});
+			obj2.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+			{
+				c.Descriptor = SpellDescriptor.Fear | SpellDescriptor.Compulsion | SpellDescriptor.Charm;
+			});
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Morale;
+				c.Stat = StatType.AdditionalAttackBonus;
+				c.Value = 2;
+			});
+		});
+		AddBlessing("SilentShroud", "AnswerBuyBlessingBlackButterfly", "Silent Shroud of the Butterfly", "Grants immunity to gaze attacks and sight-based effects.", 400, delegate(BlueprintBuff obj2)
+		{
+			obj2.AddComponent(delegate(BuffDescriptorImmunity c)
+			{
+				c.Descriptor = SpellDescriptor.SightBased | SpellDescriptor.GazeAttack;
+			});
+		});
+		AddBackAndLeave(CueStoreBlessings, "AnswerBackFromBlessings", "AnswerLeaveFromBlessings");
+		AddMythicBoon("BoonOfHeavenlyHost", "AnswerBuyMythicAngel", "Boon of the Heavenly Host (Angel)", "Grants a permanent +4 sacred bonus to AC and a +7 sacred bonus to damage rolls.", 1500, delegate(BlueprintFeature obj2)
+		{
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Sacred;
+				c.Stat = StatType.AC;
+				c.Value = 4;
+			});
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Sacred;
+				c.Stat = StatType.AdditionalDamage;
+				c.Value = 7;
+			});
+		});
+		AddMythicBoon("BoonOfAbyssalRage", "AnswerBuyMythicDemon", "Boon of Abyssal Rage (Demon)", "Grants a permanent +4 profane bonus to Strength and Constitution.", 1500, delegate(BlueprintFeature obj2)
+		{
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Profane;
+				c.Stat = StatType.Strength;
+				c.Value = 4;
+			});
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Profane;
+				c.Stat = StatType.Constitution;
+				c.Value = 4;
+			});
+		});
+		AddMythicBoon("BoonOfLordOfBones", "AnswerBuyMythicLich", "Boon of the Lord of Bones (Lich)", "Grants permanent DR 10/adamantite.", 1500, delegate(BlueprintFeature obj2)
+		{
+			obj2.AddComponent(delegate(AddDamageResistancePhysical c)
+			{
+				c.Value = 10;
+				c.BypassedByMaterial = true;
+				c.Material = PhysicalDamageMaterial.Adamantite;
+			});
+		});
+		AddMythicBoon("BoonOfWildWonder", "AnswerBuyMythicAzata", "Boon of Wild Wonder (Azata)", "Grants a permanent +3 morale bonus to all saving throws and +1 extra attack per round that stacks with Haste.", 1500, delegate(BlueprintFeature obj2)
+		{
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Morale;
+				c.Stat = StatType.SaveFortitude;
+				c.Value = 3;
+			});
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Morale;
+				c.Stat = StatType.SaveReflex;
+				c.Value = 3;
+			});
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Morale;
+				c.Stat = StatType.SaveWill;
+				c.Value = 3;
+			});
+			obj2.AddComponent(delegate(BuffExtraAttack c)
+			{
+				c.Number = 1;
+				c.Haste = false;
+			});
+		});
+		AddMythicBoon("BoonOfCosmicJester", "AnswerBuyMythicTrickster", "Boon of the Cosmic Jester (Trickster)", "Grants +2d6 sneak attack damage.", 1500, delegate(BlueprintFeature obj2)
+		{
+			BlueprintFeature sneak = BlueprintTools.GetBlueprint<BlueprintFeature>("9b9eac6709e1c084cb18c3a366e0ec87");
+			obj2.AddComponent(delegate(AddFacts c)
+			{
+				c.m_Facts = new BlueprintUnitFactReference[2]
 				{
-					BaseValue = 99,
-					IncreasedByLevel = false,
-					IncreasedByStat = false
+					sneak.ToReference<BlueprintUnitFactReference>(),
+					sneak.ToReference<BlueprintUnitFactReference>()
 				};
 			});
-			CosmicWishRestGuard.Resource = CosmicWishResource;
-			BlueprintAbility WishStrength = CreateWishVariant("WishStrengthAbility", "Strength", StatType.Strength);
-			BlueprintAbility WishDexterity = CreateWishVariant("WishDexterityAbility", "Dexterity", StatType.Dexterity);
-			BlueprintAbility WishConstitution = CreateWishVariant("WishConstitutionAbility", "Constitution", StatType.Constitution);
-			BlueprintAbility WishIntelligence = CreateWishVariant("WishIntelligenceAbility", "Intelligence", StatType.Intelligence);
-			BlueprintAbility WishWisdom = CreateWishVariant("WishWisdomAbility", "Wisdom", StatType.Wisdom);
-			BlueprintAbility WishCharisma = CreateWishVariant("WishCharismaAbility", "Charisma", StatType.Charisma);
-			BlueprintAbility WishWealth = Helpers.CreateBlueprint(Main.IsekaiContext, "WishWealthAbility", delegate(BlueprintAbility blueprintAbility)
+		});
+		AddMythicBoon("BoonOfMonadicOrder", "AnswerBuyMythicAeon", "Boon of Monadic Order (Aeon)", "Grants a permanent +4 insight bonus to attack rolls and AC, plus immunity to mind-affecting effects.", 1500, delegate(BlueprintFeature obj2)
+		{
+			obj2.AddComponent(delegate(AddStatBonus c)
 			{
-				blueprintAbility.SetName(Main.IsekaiContext, "Cosmic Wish: 500,000 Gold");
-				blueprintAbility.SetDescription(Main.IsekaiContext, "Consumes 1 Wish charge to instantly manifest 500,000 Gold into your party purse.");
-				((BlueprintUnitFact)blueprintAbility).m_Icon = Icon_Coin;
+				c.Descriptor = ModifierDescriptor.Insight;
+				c.Stat = StatType.AdditionalAttackBonus;
+				c.Value = 4;
+			});
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Insight;
+				c.Stat = StatType.AC;
+				c.Value = 4;
+			});
+			obj2.AddComponent(delegate(BuffDescriptorImmunity c)
+			{
+				c.Descriptor = SpellDescriptor.MindAffecting;
+			});
+		});
+		AddMythicBoon("BoonOfHellfireContract", "AnswerBuyMythicDevil", "Boon of Hellfire Contract (Devil)", "Grants fire resistance 100.", 1500, delegate(BlueprintFeature obj2)
+		{
+			obj2.AddComponent(delegate(AddDamageResistanceEnergy c)
+			{
+				c.Type = DamageEnergyType.Fire;
+				c.Value = 100;
+			});
+		});
+		AddMythicBoon("BoonOfGoldenDragon", "AnswerBuyMythicGoldDragon", "Boon of the Golden Dragon (Gold Dragon)", "Grants a permanent +4 inherent bonus to all 6 ability scores.", 2000, delegate(BlueprintFeature obj2)
+		{
+			obj2.AddComponent(delegate(AddStackingStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Inherent;
+				c.Stat = StatType.Strength;
+				c.Value = 4;
+			});
+			obj2.AddComponent(delegate(AddStackingStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Inherent;
+				c.Stat = StatType.Dexterity;
+				c.Value = 4;
+			});
+			obj2.AddComponent(delegate(AddStackingStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Inherent;
+				c.Stat = StatType.Constitution;
+				c.Value = 4;
+			});
+			obj2.AddComponent(delegate(AddStackingStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Inherent;
+				c.Stat = StatType.Intelligence;
+				c.Value = 4;
+			});
+			obj2.AddComponent(delegate(AddStackingStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Inherent;
+				c.Stat = StatType.Wisdom;
+				c.Value = 4;
+			});
+			obj2.AddComponent(delegate(AddStackingStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Inherent;
+				c.Stat = StatType.Charisma;
+				c.Value = 4;
+			});
+		});
+		AddMythicBoon("BoonOfPrimevalSwarm", "AnswerBuyMythicSwarm", "Boon of the Primeval Swarm (Swarm)", "Grants permanent DR 10/- and 20% concealment.", 1500, delegate(BlueprintFeature obj2)
+		{
+			obj2.AddComponent(delegate(AddDamageResistancePhysical c)
+			{
+				c.Value = 10;
+			});
+			obj2.AddComponent(delegate(AddConcealment c)
+			{
+				c.Concealment = Concealment.Partial;
+			});
+		});
+		AddMythicBoon("BoonOfUnboundMortal", "AnswerBuyMythicLegend", "Boon of the Unbound Mortal (Legend)", "Grants a permanent +4 bonus to all saving throws and all ability scores.", 2000, delegate(BlueprintFeature obj2)
+		{
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Other;
+				c.Stat = StatType.SaveFortitude;
+				c.Value = 4;
+			});
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Other;
+				c.Stat = StatType.SaveReflex;
+				c.Value = 4;
+			});
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Other;
+				c.Stat = StatType.SaveWill;
+				c.Value = 4;
+			});
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Other;
+				c.Stat = StatType.Strength;
+				c.Value = 4;
+			});
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Other;
+				c.Stat = StatType.Dexterity;
+				c.Value = 4;
+			});
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Other;
+				c.Stat = StatType.Constitution;
+				c.Value = 4;
+			});
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Other;
+				c.Stat = StatType.Intelligence;
+				c.Value = 4;
+			});
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Other;
+				c.Stat = StatType.Wisdom;
+				c.Value = 4;
+			});
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Other;
+				c.Stat = StatType.Charisma;
+				c.Value = 4;
+			});
+		});
+		AddBackAndLeave(CueStoreMythic, "AnswerBackFromMythic", "AnswerLeaveFromMythic");
+		BlueprintBuff bp = TTCoreExtensions.CreateBuff("PaperFigurineBuff", delegate(BlueprintBuff blueprintBuff)
+		{
+			blueprintBuff.SetName(Main.IsekaiContext, "Paper Figurine of Substitute Life");
+			blueprintBuff.SetDescription(Main.IsekaiContext, "A mystical talisman woven from transmigration paper. Wards you with 100 temporary hit points.");
+			((BlueprintUnitFact)blueprintBuff).m_Icon = Icon_Coin;
+			blueprintBuff.AddComponent(delegate(TemporaryHitPointsFromAbilityValue c)
+			{
+				c.Value = 100;
+			});
+			blueprintBuff.m_Flags = BlueprintBuff.Flags.StayOnDeath;
+		});
+		BlueprintBuff bp2 = TTCoreExtensions.CreateBuff("DraughtOfAbsoluteSoulAnchorBuff", delegate(BlueprintBuff blueprintBuff)
+		{
+			blueprintBuff.SetName(Main.IsekaiContext, "Soul Anchor Blessing");
+			blueprintBuff.SetDescription(Main.IsekaiContext, "Anchors your astral soul firmly to your physical vessel. Immune to death effects, curses, and mind-affecting effects.");
+			((BlueprintUnitFact)blueprintBuff).m_Icon = Icon_Coin;
+			blueprintBuff.AddComponent(delegate(BuffDescriptorImmunity c)
+			{
+				c.Descriptor = SpellDescriptor.MindAffecting | SpellDescriptor.Curse | SpellDescriptor.Death;
+			});
+			blueprintBuff.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
+			{
+				c.Descriptor = SpellDescriptor.MindAffecting | SpellDescriptor.Curse | SpellDescriptor.Death;
+			});
+			blueprintBuff.m_Flags = BlueprintBuff.Flags.StayOnDeath;
+		});
+		BlueprintFeature bp3 = Helpers.CreateBlueprint(Main.IsekaiContext, "TransmigratorMasteryFeature", delegate(BlueprintFeature blueprintFeature3)
+		{
+			blueprintFeature3.SetName(Main.IsekaiContext, "Transmigrator's Martial Mastery");
+			blueprintFeature3.SetDescription(Main.IsekaiContext, "Grants a permanent +2 competence bonus to all attack and damage rolls.");
+			((BlueprintUnitFact)blueprintFeature3).m_Icon = Icon_Coin;
+			blueprintFeature3.IsClassFeature = false;
+			blueprintFeature3.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Competence;
+				c.Stat = StatType.AdditionalAttackBonus;
+				c.Value = 2;
+			});
+			blueprintFeature3.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Competence;
+				c.Stat = StatType.AdditionalDamage;
+				c.Value = 2;
+			});
+		});
+		BlueprintAbilityResource CosmicWishResource = Helpers.CreateBlueprint(Main.IsekaiContext, "CosmicWishResource", delegate(BlueprintAbilityResource blueprintAbilityResource)
+		{
+			blueprintAbilityResource.m_MaxAmount = new BlueprintAbilityResource.Amount
+			{
+				BaseValue = 10,
+				IncreasedByLevel = false,
+				IncreasedByStat = false
+			};
+		});
+		CosmicWishCharges.WishResource = CosmicWishResource;
+		BlueprintAbility WishStrength = CreateWishVariant("WishStrengthAbility", "Strength", StatType.Strength, variantIcon);
+		BlueprintAbility WishDexterity = CreateWishVariant("WishDexterityAbility", "Dexterity", StatType.Dexterity, variantIcon2);
+		BlueprintAbility WishConstitution = CreateWishVariant("WishConstitutionAbility", "Constitution", StatType.Constitution, variantIcon3);
+		BlueprintAbility WishIntelligence = CreateWishVariant("WishIntelligenceAbility", "Intelligence", StatType.Intelligence, variantIcon4);
+		BlueprintAbility WishWisdom = CreateWishVariant("WishWisdomAbility", "Wisdom", StatType.Wisdom, variantIcon5);
+		BlueprintAbility WishCharisma = CreateWishVariant("WishCharismaAbility", "Charisma", StatType.Charisma, variantIcon6);
+		BlueprintAbility WishWealth = Helpers.CreateBlueprint(Main.IsekaiContext, "WishWealthAbility", delegate(BlueprintAbility blueprintAbility)
+		{
+			blueprintAbility.SetName(Main.IsekaiContext, "Cosmic Wish: 100,000 Gold");
+			blueprintAbility.SetDescription(Main.IsekaiContext, "Consumes 1 Wish charge to instantly manifest 100,000 Gold into your party purse.");
+			((BlueprintUnitFact)blueprintAbility).m_Icon = Icon_WishWealth ?? Icon_Coin;
+			blueprintAbility.Type = AbilityType.Special;
+			blueprintAbility.Range = AbilityRange.Personal;
+			blueprintAbility.CanTargetSelf = true;
+			blueprintAbility.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Self;
+			blueprintAbility.ActionType = UnitCommand.CommandType.Standard;
+			blueprintAbility.AddComponent(delegate(AbilityEffectRunAction c)
+			{
+				c.Actions = ActionFlow.DoSingle<ContextActionWishWealth>();
+			});
+			blueprintAbility.AddComponent(delegate(AbilityResourceLogic c)
+			{
+				c.m_RequiredResource = CosmicWishResource.ToReference<BlueprintAbilityResourceReference>();
+				c.m_IsSpendResource = true;
+				c.Amount = 1;
+			});
+		});
+		Helpers.CreateBlueprint(Main.IsekaiContext, "ModularCosmicWishAbility", delegate(BlueprintAbility blueprintAbility)
+		{
+			blueprintAbility.SetName(Main.IsekaiContext, "Cosmic Wish (Field Cast)");
+			blueprintAbility.SetDescription(Main.IsekaiContext, "Invoke cosmic reality manipulation. Consumes 1 Wish charge per cast. Requires purchasing a Wish recharge in the Cosmic Store to use again.");
+			((BlueprintUnitFact)blueprintAbility).m_Icon = Icon_CosmicWish ?? Icon_Coin;
+			blueprintAbility.Type = AbilityType.Special;
+			blueprintAbility.Range = AbilityRange.Personal;
+			blueprintAbility.CanTargetSelf = true;
+			blueprintAbility.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Self;
+			blueprintAbility.ActionType = UnitCommand.CommandType.Standard;
+			blueprintAbility.AddComponent(delegate(AbilityVariants c)
+			{
+				c.m_Variants = new BlueprintAbilityReference[7]
+				{
+					WishStrength.ToReference<BlueprintAbilityReference>(),
+					WishDexterity.ToReference<BlueprintAbilityReference>(),
+					WishConstitution.ToReference<BlueprintAbilityReference>(),
+					WishIntelligence.ToReference<BlueprintAbilityReference>(),
+					WishWisdom.ToReference<BlueprintAbilityReference>(),
+					WishCharisma.ToReference<BlueprintAbilityReference>(),
+					WishWealth.ToReference<BlueprintAbilityReference>()
+				};
+			});
+		});
+		BlueprintAnswer answer = CreateStoreAnswer("AnswerBuyElixirRejuv", "(400 Coins) [Elixir of Instant Rejuvenation] Fully restores HP, spell slots, and class ability uses.", blueprintCue, new ContextActionRejuvenation(), 400, Array.Empty<Condition>());
+		BlueprintAnswer answer2 = CreateStoreAnswer("AnswerBuyPaperFigurine", "(750 Coins) [Paper Figurine of Substitute Life] Grants 100 temporary HP for 24h.", blueprintCue, new ContextActionSpendCoinsAndApplyBuff
+		{
+			Cost = 750,
+			m_Buff = bp.ToReference<BlueprintBuffReference>(),
+			DurationHours = 24
+		}, 750, Array.Empty<Condition>());
+		BlueprintAnswer answer3 = CreateStoreAnswer("AnswerBuyDraughtSoulAnchor", "(500 Coins) [Soul Anchor Blessing] Immune to death effects, curses, and mind-affecting effects for 24h.", blueprintCue, new ContextActionSpendCoinsAndApplyBuff
+		{
+			Cost = 500,
+			m_Buff = bp2.ToReference<BlueprintBuffReference>(),
+			DurationHours = 24
+		}, 500, Array.Empty<Condition>());
+		BlueprintAnswer answer4 = CreateStoreAnswer("AnswerBuyTomeMastery", "(1,000 Coins) [Tome of Transmigrator's Mastery] Permanent +2 competence bonus to attack and damage rolls.", blueprintCue, new ContextActionSpendCoinsAndGrantFact
+		{
+			Cost = 1000,
+			m_Fact = bp3.ToReference<BlueprintUnitFactReference>()
+		}, 1000, Array.Empty<Condition>());
+		BlueprintUnitFactReference blueprintUnitFactReference = ((CosmicSponsorshipExchangeFeature != null) ? CosmicSponsorshipExchangeFeature.ToReference<BlueprintUnitFactReference>() : GuardedFact("CosmicSponsorshipExchangeFeature"));
+		BlueprintAnswer answer5 = ((blueprintUnitFactReference == null) ? null : CreateStoreAnswer("AnswerBuyWishCharge", "(1,000 Coins) [Cosmic Wish Recharge] Adds 1 charge to your field-cast Cosmic Wish ability.", blueprintCue, new ContextActionBuyWishCharge
+		{
+			Cost = 1000,
+			m_WishResource = CosmicWishResource.ToReference<BlueprintAbilityResourceReference>()
+		}, 1000, new Condition[1] { MainCharacterHas(blueprintUnitFactReference) }));
+		BlueprintUnitFactReference blueprintUnitFactReference2 = GuardedFact("SkillBookGrandScholarFeature");
+		BlueprintUnitFactReference blueprintUnitFactReference3 = GuardedFact("SkillBookPhantomInfiltratorFeature");
+		BlueprintUnitFactReference blueprintUnitFactReference4 = GuardedFact("SkillBookAbsoluteCharismaFeature");
+		BlueprintUnitFactReference blueprintUnitFactReference5 = GuardedFact("SkillBookWindWalkerFeature");
+		BlueprintUnitFactReference blueprintUnitFactReference6 = GuardedFact("SkillBookEyeOfProvidenceFeature");
+		BlueprintAnswer answer6 = ((blueprintUnitFactReference2 == null) ? null : CreateStoreAnswer("AnswerBuyBookGrandScholar", "(800 Coins) [Grimoire of the Grand Scholar] Permanent +4 Knowledge/Lore, +1 Caster Level.", blueprintCue, new ContextActionSpendCoinsAndGrantFact
+		{
+			Cost = 800,
+			m_Fact = blueprintUnitFactReference2
+		}, 800, Array.Empty<Condition>()));
+		BlueprintAnswer answer7 = ((blueprintUnitFactReference3 == null) ? null : CreateStoreAnswer("AnswerBuyBookPhantomInfiltrator", "(800 Coins) [Manual of the Phantom Infiltrator] Permanent +4 Stealth/Trickery, +1d6 Sneak Attack.", blueprintCue, new ContextActionSpendCoinsAndGrantFact
+		{
+			Cost = 800,
+			m_Fact = blueprintUnitFactReference3
+		}, 800, Array.Empty<Condition>()));
+		BlueprintAnswer answer8 = ((blueprintUnitFactReference4 == null) ? null : CreateStoreAnswer("AnswerBuyBookAbsoluteCharisma", "(800 Coins) [Chronicle of Absolute Charisma] Permanent +4 Persuasion/UMD, +2 Enchantment/Illusion DC.", blueprintCue, new ContextActionSpendCoinsAndGrantFact
+		{
+			Cost = 800,
+			m_Fact = blueprintUnitFactReference4
+		}, 800, Array.Empty<Condition>()));
+		BlueprintAnswer answer9 = ((blueprintUnitFactReference5 == null) ? null : CreateStoreAnswer("AnswerBuyBookWindWalker", "(800 Coins) [Codex of the Wind Walker] Permanent +4 Athletics/Mobility, +10 ft enhancement bonus to speed.", blueprintCue, new ContextActionSpendCoinsAndGrantFact
+		{
+			Cost = 800,
+			m_Fact = blueprintUnitFactReference5
+		}, 800, Array.Empty<Condition>()));
+		BlueprintAnswer answer10 = ((blueprintUnitFactReference6 == null) ? null : CreateStoreAnswer("AnswerBuyBookEyeOfProvidence", "(800 Coins) [Tractate of the Eye of Providence] Permanent +4 Perception, immune to Blindness, uncanny dodge.", blueprintCue, new ContextActionSpendCoinsAndGrantFact
+		{
+			Cost = 800,
+			m_Fact = blueprintUnitFactReference6
+		}, 800, Array.Empty<Condition>()));
+		List<BlueprintAnswer> obj = new List<BlueprintAnswer>
+		{
+			CreateStoreAnswer("AnswerBuyAmbrosiaMight", "(3,000 Coins) [Primordial Ambrosia of Might] Permanently grants +2 Untyped Strength (stacks infinitely).", blueprintCue, new ContextActionSpendCoinsAndGiveItem
+			{
+				Cost = 3000,
+				m_Item = Bottle("ItemPrimordialAmbrosiaMight")
+			}, 3000, Array.Empty<Condition>()),
+			CreateStoreAnswer("AnswerBuyAmbrosiaGrace", "(3,000 Coins) [Primordial Ambrosia of Grace] Permanently grants +2 Untyped Dexterity (stacks infinitely).", blueprintCue, new ContextActionSpendCoinsAndGiveItem
+			{
+				Cost = 3000,
+				m_Item = Bottle("ItemPrimordialAmbrosiaGrace")
+			}, 3000, Array.Empty<Condition>()),
+			CreateStoreAnswer("AnswerBuyAmbrosiaEndurance", "(3,000 Coins) [Primordial Ambrosia of Endurance] Permanently grants +2 Untyped Constitution (stacks infinitely).", blueprintCue, new ContextActionSpendCoinsAndGiveItem
+			{
+				Cost = 3000,
+				m_Item = Bottle("ItemPrimordialAmbrosiaEndurance")
+			}, 3000, Array.Empty<Condition>()),
+			CreateStoreAnswer("AnswerBuyAmbrosiaIntellect", "(3,000 Coins) [Primordial Ambrosia of Intellect] Permanently grants +2 Untyped Intelligence (stacks infinitely).", blueprintCue, new ContextActionSpendCoinsAndGiveItem
+			{
+				Cost = 3000,
+				m_Item = Bottle("ItemPrimordialAmbrosiaIntellect")
+			}, 3000, Array.Empty<Condition>()),
+			CreateStoreAnswer("AnswerBuyAmbrosiaInsight", "(3,000 Coins) [Primordial Ambrosia of Insight] Permanently grants +2 Untyped Wisdom (stacks infinitely).", blueprintCue, new ContextActionSpendCoinsAndGiveItem
+			{
+				Cost = 3000,
+				m_Item = Bottle("ItemPrimordialAmbrosiaInsight")
+			}, 3000, Array.Empty<Condition>()),
+			CreateStoreAnswer("AnswerBuyAmbrosiaMajesty", "(3,000 Coins) [Primordial Ambrosia of Majesty] Permanently grants +2 Untyped Charisma (stacks infinitely).", blueprintCue, new ContextActionSpendCoinsAndGiveItem
+			{
+				Cost = 3000,
+				m_Item = Bottle("ItemPrimordialAmbrosiaMajesty")
+			}, 3000, Array.Empty<Condition>()),
+			CreateStoreAnswer("AnswerBuyAmbrosiaCelerity", "(3,000 Coins) [Primordial Ambrosia of Celerity] Permanently grants +10 ft Untyped Base Speed (stacks infinitely).", blueprintCue, new ContextActionSpendCoinsAndGiveItem
+			{
+				Cost = 3000,
+				m_Item = Bottle("ItemPrimordialAmbrosiaCelerity")
+			}, 3000, Array.Empty<Condition>()),
+			CreateStoreAnswer("AnswerBuyAmbrosiaEternalRenewal", "(10,000 Coins) [Primordial Ambrosia of Eternal Renewal] Permanently grants Fast Healing 5 (Untyped Stackable, stacks infinitely).", blueprintCue, new ContextActionSpendCoinsAndGiveItem
+			{
+				Cost = 10000,
+				m_Item = Bottle("ItemPrimordialAmbrosiaEternalRenewal")
+			}, 10000, Array.Empty<Condition>()),
+			CreateStoreAnswer("AnswerBuyNectarEndlessLife", "(1,500 Coins) [Nectar of Endless Life] Permanently grants +25 Untyped Maximum HP (stacks infinitely).", blueprintCue, new ContextActionSpendCoinsAndGiveItem
+			{
+				Cost = 1500,
+				m_Item = Bottle("ItemNectarEndlessLife")
+			}, 1500, Array.Empty<Condition>()),
+			CreateStoreAnswer("AnswerBuyNectarVoidStalker", "(4,000 Coins) [Nectar of the Void Stalker] Permanently grants +1 Untyped Spell DC and +2 Spell Penetration (stacks infinitely).", blueprintCue, new ContextActionSpendCoinsAndGiveItem
+			{
+				Cost = 4000,
+				m_Item = Bottle("ItemNectarVoidStalker")
+			}, 4000, Array.Empty<Condition>()),
+			CreateStoreAnswer("AnswerBuyNectarWorldBreaker", "(4,000 Coins) [Nectar of the World Breaker] Permanently grants +2 Untyped Attack and Damage (stacks infinitely).", blueprintCue, new ContextActionSpendCoinsAndGiveItem
+			{
+				Cost = 4000,
+				m_Item = Bottle("ItemNectarWorldBreaker")
+			}, 4000, Array.Empty<Condition>()),
+			CreateStoreAnswer("AnswerBuyNectarDiamondSoul", "(3,500 Coins) [Nectar of the Diamond Soul] Permanently grants +2 Untyped to all Saving Throws (stacks infinitely).", blueprintCue, new ContextActionSpendCoinsAndGiveItem
+			{
+				Cost = 3500,
+				m_Item = Bottle("ItemNectarDiamondSoul")
+			}, 3500, Array.Empty<Condition>()),
+			CreateStoreAnswer("AnswerBuyNectarUnbrokenAegis", "(3,500 Coins) [Nectar of the Unbroken Aegis] Permanently grants +1 Untyped Armor Class (stacks infinitely).", blueprintCue, new ContextActionSpendCoinsAndGiveItem
+			{
+				Cost = 3500,
+				m_Item = Bottle("ItemNectarUnbrokenAegis")
+			}, 3500, Array.Empty<Condition>()),
+			CreateStoreAnswer("AnswerBuyDraughtVelocity", "(2,500 Coins) [Draught of Cosmic Velocity] +20 ft speed and +1 extra attack on full attack for 24 hours.", blueprintCue, new ContextActionSpendCoinsAndGiveItem
+			{
+				Cost = 2500,
+				m_Item = Bottle("ItemDraughtCosmicVelocity")
+			}, 2500, Array.Empty<Condition>()),
+			CreateStoreAnswer("AnswerBuyDraughtImmortalTitan", "(2,500 Coins) [Draught of the Immortal Titan] +150 Temp HP, DR 10/--, and Fast Healing 10 for 24 hours.", blueprintCue, new ContextActionSpendCoinsAndGiveItem
+			{
+				Cost = 2500,
+				m_Item = Bottle("ItemDraughtImmortalTitan")
+			}, 2500, Array.Empty<Condition>()),
+			CreateStoreAnswer("AnswerBuyDraughtArcaneOmniscience", "(3,000 Coins) [Draught of Arcane Omniscience] +4 Caster Level, and auto-extends and empowers all spells for 24 hours.", blueprintCue, new ContextActionSpendCoinsAndGiveItem
+			{
+				Cost = 3000,
+				m_Item = Bottle("ItemDraughtArcaneOmniscience")
+			}, 3000, Array.Empty<Condition>()),
+			CreateStoreAnswer("AnswerBuyDraughtApexPredator", "(3,000 Coins) [Draught of the Apex Predator] +1 Crit Multiplier, and bypasses all DR and Concealment for 24 hours.", blueprintCue, new ContextActionSpendCoinsAndGiveItem
+			{
+				Cost = 3000,
+				m_Item = Bottle("ItemDraughtApexPredator")
+			}, 3000, Array.Empty<Condition>()),
+			CreateStoreAnswer("AnswerBuyDraughtSoulAnchorBottle", "(500 Coins) [Draught of Absolute Soul Anchor] Bottle granting death, negative level, and compulsion immunity for 24 hours.", blueprintCue, new ContextActionSpendCoinsAndGiveItem
+			{
+				Cost = 500,
+				m_Item = Bottle("ItemDraughtAbsoluteSoulAnchor")
+			}, 500, Array.Empty<Condition>()),
+			CreateStoreAnswer("AnswerBuyWishstone", "(4,000 Coins) [Bottled Djinn Wishstone] Physical quickslot relic granting 5 reality-warping miracles. It is crushed once: choose one of the five.", blueprintCue, new ContextActionSpendCoinsAndGiveItem
+			{
+				Cost = 4000,
+				m_Item = Bottle("ItemCosmicWishstone")
+			}, 4000, Array.Empty<Condition>())
+		};
+		ListOffer(blueprintCue, answer);
+		ListOffer(blueprintCue, answer2);
+		ListOffer(blueprintCue, answer3);
+		ListOffer(blueprintCue, answer4);
+		ListOffer(blueprintCue, answer6);
+		ListOffer(blueprintCue, answer7);
+		ListOffer(blueprintCue, answer8);
+		ListOffer(blueprintCue, answer9);
+		ListOffer(blueprintCue, answer10);
+		ListOffer(blueprintCue, answer5);
+		foreach (BlueprintAnswer item in obj)
+		{
+			ListOffer(blueprintCue, item);
+		}
+		AddBackAndLeave(blueprintCue, "AnswerBackFromConsumables", "AnswerLeaveFromConsumables");
+		AddInfusion("DragonScaleInfusion", "AnswerBuyInfusionDragonScale", "Dragon's Scale Infusion", "Permanently grants a +2 Natural Armor bonus to AC.", 800, delegate(BlueprintFeature obj2)
+		{
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.NaturalArmor;
+				c.Stat = StatType.AC;
+				c.Value = 2;
+			});
+		});
+		AddInfusion("EyeOfCosmosInfusion", "AnswerBuyInfusionEyeOfCosmos", "Eye of the Cosmos Infusion", "Permanently grants True Seeing.", 800, delegate(BlueprintFeature obj2)
+		{
+			BlueprintBuff trueSeeing = BlueprintTools.GetBlueprint<BlueprintBuff>("09b4b69169304474296484c74aa12027");
+			if (trueSeeing != null)
+			{
+				obj2.AddComponent(delegate(AddFacts c)
+				{
+					c.m_Facts = new BlueprintUnitFactReference[1] { trueSeeing.ToReference<BlueprintUnitFactReference>() };
+				});
+			}
+		});
+		AddInfusion("StarlightSwiftnessInfusion", "AnswerBuyInfusionStarlightSwiftness", "Starlight Swiftness Infusion", "Permanently grants a +10 ft bonus to movement speed and +2 to Initiative.", 800, delegate(BlueprintFeature obj2)
+		{
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Enhancement;
+				c.Stat = StatType.Speed;
+				c.Value = 10;
+			});
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.UntypedStackable;
+				c.Stat = StatType.Initiative;
+				c.Value = 2;
+			});
+		});
+		AddInfusion("CosmicFortitudeInfusion", "AnswerBuyInfusionCosmicFortitude", "Cosmic Fortitude Infusion", "Permanently grants +20 maximum hit points.", 800, delegate(BlueprintFeature obj2)
+		{
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.UntypedStackable;
+				c.Stat = StatType.HitPoints;
+				c.Value = 20;
+			});
+		});
+		AddInfusion("AstralWeaponAttunement", "AnswerBuyInfusionAstralWeapon", "Astral Weapon Attunement", "Permanently grants a +5 bonus to damage rolls.", 1200, delegate(BlueprintFeature obj2)
+		{
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.UntypedStackable;
+				c.Stat = StatType.AdditionalDamage;
+				c.Value = 5;
+			});
+		});
+		ListOffer(CueStoreInfusions, CreateStoreAnswer("AnswerBuyKeyOfInfinitePathways", "(5,000 Coins) [Meta-Boon: Key of Infinite Pathways] Lifts the alignment requirement of every mythic path boon in the Cosmic Store.", CueStoreInfusions, new ContextActionSpendCoinsAndGrantFact
+		{
+			Cost = 5000,
+			m_Fact = KeyOfInfinitePathwaysFeature.ToReference<BlueprintUnitFactReference>()
+		}, 5000, Array.Empty<Condition>()));
+		AddSubclassBlessing("IsekaiTranscendence", "AnswerBuyIsekaiTranscendence", "Isekai Transcendence", "Isekai Protagonist", "Grants a +2 bonus to AC and all saving throws that stacks with everything, including Plot Armor.", "IsekaiProficiencies", delegate(BlueprintFeature obj2)
+		{
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.UntypedStackable;
+				c.Stat = StatType.AC;
+				c.Value = 2;
+			});
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.UntypedStackable;
+				c.Stat = StatType.SaveFortitude;
+				c.Value = 2;
+			});
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.UntypedStackable;
+				c.Stat = StatType.SaveReflex;
+				c.Value = 2;
+			});
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.UntypedStackable;
+				c.Stat = StatType.SaveWill;
+				c.Value = 2;
+			});
+		});
+		AddSubclassBlessing("PhantomTranscendence", "AnswerBuyPhantomTranscendence", "Phantom Transcendence", "Phantom Blade / Martial God", "Grants a +10 ft bonus to speed, +2 Dodge AC, and an extra attack on a full attack.", "PhantomBladeProficiencies", delegate(BlueprintFeature obj2)
+		{
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Enhancement;
+				c.Stat = StatType.Speed;
+				c.Value = 10;
+			});
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Dodge;
+				c.Stat = StatType.AC;
+				c.Value = 2;
+			});
+			obj2.AddComponent(delegate(BuffExtraAttack c)
+			{
+				c.Number = 1;
+				c.Haste = false;
+			});
+		});
+		AddSubclassBlessing("ImperialTranscendence", "AnswerBuyImperialTranscendence", "Imperial Transcendence", "God Emperor", "Grants a +2 Sacred bonus to Intelligence, Wisdom, and Charisma.", "GodEmperorProficiencies", delegate(BlueprintFeature obj2)
+		{
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Sacred;
+				c.Stat = StatType.Intelligence;
+				c.Value = 2;
+			});
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Sacred;
+				c.Stat = StatType.Wisdom;
+				c.Value = 2;
+			});
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Sacred;
+				c.Stat = StatType.Charisma;
+				c.Value = 2;
+			});
+		});
+		AddSubclassBlessing("SupremeTranscendence", "AnswerBuySupremeTranscendence", "Supreme Transcendence", "Overlord", "Increases the DC of all spells by 2.", "OverlordProficiencies", delegate(BlueprintFeature obj2)
+		{
+			obj2.AddComponent(delegate(IncreaseAllSpellsDC c)
+			{
+				c.Value = 2;
+				c.Descriptor = ModifierDescriptor.UntypedStackable;
+			});
+		});
+		AddSubclassBlessing("ApexTranscendence", "AnswerBuyApexTranscendence", "Apex Transcendence", "Slime", "Grants +20 maximum hit points and a +2 Enhancement bonus to Strength and Constitution.", "DevourerProficiencies", delegate(BlueprintFeature obj2)
+		{
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.UntypedStackable;
+				c.Stat = StatType.HitPoints;
+				c.Value = 20;
+			});
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Enhancement;
+				c.Stat = StatType.Strength;
+				c.Value = 2;
+			});
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Enhancement;
+				c.Stat = StatType.Constitution;
+				c.Value = 2;
+			});
+		});
+		AddSubclassBlessing("MonarchTranscendence", "AnswerBuyMonarchTranscendence", "Monarch Transcendence", "Shadow Monarch", "Grants a +2 Insight bonus to AC, Fortitude saves, and Will saves.", "ShadowMonarchProficiencies", delegate(BlueprintFeature obj2)
+		{
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Insight;
+				c.Stat = StatType.AC;
+				c.Value = 2;
+			});
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Insight;
+				c.Stat = StatType.SaveFortitude;
+				c.Value = 2;
+			});
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Insight;
+				c.Stat = StatType.SaveWill;
+				c.Value = 2;
+			});
+		});
+		AddSubclassBlessing("FellowshipTranscendence", "AnswerBuyFellowshipTranscendence", "Fellowship Transcendence", "Hero", "Grants a +2 Sacred bonus to saving throws and Fast Healing 3.", "HeroProficiencies", delegate(BlueprintFeature obj2)
+		{
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Sacred;
+				c.Stat = StatType.SaveFortitude;
+				c.Value = 2;
+			});
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Sacred;
+				c.Stat = StatType.SaveReflex;
+				c.Value = 2;
+			});
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Sacred;
+				c.Stat = StatType.SaveWill;
+				c.Value = 2;
+			});
+			obj2.AddComponent(delegate(AddEffectFastHealing c)
+			{
+				c.Heal = 3;
+				c.Bonus = 0;
+			});
+		});
+		AddSubclassBlessing("GrandmasterTranscendence", "AnswerBuyGrandmasterTranscendence", "Grandmaster Transcendence", "Mastermind", "Grants a +4 Insight bonus to Initiative and +2d6 Sneak Attack damage.", "MastermindProficiencies", delegate(BlueprintFeature obj2)
+		{
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Insight;
+				c.Stat = StatType.Initiative;
+				c.Value = 4;
+			});
+			obj2.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Insight;
+				c.Stat = StatType.SneakAttack;
+				c.Value = 2;
+			});
+		});
+		AddBackAndLeave(CueStoreInfusions, "AnswerBackFromInfusions", "AnswerLeaveFromInfusions");
+		BlueprintUnitFactReference blueprintUnitFactReference7 = GuardedFact("InstakillFeature");
+		BlueprintUnitFactReference blueprintUnitFactReference8 = GuardedFact("SuperBuffFeature");
+		BlueprintUnitFactReference blueprintUnitFactReference9 = GuardedFact("SummonCalamityFeature");
+		BlueprintUnitFactReference blueprintUnitFactReference10 = GuardedFact("CosmicAutoQuickenFeature");
+		BlueprintUnitFactReference blueprintUnitFactReference11 = GuardedFact("CosmicSupremeBeingFeature");
+		BlueprintUnitFactReference blueprintUnitFactReference12 = GuardedFact("CosmicChronoDomainFeature");
+		BlueprintUnitFactReference blueprintUnitFactReference13 = GuardedFact("CosmicChronoSurgeFeature");
+		BlueprintAnswer answer11 = ((blueprintUnitFactReference7 == null) ? null : CreateStoreAnswer("AnswerBuyCheatInstakill", "(5,000 Coins) [Death Note: Instakill] A daily death decree: a foe that fails a Fortitude save is slain (a foe immune to death effects takes heavy unholy damage instead), and one that succeeds is stunned for 1 round.", blueprintCue2, new ContextActionSpendCoinsAndGrantFact
+		{
+			Cost = 5000,
+			m_Fact = blueprintUnitFactReference7,
+			RecordForRespec = true
+		}, 5000, Array.Empty<Condition>()));
+		BlueprintAnswer answer12 = ((blueprintUnitFactReference8 == null) ? null : CreateStoreAnswer("AnswerBuyCheatSuperBuff", "(4,000 Coins) [Omnipotent Buff Matrix: Super Buff] A daily ability that mantles you and nearby allies in divine, arcane, and primal buffs. The buffs and their duration grow with your level, from 1 hour up to 24 hours at level 17.", blueprintCue2, new ContextActionSpendCoinsAndGrantFact
+		{
+			Cost = 4000,
+			m_Fact = blueprintUnitFactReference8,
+			RecordForRespec = true
+		}, 4000, Array.Empty<Condition>()));
+		BlueprintAnswer answer13 = ((blueprintUnitFactReference10 == null) ? null : CreateStoreAnswer("AnswerBuyCheatAutoQuicken", "(5,000 Coins) [Cosmic Quicken Matrix: Unrestricted Auto-Quicken] While active, every spell you cast is quickened, whatever its level, with no character level requirement.", blueprintCue2, new ContextActionSpendCoinsAndGrantFact
+		{
+			Cost = 5000,
+			m_Fact = blueprintUnitFactReference10,
+			RecordForRespec = true
+		}, 5000, Array.Empty<Condition>()));
+		BlueprintAnswer answer14 = ((blueprintUnitFactReference11 == null) ? null : CreateStoreAnswer("AnswerBuyCheatSupremeBeing", "(6,000 Coins) [Crown of the Supreme Entity: Unbound Supreme Being] Gain an untyped bonus to all six attributes: +5, plus +1 per 2 character levels and +1 per mythic rank.", blueprintCue2, new ContextActionSpendCoinsAndGrantFact
+		{
+			Cost = 6000,
+			m_Fact = blueprintUnitFactReference11,
+			RecordForRespec = true
+		}, 6000, Array.Empty<Condition>()));
+		BlueprintAnswer answer15 = ((blueprintUnitFactReference12 == null) ? null : CreateStoreAnswer("AnswerBuyCheatChronoDomain", "(4,500 Coins) [Chronos Absolute Stasis: Unconditional Time Stop] Freeze all nearby enemies in time for 2 rounds as a swift action with NO saving throw and NO spell resistance.", blueprintCue2, new ContextActionSpendCoinsAndGrantFact
+		{
+			Cost = 4500,
+			m_Fact = blueprintUnitFactReference12,
+			RecordForRespec = true
+		}, 4500, Array.Empty<Condition>()));
+		BlueprintAnswer answer16 = ((blueprintUnitFactReference13 == null) ? null : CreateStoreAnswer("AnswerBuyCheatChronoSurge", "(15,000 Coins) [Protagonist Chrono-Surge: Double Turn] Gain the ability to refund your standard, move, and swift actions as a free action 3 times per day.", blueprintCue2, new ContextActionSpendCoinsAndGrantFact
+		{
+			Cost = 15000,
+			m_Fact = blueprintUnitFactReference13,
+			RecordForRespec = true
+		}, 15000, Array.Empty<Condition>()));
+		BlueprintAnswer answer17 = ((blueprintUnitFactReference9 == null) ? null : CreateStoreAnswer("AnswerBuyCheatSummonCalamity", "(5,000 Coins) [Forbidden Calamity Horn: Summon Calamity] Summon Devastators, Playful Darkness, Deskari, Baphomet, or Nocticula to fight by your side regardless of level.", blueprintCue2, new ContextActionSpendCoinsAndGrantFact
+		{
+			Cost = 5000,
+			m_Fact = blueprintUnitFactReference9,
+			RecordForRespec = true
+		}, 5000, Array.Empty<Condition>()));
+		ListOffer(blueprintCue2, answer11);
+		ListOffer(blueprintCue2, answer12);
+		ListOffer(blueprintCue2, answer13);
+		ListOffer(blueprintCue2, answer14);
+		ListOffer(blueprintCue2, answer15);
+		ListOffer(blueprintCue2, answer16);
+		ListOffer(blueprintCue2, answer17);
+		BlueprintUnitFactReference blueprintUnitFactReference14 = GuardedFact("ManaWellspringFeature");
+		BlueprintUnitFactReference blueprintUnitFactReference15 = GuardedFact("RealityPiercerFeature");
+		BlueprintUnitFactReference blueprintUnitFactReference16 = GuardedFact("AegisUndyingFeature");
+		BlueprintUnitFactReference blueprintUnitFactReference17 = GuardedFact("DimensionalSanctuaryFeature");
+		ListOffer(blueprintCue2, (blueprintUnitFactReference14 == null) ? null : CreateStoreAnswer("AnswerBuyCheatManaWellspring", "(5,000 Coins) [Mana Wellspring: Reservoir of the Infinite] Gain +4 additional spell slots per day for all spell circles 1st through 9th.", blueprintCue2, new ContextActionSpendCoinsAndGrantFact
+		{
+			Cost = 5000,
+			m_Fact = blueprintUnitFactReference14,
+			RecordForRespec = true
+		}, 5000, Array.Empty<Condition>()));
+		ListOffer(blueprintCue2, (blueprintUnitFactReference15 == null) ? null : CreateStoreAnswer("AnswerBuyCheatRealityPiercer", "(10,000 Coins) [Reality Piercer: All-Sovereign Edge] Completely ignore all Damage Reduction and Concealment, and gain +6 Spell Penetration.", blueprintCue2, new ContextActionSpendCoinsAndGrantFact
+		{
+			Cost = 10000,
+			m_Fact = blueprintUnitFactReference15,
+			RecordForRespec = true
+		}, 10000, Array.Empty<Condition>()));
+		ListOffer(blueprintCue2, (blueprintUnitFactReference16 == null) ? null : CreateStoreAnswer("AnswerBuyCheatAegisUndying", "(6,000 Coins) [Aegis of the Undying Protagonist] Falling below 25% HP triggers emergency 150 HP healing and Greater Invisibility for 3 rounds (6-second cooldown).", blueprintCue2, new ContextActionSpendCoinsAndGrantFact
+		{
+			Cost = 6000,
+			m_Fact = blueprintUnitFactReference16,
+			RecordForRespec = true
+		}, 6000, Array.Empty<Condition>()));
+		ListOffer(blueprintCue2, (blueprintUnitFactReference17 == null) ? null : CreateStoreAnswer("AnswerBuyCheatDimensionalSanctuary", "(4,000 Coins) [Dimensional Sanctuary: Otherworld Pocket Realm] Gain 1,000,000 lbs carry capacity and total immunity to fatigue and exhaustion.", blueprintCue2, new ContextActionSpendCoinsAndGrantFact
+		{
+			Cost = 4000,
+			m_Fact = blueprintUnitFactReference17,
+			RecordForRespec = true
+		}, 4000, Array.Empty<Condition>()));
+		bool flag = blueprintCue2.Answers.Count > 0;
+		AddBackAndLeave(blueprintCue2, "AnswerBackFromForbiddenCheats", "AnswerLeaveFromForbiddenCheats");
+		ListOffer(blueprintCue3, CreateStoreAnswer("AnswerBuyCrownApotheosis", "(4,500 Coins) [Crown of Apotheosis] Permanent +6 Int/Wis/Cha, +2 insight bonus to all spell DCs, and spell resistance 10.", blueprintCue3, new ContextActionSpendCoinsAndGrantFact
+		{
+			Cost = 4500,
+			m_Fact = CosmicRelics.CosmicCrownOfApotheosisFeature.ToReference<BlueprintUnitFactReference>()
+		}, 4500, Array.Empty<Condition>()));
+		ListOffer(blueprintCue3, CreateStoreAnswer("AnswerBuyRingOmnipresence", "(4,500 Coins) [Ring of Omnipresence] Permanent immunity to paralysis and to being held in place, +5 deflection AC, +5 sacred bonus to all saving throws.", blueprintCue3, new ContextActionSpendCoinsAndGrantFact
+		{
+			Cost = 4500,
+			m_Fact = CosmicRelics.CosmicRingOfOmnipresenceFeature.ToReference<BlueprintUnitFactReference>()
+		}, 4500, Array.Empty<Condition>()));
+		ListOffer(blueprintCue3, CreateStoreAnswer("AnswerBuyAstralDragon", "(5,000 Coins) [Astral Sovereign Dragon] Gain the daily ability to summon the Astral Sovereign Dragon, an ancient silver dragon, to fight at your side for 1 hour.", blueprintCue3, new ContextActionSpendCoinsAndGrantFact
+		{
+			Cost = 5000,
+			m_Fact = CosmicRelics.CosmicAstralDragonFeature.ToReference<BlueprintUnitFactReference>()
+		}, 5000, Array.Empty<Condition>()));
+		ListOffer(blueprintCue3, CreateStoreAnswer("AnswerBuyMythicPact", "(4,000 Coins) [Rulebreaker Mythic Pact] +3 Caster Level to all spells, +4 sacred attack and damage.", blueprintCue3, new ContextActionSpendCoinsAndGrantFact
+		{
+			Cost = 4000,
+			m_Fact = CosmicRelics.CosmicMythicPactFeature.ToReference<BlueprintUnitFactReference>()
+		}, 4000, Array.Empty<Condition>()));
+		AddBackAndLeave(blueprintCue3, "AnswerBackFromCosmicRelics", "AnswerLeaveFromCosmicRelics");
+		(string, string, string, bool)[] array = new(string, string, string, bool)[14]
+		{
+			("AnswerSwitchFealtyCayden", "300e212868bca984687c92bcb66d381b", "Cayden Cailean", false),
+			("AnswerSwitchFealtyDesna", "2c0a3b9971327ba4d9d85354d16998c1", "Desna", false),
+			("AnswerSwitchFealtyIomedae", "88d5da04361b16746bf5b65795e0c38c", "Iomedae", false),
+			("AnswerSwitchFealtyPharasma", "458750bc214ab2e44abdeae404ab22e9", "Pharasma", false),
+			("AnswerSwitchFealtyCalistria", "c7531715a3f046d4da129619be63f44c", "Calistria", false),
+			("AnswerSwitchFealtyNethys", "6262cfce7c31626458325ca0909de997", "Nethys", false),
+			("AnswerSwitchFealtyAsmodeus", "a3a5ccc9c670e6f4ca4a686d23b89900", "Asmodeus", false),
+			("AnswerSwitchFealtyGorum", "8f49a5d8528a82c44b8c117a89f6b68c", "Gorum", false),
+			("AnswerSwitchFealtyBesmara", "BesmaraFeature", "Besmara", true),
+			("AnswerSwitchFealtyLanternKing", "LanternKingFeature", "the Lantern King", true),
+			("AnswerSwitchFealtyChaldira", "ChaldiraFeature", "Chaldira", true),
+			("AnswerSwitchFealtyMilani", "MilaniFeature", "Milani", true),
+			("AnswerSwitchFealtyBlackButterfly", "BlackButterflyFeature", "Black Butterfly", true),
+			("AnswerSwitchFealtyAtheism", "92c0d2da0a836ce418a267093c09ca54", "Atheism", false)
+		};
+		for (int num = 0; num < array.Length; num++)
+		{
+			(string, string, string, bool) tuple = array[num];
+			BlueprintFeature blueprintFeature = ResolveDeity(tuple.Item2, tuple.Item4);
+			if (blueprintFeature != null)
+			{
+				BlueprintFeatureReference blueprintFeatureReference = blueprintFeature.ToReference<BlueprintFeatureReference>();
+				ListOffer(blueprintCue4, CreateStoreAnswer(tuple.Item1, PatronLabel(tuple.Item3), blueprintCue4, new ContextActionSwitchDeity
+				{
+					m_NewDeity = blueprintFeatureReference,
+					Cost = 500
+				}, 500, new Condition[3]
+				{
+					new ConditionCosmicPatronSwitchAllowed
+					{
+						m_Deity = blueprintFeatureReference
+					},
+					new HasFact
+					{
+						Unit = new PlayerCharacter(),
+						m_Fact = blueprintFeature.ToReference<BlueprintUnitFactReference>(),
+						Not = true
+					},
+					ModDeityOffered(tuple.Item4)
+				}));
+			}
+		}
+		(string, BlueprintFeature, string, string, bool, string)[] array2 = new(string, BlueprintFeature, string, string, bool, string)[13]
+		{
+			("AnswerAscendAvatarCayden", DeityAvatarAscension.AvatarCaydenFeature, "Avatar of the Lucky Drunk (Cayden Cailean)", "300e212868bca984687c92bcb66d381b", false, "+4 sacred attack, AC and saves, fast healing 5, immunity to nausea, fear and compulsion (which also refuses an ally's Rage and Blessing of Luck and Resolve). Sacred does not stack with other sacred bonuses."),
+			("AnswerAscendAvatarIomedae", DeityAvatarAscension.AvatarIomedaeFeature, "Avatar of the Inheritor (Iomedae)", "88d5da04361b16746bf5b65795e0c38c", false, "+4 sacred AC, attack and saves, +6 sacred damage. Sacred does not stack with other sacred bonuses, and this overwrites Iomedae's own Vanguard blessing."),
+			("AnswerAscendAvatarAsmodeus", DeityAvatarAscension.AvatarAsmodeusFeature, "Avatar of the Prince of Darkness (Asmodeus)", "a3a5ccc9c670e6f4ca4a686d23b89900", false, "+4 profane AC, attack and ability DCs, immunity to fire and to harmful mind-affecting effects. Profane does not stack with other profane bonuses (Corrupt Aura, Monarch Domain)."),
+			("AnswerAscendAvatarDesna", DeityAvatarAscension.AvatarDesnaFeature, "Avatar of the Song of the Spheres (Desna)", "2c0a3b9971327ba4d9d85354d16998c1", false, "+30 ft speed, +4 sacred AC and saves, reroll failed saves, immunity to paralysis, entanglement, curses, movement impairment and sleep. Sacred does not stack with other sacred bonuses."),
+			("AnswerAscendAvatarPharasma", DeityAvatarAscension.AvatarPharasmaFeature, "Avatar of the Lady of Graves (Pharasma)", "458750bc214ab2e44abdeae404ab22e9", false, "Immunity to death effects, energy drain and negative energy, +4 saves, +2 attack and +6 damage, all stacking."),
+			("AnswerAscendAvatarCalistria", DeityAvatarAscension.AvatarCalistriaFeature, "Avatar of the Savored Sting (Calistria)", "c7531715a3f046d4da129619be63f44c", false, "+4 insight initiative, attack, AC and Reflex, +4d6 sneak attack, poison immunity. Insight does not stack with other insight bonuses (Aeon boon, Omniscient Mimicry, Grandmaster Transcendence)."),
+			("AnswerAscendAvatarNethys", DeityAvatarAscension.AvatarNethysFeature, "Avatar of the All-Seeing Eye (Nethys)", "6262cfce7c31626458325ca0909de997", false, "+3 ability DCs, +4 spell penetration, +4 saves, +2 attack and +4 damage, all stacking; resist 10 acid, cold, electricity, fire and sonic; see invisibility."),
+			("AnswerAscendAvatarGorum", DeityAvatarAscension.AvatarGorumFeature, "Avatar of Our Lord in Iron (Gorum)", "8f49a5d8528a82c44b8c117a89f6b68c", false, "+6 Strength, +4 Constitution and +4 damage, an extra attack on a full attack, DR 10/- that stacks with your other DR, immunity to fatigue and exhaustion. All stacking."),
+			("AnswerAscendAvatarBesmara", DeityAvatarAscension.AvatarBesmaraFeature, "Avatar of the Pirate Queen (Besmara)", "BesmaraFeature", true, "+4 AC and saves that stack with everything including Plot Armor, +4 luck attack, +4 CMB and CMD, fast healing 5. The luck attack bonus does not stack with Signature Attack."),
+			("AnswerAscendAvatarLanternKing", DeityAvatarAscension.AvatarLanternKingFeature, "Avatar of the Laughing King (the Lantern King)", "LanternKingFeature", true, "+6 dodge AC, +6 Dexterity, +4 Will, immunity to paralysis, entanglement and confusion. All stacking."),
+			("AnswerAscendAvatarChaldira", DeityAvatarAscension.AvatarChaldiraFeature, "Avatar of the Mischievous Friend (Chaldira)", "ChaldiraFeature", true, "Allies within 30 ft (not you) gain +4 luck saves and +3 luck attack and AC; you gain +2 AC and saves that stack with everything. The aura's luck does not stack with allies' other luck bonuses."),
+			("AnswerAscendAvatarMilani", DeityAvatarAscension.AvatarMilaniFeature, "Avatar of the Everbloom (Milani)", "MilaniFeature", true, "+4 sacred AC and saves, +2 attack and +4 damage that stack, fast healing 5, immunity to disease and bleed. Sacred does not stack with other sacred bonuses."),
+			("AnswerAscendAvatarBlackButterfly", DeityAvatarAscension.AvatarBlackButterflyFeature, "Avatar of the Silence Between (Black Butterfly)", "BlackButterflyFeature", true, "50% miss chance against attacks, +4 dodge AC, +4 Will and initiative, +4 damage, immunity to cold and sonic. All stacking except the miss chance.")
+		};
+		for (int num = 0; num < array2.Length; num++)
+		{
+			(string, BlueprintFeature, string, string, bool, string) a = array2[num];
+			if (a.Item2 == null)
+			{
+				continue;
+			}
+			BlueprintFeature blueprintFeature2 = ResolveDeity(a.Item4, a.Item5);
+			if (blueprintFeature2 != null)
+			{
+				bool flag2 = a.Item2 == DeityAvatarAscension.AvatarLanternKingFeature;
+				ListOffer(blueprintCue4, CreateStoreAnswer(a.Item1, AvatarLabel(a.Item3, a.Item6), blueprintCue4, new ContextActionAscendAvatar
+				{
+					Cost = 10000,
+					m_AvatarFeature = a.Item2.ToReference<BlueprintFeatureReference>()
+				}, 10000, new Condition[3]
+				{
+					FollowerOf(a, blueprintFeature2),
+					ModDeityOffered(a.Item5),
+					flag2 ? new ConditionLanternKingDiscountEarned
+					{
+						Not = true
+					} : null
+				}));
+				if (flag2)
+				{
+					int discountedAvatarCost = LanternKingReveal.DiscountedAvatarCost;
+					ListOffer(blueprintCue4, CreateStoreAnswer("AnswerAscendAvatarLanternKingDiscount", DiscountedAvatarLabel(a.Item3, a.Item6), blueprintCue4, new ContextActionAscendAvatar
+					{
+						Cost = discountedAvatarCost,
+						m_AvatarFeature = a.Item2.ToReference<BlueprintFeatureReference>()
+					}, discountedAvatarCost, new Condition[3]
+					{
+						FollowerOf(a, blueprintFeature2),
+						ModDeityOffered(a.Item5),
+						new ConditionLanternKingDiscountEarned()
+					}));
+				}
+			}
+		}
+		AddBackAndLeave(blueprintCue4, "AnswerBackFromFealty", "AnswerLeaveFromFealty");
+		BlueprintFeature blueprint = BlueprintTools.GetBlueprint<BlueprintFeature>("92c0d2da0a836ce418a267093c09ca54");
+		ListOffer(blueprintCue5, CreateStoreAnswer("AnswerEmbraceGodDefier", "<color=#5B2A86>[Ascend]</color> Shatter divine chains and walk the Path of the God Defier! (Cost: 10,000 Coins)", CosmicStoreRootCue, new ContextActionAscendAvatar
+		{
+			Cost = 10000,
+			m_AvatarFeature = DeityAvatarAscension.GodDefierFeature.ToReference<BlueprintFeatureReference>()
+		}, 10000, new Condition[1] { (blueprint != null) ? MainCharacterHas(blueprint.ToReference<BlueprintUnitFactReference>()) : null }));
+		AddBackAndLeave(blueprintCue5, "AnswerBackFromGodDefier", "AnswerLeaveFromGodDefier");
+		ListOffer(CosmicStoreRootCue, CreateStoreAnswer("AnswerStoreBlessings", "[Deity Blessings] Browse 14 Constellation Patron Blessings (100 - 500 Coins)", CueStoreBlessings, null, 0, Array.Empty<Condition>()));
+		ListOffer(CosmicStoreRootCue, CreateStoreAnswer("AnswerStoreMythic", "[Mythic Path Boons] Browse 10 Mythic Path Resonance Boons (1,500 - 2,000 Coins)", CueStoreMythic, null, 0, Array.Empty<Condition>()));
+		ListOffer(CosmicStoreRootCue, CreateStoreAnswer("AnswerStoreConsumables", "[Web Novel Consumables & Wishes] Elixirs, Figurines, and Wishes", blueprintCue, null, 0, Array.Empty<Condition>()));
+		ListOffer(CosmicStoreRootCue, CreateStoreAnswer("AnswerStoreInfusions", "[Infusions & Transcendence] Inscribe cosmic truth and subclass mastery", CueStoreInfusions, null, 0, Array.Empty<Condition>()));
+		if (flag)
+		{
+			ListOffer(CosmicStoreRootCue, CreateStoreAnswer("AnswerStoreForbiddenCheats", "<color=#7A1010>[Forbidden Otherworldly Cheats]</color> God-mode protagonist hacks (4,000 - 15,000 Coins)", blueprintCue2, null, 0, Array.Empty<Condition>()));
+		}
+		ListOffer(CosmicStoreRootCue, CreateStoreAnswer("AnswerStoreCosmicRelics", "<color=#133E71>[Cosmic Relics & Sovereign Boons]</color> Stellar artifacts and companions (4,000 - 5,000 Coins)", blueprintCue3, null, 0, Array.Empty<Condition>()));
+		ListOffer(CosmicStoreRootCue, CreateStoreAnswer("AnswerStoreFealty", "[Constellation Fealty & Avatar Ascension] Align with a patron or ascend as an Avatar", blueprintCue4, null, 0, Array.Empty<Condition>()));
+		ListOffer(CosmicStoreRootCue, CreateStoreAnswer("AnswerStoreGodDefier", "<color=#5B2A86>[Path of the God Defier]</color> (Atheists) Shatter divine chains (10,000 Coins)", blueprintCue5, null, 0, Array.Empty<Condition>()));
+		ListOffer(CosmicStoreRootCue, CreateStoreAnswer("AnswerStoreClose", "[Leave] Close the Cosmic Constellation Exchange.", null, null, 0, Array.Empty<Condition>()));
+		BlueprintAbility OpenCosmicStoreAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "OpenCosmicStoreAbility", delegate(BlueprintAbility blueprintAbility)
+		{
+			blueprintAbility.SetName(Main.IsekaiContext, "Commune with Constellations");
+			blueprintAbility.SetDescription(Main.IsekaiContext, "Open the Cosmic Constellation Exchange dialog to browse offerings, redeem accumulated Cosmic Coins for divine blessings, mythic boons, web novel elixirs, modular wishes, infusions, switch patron deities, or ascend as a divine Avatar.");
+			((BlueprintUnitFact)blueprintAbility).m_Icon = Icon_Coin;
+			blueprintAbility.Type = AbilityType.Special;
+			blueprintAbility.Range = AbilityRange.Personal;
+			blueprintAbility.CanTargetSelf = true;
+			blueprintAbility.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Self;
+			blueprintAbility.ActionType = UnitCommand.CommandType.Free;
+			blueprintAbility.AddComponent(delegate(AbilityEffectRunAction c)
+			{
+				c.Actions = ActionFlow.DoSingle(delegate(ContextActionOpenCosmicStoreDialog contextActionOpenCosmicStoreDialog)
+				{
+					contextActionOpenCosmicStoreDialog.m_Dialog = CosmicStoreDialog.ToReference<BlueprintDialogReference>();
+				});
+			});
+		});
+		DivineTokens.ItemCosmicCoin = Helpers.CreateBlueprint(Main.IsekaiContext, "ItemCosmicCoin", delegate(BlueprintItemEquipmentUsable blueprintItemEquipmentUsable)
+		{
+			blueprintItemEquipmentUsable.SetName(Main.IsekaiContext, "Cosmic Coin");
+			blueprintItemEquipmentUsable.SetDescription(Main.IsekaiContext, "A shimmering token forged from condensed divine favor and audience entertainment. Right-click to use from your inventory to instantly commune with the observing constellations and open the Cosmic Constellation Exchange.\n\nYour inventory stack automatically synchronizes with your accumulated Cosmic Coins.");
+			((BlueprintItem)blueprintItemEquipmentUsable).m_Icon = Icon_Coin;
+			((BlueprintItem)blueprintItemEquipmentUsable).m_Cost = 0;
+			((BlueprintItem)blueprintItemEquipmentUsable).m_Weight = 0f;
+			((BlueprintItem)blueprintItemEquipmentUsable).m_IsNotable = true;
+			((BlueprintItem)blueprintItemEquipmentUsable).m_ForceStackable = true;
+			((BlueprintItem)blueprintItemEquipmentUsable).m_Destructible = false;
+			blueprintItemEquipmentUsable.Type = UsableItemType.Other;
+			blueprintItemEquipmentUsable.SpendCharges = false;
+			blueprintItemEquipmentUsable.Charges = 1;
+			blueprintItemEquipmentUsable.RestoreChargesOnRest = false;
+			((BlueprintItemEquipment)blueprintItemEquipmentUsable).m_Ability = OpenCosmicStoreAbility.ToReference<BlueprintAbilityReference>();
+		});
+		void AddBackAndLeave(BlueprintCue cue, string backName, string leaveName)
+		{
+			cue.Answers.Add(CreateStoreAnswer(backName, "[Back] Return to the Main Catalog.", CosmicStoreRootCue, null, 0, Array.Empty<Condition>()).ToReference<BlueprintAnswerBaseReference>());
+			cue.Answers.Add(CreateStoreAnswer(leaveName, "[Leave] Close the Cosmic Constellation Exchange.", null, null, 0, Array.Empty<Condition>()).ToReference<BlueprintAnswerBaseReference>());
+		}
+		void AddBlessing(string name, string answerName, string displayName, string desc, int cost, Action<BlueprintBuff> configureBuff)
+		{
+			BlueprintBuff bp4 = TTCoreExtensions.CreateBuff(name + "Buff", delegate(BlueprintBuff blueprintBuff)
+			{
+				blueprintBuff.SetName(Main.IsekaiContext, displayName);
+				blueprintBuff.SetDescription(Main.IsekaiContext, desc);
+				((BlueprintUnitFact)blueprintBuff).m_Icon = Icon_Coin;
+				blueprintBuff.m_Flags = BlueprintBuff.Flags.StayOnDeath;
+				configureBuff(blueprintBuff);
+			});
+			ListOffer(CueStoreBlessings, CreateStoreAnswer(answerName, OfferLabel(cost, displayName, desc), CueStoreBlessings, new ContextActionSpendCoinsAndApplyBuff
+			{
+				Cost = cost,
+				m_Buff = bp4.ToReference<BlueprintBuffReference>(),
+				DurationHours = 1
+			}, cost, Array.Empty<Condition>()));
+		}
+		void AddInfusion(string name, string answerName, string displayName, string desc, int cost, Action<BlueprintFeature> configureFeature)
+		{
+			BlueprintFeature bp4 = Helpers.CreateBlueprint(Main.IsekaiContext, name + "Feature", delegate(BlueprintFeature blueprintFeature3)
+			{
+				blueprintFeature3.SetName(Main.IsekaiContext, displayName);
+				blueprintFeature3.SetDescription(Main.IsekaiContext, desc);
+				((BlueprintUnitFact)blueprintFeature3).m_Icon = Icon_Coin;
+				blueprintFeature3.IsClassFeature = false;
+				configureFeature(blueprintFeature3);
+			});
+			ListOffer(CueStoreInfusions, CreateStoreAnswer(answerName, OfferLabel(cost, displayName, desc), CueStoreInfusions, new ContextActionSpendCoinsAndGrantFact
+			{
+				Cost = cost,
+				m_Fact = bp4.ToReference<BlueprintUnitFactReference>()
+			}, cost, Array.Empty<Condition>()));
+		}
+		void AddMythicBoon(string name, string answerName, string displayName, string desc, int cost, Action<BlueprintFeature> configureFeature)
+		{
+			BlueprintFeature bp4 = Helpers.CreateBlueprint(Main.IsekaiContext, name + "Feature", delegate(BlueprintFeature blueprintFeature3)
+			{
+				blueprintFeature3.SetName(Main.IsekaiContext, displayName);
+				blueprintFeature3.SetDescription(Main.IsekaiContext, desc);
+				((BlueprintUnitFact)blueprintFeature3).m_Icon = Icon_Coin;
+				blueprintFeature3.IsClassFeature = false;
+				configureFeature(blueprintFeature3);
+			});
+			AlignmentMaskType alignmentMaskType = (MythicBoonAlignment.TryGetValue(name, out var value) ? value : AlignmentMaskType.Any);
+			ListOffer(CueStoreMythic, CreateStoreAnswer(answerName, MythicOfferLabel(cost, displayName, desc, alignmentMaskType), CueStoreMythic, new ContextActionSpendCoinsAndGrantFact
+			{
+				Cost = cost,
+				m_Fact = bp4.ToReference<BlueprintUnitFactReference>(),
+				m_KeyOfInfinitePathways = KeyOfInfinitePathwaysFeature.ToReference<BlueprintFeatureReference>(),
+				AllowedAlignment = alignmentMaskType
+			}, cost, Array.Empty<Condition>()));
+		}
+		void AddSubclassBlessing(string name, string answerName, string displayName, string archetype, string desc, string requiredFactName, Action<BlueprintFeature> configureAwakened)
+		{
+			BlueprintFeature awakenedFeat = Helpers.CreateBlueprint(Main.IsekaiContext, name + "AwakenedFeature", delegate(BlueprintFeature blueprintFeature3)
+			{
+				blueprintFeature3.SetName(Main.IsekaiContext, displayName + " (Awakened)");
+				blueprintFeature3.SetDescription(Main.IsekaiContext, desc);
+				((BlueprintUnitFact)blueprintFeature3).m_Icon = Icon_Coin;
+				blueprintFeature3.IsClassFeature = false;
+				configureAwakened(blueprintFeature3);
+			});
+			BlueprintFeature bp4 = Helpers.CreateBlueprint(Main.IsekaiContext, name + "Feature", delegate(BlueprintFeature blueprintFeature3)
+			{
+				blueprintFeature3.SetName(Main.IsekaiContext, displayName);
+				blueprintFeature3.SetDescription(Main.IsekaiContext, desc + "\n<i>(Takes effect only for a character with this archetype's proficiencies; checked when the blessing is gained and at each level-up.)</i>");
+				((BlueprintUnitFact)blueprintFeature3).m_Icon = Icon_Coin;
+				blueprintFeature3.IsClassFeature = false;
+				blueprintFeature3.AddComponent(delegate(AddFeatureIfHasFact c)
+				{
+					c.m_CheckedFact = BlueprintTools.GetModBlueprintReference<BlueprintUnitFactReference>(Main.IsekaiContext, requiredFactName);
+					c.m_Feature = awakenedFeat.ToReference<BlueprintUnitFactReference>();
+					c.Not = false;
+				});
+			});
+			BlueprintUnitFactReference blueprintUnitFactReference18 = GuardedFact(requiredFactName);
+			if (blueprintUnitFactReference18 != null)
+			{
+				ListOffer(CueStoreInfusions, CreateStoreAnswer(answerName, TranscendenceLabel(archetype, displayName, desc), CueStoreInfusions, new ContextActionSpendCoinsAndGrantFact
+				{
+					Cost = 1200,
+					m_Fact = bp4.ToReference<BlueprintUnitFactReference>()
+				}, 1200, new Condition[1] { MainCharacterHas(blueprintUnitFactReference18) }));
+			}
+		}
+		static BlueprintItemReference Bottle(string itemName)
+		{
+			return BlueprintTools.GetModBlueprintReference<BlueprintItemReference>(Main.IsekaiContext, itemName);
+		}
+		static BlueprintAnswer CreateStoreAnswer(string name, string text, BlueprintCue nextCue, GameAction onSelectAction = null, int cost = 0, params Condition[] showConditions)
+		{
+			return TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer blueprintAnswer)
+			{
+				blueprintAnswer.SetText(Main.IsekaiContext, text);
+				blueprintAnswer.NextCue = new CueSelection
+				{
+					Cues = ((nextCue != null) ? new List<BlueprintCueBaseReference> { nextCue.ToReference<BlueprintCueBaseReference>() } : new List<BlueprintCueBaseReference>()),
+					Strategy = Strategy.First
+				};
+				Condition[] conditions = (showConditions ?? new Condition[0]).Where((Condition c) => c != null).ToArray();
+				blueprintAnswer.ShowConditions = ActionFlow.IfAll(conditions);
+				blueprintAnswer.SelectConditions = ((cost > 0) ? ActionFlow.IfAll(new ConditionCanAffordCosmicCoins
+				{
+					Cost = cost
+				}) : ActionFlow.EmptyCondition());
+				blueprintAnswer.OnSelect = ((onSelectAction != null) ? new ActionList
+				{
+					Actions = new GameAction[1] { onSelectAction }
+				} : ActionFlow.DoNothing());
+			});
+		}
+		BlueprintAbility CreateWishVariant(string name, string statName, StatType stat, Sprite sprite, int bonus = 2)
+		{
+			return Helpers.CreateBlueprint(Main.IsekaiContext, name, delegate(BlueprintAbility blueprintAbility)
+			{
+				blueprintAbility.SetName(Main.IsekaiContext, $"Cosmic Wish: Permanent +{bonus} {statName}");
+				blueprintAbility.SetDescription(Main.IsekaiContext, $"Consumes 1 Wish charge to permanently grant a +{bonus} inherent bonus to {statName} that stacks with every other inherent bonus.");
+				((BlueprintUnitFact)blueprintAbility).m_Icon = sprite ?? Icon_Coin;
 				blueprintAbility.Type = AbilityType.Special;
 				blueprintAbility.Range = AbilityRange.Personal;
 				blueprintAbility.CanTargetSelf = true;
 				blueprintAbility.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Self;
 				blueprintAbility.ActionType = UnitCommand.CommandType.Standard;
+				BlueprintFeature feat = Helpers.CreateBlueprint(Main.IsekaiContext, name + "Feature", delegate(BlueprintFeature f)
+				{
+					f.SetName(Main.IsekaiContext, $"Inherent Boost: {statName} +{bonus}");
+					f.SetDescription(Main.IsekaiContext, $"+{bonus} inherent bonus to {statName} for each Wish spent on it, stacking with every other inherent bonus.");
+					((BlueprintUnitFact)f).m_Icon = Icon_Coin;
+					f.IsClassFeature = false;
+					f.AddComponent(delegate(AddStackingStatBonus c)
+					{
+						c.Descriptor = ModifierDescriptor.Inherent;
+						c.Stat = stat;
+						c.Value = bonus;
+					});
+					f.Ranks = 10;
+				});
+				blueprintAbility.AddComponent(delegate(AbilityCasterFeatureBelowRank c)
+				{
+					c.m_Feature = feat.ToReference<BlueprintFeatureReference>();
+					c.MaxRank = feat.Ranks;
+				});
 				blueprintAbility.AddComponent(delegate(AbilityEffectRunAction c)
 				{
-					c.Actions = ActionFlow.DoSingle<ContextActionWishWealth>();
+					c.Actions = ActionFlow.DoSingle(delegate(ContextActionAddFeature contextActionAddFeature)
+					{
+						contextActionAddFeature.m_PermanentFeature = feat.ToReference<BlueprintFeatureReference>();
+					});
 				});
 				blueprintAbility.AddComponent(delegate(AbilityResourceLogic c)
 				{
@@ -709,1317 +1717,91 @@ namespace IsekaiMod.Content.Constellations
 					c.Amount = 1;
 				});
 			});
-			BlueprintAbility ModularCosmicWishAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "ModularCosmicWishAbility", delegate(BlueprintAbility blueprintAbility)
+		}
+		static Condition FollowerOf((string ansName, BlueprintFeature feat, string name, string deityId, bool isModDeity, string summary) tuple2, BlueprintFeature deityFeat)
+		{
+			if (tuple2.feat == DeityAvatarAscension.AvatarBesmaraFeature)
 			{
-				blueprintAbility.SetName(Main.IsekaiContext, "Cosmic Wish (Field Cast)");
-				blueprintAbility.SetDescription(Main.IsekaiContext, "Invoke cosmic reality manipulation. Consumes 1 Wish charge per cast. Requires purchasing a Wish recharge in the Cosmic Store to use again.");
-				((BlueprintUnitFact)blueprintAbility).m_Icon = Icon_Coin;
-				blueprintAbility.Type = AbilityType.Special;
-				blueprintAbility.Range = AbilityRange.Personal;
-				blueprintAbility.CanTargetSelf = true;
-				blueprintAbility.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Self;
-				blueprintAbility.ActionType = UnitCommand.CommandType.Standard;
-				blueprintAbility.AddComponent(delegate(AbilityVariants c)
+				return new ConditionMainCharacterHasAnyFact
 				{
-					c.m_Variants = new BlueprintAbilityReference[7]
+					m_Facts = new BlueprintUnitFactReference[2]
 					{
-						WishStrength.ToReference<BlueprintAbilityReference>(),
-						WishDexterity.ToReference<BlueprintAbilityReference>(),
-						WishConstitution.ToReference<BlueprintAbilityReference>(),
-						WishIntelligence.ToReference<BlueprintAbilityReference>(),
-						WishWisdom.ToReference<BlueprintAbilityReference>(),
-						WishCharisma.ToReference<BlueprintAbilityReference>(),
-						WishWealth.ToReference<BlueprintAbilityReference>()
-					};
-				});
-			});
-			BlueprintAbility item6 = Helpers.CreateBlueprint(Main.IsekaiContext, "BuyWishChargeAbility", delegate(BlueprintAbility blueprintAbility)
-			{
-				blueprintAbility.SetName(Main.IsekaiContext, "Miracle: Cosmic Wish Recharge");
-				blueprintAbility.SetDescription(Main.IsekaiContext, "Spend 4,000 Cosmic Coins to purchase exactly 1 charge for your modular Cosmic Wish ability. Grants a permanent +2 untyped stackable bonus to any attribute of your choice or 500,000 Gold when cast.");
-				((BlueprintUnitFact)blueprintAbility).m_Icon = Icon_Coin;
-				blueprintAbility.Type = AbilityType.Special;
-				blueprintAbility.Range = AbilityRange.Personal;
-				blueprintAbility.CanTargetSelf = true;
-				blueprintAbility.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Self;
-				blueprintAbility.ActionType = UnitCommand.CommandType.Standard;
-				blueprintAbility.AddComponent(delegate(AbilityEffectRunAction c)
-				{
-					c.Actions = ActionFlow.DoSingle(delegate(ContextActionBuyWishCharge a)
-					{
-						a.Cost = 4000;
-						a.m_WishResource = CosmicWishResource.ToReference<BlueprintAbilityResourceReference>();
-					});
-				});
-			});
-			storeAbilities.Add(item6);
-			BlueprintAbility item7 = Helpers.CreateBlueprint(Main.IsekaiContext, "ManifestScrollAbility", delegate(BlueprintAbility blueprintAbility)
-			{
-				blueprintAbility.SetName(Main.IsekaiContext, "Miracle: Manifest Supreme Revival Scroll");
-				blueprintAbility.SetDescription(Main.IsekaiContext, "Spend 1,500 Cosmic Coins to directly manifest a supreme scroll of true resurrection into your inventory.");
-				((BlueprintUnitFact)blueprintAbility).m_Icon = ResurrectionScroll.m_Icon;
-				blueprintAbility.Type = AbilityType.Special;
-				blueprintAbility.Range = AbilityRange.Personal;
-				blueprintAbility.CanTargetSelf = true;
-				blueprintAbility.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Self;
-				blueprintAbility.ActionType = UnitCommand.CommandType.Standard;
-				blueprintAbility.AddComponent(delegate(AbilityEffectRunAction c)
-				{
-					c.Actions = ActionFlow.DoSingle(delegate(ContextActionManifestScroll a)
-					{
-						a.Cost = 1500;
-						a.m_Item = ResurrectionScroll.ToReference<BlueprintItemReference>();
-					});
-				});
-			});
-			storeAbilities.Add(item7);
-			List<(string name, BlueprintFeature feat, int cost, string displayName, string desc)> infusionList = new List<(string, BlueprintFeature, int, string, string)>();
-			AddInfusion("DragonScaleInfusion", "Dragon's Scale Infusion", "Permanently grants a +2 Natural Armor bonus to AC.", 800, delegate(BlueprintFeature obj)
-			{
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.NaturalArmor;
-					c.Stat = StatType.AC;
-					c.Value = 2;
-				});
-			});
-			AddInfusion("EyeOfCosmosInfusion", "Eye of the Cosmos Infusion", "Permanently grants True Seeing.", 800, delegate(BlueprintFeature obj)
-			{
-				BlueprintBuff trueSeeing = BlueprintTools.GetBlueprint<BlueprintBuff>("09b4b69169304474296484c74aa12027");
-				if (trueSeeing != null)
-				{
-					obj.AddComponent(delegate(AddFacts c)
-					{
-						c.m_Facts = new BlueprintUnitFactReference[1] { trueSeeing.ToReference<BlueprintUnitFactReference>() };
-					});
-				}
-			});
-			AddInfusion("StarlightSwiftnessInfusion", "Starlight Swiftness Infusion", "Permanently grants a +10 ft bonus to movement speed and +2 to Initiative.", 800, delegate(BlueprintFeature obj)
-			{
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Enhancement;
-					c.Stat = StatType.Speed;
-					c.Value = 10;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.UntypedStackable;
-					c.Stat = StatType.Initiative;
-					c.Value = 2;
-				});
-			});
-			AddInfusion("CosmicFortitudeInfusion", "Cosmic Fortitude Infusion", "Permanently grants +20 maximum hit points.", 800, delegate(BlueprintFeature obj)
-			{
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.UntypedStackable;
-					c.Stat = StatType.HitPoints;
-					c.Value = 20;
-				});
-			});
-			AddInfusion("AstralWeaponAttunement", "Astral Weapon Attunement", "Permanently causes all weapon attacks to deal an additional 1d6 force damage.", 1200, delegate(BlueprintFeature obj)
-			{
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.UntypedStackable;
-					c.Stat = StatType.AdditionalDamage;
-					c.Value = 5;
-				});
-			});
-			List<(string name, BlueprintFeature masterFeat, string displayName, string desc)> subclassBoonList = new List<(string, BlueprintFeature, string, string)>();
-			AddSubclassBlessing("IsekaiTranscendence", "Isekai Transcendence", "Grants a +2 Luck bonus to AC and all saving throws.", "IsekaiProficiencies", delegate(BlueprintFeature obj)
-			{
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Luck;
-					c.Stat = StatType.AC;
-					c.Value = 2;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Luck;
-					c.Stat = StatType.SaveFortitude;
-					c.Value = 2;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Luck;
-					c.Stat = StatType.SaveReflex;
-					c.Value = 2;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Luck;
-					c.Stat = StatType.SaveWill;
-					c.Value = 2;
-				});
-			});
-			AddSubclassBlessing("MartialGodBlessingTranscendence", "Martial God Transcendence", "Grants a +10 ft bonus to speed, +2 Dodge AC, and an extra attack on a full attack.", "MartialGodProficiencies", delegate(BlueprintFeature obj)
-			{
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Enhancement;
-					c.Stat = StatType.Speed;
-					c.Value = 10;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Dodge;
-					c.Stat = StatType.AC;
-					c.Value = 2;
-				});
-				obj.AddComponent(delegate(BuffExtraAttack c)
-				{
-					c.Number = 1;
-					c.Haste = false;
-				});
-			});
-			AddSubclassBlessing("ImperialTranscendence", "Imperial Transcendence", "Grants a +2 Sacred bonus to Intelligence, Wisdom, and Charisma.", "GodEmperorProficiencies", delegate(BlueprintFeature obj)
-			{
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Sacred;
-					c.Stat = StatType.Intelligence;
-					c.Value = 2;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Sacred;
-					c.Stat = StatType.Wisdom;
-					c.Value = 2;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Sacred;
-					c.Stat = StatType.Charisma;
-					c.Value = 2;
-				});
-			});
-			AddSubclassBlessing("SupremeTranscendence", "Supreme Transcendence", "Increases the DC of all spells and Despair Auras by +2.", "OverlordProficiencies", delegate(BlueprintFeature obj)
-			{
-				obj.AddComponent(delegate(IncreaseAllSpellsDC c)
-				{
-					c.Value = 2;
-					c.Descriptor = ModifierDescriptor.UntypedStackable;
-				});
-			});
-			AddSubclassBlessing("ApexTranscendence", "Apex Transcendence", "Grants +20 maximum hit points and a +2 Enhancement bonus to Strength and Constitution.", "DevourerProficiencies", delegate(BlueprintFeature obj)
-			{
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.UntypedStackable;
-					c.Stat = StatType.HitPoints;
-					c.Value = 20;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Enhancement;
-					c.Stat = StatType.Strength;
-					c.Value = 2;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Enhancement;
-					c.Stat = StatType.Constitution;
-					c.Value = 2;
-				});
-			});
-			AddSubclassBlessing("MonarchTranscendence", "Monarch Transcendence", "Grants a +2 Insight bonus to AC and saves, and empowers shadow extractions.", "ShadowMonarchProficiencies", delegate(BlueprintFeature obj)
-			{
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Insight;
-					c.Stat = StatType.AC;
-					c.Value = 2;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Insight;
-					c.Stat = StatType.SaveFortitude;
-					c.Value = 2;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Insight;
-					c.Stat = StatType.SaveWill;
-					c.Value = 2;
-				});
-			});
-			AddSubclassBlessing("FellowshipTranscendence", "Fellowship Transcendence", "Grants a +2 Sacred bonus to saving throws and Fast Healing 3 to the Hero.", "HeroProficiencies", delegate(BlueprintFeature obj)
-			{
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Sacred;
-					c.Stat = StatType.SaveFortitude;
-					c.Value = 2;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Sacred;
-					c.Stat = StatType.SaveReflex;
-					c.Value = 2;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Sacred;
-					c.Stat = StatType.SaveWill;
-					c.Value = 2;
-				});
-				obj.AddComponent(delegate(AddEffectFastHealing c)
-				{
-					c.Heal = 3;
-					c.Bonus = 0;
-				});
-			});
-			AddSubclassBlessing("GrandmasterTranscendence", "Grandmaster Transcendence", "Grants a +4 Insight bonus to Initiative and +2d6 Sneak Attack damage.", "MastermindProficiencies", delegate(BlueprintFeature obj)
-			{
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Insight;
-					c.Stat = StatType.Initiative;
-					c.Value = 4;
-				});
-				obj.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Insight;
-					c.Stat = StatType.SneakAttack;
-					c.Value = 2;
-				});
-			});
-			BlueprintCue blueprintCue = TTCoreExtensions.CreateCue("CueStoreBlessings", delegate(BlueprintCue blueprintCue9)
-			{
-				blueprintCue9.SetText(Main.IsekaiContext, "<color=#F5C542><b>[Deity Blessings Catalog]</b></color>\n\nThe constellations offer their divine favor in exchange for Cosmic Coins. Blessings last for 1 hour and persist through death.\n\nSelect a blessing to invoke:");
-				blueprintCue9.Answers = new List<BlueprintAnswerBaseReference>();
-			});
-			BlueprintCue blueprintCue2 = TTCoreExtensions.CreateCue("CueStoreMythic", delegate(BlueprintCue blueprintCue9)
-			{
-				blueprintCue9.SetText(Main.IsekaiContext, "<color=#F5C542><b>[Mythic Path Boons Catalog]</b></color>\n\nEchoes of legendary planar destinies crystallized into permanent personal enhancements.\n\nSelect a mythic path boon to acquire:");
-				blueprintCue9.Answers = new List<BlueprintAnswerBaseReference>();
-			});
-			BlueprintCue blueprintCue3 = TTCoreExtensions.CreateCue("CueStoreConsumables", delegate(BlueprintCue blueprintCue9)
-			{
-				blueprintCue9.SetText(Main.IsekaiContext, "<color=#F5C542><b>[Web Novel Consumables & Cosmic Wishes]</b></color>\n\nEmergency trump cards and reality-warping miracles drafted by senior Otherworlders.\n\nSelect an offering to acquire:");
-				blueprintCue9.Answers = new List<BlueprintAnswerBaseReference>();
-			});
-			BlueprintCue blueprintCue4 = TTCoreExtensions.CreateCue("CueStoreInfusions", delegate(BlueprintCue blueprintCue9)
-			{
-				blueprintCue9.SetText(Main.IsekaiContext, "<color=#F5C542><b>[Permanent Infusions & Subclass Transcendence]</b></color>\n\nInscribe cosmic truth directly into your flesh, blood, and class techniques.\n\nSelect an infusion or transcendence to acquire:");
-				blueprintCue9.Answers = new List<BlueprintAnswerBaseReference>();
-			});
-			BlueprintCue blueprintCue5 = TTCoreExtensions.CreateCue("CueStoreForbiddenCheats", delegate(BlueprintCue blueprintCue9)
-			{
-				blueprintCue9.SetText(Main.IsekaiContext, "<color=#FF4500><b>[Forbidden Otherworldly Cheats (Protagonist Hacks)]</b></color>\n\n<i>\"H-Hey! How did you get access to the developer console?! The cosmic balance will collapse!\"</i>\n\nThe observing constellations erupt into chaotic panic as you tap into the raw architectural code of reality. For an exorbitant fee of accumulated Cosmic Coins, they are willing to turn a blind eye and grant you truly game-breaking otherworldly cheats.\n\nSelect a forbidden cheat below:");
-				blueprintCue9.Answers = new List<BlueprintAnswerBaseReference>();
-			});
-			BlueprintCue blueprintCue6 = TTCoreExtensions.CreateCue("CueStoreCosmicRelics", delegate(BlueprintCue blueprintCue9)
-			{
-				blueprintCue9.SetText(Main.IsekaiContext, "<color=#00FFFF><b>[Cosmic Relics & Sovereign Boons]</b></color>\n\nThe constellations draw back the celestial veil, presenting legendary stellar relics, ancient companions, and mythic rulebreaker pacts forged from the heart of dying stars.\n\nSelect a cosmic relic or boon:");
-				blueprintCue9.Answers = new List<BlueprintAnswerBaseReference>();
-			});
-			BlueprintCue blueprintCue7 = TTCoreExtensions.CreateCue("CueStoreFealty", delegate(BlueprintCue blueprintCue9)
-			{
-				blueprintCue9.SetText(Main.IsekaiContext, "<color=#F5C542><b>[Constellation Fealty & Avatar Ascension]</b></color>\n\nThe constellations watch your battles closely. Align your soul with a sponsor deity for +25% patron donations, or ascend as their mortal Avatar for 10,000 Cosmic Coins.\n\nSelect an option:");
-				blueprintCue9.Answers = new List<BlueprintAnswerBaseReference>();
-			});
-			BlueprintCue blueprintCue8 = TTCoreExtensions.CreateCue("CueStoreGodDefier", delegate(BlueprintCue blueprintCue9)
-			{
-				blueprintCue9.SetText(Main.IsekaiContext, "<color=#F5C542><b>[Path of the God Defier]</b></color>\n\n<i>\"We bow to no throne and worship no star. Our fate belongs only to us.\"</i>\n\nReject all divine authority and constellation patronage. Gain +4 to all ability scores, immunity to curses and death magic, spell resistance 35, and +4d6 damage on weapon hits against outsiders.\n\n<b>Requirements:</b> Atheism & 10,000 Cosmic Coins.");
-				blueprintCue9.Answers = new List<BlueprintAnswerBaseReference>();
-			});
-			BlueprintCue CosmicStoreRootCue = TTCoreExtensions.CreateCue("CosmicStoreRootCue", delegate(BlueprintCue blueprintCue9)
-			{
-				blueprintCue9.SetText(Main.IsekaiContext, "<color=#F5C542><b>[The Cosmic Constellation Exchange]</b></color>\n\nSoft starlight crystallizes around you into a shimmering celestial interface. The observing constellations watch with eager anticipation as your accumulated Cosmic Coins hum with multiversal energy.\n\nSelect a catalog category below:");
-				blueprintCue9.Answers = new List<BlueprintAnswerBaseReference>();
-			});
-			BlueprintDialog CosmicStoreDialog = Helpers.CreateBlueprint(Main.IsekaiContext, "CosmicStoreDialog", delegate(BlueprintDialog blueprintDialog)
-			{
-				blueprintDialog.FirstCue = new CueSelection
-				{
-					Cues = new List<BlueprintCueBaseReference> { CosmicStoreRootCue.ToReference<BlueprintCueBaseReference>() },
-					Strategy = Strategy.First
+						deityFeat.ToReference<BlueprintUnitFactReference>(),
+						BlueprintTools.GetBlueprintReference<BlueprintUnitFactReference>("470d824767d34e2e9a59b6d70681af7a")
+					}
 				};
-				blueprintDialog.Type = DialogType.Common;
-				blueprintDialog.TurnPlayer = false;
-				blueprintDialog.TurnFirstSpeaker = false;
-				blueprintDialog.Conditions = ActionFlow.EmptyCondition();
-				blueprintDialog.StartActions = ActionFlow.DoNothing();
-				blueprintDialog.FinishActions = ActionFlow.DoNothing();
-				blueprintDialog.ReplaceActions = ActionFlow.DoNothing();
-			});
-			BlueprintAnswer bp = CreateStoreAnswer("AnswerStoreBlessings", "(1) [Deity Blessings] Browse 14 Constellation Patron Blessings (100 - 500 Coins)", blueprintCue);
-			BlueprintAnswer bp2 = CreateStoreAnswer("AnswerStoreMythic", "(2) [Mythic Path Boons] Browse 10 Mythic Path Resonance Boons (1,500 - 2,000 Coins)", blueprintCue2);
-			BlueprintAnswer bp3 = CreateStoreAnswer("AnswerStoreConsumables", "(3) [Web Novel Consumables & Wishes] Elixirs, Figurines, and Wishes", blueprintCue3);
-			BlueprintAnswer bp4 = CreateStoreAnswer("AnswerStoreInfusions", "(4) [Infusions & Transcendence] Inscribe cosmic truth and subclass mastery", blueprintCue4);
-			BlueprintAnswer bp5 = CreateStoreAnswer("AnswerStoreForbiddenCheats", "(5) <color=#FF4500>[Forbidden Otherworldly Cheats]</color> God-mode protagonist hacks (4,000 - 6,000 Coins)", blueprintCue5);
-			BlueprintAnswer bp6 = CreateStoreAnswer("AnswerStoreCosmicRelics", "(6) <color=#00FFFF>[Cosmic Relics & Sovereign Boons]</color> Stellar artifacts and companions (3,500 - 5,500 Coins)", blueprintCue6);
-			BlueprintAnswer bp7 = CreateStoreAnswer("AnswerStoreFealty", "(7) [Constellation Fealty & Avatar Ascension] Align with a patron or ascend as an Avatar", blueprintCue7);
-			BlueprintAnswer bp8 = CreateStoreAnswer("AnswerStoreGodDefier", "(8) <color=#F5C542>[Path of the God Defier]</color> (Atheists) Shatter divine chains (10,000 Coins)", blueprintCue8);
-			BlueprintAnswer bp9 = CreateStoreAnswer("AnswerStoreClose", "[Leave] Close the Cosmic Constellation Exchange.", null);
-			CosmicStoreRootCue.Answers.Add(bp.ToReference<BlueprintAnswerBaseReference>());
-			CosmicStoreRootCue.Answers.Add(bp2.ToReference<BlueprintAnswerBaseReference>());
-			CosmicStoreRootCue.Answers.Add(bp3.ToReference<BlueprintAnswerBaseReference>());
-			CosmicStoreRootCue.Answers.Add(bp4.ToReference<BlueprintAnswerBaseReference>());
-			CosmicStoreRootCue.Answers.Add(bp5.ToReference<BlueprintAnswerBaseReference>());
-			CosmicStoreRootCue.Answers.Add(bp6.ToReference<BlueprintAnswerBaseReference>());
-			CosmicStoreRootCue.Answers.Add(bp7.ToReference<BlueprintAnswerBaseReference>());
-			CosmicStoreRootCue.Answers.Add(bp8.ToReference<BlueprintAnswerBaseReference>());
-			CosmicStoreRootCue.Answers.Add(bp9.ToReference<BlueprintAnswerBaseReference>());
-			BlueprintAnswer bp10 = CreateStoreAnswer("AnswerBackFromBlessings", "[Back] Return to the Main Catalog.", CosmicStoreRootCue);
-			BlueprintAnswer bp11 = CreateStoreAnswer("AnswerBackFromMythic", "[Back] Return to the Main Catalog.", CosmicStoreRootCue);
-			BlueprintAnswer bp12 = CreateStoreAnswer("AnswerBackFromConsumables", "[Back] Return to the Main Catalog.", CosmicStoreRootCue);
-			BlueprintAnswer bp13 = CreateStoreAnswer("AnswerBackFromInfusions", "[Back] Return to the Main Catalog.", CosmicStoreRootCue);
-			BlueprintAnswer bp14 = CreateStoreAnswer("AnswerBackFromForbiddenCheats", "[Back] Return to the Main Catalog.", CosmicStoreRootCue);
-			BlueprintAnswer bp15 = CreateStoreAnswer("AnswerBackFromCosmicRelics", "[Back] Return to the Main Catalog.", CosmicStoreRootCue);
-			BlueprintAnswer bp16 = CreateStoreAnswer("AnswerBackFromFealty", "[Back] Return to the Main Catalog.", CosmicStoreRootCue);
-			BlueprintAnswer bp17 = CreateStoreAnswer("AnswerBackFromGodDefier", "[Back] Return to the Main Catalog.", CosmicStoreRootCue);
-			Dictionary<string, string> dictionary = new Dictionary<string, string>
-			{
-				{ "CaydenReserveBrew", "AnswerBuyBlessingCayden" },
-				{ "StarlightAegis", "AnswerBuyBlessingDesna" },
-				{ "EssenceOfLurker", "AnswerBuyBlessingYogSothoth" },
-				{ "LanternTricksterGlow", "AnswerBuyBlessingLanternKing" },
-				{ "QueenOfTheSeasFavor", "AnswerBuyBlessingBesmara" },
-				{ "ChaldiraHeartyLuck", "AnswerBuyBlessingChaldira" },
-				{ "IronLordFury", "AnswerBuyBlessingGorum" },
-				{ "AllSeeingGlyph", "AnswerBuyBlessingNethys" },
-				{ "KissOfTheSavoredSting", "AnswerBuyBlessingCalistria" },
-				{ "LadyOfGravesWarding", "AnswerBuyBlessingPharasma" },
-				{ "InheritorVanguard", "AnswerBuyBlessingIomedae" },
-				{ "ArchfiendsCovenant", "AnswerBuyBlessingAsmodeus" },
-				{ "RoseGuardsResolve", "AnswerBuyBlessingMilani" },
-				{ "SilentShroud", "AnswerBuyBlessingBlackButterfly" }
-			};
-			foreach (var item9 in blessingBuffs)
-			{
-				if (dictionary.TryGetValue(item9.name, out var value))
-				{
-					BlueprintAnswer bp18 = CreateStoreAnswer(value, $"({item9.cost} Coins) [{item9.displayName}] {item9.desc}", blueprintCue, new ContextActionSpendCoinsAndApplyBuff
-					{
-						Cost = item9.cost,
-						m_Buff = item9.buff.ToReference<BlueprintBuffReference>(),
-						DurationHours = 1
-					});
-					blueprintCue.Answers.Add(bp18.ToReference<BlueprintAnswerBaseReference>());
-				}
 			}
-			blueprintCue.Answers.Add(bp10.ToReference<BlueprintAnswerBaseReference>());
-			Dictionary<string, string> dictionary2 = new Dictionary<string, string>
+			return MainCharacterHas(deityFeat.ToReference<BlueprintUnitFactReference>());
+		}
+		static BlueprintUnitFactReference GuardedFact(string featureName)
+		{
+			BlueprintFeature modBlueprint = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, featureName);
+			if (modBlueprint == null)
 			{
-				{ "BoonOfHeavenlyHost", "AnswerBuyMythicAngel" },
-				{ "BoonOfAbyssalRage", "AnswerBuyMythicDemon" },
-				{ "BoonOfLordOfBones", "AnswerBuyMythicLich" },
-				{ "BoonOfWildWonder", "AnswerBuyMythicAzata" },
-				{ "BoonOfCosmicJester", "AnswerBuyMythicTrickster" },
-				{ "BoonOfMonadicOrder", "AnswerBuyMythicAeon" },
-				{ "BoonOfHellfireContract", "AnswerBuyMythicDevil" },
-				{ "BoonOfGoldenDragon", "AnswerBuyMythicGoldDragon" },
-				{ "BoonOfPrimevalSwarm", "AnswerBuyMythicSwarm" },
-				{ "BoonOfUnboundMortal", "AnswerBuyMythicLegend" }
-			};
-			foreach (var item10 in mythicBoonList)
-			{
-				if (dictionary2.TryGetValue(item10.name, out var value2))
-				{
-					BlueprintAnswer bp19 = CreateStoreAnswer(value2, $"({item10.cost} Coins) [{item10.displayName}] {item10.desc}", blueprintCue2, new ContextActionSpendCoinsAndGrantFact
-					{
-						Cost = item10.cost,
-						m_Fact = item10.feat.ToReference<BlueprintUnitFactReference>(),
-						m_KeyOfInfinitePathways = KeyOfInfinitePathwaysFeature.ToReference<BlueprintFeatureReference>(),
-						AllowedAlignment = item10.alignment
-					});
-					blueprintCue2.Answers.Add(bp19.ToReference<BlueprintAnswerBaseReference>());
-				}
+				Main.IsekaiContext.Logger.LogWarning("Cosmic Store: '" + featureName + "' did not resolve; its offer is not listed.");
+				return null;
 			}
-			blueprintCue2.Answers.Add(bp11.ToReference<BlueprintAnswerBaseReference>());
-			BlueprintAnswer bp20 = CreateStoreAnswer("AnswerBuyElixirRejuv", "(400 Coins) [Elixir of Instant Rejuvenation] Fully restores HP, spell slots, and cures conditions.", blueprintCue3, new ContextActionRejuvenation());
-			BlueprintAnswer bp21 = CreateStoreAnswer("AnswerBuyPaperFigurine", "(750 Coins) [Paper Figurine of Substitute Life] Grants +100 temporary HP for 24h.", blueprintCue3, new ContextActionSpendCoinsAndApplyBuff
-			{
-				Cost = 750,
-				m_Buff = PaperFigurineBuff.ToReference<BlueprintBuffReference>(),
-				DurationHours = 24
-			});
-			BlueprintAnswer bp22 = CreateStoreAnswer("AnswerBuyDraughtSoulAnchor", "(500 Coins) [Draught of Absolute Soul Anchor] Immune to death effects, negative levels, and compulsion for 24h.", blueprintCue3, new ContextActionSpendCoinsAndApplyBuff
-			{
-				Cost = 500,
-				m_Buff = SoulAnchorBuff.ToReference<BlueprintBuffReference>(),
-				DurationHours = 24
-			});
-			BlueprintAnswer bp23 = CreateStoreAnswer("AnswerBuyTomeMastery", "(1,000 Coins) [Tome of Protagonist's Mastery] Permanent +2 competence bonus to attacks, damage, and DCs.", blueprintCue3, new ContextActionSpendCoinsAndGrantFact
-			{
-				Cost = 1000,
-				m_Fact = OtherworlderMasteryFeature.ToReference<BlueprintUnitFactReference>()
-			});
-			BlueprintAnswer bp24 = CreateStoreAnswer("AnswerBuyWishCharge", "(4,000 Coins) [Cosmic Wish Recharge] Adds 1 charge to your field-cast Cosmic Wish ability.", blueprintCue3, new ContextActionBuyWishCharge
-			{
-				Cost = 4000,
-				m_WishResource = CosmicWishResource.ToReference<BlueprintAbilityResourceReference>()
-			});
-			BlueprintAnswer bp25 = CreateStoreAnswer("AnswerBuyAmbrosiaMight", "(3,000 Coins) [Primordial Ambrosia of Might] Permanently grants +2 Untyped Strength (stacks infinitely).", blueprintCue3, new ContextActionSpendCoinsAndGiveItem
-			{
-				Cost = 3000,
-				m_Item = CosmicConsumables.ItemPrimordialAmbrosiaMight.ToReference<BlueprintItemReference>()
-			});
-			BlueprintAnswer bp26 = CreateStoreAnswer("AnswerBuyAmbrosiaGrace", "(3,000 Coins) [Primordial Ambrosia of Grace] Permanently grants +2 Untyped Dexterity (stacks infinitely).", blueprintCue3, new ContextActionSpendCoinsAndGiveItem
-			{
-				Cost = 3000,
-				m_Item = CosmicConsumables.ItemPrimordialAmbrosiaGrace.ToReference<BlueprintItemReference>()
-			});
-			BlueprintAnswer bp27 = CreateStoreAnswer("AnswerBuyAmbrosiaEndurance", "(3,000 Coins) [Primordial Ambrosia of Endurance] Permanently grants +2 Untyped Constitution (stacks infinitely).", blueprintCue3, new ContextActionSpendCoinsAndGiveItem
-			{
-				Cost = 3000,
-				m_Item = CosmicConsumables.ItemPrimordialAmbrosiaEndurance.ToReference<BlueprintItemReference>()
-			});
-			BlueprintAnswer bp28 = CreateStoreAnswer("AnswerBuyAmbrosiaIntellect", "(3,000 Coins) [Primordial Ambrosia of Intellect] Permanently grants +2 Untyped Intelligence (stacks infinitely).", blueprintCue3, new ContextActionSpendCoinsAndGiveItem
-			{
-				Cost = 3000,
-				m_Item = CosmicConsumables.ItemPrimordialAmbrosiaIntellect.ToReference<BlueprintItemReference>()
-			});
-			BlueprintAnswer bp29 = CreateStoreAnswer("AnswerBuyAmbrosiaInsight", "(3,000 Coins) [Primordial Ambrosia of Insight] Permanently grants +2 Untyped Wisdom (stacks infinitely).", blueprintCue3, new ContextActionSpendCoinsAndGiveItem
-			{
-				Cost = 3000,
-				m_Item = CosmicConsumables.ItemPrimordialAmbrosiaInsight.ToReference<BlueprintItemReference>()
-			});
-			BlueprintAnswer bp30 = CreateStoreAnswer("AnswerBuyAmbrosiaMajesty", "(3,000 Coins) [Primordial Ambrosia of Majesty] Permanently grants +2 Untyped Charisma (stacks infinitely).", blueprintCue3, new ContextActionSpendCoinsAndGiveItem
-			{
-				Cost = 3000,
-				m_Item = CosmicConsumables.ItemPrimordialAmbrosiaMajesty.ToReference<BlueprintItemReference>()
-			});
-			BlueprintAnswer bp31 = CreateStoreAnswer("AnswerBuyAmbrosiaCelerity", "(3,000 Coins) [Primordial Ambrosia of Celerity] Permanently grants +10 ft Untyped Base Speed (stacks infinitely).", blueprintCue3, new ContextActionSpendCoinsAndGiveItem
-			{
-				Cost = 3000,
-				m_Item = CosmicConsumables.ItemPrimordialAmbrosiaCelerity.ToReference<BlueprintItemReference>()
-			});
-			BlueprintAnswer bp32 = CreateStoreAnswer("AnswerBuyAmbrosiaEternalRenewal", "(10,000 Coins) [Primordial Ambrosia of Eternal Renewal] Permanently grants Fast Healing 5 (Untyped Stackable, stacks infinitely).", blueprintCue3, new ContextActionSpendCoinsAndGiveItem
-			{
-				Cost = 10000,
-				m_Item = CosmicConsumables.ItemPrimordialAmbrosiaEternalRenewal.ToReference<BlueprintItemReference>()
-			});
-			BlueprintAnswer bp33 = CreateStoreAnswer("AnswerBuyNectarEndlessLife", "(1,500 Coins) [Nectar of Endless Life] Permanently grants +25 Untyped Maximum HP (stacks infinitely).", blueprintCue3, new ContextActionSpendCoinsAndGiveItem
-			{
-				Cost = 1500,
-				m_Item = CosmicConsumables.ItemNectarEndlessLife.ToReference<BlueprintItemReference>()
-			});
-			BlueprintAnswer bp34 = CreateStoreAnswer("AnswerBuyNectarVoidStalker", "(4,000 Coins) [Nectar of the Void Stalker] Permanently grants +1 Untyped Spell DC and +2 Spell Penetration (stacks infinitely).", blueprintCue3, new ContextActionSpendCoinsAndGiveItem
-			{
-				Cost = 4000,
-				m_Item = CosmicConsumables.ItemNectarVoidStalker.ToReference<BlueprintItemReference>()
-			});
-			BlueprintAnswer bp35 = CreateStoreAnswer("AnswerBuyNectarWorldBreaker", "(4,000 Coins) [Nectar of the World Breaker] Permanently grants +2 Untyped Attack and Damage (stacks infinitely).", blueprintCue3, new ContextActionSpendCoinsAndGiveItem
-			{
-				Cost = 4000,
-				m_Item = CosmicConsumables.ItemNectarWorldBreaker.ToReference<BlueprintItemReference>()
-			});
-			BlueprintAnswer bp36 = CreateStoreAnswer("AnswerBuyNectarDiamondSoul", "(3,500 Coins) [Nectar of the Diamond Soul] Permanently grants +2 Untyped to all Saving Throws (stacks infinitely).", blueprintCue3, new ContextActionSpendCoinsAndGiveItem
-			{
-				Cost = 3500,
-				m_Item = CosmicConsumables.ItemNectarDiamondSoul.ToReference<BlueprintItemReference>()
-			});
-			BlueprintAnswer bp37 = CreateStoreAnswer("AnswerBuyNectarUnbrokenAegis", "(3,500 Coins) [Nectar of the Unbroken Aegis] Permanently grants +1 Untyped Armor Class (stacks infinitely).", blueprintCue3, new ContextActionSpendCoinsAndGiveItem
-			{
-				Cost = 3500,
-				m_Item = CosmicConsumables.ItemNectarUnbrokenAegis.ToReference<BlueprintItemReference>()
-			});
-			BlueprintAnswer bp38 = CreateStoreAnswer("AnswerBuyDraughtVelocity", "(2,500 Coins) [Draught of Cosmic Velocity] +20 ft speed and +1 extra attack on full attack for 24 hours.", blueprintCue3, new ContextActionSpendCoinsAndGiveItem
-			{
-				Cost = 2500,
-				m_Item = CosmicConsumables.ItemDraughtCosmicVelocity.ToReference<BlueprintItemReference>()
-			});
-			BlueprintAnswer bp39 = CreateStoreAnswer("AnswerBuyDraughtImmortalTitan", "(2,500 Coins) [Draught of the Immortal Titan] +150 Temp HP, DR 10/--, and Fast Healing 10 for 24 hours.", blueprintCue3, new ContextActionSpendCoinsAndGiveItem
-			{
-				Cost = 2500,
-				m_Item = CosmicConsumables.ItemDraughtImmortalTitan.ToReference<BlueprintItemReference>()
-			});
-			BlueprintAnswer bp40 = CreateStoreAnswer("AnswerBuyDraughtArcaneOmniscience", "(3,000 Coins) [Draught of Arcane Omniscience] +4 Caster Level, and auto-extends and empowers all spells for 24 hours.", blueprintCue3, new ContextActionSpendCoinsAndGiveItem
-			{
-				Cost = 3000,
-				m_Item = CosmicConsumables.ItemDraughtArcaneOmniscience.ToReference<BlueprintItemReference>()
-			});
-			BlueprintAnswer bp41 = CreateStoreAnswer("AnswerBuyDraughtApexPredator", "(3,000 Coins) [Draught of the Apex Predator] +1 Crit Multiplier, and bypasses all DR and Concealment for 24 hours.", blueprintCue3, new ContextActionSpendCoinsAndGiveItem
-			{
-				Cost = 3000,
-				m_Item = CosmicConsumables.ItemDraughtApexPredator.ToReference<BlueprintItemReference>()
-			});
-			BlueprintAnswer bp42 = CreateStoreAnswer("AnswerBuyDraughtSoulAnchorBottle", "(500 Coins) [Draught of Absolute Soul Anchor] Bottle granting death, negative level, and compulsion immunity for 24 hours.", blueprintCue3, new ContextActionSpendCoinsAndGiveItem
-			{
-				Cost = 500,
-				m_Item = CosmicConsumables.ItemDraughtAbsoluteSoulAnchor.ToReference<BlueprintItemReference>()
-			});
-			BlueprintAnswer bp43 = CreateStoreAnswer("AnswerBuyWishstone", "(4,000 Coins) [Bottled Djinn Wishstone] Physical quickslot relic granting 5 reality-warping miracles.", blueprintCue3, new ContextActionSpendCoinsAndGiveItem
-			{
-				Cost = 4000,
-				m_Item = CosmicConsumables.ItemCosmicWishstone.ToReference<BlueprintItemReference>()
-			});
-			BlueprintFeature modBlueprint = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "SkillBookGrandScholarFeature");
-			BlueprintFeature modBlueprint2 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "SkillBookPhantomInfiltratorFeature");
-			BlueprintFeature modBlueprint3 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "SkillBookAbsoluteCharismaFeature");
-			BlueprintFeature modBlueprint4 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "SkillBookWindWalkerFeature");
-			BlueprintFeature modBlueprint5 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "SkillBookEyeOfProvidenceFeature");
-			BlueprintAnswer bp44 = CreateStoreAnswer("AnswerBuyBookGrandScholar", "(800 Coins) [Grimoire of the Grand Scholar] Permanent +4 Knowledge/Lore, +1 Caster Level.", blueprintCue3, new ContextActionSpendCoinsAndGrantFact
-			{
-				Cost = 800,
-				m_Fact = modBlueprint.ToReference<BlueprintUnitFactReference>()
-			});
-			BlueprintAnswer bp45 = CreateStoreAnswer("AnswerBuyBookPhantomInfiltrator", "(800 Coins) [Manual of the Phantom Infiltrator] Permanent +4 Stealth/Trickery, +1d6 Sneak Attack.", blueprintCue3, new ContextActionSpendCoinsAndGrantFact
-			{
-				Cost = 800,
-				m_Fact = modBlueprint2.ToReference<BlueprintUnitFactReference>()
-			});
-			BlueprintAnswer bp46 = CreateStoreAnswer("AnswerBuyBookAbsoluteCharisma", "(800 Coins) [Chronicle of Absolute Charisma] Permanent +4 Persuasion/UMD, +2 Enchantment/Illusion DC.", blueprintCue3, new ContextActionSpendCoinsAndGrantFact
-			{
-				Cost = 800,
-				m_Fact = modBlueprint3.ToReference<BlueprintUnitFactReference>()
-			});
-			BlueprintAnswer bp47 = CreateStoreAnswer("AnswerBuyBookWindWalker", "(800 Coins) [Codex of the Wind Walker] Permanent +4 Athletics/Mobility, +10 ft base speed.", blueprintCue3, new ContextActionSpendCoinsAndGrantFact
-			{
-				Cost = 800,
-				m_Fact = modBlueprint4.ToReference<BlueprintUnitFactReference>()
-			});
-			BlueprintAnswer bp48 = CreateStoreAnswer("AnswerBuyBookEyeOfProvidence", "(800 Coins) [Tractate of the Eye of Providence] Permanent +4 Perception, immune to Blindness and Flat-Footed.", blueprintCue3, new ContextActionSpendCoinsAndGrantFact
-			{
-				Cost = 800,
-				m_Fact = modBlueprint5.ToReference<BlueprintUnitFactReference>()
-			});
-			blueprintCue3.Answers.Add(bp20.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue3.Answers.Add(bp21.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue3.Answers.Add(bp22.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue3.Answers.Add(bp42.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue3.Answers.Add(bp23.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue3.Answers.Add(bp25.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue3.Answers.Add(bp26.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue3.Answers.Add(bp27.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue3.Answers.Add(bp28.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue3.Answers.Add(bp29.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue3.Answers.Add(bp30.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue3.Answers.Add(bp31.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue3.Answers.Add(bp32.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue3.Answers.Add(bp33.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue3.Answers.Add(bp34.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue3.Answers.Add(bp35.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue3.Answers.Add(bp36.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue3.Answers.Add(bp37.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue3.Answers.Add(bp38.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue3.Answers.Add(bp39.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue3.Answers.Add(bp40.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue3.Answers.Add(bp41.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue3.Answers.Add(bp43.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue3.Answers.Add(bp44.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue3.Answers.Add(bp45.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue3.Answers.Add(bp46.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue3.Answers.Add(bp47.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue3.Answers.Add(bp48.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue3.Answers.Add(bp24.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue3.Answers.Add(bp12.ToReference<BlueprintAnswerBaseReference>());
-			Dictionary<string, string> dictionary3 = new Dictionary<string, string>
-			{
-				{ "DragonScaleInfusion", "AnswerBuyInfusionDragonScale" },
-				{ "EyeOfCosmosInfusion", "AnswerBuyInfusionEyeOfCosmos" },
-				{ "StarlightSwiftnessInfusion", "AnswerBuyInfusionStarlightSwiftness" },
-				{ "CosmicFortitudeInfusion", "AnswerBuyInfusionCosmicFortitude" },
-				{ "AstralWeaponAttunement", "AnswerBuyInfusionAstralWeapon" }
-			};
-			foreach (var item11 in infusionList)
-			{
-				if (dictionary3.TryGetValue(item11.name, out var value3))
-				{
-					BlueprintAnswer bp49 = CreateStoreAnswer(value3, $"({item11.cost} Coins) [{item11.displayName}] {item11.desc}", blueprintCue4, new ContextActionSpendCoinsAndGrantFact
-					{
-						Cost = item11.cost,
-						m_Fact = item11.feat.ToReference<BlueprintUnitFactReference>()
-					});
-					blueprintCue4.Answers.Add(bp49.ToReference<BlueprintAnswerBaseReference>());
-				}
-			}
-			BlueprintAnswer bp50 = CreateStoreAnswer("AnswerBuyKeyOfInfinitePathways", "(5,000 Coins) [Meta-Boon: Key of Infinite Pathways] Shatters alignment and mythic restrictions in the Cosmic Store.", blueprintCue4, new ContextActionSpendCoinsAndGrantFact
-			{
-				Cost = 5000,
-				m_Fact = KeyOfInfinitePathwaysFeature.ToReference<BlueprintUnitFactReference>()
-			});
-			blueprintCue4.Answers.Add(bp50.ToReference<BlueprintAnswerBaseReference>());
-			Dictionary<string, string> dictionary4 = new Dictionary<string, string>
-			{
-				{ "IsekaiTranscendence", "AnswerBuyIsekaiTranscendence" },
-				{ "PhantomTranscendence", "AnswerBuyPhantomTranscendence" },
-				{ "ImperialTranscendence", "AnswerBuyImperialTranscendence" },
-				{ "SupremeTranscendence", "AnswerBuySupremeTranscendence" },
-				{ "ApexTranscendence", "AnswerBuyApexTranscendence" },
-				{ "MonarchTranscendence", "AnswerBuyMonarchTranscendence" },
-				{ "FellowshipTranscendence", "AnswerBuyFellowshipTranscendence" },
-				{ "GrandmasterTranscendence", "AnswerBuyGrandmasterTranscendence" }
-			};
-			foreach (var item12 in subclassBoonList)
-			{
-				if (dictionary4.TryGetValue(item12.name, out var value4))
-				{
-					BlueprintAnswer bp51 = CreateStoreAnswer(value4, "(100 Coins) [Transcendence: " + item12.displayName + "] " + item12.desc, blueprintCue4, new ContextActionSpendCoinsAndGrantFact
-					{
-						Cost = 100,
-						m_Fact = item12.masterFeat.ToReference<BlueprintUnitFactReference>()
-					});
-					blueprintCue4.Answers.Add(bp51.ToReference<BlueprintAnswerBaseReference>());
-				}
-			}
-			blueprintCue4.Answers.Add(bp13.ToReference<BlueprintAnswerBaseReference>());
-			BlueprintFeature modBlueprint6 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "InstakillFeature");
-			BlueprintFeature modBlueprint7 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "SuperBuffFeature");
-			BlueprintFeature modBlueprint8 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "SummonCalamityFeature");
-			BlueprintFeature modBlueprint9 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "CosmicAutoQuickenFeature");
-			BlueprintFeature modBlueprint10 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "CosmicSupremeBeingFeature");
-			BlueprintFeature modBlueprint11 = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "CosmicChronoDomainFeature");
-			BlueprintFeature bp52 = Helpers.CreateBlueprint(Main.IsekaiContext, "ManaWellspringFeature", delegate(BlueprintFeature blueprintFeature2)
-			{
-				blueprintFeature2.SetName(Main.IsekaiContext, "Forbidden Cheat: Mana Wellspring");
-				blueprintFeature2.SetDescription(Main.IsekaiContext, "An inexhaustible fountain of otherworld mana courses through your soul. Grants +4 additional spell slots per day for all spell tiers from 1st through 9th circle.");
-				((BlueprintUnitFact)blueprintFeature2).m_Icon = Icon_Coin;
-				blueprintFeature2.IsClassFeature = true;
-				blueprintFeature2.AddComponent(delegate(AddSpellsPerDay c)
-				{
-					c.Amount = 4;
-					c.Levels = new int[10] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-				});
-			});
-			BlueprintFeature bp53 = Helpers.CreateBlueprint(Main.IsekaiContext, "RealityPiercerFeature", delegate(BlueprintFeature blueprintFeature2)
-			{
-				blueprintFeature2.SetName(Main.IsekaiContext, "Forbidden Cheat: Reality Piercer");
-				blueprintFeature2.SetDescription(Main.IsekaiContext, "Your attacks shear through reality itself. All physical and magical attacks completely ignore Damage Reduction and Concealment, and you gain a +6 untyped bonus to Spell Penetration.");
-				((BlueprintUnitFact)blueprintFeature2).m_Icon = Icon_Coin;
-				blueprintFeature2.IsClassFeature = true;
-				blueprintFeature2.AddComponent<IgnoreDamageReductionOnAttack>();
-				blueprintFeature2.AddComponent(delegate(SpellPenetrationBonus c)
-				{
-					c.Value = 6;
-					c.Descriptor = ModifierDescriptor.UntypedStackable;
-				});
-			});
-			BlueprintAbilityResource ChronoSurgeResource = Helpers.CreateBlueprint(Main.IsekaiContext, "ChronoSurgeResource", delegate(BlueprintAbilityResource blueprintAbilityResource)
-			{
-				blueprintAbilityResource.m_MaxAmount = new BlueprintAbilityResource.Amount
-				{
-					BaseValue = 3,
-					IncreasedByLevel = false,
-					IncreasedByStat = false
-				};
-			});
-			BlueprintAbility ChronoSurgeAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "ChronoSurgeAbility", delegate(BlueprintAbility blueprintAbility)
-			{
-				blueprintAbility.SetName(Main.IsekaiContext, "Chrono-Surge: Double Turn");
-				blueprintAbility.SetDescription(Main.IsekaiContext, "As a free action (usable 3 times per day), warp the local temporal stream to immediately reset and refund your Standard, Move, and Swift actions. Does not desync the turn order.");
-				((BlueprintUnitFact)blueprintAbility).m_Icon = Icon_Coin;
-				blueprintAbility.Type = AbilityType.Special;
-				blueprintAbility.Range = AbilityRange.Personal;
-				blueprintAbility.CanTargetSelf = true;
-				blueprintAbility.ActionType = UnitCommand.CommandType.Free;
-				blueprintAbility.AddComponent(delegate(AbilityEffectRunAction c)
-				{
-					c.Actions = ActionFlow.DoSingle<ContextActionChronoSurge>();
-				});
-				blueprintAbility.AddComponent(delegate(AbilityResourceLogic c)
-				{
-					c.m_RequiredResource = ChronoSurgeResource.ToReference<BlueprintAbilityResourceReference>();
-					c.m_IsSpendResource = true;
-					c.Amount = 1;
-				});
-			});
-			BlueprintFeature bp54 = Helpers.CreateBlueprint(Main.IsekaiContext, "CosmicChronoSurgeFeature", delegate(BlueprintFeature blueprintFeature2)
-			{
-				blueprintFeature2.SetName(Main.IsekaiContext, "Forbidden Cheat: Chrono-Surge");
-				blueprintFeature2.SetDescription(Main.IsekaiContext, "Mastery over temporal flow grants you the Chrono-Surge ability, allowing you to seize a double turn 3 times per day as a free action.");
-				((BlueprintUnitFact)blueprintFeature2).m_Icon = Icon_Coin;
-				blueprintFeature2.IsClassFeature = true;
-				blueprintFeature2.AddComponent(delegate(AddFacts c)
-				{
-					c.m_Facts = new BlueprintUnitFactReference[1] { ChronoSurgeAbility.ToReference<BlueprintUnitFactReference>() };
-				});
-				blueprintFeature2.AddComponent(delegate(AddAbilityResources c)
-				{
-					c.m_Resource = ChronoSurgeResource.ToReference<BlueprintAbilityResourceReference>();
-					c.RestoreAmount = true;
-				});
-			});
-			BlueprintFeature bp55 = Helpers.CreateBlueprint(Main.IsekaiContext, "GachaJackpotFeature", delegate(BlueprintFeature blueprintFeature2)
-			{
-				blueprintFeature2.SetName(Main.IsekaiContext, "Forbidden Cheat: Gacha Jackpot");
-				blueprintFeature2.SetDescription(Main.IsekaiContext, "Bends probability matrices to guarantee legendary fortune. Grants a +4 luck bonus to all d20 rolls (attack rolls, saving throws, and skill checks) and manifests 250,000 Gold directly into your treasury upon acquisition.");
-				((BlueprintUnitFact)blueprintFeature2).m_Icon = Icon_Coin;
-				blueprintFeature2.IsClassFeature = true;
-				blueprintFeature2.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Luck;
-					c.Stat = StatType.AdditionalAttackBonus;
-					c.Value = 4;
-				});
-				blueprintFeature2.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Luck;
-					c.Stat = StatType.SaveFortitude;
-					c.Value = 4;
-				});
-				blueprintFeature2.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Luck;
-					c.Stat = StatType.SaveReflex;
-					c.Value = 4;
-				});
-				blueprintFeature2.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Luck;
-					c.Stat = StatType.SaveWill;
-					c.Value = 4;
-				});
-				blueprintFeature2.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Luck;
-					c.Stat = StatType.SkillAthletics;
-					c.Value = 4;
-				});
-				blueprintFeature2.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Luck;
-					c.Stat = StatType.SkillPerception;
-					c.Value = 4;
-				});
-				blueprintFeature2.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Luck;
-					c.Stat = StatType.SkillPersuasion;
-					c.Value = 4;
-				});
-			});
-			BlueprintBuff AegisUndyingBuff = TTCoreExtensions.CreateBuff("AegisUndyingBuff", delegate(BlueprintBuff blueprintBuff)
-			{
-				blueprintBuff.SetName(Main.IsekaiContext, "Aegis of the Undying Awakening");
-				blueprintBuff.SetDescription(Main.IsekaiContext, "Protected by the impenetrable aegis of destiny. Restores 150 Hit Points and grants Greater Invisibility for 3 rounds.");
-				((BlueprintUnitFact)blueprintBuff).m_Icon = Icon_Coin;
-				BlueprintBuff invisBuff = BlueprintTools.GetBlueprint<BlueprintBuff>("e6b35473a237a6045969253beb09777c");
-				if (invisBuff != null)
-				{
-					blueprintBuff.AddComponent(delegate(AddFacts c)
-					{
-						c.m_Facts = new BlueprintUnitFactReference[1] { invisBuff.ToReference<BlueprintUnitFactReference>() };
-					});
-				}
-			});
-			BlueprintFeature bp56 = Helpers.CreateBlueprint(Main.IsekaiContext, "AegisUndyingFeature", delegate(BlueprintFeature blueprintFeature2)
-			{
-				blueprintFeature2.SetName(Main.IsekaiContext, "Forbidden Cheat: Aegis of the Undying");
-				blueprintFeature2.SetDescription(Main.IsekaiContext, "Whenever your hit points fall below 25%, the cosmic aegis automatically triggers, instantly healing you for 150 hit points and shrouding you in Greater Invisibility for 3 rounds. Stacks seamlessly with all other survival powers.");
-				((BlueprintUnitFact)blueprintFeature2).m_Icon = Icon_Coin;
-				blueprintFeature2.IsClassFeature = true;
-				blueprintFeature2.AddComponent(delegate(AddIncomingDamageTrigger c)
-				{
-					c.Actions = ActionFlow.DoSingle(delegate(Conditional cond)
-					{
-						cond.ConditionsChecker = ActionFlow.IfSingle(delegate(ContextConditionTargetHPLessThanPercent hp)
-						{
-							hp.Percent = 25;
-						});
-						cond.IfTrue = ActionFlow.DoSingle(delegate(ContextActionApplyBuff a)
-						{
-							a.m_Buff = AegisUndyingBuff.ToReference<BlueprintBuffReference>();
-							a.DurationValue = new ContextDurationValue
-							{
-								Rate = DurationRate.Rounds,
-								DiceType = DiceType.Zero,
-								BonusValue = new ContextValue
-								{
-									ValueType = ContextValueType.Simple,
-									Value = 3
-								}
-							};
-						});
-						cond.IfFalse = ActionFlow.DoNothing();
-					});
-				});
-				blueprintFeature2.AddComponent(delegate(AddIncomingDamageTrigger c)
-				{
-					c.Actions = ActionFlow.DoSingle(delegate(Conditional cond)
-					{
-						cond.ConditionsChecker = ActionFlow.IfSingle(delegate(ContextConditionTargetHPLessThanPercent hp)
-						{
-							hp.Percent = 25;
-						});
-						cond.IfTrue = ActionFlow.DoSingle(delegate(ContextActionHealTarget h)
-						{
-							h.Value = new ContextDiceValue
-							{
-								DiceType = DiceType.Zero,
-								BonusValue = new ContextValue
-								{
-									ValueType = ContextValueType.Simple,
-									Value = 150
-								}
-							};
-						});
-						cond.IfFalse = ActionFlow.DoNothing();
-					});
-				});
-			});
-			BlueprintFeature bp57 = Helpers.CreateBlueprint(Main.IsekaiContext, "DimensionalSanctuaryFeature", delegate(BlueprintFeature blueprintFeature2)
-			{
-				blueprintFeature2.SetName(Main.IsekaiContext, "Forbidden Cheat: Dimensional Sanctuary");
-				blueprintFeature2.SetDescription(Main.IsekaiContext, "An otherworldly pocket sanctuary extends around you and your company. Party encumbrance capacity is increased by 1,000,000 lbs, and you gain permanent immunity to Fatigue and Exhaustion.");
-				((BlueprintUnitFact)blueprintFeature2).m_Icon = Icon_Coin;
-				blueprintFeature2.IsClassFeature = true;
-				blueprintFeature2.AddComponent(delegate(AddPartyEncumbrance c)
-				{
-					c.Value = 1000000;
-				});
-				blueprintFeature2.AddComponent(delegate(AddConditionImmunity c)
-				{
-					c.Condition = UnitCondition.Fatigued;
-				});
-				blueprintFeature2.AddComponent(delegate(AddConditionImmunity c)
-				{
-					c.Condition = UnitCondition.Exhausted;
-				});
-				// Condition immunity alone leaves the delivering buff in place; blocking the descriptor stops it, as the game's own immunities do.
-				blueprintFeature2.AddComponent(delegate(BuffDescriptorImmunity c)
-				{
-					c.Descriptor = SpellDescriptor.Fatigue | SpellDescriptor.Exhausted;
-				});
-				blueprintFeature2.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
-				{
-					c.Descriptor = SpellDescriptor.Fatigue | SpellDescriptor.Exhausted;
-				});
-			});
-			BlueprintAnswer bp58 = CreateStoreAnswer("AnswerBuyCheatInstakill", "(5,000 Coins) [Death Note: True Instakill] Slay any mortal or immortal foe with an unblockable death decree bypassing immunities.", blueprintCue5, new ContextActionSpendCoinsAndGrantFact
-			{
-				Cost = 5000,
-				m_Fact = modBlueprint6.ToReference<BlueprintUnitFactReference>()
-			});
-			BlueprintAnswer bp59 = CreateStoreAnswer("AnswerBuyCheatSuperBuff", "(4,000 Coins) [Omnipotent Buff Matrix: 24h SuperBuff] Instantly mantle yourself and your party with over 50 divine, arcane, and primal buffs for 24 hours.", blueprintCue5, new ContextActionSpendCoinsAndGrantFact
-			{
-				Cost = 4000,
-				m_Fact = modBlueprint7.ToReference<BlueprintUnitFactReference>()
-			});
-			BlueprintAnswer bp60 = CreateStoreAnswer("AnswerBuyCheatAutoQuicken", "(5,000 Coins) [Cosmic Quicken Matrix: Unrestricted Auto-Quicken] Every spell you cast, up to 10th level, becomes quickened as a free swift action without level restriction.", blueprintCue5, new ContextActionSpendCoinsAndGrantFact
-			{
-				Cost = 5000,
-				m_Fact = modBlueprint9.ToReference<BlueprintUnitFactReference>()
-			});
-			BlueprintAnswer bp61 = CreateStoreAnswer("AnswerBuyCheatSupremeBeing", "(6,000 Coins) [Crown of the Supreme Entity: Unbound Supreme Being] Gain a massive +25 to +35 untyped stackable bonus to all six attributes (+5 flat, +1/2 levels, +1/mythic rank).", blueprintCue5, new ContextActionSpendCoinsAndGrantFact
-			{
-				Cost = 6000,
-				m_Fact = modBlueprint10.ToReference<BlueprintUnitFactReference>()
-			});
-			BlueprintAnswer bp62 = CreateStoreAnswer("AnswerBuyCheatChronoDomain", "(4,500 Coins) [Chronos Absolute Stasis: Unconditional Time Stop] Freeze all nearby enemies in time for 2 rounds as a swift action with NO saving throw and NO spell resistance.", blueprintCue5, new ContextActionSpendCoinsAndGrantFact
-			{
-				Cost = 4500,
-				m_Fact = modBlueprint11.ToReference<BlueprintUnitFactReference>()
-			});
-			BlueprintAnswer bp63 = CreateStoreAnswer("AnswerBuyCheatSummonCalamity", "(5,000 Coins) [Forbidden Calamity Horn: Summon Calamity] Summon Devastators, Playful Darkness, Deskari, Baphomet, or Nocticula to fight by your side regardless of level.", blueprintCue5, new ContextActionSpendCoinsAndGrantFact
-			{
-				Cost = 5000,
-				m_Fact = modBlueprint8.ToReference<BlueprintUnitFactReference>()
-			});
-			BlueprintAnswer bp64 = CreateStoreAnswer("AnswerBuyCheatManaWellspring", "(5,000 Coins) [Mana Wellspring: Reservoir of the Infinite] Gain +4 additional spell slots per day for all spell circles 1st through 9th.", blueprintCue5, new ContextActionSpendCoinsAndGrantFact
-			{
-				Cost = 5000,
-				m_Fact = bp52.ToReference<BlueprintUnitFactReference>()
-			});
-			BlueprintAnswer bp65 = CreateStoreAnswer("AnswerBuyCheatRealityPiercer", "(10,000 Coins) [Reality Piercer: All-Sovereign Edge] Completely ignore all Damage Reduction and Concealment, and gain +6 Spell Penetration.", blueprintCue5, new ContextActionSpendCoinsAndGrantFact
-			{
-				Cost = 10000,
-				m_Fact = bp53.ToReference<BlueprintUnitFactReference>()
-			});
-			BlueprintAnswer bp66 = CreateStoreAnswer("AnswerBuyCheatChronoSurge", "(15,000 Coins) [Protagonist Chrono-Surge: Double Turn] Gain the ability to refund standard and move actions as a free action 3 times per day.", blueprintCue5, new ContextActionSpendCoinsAndGrantFact
-			{
-				Cost = 15000,
-				m_Fact = bp54.ToReference<BlueprintUnitFactReference>()
-			});
-			BlueprintAnswer bp67 = CreateStoreAnswer("AnswerBuyCheatGachaJackpot", "(5,000 Coins) [Gacha Jackpot: Midas Touch] Gain +4 luck bonus to all d20 rolls and manifest 250,000 Gold directly into your treasury.", blueprintCue5, new ContextActionBuyGachaJackpot
-			{
-				Cost = 5000,
-				m_Fact = bp55.ToReference<BlueprintUnitFactReference>()
-			});
-			BlueprintAnswer bp68 = CreateStoreAnswer("AnswerBuyCheatAegisUndying", "(6,000 Coins) [Aegis of the Undying Protagonist] Falling below 25% HP triggers emergency 150 HP healing and Greater Invisibility for 3 rounds.", blueprintCue5, new ContextActionSpendCoinsAndGrantFact
-			{
-				Cost = 6000,
-				m_Fact = bp56.ToReference<BlueprintUnitFactReference>()
-			});
-			BlueprintAnswer bp69 = CreateStoreAnswer("AnswerBuyCheatDimensionalSanctuary", "(4,000 Coins) [Dimensional Sanctuary: Otherworld Pocket Realm] Gain 1,000,000 lbs carry capacity and total immunity to fatigue and exhaustion.", blueprintCue5, new ContextActionSpendCoinsAndGrantFact
-			{
-				Cost = 4000,
-				m_Fact = bp57.ToReference<BlueprintUnitFactReference>()
-			});
-			blueprintCue5.Answers.Add(bp58.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue5.Answers.Add(bp59.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue5.Answers.Add(bp60.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue5.Answers.Add(bp61.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue5.Answers.Add(bp62.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue5.Answers.Add(bp63.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue5.Answers.Add(bp64.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue5.Answers.Add(bp65.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue5.Answers.Add(bp66.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue5.Answers.Add(bp67.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue5.Answers.Add(bp68.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue5.Answers.Add(bp69.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue5.Answers.Add(bp14.ToReference<BlueprintAnswerBaseReference>());
-			BlueprintAnswer bp70 = CreateStoreAnswer("AnswerBuyCrownApotheosis", "(4,500 Coins) [Crown of Apotheosis] Permanent +6 Int/Wis/Cha, +4 all spell DCs, +10 SR.", blueprintCue6, new ContextActionSpendCoinsAndGrantFact
-			{
-				Cost = 4500,
-				m_Fact = CosmicRelics.CosmicCrownOfApotheosisFeature.ToReference<BlueprintUnitFactReference>()
-			});
-			BlueprintAnswer bp71 = CreateStoreAnswer("AnswerBuyRingOmnipresence", "(4,500 Coins) [Ring of Omnipresence] Permanent Freedom of Movement, +5 deflection AC, +5 sacred bonus to all saving throws.", blueprintCue6, new ContextActionSpendCoinsAndGrantFact
-			{
-				Cost = 4500,
-				m_Fact = CosmicRelics.CosmicRingOfOmnipresenceFeature.ToReference<BlueprintUnitFactReference>()
-			});
-			BlueprintAnswer bp72 = CreateStoreAnswer("AnswerBuyAstralDragon", "(5,000 Coins) [Astral Sovereign Dragon] Gain the daily ability to summon an ancient Astral Sovereign Dragon companion.", blueprintCue6, new ContextActionSpendCoinsAndGrantFact
-			{
-				Cost = 5000,
-				m_Fact = CosmicRelics.CosmicAstralDragonFeature.ToReference<BlueprintUnitFactReference>()
-			});
-			BlueprintAnswer bp73 = CreateStoreAnswer("AnswerBuyMythicPact", "(4,000 Coins) [Rulebreaker Mythic Pact] +3 Caster Level to all spells, +4 sacred attack and damage.", blueprintCue6, new ContextActionSpendCoinsAndGrantFact
-			{
-				Cost = 4000,
-				m_Fact = CosmicRelics.CosmicMythicPactFeature.ToReference<BlueprintUnitFactReference>()
-			});
-			blueprintCue6.Answers.Add(bp70.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue6.Answers.Add(bp71.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue6.Answers.Add(bp72.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue6.Answers.Add(bp73.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue6.Answers.Add(bp15.ToReference<BlueprintAnswerBaseReference>());
-			(string, string, string)[] array = new(string, string, string)[14]
-			{
-				("AnswerSwitchFealtyCayden", "300e212868bca984687c92bcb66d381b", "Cayden Cailean"),
-				("AnswerSwitchFealtyDesna", "2c0a3b9971327ba4d9d85354d16998c1", "Desna"),
-				("AnswerSwitchFealtyIomedae", "88d5da04361b16746bf5b65795e0c38c", "Iomedae"),
-				("AnswerSwitchFealtyPharasma", "458750bc214ab2e44abdeae404ab22e9", "Pharasma"),
-				("AnswerSwitchFealtyCalistria", "c7531715a3f046d4da129619be63f44c", "Calistria"),
-				("AnswerSwitchFealtyNethys", "6262cfce7c31626458325ca0909de997", "Nethys"),
-				("AnswerSwitchFealtyAsmodeus", "a3a5ccc9c670e6f4ca4a686d23b89900", "Asmodeus"),
-				("AnswerSwitchFealtyGorum", "8f49a5d8528a82c44b8c117a89f6b68c", "Gorum"),
-				("AnswerSwitchFealtyBesmara", "470d824767d34e2e9a59b6d70681af7a", "Besmara"),
-				("AnswerSwitchFealtyLanternKing", "ed7ba1da81834e55be5530ecbc2b1464", "The Lantern King"),
-				("AnswerSwitchFealtyChaldira", "47a505b2df6a4401826d708ca6723223", "Chaldira"),
-				("AnswerSwitchFealtyMilani", "68fb3a3c9b744951b14ea9f26bf5d1f8", "Milani"),
-				("AnswerSwitchFealtyBlackButterfly", "1f29c6dc4aa940aa8c16ca61c470fe4c", "Black Butterfly"),
-				("AnswerSwitchFealtyAtheism", "92c0d2da0a836ce418a267093c09ca54", "Atheism (The Free Agent)")
-			};
-			for (int num = 0; num < array.Length; num++)
-			{
-				(string, string, string) tuple = array[num];
-				BlueprintFeature blueprintFeature = BlueprintSafetyExtensions.SafeGetBlueprint<BlueprintFeature>(tuple.Item2);
-				if (blueprintFeature == null && tuple.Item3 == "Chaldira")
-				{
-					blueprintFeature = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "ChaldiraFeature");
-				}
-				if (blueprintFeature != null)
-				{
-					BlueprintAnswer bp74 = CreateStoreAnswer(tuple.Item1, "[Switch Patron] Align your soul with " + tuple.Item3, blueprintCue7, new ContextActionSwitchDeity
-					{
-						m_NewDeity = blueprintFeature.ToReference<BlueprintFeatureReference>()
-					});
-					blueprintCue7.Answers.Add(bp74.ToReference<BlueprintAnswerBaseReference>());
-				}
-			}
-			(string, BlueprintFeature, string)[] array2 = new(string, BlueprintFeature, string)[11]
-			{
-				("AnswerAscendAvatarCayden", DeityAvatarAscension.AvatarCaydenFeature, "Avatar of the Lucky Drunk (Cayden Cailean)"),
-				("AnswerAscendAvatarIomedae", DeityAvatarAscension.AvatarIomedaeFeature, "Avatar of the Inheritor (Iomedae)"),
-				("AnswerAscendAvatarAsmodeus", DeityAvatarAscension.AvatarAsmodeusFeature, "Avatar of the Archfiend (Asmodeus)"),
-				("AnswerAscendAvatarDesna", DeityAvatarAscension.AvatarDesnaFeature, "Avatar of the Song of the Spheres (Desna)"),
-				("AnswerAscendAvatarPharasma", DeityAvatarAscension.AvatarPharasmaFeature, "Avatar of the Lady of Graves (Pharasma)"),
-				("AnswerAscendAvatarCalistria", DeityAvatarAscension.AvatarCalistriaFeature, "Avatar of the Savored Sting (Calistria)"),
-				("AnswerAscendAvatarNethys", DeityAvatarAscension.AvatarNethysFeature, "Avatar of the All-Seeing Eye (Nethys)"),
-				("AnswerAscendAvatarGorum", DeityAvatarAscension.AvatarGorumFeature, "Avatar of Our Lord in Iron (Gorum)"),
-				("AnswerAscendAvatarBesmara", DeityAvatarAscension.AvatarBesmaraFeature, "Avatar of the Pirate Queen (Besmara)"),
-				("AnswerAscendAvatarLanternKing", DeityAvatarAscension.AvatarLanternKingFeature, "Avatar of the Prankster (Lantern King)"),
-				("AnswerAscendAvatarChaldira", DeityAvatarAscension.AvatarChaldiraFeature, "Avatar of Audacious Fortune (Chaldira)")
-			};
-			for (int num = 0; num < array2.Length; num++)
-			{
-				(string, BlueprintFeature, string) tuple2 = array2[num];
-				if (tuple2.Item2 != null)
-				{
-					BlueprintAnswer bp75 = CreateStoreAnswer(tuple2.Item1, "<color=#F5C542>[Ascend]</color> Embody the " + tuple2.Item3 + " (10,000 Coins)", blueprintCue7, new ContextActionAscendAvatar
-					{
-						Cost = 10000,
-						m_AvatarFeature = tuple2.Item2.ToReference<BlueprintFeatureReference>()
-					});
-					blueprintCue7.Answers.Add(bp75.ToReference<BlueprintAnswerBaseReference>());
-				}
-			}
-			blueprintCue7.Answers.Add(bp16.ToReference<BlueprintAnswerBaseReference>());
-			BlueprintFeature blueprint = BlueprintTools.GetBlueprint<BlueprintFeature>("92c0d2da0a836ce418a267093c09ca54");
-			BlueprintAnswer bp76 = CreateStoreAnswer("AnswerEmbraceGodDefier", "<color=#F5C542>[Ascend]</color> Shatter divine chains and walk the Path of the God Defier! (Cost: 10,000 Coins)", CosmicStoreRootCue, new ContextActionAscendAvatar
-			{
-				Cost = 10000,
-				m_AvatarFeature = DeityAvatarAscension.GodDefierFeature.ToReference<BlueprintFeatureReference>()
-			}, (blueprint != null) ? new HasFact
-			{
-				Unit = new PlayerCharacter(),
-				m_Fact = blueprint.ToReference<BlueprintUnitFactReference>()
-			} : null);
-			blueprintCue8.Answers.Add(bp76.ToReference<BlueprintAnswerBaseReference>());
-			blueprintCue8.Answers.Add(bp17.ToReference<BlueprintAnswerBaseReference>());
-			BlueprintAbility openStoreAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "OpenCosmicStoreAbility", delegate(BlueprintAbility blueprintAbility)
-			{
-				blueprintAbility.SetName(Main.IsekaiContext, "Commune with Constellations");
-				blueprintAbility.SetDescription(Main.IsekaiContext, "Open the Cosmic Constellation Exchange dialog to browse offerings, redeem accumulated Cosmic Coins for divine blessings, mythic boons, web novel elixirs, modular wishes, infusions, switch patron deities, or ascend as a divine Avatar.");
-				((BlueprintUnitFact)blueprintAbility).m_Icon = Icon_Coin;
-				blueprintAbility.Type = AbilityType.Special;
-				blueprintAbility.Range = AbilityRange.Personal;
-				blueprintAbility.CanTargetSelf = true;
-				blueprintAbility.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Self;
-				blueprintAbility.ActionType = UnitCommand.CommandType.Free;
-				blueprintAbility.AddComponent(delegate(AbilityEffectRunAction c)
-				{
-					c.Actions = ActionFlow.DoSingle(delegate(ContextActionOpenCosmicStoreDialog a)
-					{
-						a.m_Dialog = CosmicStoreDialog.ToReference<BlueprintDialogReference>();
-					});
-				});
-			});
-			DivineTokens.ItemCosmicCoin = Helpers.CreateBlueprint(Main.IsekaiContext, "ItemCosmicCoin", delegate(BlueprintItemEquipmentUsable blueprintItemEquipmentUsable)
-			{
-				blueprintItemEquipmentUsable.SetName(Main.IsekaiContext, "Cosmic Coin");
-				blueprintItemEquipmentUsable.SetDescription(Main.IsekaiContext, "A shimmering token forged from condensed divine favor and audience entertainment. Awarded by observing deities and higher planar entities when celebrating your heroic triumphs, audacity, and choices.\n\nYour inventory stack automatically synchronizes with your accumulated Cosmic Coins. Can be traded with the Astral Coin Envoy and planar merchants at the Planar Coliseum.");
-				((BlueprintItem)blueprintItemEquipmentUsable).m_Icon = Icon_Coin;
-				((BlueprintItem)blueprintItemEquipmentUsable).m_Cost = 0;
-				((BlueprintItem)blueprintItemEquipmentUsable).m_Weight = 0f;
-				((BlueprintItem)blueprintItemEquipmentUsable).m_IsNotable = true;
-				((BlueprintItem)blueprintItemEquipmentUsable).m_ForceStackable = true;
-				((BlueprintItem)blueprintItemEquipmentUsable).m_Destructible = false;
-				blueprintItemEquipmentUsable.Type = UsableItemType.Other;
-				blueprintItemEquipmentUsable.SpendCharges = false;
-				blueprintItemEquipmentUsable.Charges = 0;
-				blueprintItemEquipmentUsable.RestoreChargesOnRest = false;
-			});
-			CosmicSponsorshipExchangeFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "CosmicSponsorshipExchangeFeature", delegate(BlueprintFeature blueprintFeature2)
-			{
-				blueprintFeature2.SetName(Main.IsekaiContext, "Cosmic Sponsorship Exchange");
-				blueprintFeature2.SetDescription(Main.IsekaiContext, "Allows you to commune with the observing constellations and redeem accumulated Cosmic Coins through a celestial store interface, offering divine blessings, mythic boons, web novel elixirs, modular wishes, cosmic infusions, and avatar ascensions.");
-				((BlueprintUnitFact)blueprintFeature2).m_Icon = Icon_Coin;
-				blueprintFeature2.IsClassFeature = true;
-				blueprintFeature2.AddComponent(delegate(AddAbilityResources c)
-				{
-					c.m_Resource = CosmicWishResource.ToReference<BlueprintAbilityResourceReference>();
-					c.RestoreAmount = false;
-				});
-				storeAbilities.Add(ModularCosmicWishAbility);
-				blueprintFeature2.AddComponent(delegate(AddFacts c)
-				{
-					// The store ability was created but never granted, so the exchange only handed out the Cosmic Wish.
-					c.m_Facts = new BlueprintUnitFactReference[2] { ModularCosmicWishAbility.ToReference<BlueprintUnitFactReference>(), openStoreAbility.ToReference<BlueprintUnitFactReference>() };
-				});
-			});
-			void AddBlessing(string name, string displayName, string desc, int cost, Action<BlueprintBuff> configureBuff)
-			{
-				BlueprintBuff buff = TTCoreExtensions.CreateBuff(name + "Buff", delegate(BlueprintBuff blueprintBuff)
-				{
-					blueprintBuff.SetName(Main.IsekaiContext, displayName);
-					blueprintBuff.SetDescription(Main.IsekaiContext, desc);
-					((BlueprintUnitFact)blueprintBuff).m_Icon = Icon_Coin;
-					blueprintBuff.m_Flags = BlueprintBuff.Flags.StayOnDeath;
-					configureBuff(blueprintBuff);
-				});
-				blessingBuffs.Add((name, buff, cost, displayName, desc));
-				BlueprintAbility item8 = Helpers.CreateBlueprint(Main.IsekaiContext, name + "Ability", delegate(BlueprintAbility blueprintAbility)
-				{
-					blueprintAbility.SetName(Main.IsekaiContext, "Sponsorship: " + displayName);
-					blueprintAbility.SetDescription(Main.IsekaiContext, $"Spend {cost} Cosmic Coins to invoke this divine blessing for 1 hour (persists through death).\n{desc}");
-					((BlueprintUnitFact)blueprintAbility).m_Icon = Icon_Coin;
-					blueprintAbility.Type = AbilityType.Special;
-					blueprintAbility.Range = AbilityRange.Personal;
-					blueprintAbility.CanTargetSelf = true;
-					blueprintAbility.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Self;
-					blueprintAbility.ActionType = UnitCommand.CommandType.Standard;
-					blueprintAbility.AddComponent(delegate(AbilityEffectRunAction c)
-					{
-						c.Actions = ActionFlow.DoSingle(delegate(ContextActionSpendCoinsAndApplyBuff a)
-						{
-							a.Cost = cost;
-							a.m_Buff = buff.ToReference<BlueprintBuffReference>();
-							a.DurationHours = 1;
-						});
-					});
-				});
-				storeAbilities.Add(item8);
-			}
-			void AddInfusion(string name, string displayName, string desc, int cost, Action<BlueprintFeature> configureFeature)
-			{
-				BlueprintFeature feat = Helpers.CreateBlueprint(Main.IsekaiContext, name + "Feature", delegate(BlueprintFeature blueprintFeature2)
-				{
-					blueprintFeature2.SetName(Main.IsekaiContext, displayName);
-					blueprintFeature2.SetDescription(Main.IsekaiContext, desc);
-					((BlueprintUnitFact)blueprintFeature2).m_Icon = Icon_Coin;
-					blueprintFeature2.IsClassFeature = true;
-					configureFeature(blueprintFeature2);
-				});
-				infusionList.Add((name, feat, cost, displayName, desc));
-				BlueprintAbility item8 = Helpers.CreateBlueprint(Main.IsekaiContext, name + "Ability", delegate(BlueprintAbility blueprintAbility)
-				{
-					blueprintAbility.SetName(Main.IsekaiContext, "Infusion: " + displayName);
-					blueprintAbility.SetDescription(Main.IsekaiContext, $"Spend {cost} Cosmic Coins to permanently infuse yourself with this enhancement.\n{desc}");
-					((BlueprintUnitFact)blueprintAbility).m_Icon = Icon_Coin;
-					blueprintAbility.Type = AbilityType.Special;
-					blueprintAbility.Range = AbilityRange.Personal;
-					blueprintAbility.CanTargetSelf = true;
-					blueprintAbility.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Self;
-					blueprintAbility.ActionType = UnitCommand.CommandType.Standard;
-					blueprintAbility.AddComponent(delegate(AbilityEffectRunAction c)
-					{
-						c.Actions = ActionFlow.DoSingle(delegate(ContextActionSpendCoinsAndGrantFact a)
-						{
-							a.Cost = cost;
-							a.m_Fact = feat.ToReference<BlueprintUnitFactReference>();
-						});
-					});
-				});
-				storeAbilities.Add(item8);
-			}
-			void AddMythicBoon(string name, string displayName, string desc, int cost, AlignmentMaskType alignment, Action<BlueprintFeature> configureFeature)
-			{
-				BlueprintFeature feat = Helpers.CreateBlueprint(Main.IsekaiContext, name + "Feature", delegate(BlueprintFeature blueprintFeature2)
-				{
-					blueprintFeature2.SetName(Main.IsekaiContext, displayName);
-					blueprintFeature2.SetDescription(Main.IsekaiContext, desc);
-					((BlueprintUnitFact)blueprintFeature2).m_Icon = Icon_Coin;
-					blueprintFeature2.IsClassFeature = true;
-					configureFeature(blueprintFeature2);
-				});
-				mythicBoonList.Add((name, feat, cost, alignment, displayName, desc));
-				BlueprintAbility item8 = Helpers.CreateBlueprint(Main.IsekaiContext, name + "Ability", delegate(BlueprintAbility blueprintAbility)
-				{
-					blueprintAbility.SetName(Main.IsekaiContext, "Mythic Boon: " + displayName);
-					blueprintAbility.SetDescription(Main.IsekaiContext, $"Spend {cost} Cosmic Coins to permanently acquire this mythic path boon.\n{desc}");
-					((BlueprintUnitFact)blueprintAbility).m_Icon = Icon_Coin;
-					blueprintAbility.Type = AbilityType.Special;
-					blueprintAbility.Range = AbilityRange.Personal;
-					blueprintAbility.CanTargetSelf = true;
-					blueprintAbility.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Self;
-					blueprintAbility.ActionType = UnitCommand.CommandType.Standard;
-					blueprintAbility.AddComponent(delegate(AbilityEffectRunAction c)
-					{
-						c.Actions = ActionFlow.DoSingle(delegate(ContextActionSpendCoinsAndGrantFact a)
-						{
-							a.Cost = cost;
-							a.m_Fact = feat.ToReference<BlueprintUnitFactReference>();
-							a.m_KeyOfInfinitePathways = KeyOfInfinitePathwaysFeature.ToReference<BlueprintFeatureReference>();
-							a.AllowedAlignment = alignment;
-						});
-					});
-				});
-				storeAbilities.Add(item8);
-			}
-			void AddSubclassBlessing(string name, string displayName, string desc, string requiredFactName, Action<BlueprintFeature> configureAwakened)
-			{
-				BlueprintFeature awakenedFeat = Helpers.CreateBlueprint(Main.IsekaiContext, name + "AwakenedFeature", delegate(BlueprintFeature blueprintFeature2)
-				{
-					blueprintFeature2.SetName(Main.IsekaiContext, displayName + " (Awakened)");
-					blueprintFeature2.SetDescription(Main.IsekaiContext, desc);
-					((BlueprintUnitFact)blueprintFeature2).m_Icon = Icon_Coin;
-					blueprintFeature2.IsClassFeature = true;
-					configureAwakened(blueprintFeature2);
-				});
-				BlueprintFeature masterFeat = Helpers.CreateBlueprint(Main.IsekaiContext, name + "Feature", delegate(BlueprintFeature blueprintFeature2)
-				{
-					blueprintFeature2.SetName(Main.IsekaiContext, displayName);
-					blueprintFeature2.SetDescription(Main.IsekaiContext, desc + "\n<i>(Requires active attunement to this subclass; automatically hibernates if respecced and re-awakens upon return)</i>");
-					((BlueprintUnitFact)blueprintFeature2).m_Icon = Icon_Coin;
-					blueprintFeature2.IsClassFeature = true;
-					blueprintFeature2.AddComponent(delegate(AddFeatureIfHasFact c)
-					{
-						c.m_CheckedFact = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, requiredFactName)?.ToReference<BlueprintUnitFactReference>();
-						c.m_Feature = awakenedFeat.ToReference<BlueprintUnitFactReference>();
-						c.Not = false;
-					});
-				});
-				subclassBoonList.Add((name, masterFeat, displayName, desc));
-				BlueprintAbility item8 = Helpers.CreateBlueprint(Main.IsekaiContext, name + "Ability", delegate(BlueprintAbility blueprintAbility)
-				{
-					blueprintAbility.SetName(Main.IsekaiContext, "Transcendence: " + displayName);
-					blueprintAbility.SetDescription(Main.IsekaiContext, "Spend 100 Cosmic Coins to acquire this permanent subclass transcendence blessing.\n" + desc);
-					((BlueprintUnitFact)blueprintAbility).m_Icon = Icon_Coin;
-					blueprintAbility.Type = AbilityType.Special;
-					blueprintAbility.Range = AbilityRange.Personal;
-					blueprintAbility.CanTargetSelf = true;
-					blueprintAbility.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Self;
-					blueprintAbility.ActionType = UnitCommand.CommandType.Standard;
-					blueprintAbility.AddComponent(delegate(AbilityEffectRunAction c)
-					{
-						c.Actions = ActionFlow.DoSingle(delegate(ContextActionSpendCoinsAndGrantFact a)
-						{
-							a.Cost = 100;
-							a.m_Fact = masterFeat.ToReference<BlueprintUnitFactReference>();
-						});
-					});
-				});
-				storeAbilities.Add(item8);
-			}
-			static BlueprintAnswer CreateStoreAnswer(string name, string text, BlueprintCue nextCue, GameAction onSelectAction = null, Condition showCondition = null)
-			{
-				return TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer blueprintAnswer)
-				{
-					blueprintAnswer.SetText(Main.IsekaiContext, text);
-					blueprintAnswer.NextCue = new CueSelection
-					{
-						Cues = ((nextCue != null) ? new List<BlueprintCueBaseReference> { nextCue.ToReference<BlueprintCueBaseReference>() } : new List<BlueprintCueBaseReference>()),
-						Strategy = Strategy.First
-					};
-					blueprintAnswer.ShowConditions = ((showCondition != null) ? ActionFlow.IfAll(showCondition) : ActionFlow.IfAll());
-					blueprintAnswer.OnSelect = ((onSelectAction != null) ? new ActionList
-					{
-						Actions = new GameAction[1] { onSelectAction }
-					} : ActionFlow.DoNothing());
-				});
-			}
-			BlueprintAbility CreateWishVariant(string name, string statName, StatType stat, int bonus = 2)
-			{
-				BlueprintFeature feat = Helpers.CreateBlueprint(Main.IsekaiContext, name + "Feature", delegate(BlueprintFeature f)
-				{
-					f.SetName(Main.IsekaiContext, $"Cosmic Boon: {statName} +{bonus}");
-					f.SetDescription(Main.IsekaiContext, $"+{bonus} untyped stackable bonus to {statName}");
-					((BlueprintUnitFact)f).m_Icon = Icon_Coin;
-					f.Ranks = 999;
-					f.AddComponent(delegate(AddContextStatBonus c)
-					{
-						c.Descriptor = ModifierDescriptor.UntypedStackable;
-						c.Stat = stat;
-						c.Multiplier = bonus;
-						c.Value = new ContextValue
-						{
-							ValueType = ContextValueType.Rank,
-							ValueRank = AbilityRankType.Default
-						};
-					});
-					f.AddComponent(delegate(ContextRankConfig c)
-					{
-						c.m_Type = AbilityRankType.Default;
-						c.m_BaseValueType = ContextRankBaseValueType.FeatureRank;
-						c.m_Feature = f.ToReference<BlueprintFeatureReference>();
-					});
-				});
-				return Helpers.CreateBlueprint(Main.IsekaiContext, name, delegate(BlueprintAbility blueprintAbility)
-				{
-					blueprintAbility.SetName(Main.IsekaiContext, $"Cosmic Wish: Permanent +{bonus} {statName}");
-					blueprintAbility.SetDescription(Main.IsekaiContext, $"Consumes 1 Wish charge to permanently grant a +{bonus} untyped stackable bonus to {statName}.");
-					((BlueprintUnitFact)blueprintAbility).m_Icon = Icon_Coin;
-					blueprintAbility.Type = AbilityType.Special;
-					blueprintAbility.Range = AbilityRange.Personal;
-					blueprintAbility.CanTargetSelf = true;
-					blueprintAbility.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Self;
-					blueprintAbility.ActionType = UnitCommand.CommandType.Standard;
-					blueprintAbility.AddComponent(delegate(AbilityEffectRunAction c)
-					{
-						c.Actions = ActionFlow.DoSingle(delegate(ContextActionConsumeStackableConsumable a)
-						{
-							a.m_Feature = feat.ToReference<BlueprintFeatureReference>();
-							a.ItemName = "Cosmic Wish (" + statName + ")";
-							a.ValuePerRank = bonus;
-							a.StatDisplayName = statName;
-						});
-					});
-					blueprintAbility.AddComponent(delegate(AbilityResourceLogic c)
-					{
-						c.m_RequiredResource = CosmicWishResource.ToReference<BlueprintAbilityResourceReference>();
-						c.m_IsSpendResource = true;
-						c.Amount = 1;
-					});
-				});
+			return modBlueprint.ToReference<BlueprintUnitFactReference>();
+		}
+		static void ListOffer(BlueprintCue cue, BlueprintAnswer blueprintAnswer)
+		{
+			if (cue != null && blueprintAnswer != null)
+			{
+				cue.Answers.Add(blueprintAnswer.ToReference<BlueprintAnswerBaseReference>());
 			}
 		}
+		static Condition MainCharacterHas(BlueprintUnitFactReference fact)
+		{
+			return new HasFact
+			{
+				Unit = new PlayerCharacter(),
+				m_Fact = fact
+			};
+		}
+		static Condition ModDeityOffered(bool isModDeity)
+		{
+			if (!isModDeity)
+			{
+				return null;
+			}
+			return new ConditionContentOffered
+			{
+				Content = OfferedContent.IsekaiDeities
+			};
+		}
+		static BlueprintFeature ResolveDeity(string id, bool isModDeity)
+		{
+			if (!isModDeity)
+			{
+				return BlueprintTools.GetBlueprint<BlueprintFeature>(id);
+			}
+			return BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, id);
+		}
+	}
+
+	public static void CreateBlueprints()
+	{
+		Sprite Icon_Coin = AssetLoader.LoadInternal(Main.IsekaiContext, "Features", "ICON_COSMIC_COIN.png");
+		CosmicStoreText.Create();
+		CosmicSponsorshipExchangeFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "CosmicSponsorshipExchangeFeature", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Cosmic Sponsorship Exchange");
+			bp.SetDescription(Main.IsekaiContext, "Allows you to commune with the observing constellations and redeem accumulated Cosmic Coins through a celestial store interface, offering divine blessings, mythic boons, web novel elixirs, modular wishes, cosmic infusions, and avatar ascensions.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Coin;
+			bp.IsClassFeature = true;
+			bp.AddComponent(delegate(AddAbilityResources c)
+			{
+				c.m_Resource = BlueprintTools.GetModBlueprintReference<BlueprintAbilityResourceReference>(Main.IsekaiContext, "CosmicWishResource");
+				c.RestoreAmount = false;
+			});
+			bp.AddComponent(delegate(AddFacts c)
+			{
+				c.m_Facts = new BlueprintUnitFactReference[2]
+				{
+					BlueprintTools.GetModBlueprintReference<BlueprintUnitFactReference>(Main.IsekaiContext, "OpenCosmicStoreAbility"),
+					BlueprintTools.GetModBlueprintReference<BlueprintUnitFactReference>(Main.IsekaiContext, "ModularCosmicWishAbility")
+				};
+			});
+		});
 	}
 }

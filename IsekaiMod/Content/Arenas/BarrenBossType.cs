@@ -1,11 +1,10 @@
-﻿namespace IsekaiMod.Content.Arenas
+namespace IsekaiMod.Content.Arenas;
+
+public enum BarrenBossType
 {
-	public enum BarrenBossType
-	{
-		Act1OuterWorldStray,
-		Act2ChronosExile,
-		Act3TransdimensionalBehemoth,
-		Act4AbyssalVoidDragon,
-		Act5CosmicArbiterOfRuin
-	}
+	Act1OuterWorldStray,
+	Act2ChronosExile,
+	Act3TransdimensionalBehemoth,
+	Act4AbyssalVoidDragon,
+	Act5CosmicArbiterOfRuin
 }

@@ -1,4 +1,4 @@
-﻿using IsekaiMod.Utilities;
+using IsekaiMod.Utilities;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Prerequisites;
 using Kingmaker.Blueprints.Facts;
@@ -9,27 +9,28 @@ using Kingmaker.UnitLogic.Buffs.Blueprints;
 using TabletopTweaks.Core.Utilities;
 using UnityEngine;
 
-namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
+namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower;
+
+internal class MagicalAmplification
 {
-	internal class MagicalAmplification
+	public static BlueprintFeature MagicalAmplificationFeature;
+
+	public static void Add()
 	{
-		public static void Add()
+		string description = "Any {g|Encyclopedia:Spell}spells{/g} dealing {g|Encyclopedia:Damage}damage{/g} now change their dice to d10, if it was not d10 or greater. If it already was d10 or greater, instead the spell deals one additional point of damage per dice rolled. This cannot be combined with the epic Arcane Overcharge, which does the same thing more strongly.";
+		Sprite icon = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintAbility>("1a33199538c31a14db23318fdb6e10cb"))?.m_Icon;
+		MagicalAmplificationFeature = TTCoreExtensions.CreateToggleBuffFeature("MagicalAmplification", description, icon, delegate(BlueprintBuff bp)
 		{
-			string description = "Any {g|Encyclopedia:Spell}spells{/g} dealing {g|Encyclopedia:Damage}damage{/g} now change their dice to d10, if it was not d10 or greater. If it already was d10 or greater, instead the spell deals one additional point of damage per dice rolled.";
-			Sprite icon = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintAbility>("1a33199538c31a14db23318fdb6e10cb")).m_Icon;
-			BlueprintFeature blueprintFeature = TTCoreExtensions.CreateToggleBuffFeature("MagicalAmplification", description, icon, delegate(BlueprintBuff bp)
+			bp.AddComponent(delegate(PromoteSpellDices c)
 			{
-				bp.AddComponent(delegate(PromoteSpellDices c)
-				{
-					c.MinDice = DiceType.D10;
-					c.Bonus = 1;
-				});
+				c.MinDice = DiceType.D10;
+				c.Bonus = 1;
 			});
-			blueprintFeature.AddComponent(delegate(PrerequisiteCharacterLevel c)
-			{
-				c.Level = 5;
-			});
-			SpecialPowerSelection.AddToMagicSelection(blueprintFeature);
-		}
+		});
+		MagicalAmplificationFeature.AddComponent(delegate(PrerequisiteCharacterLevel c)
+		{
+			c.Level = 5;
+		});
+		SpecialPowerSelection.AddToSelection(MagicalAmplificationFeature);
 	}
 }

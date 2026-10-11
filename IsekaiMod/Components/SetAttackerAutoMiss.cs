@@ -1,46 +1,45 @@
-﻿using Kingmaker.Blueprints;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.JsonSystem;
 using Kingmaker.EntitySystem;
 using Kingmaker.EntitySystem.Entities;
 using Kingmaker.PubSubSystem;
 using Kingmaker.RuleSystem.Rules;
 
-namespace IsekaiMod.Components
+namespace IsekaiMod.Components;
+
+[AllowMultipleComponents]
+[TypeId("f9cdd93e34a149349a64dfec5b0b6deb")]
+public class SetAttackerAutoMiss : BlueprintComponent, IRuntimeEntityFactComponentProvider
 {
-	[AllowMultipleComponents]
-	[TypeId("f9cdd93e34a149349a64dfec5b0b6deb")]
-	public class SetAttackerAutoMiss : BlueprintComponent, IRuntimeEntityFactComponentProvider
+	public class Runtime : EntityFactComponent<UnitEntityData, SetAttackerAutoMiss>, ITargetRulebookHandler<RuleAttackRoll>, IRulebookHandler<RuleAttackRoll>, ISubscriber, ITargetRulebookSubscriber
 	{
-		public class Runtime : EntityFactComponent<UnitEntityData, SetAttackerAutoMiss>, ITargetRulebookHandler<RuleAttackRoll>, IRulebookHandler<RuleAttackRoll>, ISubscriber, ITargetRulebookSubscriber
+		public override void OnTurnOn()
 		{
-			public override void OnTurnOn()
-			{
-			}
+		}
 
-			public override void OnTurnOff()
-			{
-			}
+		public override void OnTurnOff()
+		{
+		}
 
-			public void OnEventAboutToTrigger(RuleAttackRoll evt)
+		public void OnEventAboutToTrigger(RuleAttackRoll evt)
+		{
+			if (evt.Target != base.Owner)
 			{
-				if (evt.Target != base.Owner)
-				{
-					return;
-				}
-				using (base.Fact.MaybeContext?.GetDataScope(evt.Initiator))
-				{
-					evt.AutoMiss = true;
-				}
+				return;
 			}
-
-			public void OnEventDidTrigger(RuleAttackRoll evt)
+			using (base.Fact.MaybeContext?.GetDataScope(evt.Initiator))
 			{
+				evt.AutoMiss = true;
 			}
 		}
 
-		public EntityFactComponent CreateRuntimeFactComponent()
+		public void OnEventDidTrigger(RuleAttackRoll evt)
 		{
-			return new Runtime();
 		}
+	}
+
+	public EntityFactComponent CreateRuntimeFactComponent()
+	{
+		return new Runtime();
 	}
 }

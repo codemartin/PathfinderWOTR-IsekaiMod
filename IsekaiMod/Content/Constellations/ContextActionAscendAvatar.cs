@@ -1,45 +1,51 @@
-﻿using Kingmaker.Blueprints;
+using System.Collections.Generic;
+using System.Linq;
+using IsekaiMod.Utilities;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
+using Kingmaker.Blueprints.JsonSystem;
 using Kingmaker.EntitySystem.Entities;
-using Kingmaker.PubSubSystem;
-using Kingmaker.UnitLogic.Mechanics.Actions;
 
-namespace IsekaiMod.Content.Constellations
+namespace IsekaiMod.Content.Constellations;
+
+[TypeId("46e2fbaa0e214b129b003a04f233ff3d")]
+public class ContextActionAscendAvatar : IsekaiContextAction
 {
-	public class ContextActionAscendAvatar : ContextAction
+	public int Cost = 10000;
+
+	public BlueprintFeatureReference m_AvatarFeature;
+
+	public override string GetCaption()
 	{
-		public int Cost = 10000;
+		return $"Ascends as Avatar for {Cost} Cosmic Coins";
+	}
 
-		public BlueprintFeatureReference m_AvatarFeature;
-
-		public override string GetCaption()
+	protected override void RunSafely()
+	{
+		UnitEntityData player = DivineTokens.GetPlayer();
+		BlueprintFeature blueprintFeature = m_AvatarFeature?.Get();
+		if (player == null || blueprintFeature == null)
 		{
-			return $"Ascends as Avatar for {Cost} Cosmic Coins";
+			return;
 		}
-
-		public override void RunAction()
+		List<BlueprintFeature> source = DivineSponsorshipStore.OwnedFeatures(player);
+		string heldName;
+		switch (DeityAvatarAscension.CheckAscend(source.Select((BlueprintFeature b) => b.name), blueprintFeature.name, out heldName))
 		{
-			UnitEntityData player = DivineTokens.GetPlayer();
-			BlueprintFeature avatarFeat = m_AvatarFeature?.Get();
-			if (player == null || avatarFeat == null)
-			{
-				return;
-			}
-			if (player.Descriptor.Progression.Features.HasFact(avatarFeat))
-			{
-				EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
-				{
-					h.HandleLogMessage("<color=#DC143C>[Cosmic Ascension]</color> You already embody this Avatar form!");
-				});
-			}
-			else if (DivineTokens.SpendCoins(Cost))
-			{
-				player.Descriptor.Progression.Features.AddFeature(avatarFeat);
-				EventBus.RaiseEvent(delegate(ILogMessageUIHandler h)
-				{
-					h.HandleLogMessage("<color=#F5C542><b>[AVATAR ASCENSION!]</b></color> The skies split with divine brilliance as you ascend as the <b>" + avatarFeat.Name + "</b>!");
-				});
-			}
+		case DeityAvatarAscension.AscendRefusal.AlreadyEmbodied:
+			DivineTokens.Log(CosmicStoreText.AlreadyEmbodied, blueprintFeature.Name);
+			return;
+		case DeityAvatarAscension.AscendRefusal.OtherAvatarHeld:
+		{
+			BlueprintFeature blueprintFeature2 = source.FirstOrDefault((BlueprintFeature b) => b.name == heldName);
+			DivineTokens.Log(CosmicStoreText.OtherAvatarHeld, (blueprintFeature2 != null) ? blueprintFeature2.Name : heldName);
+			return;
+		}
+		}
+		if (DivineTokens.SpendCoins(Cost))
+		{
+			player.Descriptor.Progression.Features.AddFeature(blueprintFeature);
+			DivineTokens.Log(CosmicStoreText.Ascended, blueprintFeature.Name);
 		}
 	}
 }

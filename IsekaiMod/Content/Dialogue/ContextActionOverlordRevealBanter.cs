@@ -1,28 +1,23 @@
-﻿using System.Collections.Generic;
 using IsekaiMod.Content.Constellations;
-using Kingmaker.UnitLogic.Mechanics.Actions;
+using IsekaiMod.Utilities;
+using Kingmaker.Blueprints.JsonSystem;
 
-namespace IsekaiMod.Content.Dialogue
+namespace IsekaiMod.Content.Dialogue;
+
+[TypeId("ec81f98c5e3f4e1f99000da7f58a5860")]
+public class ContextActionOverlordRevealBanter : IsekaiContextAction
 {
-	public class ContextActionOverlordRevealBanter : ContextAction
+	public override string GetCaption()
 	{
-		public override string GetCaption()
-		{
-			return "Awards 250 Cosmic Coins and triggers Overlord Reveal Banter";
-		}
+		return "Awards 250 Cosmic Coins and triggers Overlord Reveal Banter";
+	}
 
-		public override void RunAction()
+	protected override void RunSafely()
+	{
+		if (ConstellationChatManager.TryClaimSceneReward("OverlordReveal"))
 		{
-			DivineTokens.AddCoins(250, "Urgathoa");
-			List<string> overlordSkeletonRevealBanter = ConstellationDialogueBanter.GetOverlordSkeletonRevealBanter();
-			if (overlordSkeletonRevealBanter == null)
-			{
-				return;
-			}
-			foreach (string item in overlordSkeletonRevealBanter)
-			{
-				ConstellationChatManager.PostLog(item, "Urgathoa", ConstellationCategory.Subclass, 0, "Overlord Reveal");
-			}
+			DivineTokens.AddClaimedCoins(250, "The Pallid Princess");
 		}
+		ConstellationChatManager.PostLines(ConstellationDialogueBanter.GetOverlordSkeletonRevealBanter(), "The Pallid Princess", ConstellationCategory.Subclass, "Caves: Rescue Anevia");
 	}
 }

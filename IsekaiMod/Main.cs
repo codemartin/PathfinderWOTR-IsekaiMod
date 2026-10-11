@@ -1,75 +1,93 @@
-﻿using System;
+using System;
 using System.Diagnostics;
-using System.Linq;
 using HarmonyLib;
+using IsekaiMod.Content.Guardians;
 using IsekaiMod.ModLogic;
-using Kingmaker.UI.MVVM._VM.Tooltip.Templates;
-using Kingmaker.UI.Models.Log.CombatLog_ThreadSystem;
-using Kingmaker.UI.Models.Log.CombatLog_ThreadSystem.LogThreads.Common;
+using IsekaiMod.Utilities;
+using IsekaiMod.Utilities.SelfTest;
 using TabletopTweaks.Core.Utilities;
 using UnityEngine;
 using UnityModManagerNet;
 
-namespace IsekaiMod
+namespace IsekaiMod;
+
+internal static class Main
 {
-	internal static class Main
+	public class Message
 	{
-		public class Message
+		public string Text { get; set; }
+
+		public DateTime Timestamp { get; set; }
+
+		public Color Color { get; set; }
+	}
+
+	public static ModContextTTTBase IsekaiContext;
+
+	public static bool Load(UnityModManager.ModEntry modEntry)
+	{
+		try
 		{
-			public string Text { get; set; }
-
-			public DateTime Timestamp { get; set; }
-
-			public Color Color { get; set; }
-		}
-
-		public static ModContextTTTBase IsekaiContext;
-
-		public static bool Load(UnityModManager.ModEntry modEntry)
-		{
+			LogSession.Write();
 			IsekaiContext = new ModContextTTTBase(modEntry);
+			Harmony harmony = new Harmony(modEntry.Info.Id);
+			IsekaiContext.ModEntry.OnSaveGUI = OnSaveGUI;
+			IsekaiContext.ModEntry.OnGUI = UMMSettingsUI.OnGUI;
+			IsekaiSelfTest.Arm();
+			HarmonyStartup.PatchModAssembly(harmony);
+			GuardianPetLevel.ApplyTabletopTweaksGate(harmony);
+			PostPatchInitializer.Initialize(IsekaiContext);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			Log(ex.ToString());
+			throw;
+		}
+	}
+
+	public static void Log(string msg)
+	{
+		ModContextTTTBase isekaiContext = IsekaiContext;
+		if (isekaiContext != null)
+		{
+			isekaiContext.Logger.Log(msg);
+			return;
+		}
+		try
+		{
+			UnityModManager.Logger.Log("[IsekaiMod] " + msg);
+		}
+		catch
+		{
+		}
+	}
+
+	public static void LogError(string msg)
+	{
+		ModContextTTTBase isekaiContext = IsekaiContext;
+		if (isekaiContext != null)
+		{
 			try
 			{
-				Harmony harmony = new Harmony(modEntry.Info.Id);
-				IsekaiContext.ModEntry.OnSaveGUI = OnSaveGUI;
-				IsekaiContext.ModEntry.OnGUI = UMMSettingsUI.OnGUI;
-				harmony.PatchAll();
-				Utilities.CombatPerformanceDiagnostics.Install(harmony);
-				Utilities.FrameStallDiagnostics.Install(harmony);
-				PostPatchInitializer.Initialize(IsekaiContext);
-				return true;
+				isekaiContext.Logger.LogError(msg);
+				return;
 			}
-			catch (Exception ex)
+			catch
 			{
-				Log(ex.ToString());
-				throw ex;
 			}
 		}
+		Log("ERROR: " + msg);
+	}
 
-		public static void Log(string msg)
-		{
-			IsekaiContext.Logger.Log(msg);
-		}
+	[Conditional("DEBUG")]
+	public static void LogDebug(string msg)
+	{
+		Log(msg);
+	}
 
-		public static void LogToGeneral(string message)
-		{
-			MessageLogThread messageLogThread = LogThreadService.Instance.GetThreadsByChannelType(default(LogChannelType)).OfType<MessageLogThread>().FirstOrDefault();
-			if (messageLogThread != null)
-			{
-				CombatLogMessage newMessage = new CombatLogMessage(message, Color.white, PrefixIcon.None, new TooltipTemplateSimple(null, message));
-				((LogThreadBase)messageLogThread).AddMessage(newMessage);
-			}
-		}
-
-		[Conditional("DEBUG")]
-		public static void LogDebug(string msg)
-		{
-			IsekaiContext.Logger.Log(msg);
-		}
-
-		private static void OnSaveGUI(UnityModManager.ModEntry modEntry)
-		{
-			IsekaiContext.SaveAllSettings();
-		}
+	private static void OnSaveGUI(UnityModManager.ModEntry modEntry)
+	{
+		IsekaiContext.SaveAllSettings();
 	}
 }

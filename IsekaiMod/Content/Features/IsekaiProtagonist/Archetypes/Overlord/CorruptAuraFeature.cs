@@ -1,4 +1,4 @@
-﻿using IsekaiMod.Utilities;
+using IsekaiMod.Utilities;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.Enums;
 using Kingmaker.Enums.Damage;
@@ -9,58 +9,57 @@ using Kingmaker.Utility;
 using TabletopTweaks.Core.Utilities;
 using UnityEngine;
 
-namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Overlord
-{
-	internal class CorruptAuraFeature
-	{
-		private static readonly Sprite Icon_CorruptAura = AssetLoader.LoadInternal(Main.IsekaiContext, "Features", "ICON_AURA_CORRUPT.png");
+namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Overlord;
 
-		public static void Add()
+internal class CorruptAuraFeature
+{
+	private static readonly Sprite Icon_CorruptAura = AssetLoader.LoadInternal(Main.IsekaiContext, "Features", "ICON_AURA_CORRUPT.png");
+
+	public static void Add()
+	{
+		TTCoreExtensions.CreateToggleAuraBuffFeature("CorruptAura", "Allies within 40 feet of the Overlord has a +4 profane bonus to attack, damage, AC and saving throws. Their attacks are treated as evil for the purpose of overcoming {g|Encyclopedia:Damage_Reduction}damage reduction{/g}.", "This character has a +4 profane bonus to attack, damage, AC and saving throws. Their attacks are treated as evil for the purpose of overcoming {g|Encyclopedia:Damage_Reduction}damage reduction{/g}.", Icon_CorruptAura, BlueprintAbilityAreaEffect.TargetType.Ally, new Feet(40f), affectEnemies: false, delegate(BlueprintBuff bp)
 		{
-			TTCoreExtensions.CreateToggleAuraBuffFeature("CorruptAura", "Allies within 40 feet of the Overlord has a +4 profane bonus to attack, damage, AC and saving throws. Their attacks are treated as evil for the purpose of overcoming {g|Encyclopedia:Damage_Reduction}damage reduction{/g}.", "This character has a +4 profane bonus to attack, damage, AC and saving throws. Their attacks are treated as evil for the purpose of overcoming {g|Encyclopedia:Damage_Reduction}damage reduction{/g}.", Icon_CorruptAura, BlueprintAbilityAreaEffect.TargetType.Ally, new Feet(40f), affectEnemies: false, delegate(BlueprintBuff bp)
+			bp.AddComponent(delegate(AddStatBonus c)
 			{
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Profane;
-					c.Stat = StatType.AdditionalAttackBonus;
-					c.Value = 4;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Profane;
-					c.Stat = StatType.AdditionalDamage;
-					c.Value = 4;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Profane;
-					c.Stat = StatType.AC;
-					c.Value = 4;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Profane;
-					c.Stat = StatType.SaveFortitude;
-					c.Value = 4;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Profane;
-					c.Stat = StatType.SaveReflex;
-					c.Value = 4;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Profane;
-					c.Stat = StatType.SaveWill;
-					c.Value = 4;
-				});
-				bp.AddComponent(delegate(AddOutgoingPhysicalDamageProperty c)
-				{
-					c.AddAlignment = true;
-					c.Alignment = DamageAlignment.Evil;
-				});
+				c.Descriptor = ModifierDescriptor.Profane;
+				c.Stat = StatType.AdditionalAttackBonus;
+				c.Value = 4;
 			});
-		}
+			bp.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Profane;
+				c.Stat = StatType.AdditionalDamage;
+				c.Value = 4;
+			});
+			bp.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Profane;
+				c.Stat = StatType.AC;
+				c.Value = 4;
+			});
+			bp.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Profane;
+				c.Stat = StatType.SaveFortitude;
+				c.Value = 4;
+			});
+			bp.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Profane;
+				c.Stat = StatType.SaveReflex;
+				c.Value = 4;
+			});
+			bp.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Profane;
+				c.Stat = StatType.SaveWill;
+				c.Value = 4;
+			});
+			bp.AddComponent(delegate(AddOutgoingPhysicalDamageProperty c)
+			{
+				c.AddAlignment = true;
+				c.Alignment = DamageAlignment.Evil;
+			});
+		});
 	}
 }

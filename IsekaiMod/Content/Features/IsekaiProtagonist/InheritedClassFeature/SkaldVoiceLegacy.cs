@@ -1,4 +1,4 @@
-﻿using IsekaiMod.Content.Classes.IsekaiProtagonist;
+using IsekaiMod.Content.Classes.IsekaiProtagonist;
 using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.GodEmperor;
 using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Hero;
 using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.MartialGod;
@@ -10,65 +10,69 @@ using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Prerequisites;
 using TabletopTweaks.Core.Utilities;
 
-namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature
+namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature;
+
+internal class SkaldVoiceLegacy
 {
-	internal class SkaldVoiceLegacy
+	private static string BaseArchetypeId = "db942e7040084ea289c6be2bfeb3d0a8";
+
+	private static BlueprintArchetype BaseArchetype = BlueprintTools.GetBlueprint<BlueprintArchetype>(BaseArchetypeId);
+
+	private static BlueprintProgression prog;
+
+	public static void Configure()
 	{
-		private static string BaseArchetypeId = "db942e7040084ea289c6be2bfeb3d0a8";
-
-		private static BlueprintArchetype BaseArchetype = BlueprintTools.GetBlueprint<BlueprintArchetype>(BaseArchetypeId);
-
-		private static BlueprintProgression prog;
-
-		public static void Configure()
+		prog = Helpers.CreateBlueprint(Main.IsekaiContext, "SkaldVoiceLegacy", delegate(BlueprintProgression bp)
 		{
-			prog = Helpers.CreateBlueprint(Main.IsekaiContext, "SkaldVoiceLegacy", delegate(BlueprintProgression bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Skald Legacy - The Voice");
-				bp.SetDescription(Main.IsekaiContext, "You had a hidden passion for karaoke and were devastated seeing that no such thing exist in Golarion. \nAs an ever - ready person you decide to train nonetheless since killing demonic armies only with your voice would show your talent to the entire world.");
-				bp.GiveFeaturesForPreviousLevels = true;
-			});
-			LegacySelection.RegisterForFeat(prog);
-			LegacySelection.Register(prog);
-			MartialGodLegacySelection.Register(prog);
-			GodEmperorLegacySelection.Prohibit(prog);
-			HeroLegacySelection.Register(prog);
-			MastermindLegacySelection.Prohibit(prog);
-			OverlordLegacySelection.Prohibit(prog);
+			bp.SetName(Main.IsekaiContext, "Skald Legacy - The Voice");
+			bp.SetDescription(Main.IsekaiContext, "You had a hidden passion for karaoke and were devastated seeing that no such thing exist in Golarion. \nAs an ever - ready person you decide to train nonetheless since killing demonic armies only with your voice would show your talent to the entire world.");
+			bp.GiveFeaturesForPreviousLevels = true;
+		});
+		LegacySelection.RegisterForFeat(prog);
+		LegacySelection.Register(prog);
+		MartialGodLegacySelection.Register(prog);
+		GodEmperorLegacySelection.Prohibit(prog);
+		HeroLegacySelection.Register(prog);
+		MastermindLegacySelection.Prohibit(prog);
+		OverlordLegacySelection.Prohibit(prog);
+	}
+
+	public static void PatchProgression()
+	{
+		if (prog == null)
+		{
+			return;
 		}
-
-		public static void PatchProgression()
+		if (BaseArchetype == null)
 		{
-			if (prog == null)
+			BaseArchetype = BlueprintTools.GetBlueprint<BlueprintArchetype>(BaseArchetypeId);
+			if (BaseArchetype == null)
 			{
 				return;
 			}
-			if (BaseArchetype == null)
-			{
-				BaseArchetype = BlueprintTools.GetBlueprint<BlueprintArchetype>(BaseArchetypeId);
-				if (BaseArchetype == null)
-				{
-					return;
-				}
-			}
-			prog = PatchTools.PatchClassProgressionBasedonRefArchetype(prog, ClassTools.Classes.SkaldClass, BaseArchetype, null);
-			BlueprintCharacterClassReference skaldClass = ClassTools.ClassReferences.SkaldClass;
-			PatchTools.PatchProgressionFeaturesBasedOnReferenceArchetype(IsekaiProtagonistClass.GetReference(), skaldClass, BaseArchetype);
-			prog.AddPrerequisite(delegate(PrerequisiteNoClassLevel c)
-			{
-				c.m_CharacterClass = ClassTools.Classes.SkaldClass.ToReference<BlueprintCharacterClassReference>();
-			});
-			prog.AddPrerequisiteNoFeature(SkaldSilverTongueLegacy.Get());
-			prog.AddPrerequisiteNoFeature(SkaldBaseLegacy.Get());
 		}
-
-		public static BlueprintProgression Get()
+		prog = PatchTools.PatchClassProgressionBasedonRefArchetype(prog, ClassTools.Classes.SkaldClass, BaseArchetype, null);
+		BlueprintCharacterClassReference skaldClass = ClassTools.ClassReferences.SkaldClass;
+		BlueprintCharacterClassReference reference = IsekaiProtagonistClass.GetReference();
+		PatchTools.PatchProgressionFeaturesBasedOnReferenceArchetype(reference, skaldClass, BaseArchetype);
+		PatchTools.PatchProgressionFeaturesBasedOnReferenceClass(prog, reference, skaldClass);
+		prog.AddPrerequisite(delegate(PrerequisiteNoClassLevel c)
 		{
-			if (prog != null)
-			{
-				return prog;
-			}
-			return BlueprintTools.GetModBlueprint<BlueprintProgression>(Main.IsekaiContext, "SkaldVoiceLegacy");
+			c.m_CharacterClass = ClassTools.Classes.SkaldClass.ToReference<BlueprintCharacterClassReference>();
+		});
+		prog.AddPrerequisiteNoFeature(BardLegacy.Get());
+		prog.AddPrerequisiteNoFeature(BarbarianLegacy.Get());
+		prog.AddPrerequisiteNoFeature(SkaldSilverTongueLegacy.Get());
+		prog.AddPrerequisiteNoFeature(SkaldBaseLegacy.Get());
+		prog.AddPrerequisiteNoFeature(BloodragerChimeraLegacy.Get());
+	}
+
+	public static BlueprintProgression Get()
+	{
+		if (prog != null)
+		{
+			return prog;
 		}
+		return BlueprintTools.GetModBlueprint<BlueprintProgression>(Main.IsekaiContext, "SkaldVoiceLegacy");
 	}
 }

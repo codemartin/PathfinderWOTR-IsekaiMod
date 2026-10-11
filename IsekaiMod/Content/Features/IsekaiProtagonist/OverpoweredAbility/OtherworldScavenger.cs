@@ -1,9 +1,7 @@
-﻿using HarmonyLib;
+using IsekaiMod.Config;
 using IsekaiMod.Utilities;
-using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Selection;
-using Kingmaker.Blueprints.Classes.Spells;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.Enums;
@@ -12,69 +10,56 @@ using Kingmaker.UnitLogic.FactLogic;
 using TabletopTweaks.Core.Utilities;
 using UnityEngine;
 
-namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
-{
-	internal class OtherworldScavenger
-	{
-		private static readonly Sprite Icon_Scavenger = AssetLoader.LoadInternal(Main.IsekaiContext, "Features", "ICON_COSMIC_COIN.png");
+namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility;
 
-		public static void Add()
+internal class OtherworldScavenger
+{
+	private static readonly Sprite Icon_Scavenger = AssetLoader.LoadInternal(Main.IsekaiContext, "Features", "ICON_COSMIC_COIN.png");
+
+	private const string BasicFeatSelection = "247a4068296e8be42890143f451b4b45";
+
+	public static void Add()
+	{
+		BlueprintFeature feature = Helpers.CreateBlueprint(Main.IsekaiContext, "OtherworldScavengerFeature", delegate(BlueprintFeature bp)
 		{
-			BlueprintFeature blueprintFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "OtherworldScavengerFeature", delegate(BlueprintFeature bp)
+			bp.SetName(Main.IsekaiContext, "Otherworld Scavenger");
+			bp.SetDescription(Main.IsekaiContext, "Whether caught in the burning ashes of Kenabres or stranded in desolate icy wastes, you adapt with uncanny resourcefulness.\nBenefit: You gain a +4 competence bonus to Perception, Lore (Nature), and Athletics checks, Damage Reduction 5/-, and complete immunity to the fatigued and exhausted conditions.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Scavenger;
+			bp.Ranks = 1;
+			bp.IsClassFeature = true;
+			bp.Groups = new FeatureGroup[1] { FeatureGroup.Feat };
+			bp.AddComponent(delegate(AddStatBonus c)
 			{
-				bp.SetName(Main.IsekaiContext, "Otherworld Scavenger");
-				bp.SetDescription(Main.IsekaiContext, "Whether caught in the burning ashes of Kenabres or stranded in desolate icy wastes, you adapt with uncanny resourcefulness.\nBenefit: You gain a +4 competence bonus to Perception, Lore (Nature), and Athletics checks, Damage Reduction 5/-, and complete immunity to the fatigued and exhausted conditions.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Scavenger;
-				bp.Ranks = 1;
-				bp.IsClassFeature = true;
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Competence;
-					c.Stat = StatType.SkillPerception;
-					c.Value = 4;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Competence;
-					c.Stat = StatType.SkillLoreNature;
-					c.Value = 4;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Competence;
-					c.Stat = StatType.SkillAthletics;
-					c.Value = 4;
-				});
-				bp.AddComponent(delegate(AddDamageResistancePhysical c)
-				{
-					c.Value = 5;
-				});
-				bp.AddComponent(delegate(AddConditionImmunity c)
-				{
-					c.Condition = UnitCondition.Fatigued;
-				});
-				bp.AddComponent(delegate(AddConditionImmunity c)
-				{
-					c.Condition = UnitCondition.Exhausted;
-				});
-				// The rage fatigue is a buff (Fatigued, e6f2fc5d) that adds the condition; the condition immunities above
-				// leave that buff on the character, so block the buffs themselves the way the game's own immunity does.
-				bp.AddComponent(delegate(BuffDescriptorImmunity c)
-				{
-					c.Descriptor = SpellDescriptor.Fatigue | SpellDescriptor.Exhausted;
-				});
-				bp.AddComponent(delegate(SpellImmunityToSpellDescriptor c)
-				{
-					c.Descriptor = SpellDescriptor.Fatigue | SpellDescriptor.Exhausted;
-				});
+				c.Descriptor = ModifierDescriptor.Competence;
+				c.Stat = StatType.SkillPerception;
+				c.Value = 4;
 			});
-			BlueprintFeatureSelection modBlueprint = BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "IsekaiBonusFeatSelection");
-			if (modBlueprint != null)
+			bp.AddComponent(delegate(AddStatBonus c)
 			{
-				modBlueprint.m_Features = modBlueprint.m_Features.AddToArray(blueprintFeature.ToReference<BlueprintFeatureReference>());
-				modBlueprint.m_AllFeatures = modBlueprint.m_AllFeatures.AddToArray(blueprintFeature.ToReference<BlueprintFeatureReference>());
-			}
-			FeatTools.Selections.BasicFeatSelection.AddToSelection(blueprintFeature);
-		}
+				c.Descriptor = ModifierDescriptor.Competence;
+				c.Stat = StatType.SkillLoreNature;
+				c.Value = 4;
+			});
+			bp.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Competence;
+				c.Stat = StatType.SkillAthletics;
+				c.Value = 4;
+			});
+			bp.AddComponent(delegate(AddDamageResistancePhysical c)
+			{
+				c.Value = 5;
+			});
+			bp.AddComponent(delegate(AddConditionImmunity c)
+			{
+				c.Condition = UnitCondition.Fatigued;
+			});
+			bp.AddComponent(delegate(AddConditionImmunity c)
+			{
+				c.Condition = UnitCondition.Exhausted;
+			});
+		});
+		BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "IsekaiBonusFeatSelection")?.AddToSelection(feature);
+		ContentOffering.OfferInSelection(BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("247a4068296e8be42890143f451b4b45"), feature, OfferedContent.IsekaiProtagonist);
 	}
 }

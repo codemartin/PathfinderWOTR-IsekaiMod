@@ -1,56 +1,38 @@
-﻿using IsekaiMod.Utilities;
-using Kingmaker.Blueprints.Facts;
-using Kingmaker.EntitySystem.Stats;
-using Kingmaker.Enums;
-using Kingmaker.Enums.Damage;
-using Kingmaker.UnitLogic.Buffs.Blueprints;
-using Kingmaker.UnitLogic.FactLogic;
+using IsekaiMod.Utilities;
+using Kingmaker.Blueprints;
+using Kingmaker.DialogSystem.Blueprints;
 using TabletopTweaks.Core.Utilities;
-using UnityEngine;
 
-namespace IsekaiMod.Content.Dialogue
+namespace IsekaiMod.Content.Dialogue;
+
+internal class IsekaiFinnean
 {
-	internal class IsekaiFinnean
+	public static void Add()
 	{
-		public static BlueprintBuff FinneanAwakenedEdgeBuff;
+		AddExoticFormsDialogue();
+	}
 
-		public static void Add()
+	private static void AddExoticFormsDialogue()
+	{
+		BlueprintAnswersList blueprint = BlueprintTools.GetBlueprint<BlueprintAnswersList>("615ef80243cfc184ba42286395880b0e");
+		BlueprintUnitReference blueprintReference = BlueprintTools.GetBlueprintReference<BlueprintUnitReference>("ea8034769ab7d584e97b5227cbc03296");
+		if (blueprint == null)
 		{
-			CreateBuffs();
+			Main.IsekaiContext.Logger.LogWarning("IsekaiFinnean: AnswersList_0003 was not found, skipping.");
+			return;
 		}
-
-		public static void CreateBuffs()
+		GraftedAnswer.Named("IsekaiDialogueFinnean").At(DialogueBeats.FinneanHub).Configure(delegate(BlueprintAnswer bp)
 		{
-			if (FinneanAwakenedEdgeBuff != null)
+			bp.RequireIsekaiClass();
+		})
+			.Says("(Isekai Protagonist) \"A sentient soul bound within an ever-shifting armament? You are essentially an enchanted legendary relic. Can you take the shape of other exotic weapon forms?\"")
+			.Configure(delegate(BlueprintAnswer bp)
 			{
-				return;
-			}
-			Sprite iconCoin = AssetLoader.LoadInternal(Main.IsekaiContext, "Features", "ICON_COSMIC_COIN.png");
-			FinneanAwakenedEdgeBuff = TTCoreExtensions.CreateBuff("FinneanAwakenedEdgeBuff", delegate(BlueprintBuff bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Finnean's Awakened Resonance");
-				bp.SetDescription(Main.IsekaiContext, "Resonating with the soul of an Otherworlder, Finnean hums with pure spectral luminescence. Grants a +1 competence bonus to attack rolls and weapon damage, and causes weapon attacks to strike incorporeal foes as though possessing Ghost Touch.");
-				((BlueprintUnitFact)bp).m_Icon = iconCoin;
-				bp.m_Flags = BlueprintBuff.Flags.StayOnDeath;
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Competence;
-					c.Stat = StatType.AdditionalAttackBonus;
-					c.Value = 1;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Competence;
-					c.Stat = StatType.AdditionalDamage;
-					c.Value = 1;
-				});
-				bp.AddComponent(delegate(AddOutgoingPhysicalDamageProperty c)
-				{
-					c.AffectAnyPhysicalDamage = true;
-					c.AddReality = true;
-					c.Reality = DamageRealityType.Ghost;
-				});
-			});
-		}
+				bp.RequirePlotArmor();
+			})
+			.RepliedToBy("IsekaiDialogueFinneanReply", "\"Exotic forms? Well, I try my best! Swords, bows, polearms... you name it, and I'll do everything I can to keep you alive out there, partner!\"")
+			.SpokenWithPortraitOf(blueprintReference)
+			.ThenBackToTheList()
+			.Graft();
 	}
 }

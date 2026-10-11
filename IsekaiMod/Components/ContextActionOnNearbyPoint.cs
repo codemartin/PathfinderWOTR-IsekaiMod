@@ -1,48 +1,47 @@
-﻿using Kingmaker.Blueprints.JsonSystem;
+using IsekaiMod.Utilities;
+using Kingmaker.Blueprints.JsonSystem;
 using Kingmaker.ElementsSystem;
-using Kingmaker.UnitLogic.Mechanics.Actions;
 using Kingmaker.View;
 using Pathfinding;
 using UnityEngine;
 
-namespace IsekaiMod.Components
+namespace IsekaiMod.Components;
+
+[TypeId("bc1d7430da024608b6e623c70b380dff")]
+public class ContextActionOnNearbyPoint : IsekaiContextAction
 {
-	[TypeId("bc1d7430da024608b6e623c70b380dff")]
-	public class ContextActionOnNearbyPoint : ContextAction
+	public ActionList Actions;
+
+	public override string GetCaption()
 	{
-		public ActionList Actions;
+		return "Run a context action nearby target point";
+	}
 
-		public override string GetCaption()
+	public override string GetDescription()
+	{
+		return "Point nearby will be action target";
+	}
+
+	protected override void RunSafely()
+	{
+		if (Actions?.Actions == null || Actions.Actions.Length == 0)
 		{
-			return "Run a context action nearby target point";
+			return;
 		}
-
-		public override string GetDescription()
+		int num = Actions.Actions.Length;
+		Vector3 vector = base.Context.MainTarget.Point;
+		NNInfo nearestNode = ObstacleAnalyzer.GetNearestNode(vector);
+		if (nearestNode.node != null)
 		{
-			return "Point nearby will be action target";
+			vector = nearestNode.position;
 		}
-
-		public override void RunAction()
+		FreePlaceSelector.PlaceSpawnPlaces(num, 1f, vector);
+		for (int i = 0; i < num; i++)
 		{
-			if (base.Context?.MainTarget == null || Actions?.Actions == null || Actions.Actions.Length == 0)
+			vector = FreePlaceSelector.GetRelaxedPosition(i, projectOnGround: true);
+			using (base.Context.GetDataScope(vector))
 			{
-				return;
-			}
-			int num = Actions.Actions.Length;
-			Vector3 vector = base.Context.MainTarget.Point;
-			NNInfo nearestNode = ObstacleAnalyzer.GetNearestNode(vector);
-			if (nearestNode.node != null)
-			{
-				vector = nearestNode.position;
-			}
-			FreePlaceSelector.PlaceSpawnPlaces(num, 1f, vector);
-			for (int i = 0; i < num; i++)
-			{
-				vector = FreePlaceSelector.GetRelaxedPosition(i, projectOnGround: true);
-				using (base.Context.GetDataScope(vector))
-				{
-					Actions.Actions[i]?.RunAction();
-				}
+				Actions.Actions[i]?.RunAction();
 			}
 		}
 	}

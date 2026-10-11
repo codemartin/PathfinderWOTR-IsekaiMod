@@ -1,9 +1,12 @@
-﻿using IsekaiMod.Utilities;
+using IsekaiMod.Components;
+using IsekaiMod.Utilities;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Prerequisites;
 using Kingmaker.Blueprints.Facts;
+using Kingmaker.Designers.EventConditionActionSystem.Actions;
 using Kingmaker.Enums;
 using Kingmaker.RuleSystem;
+using Kingmaker.UnitLogic.Abilities.Blueprints;
 using Kingmaker.UnitLogic.Buffs.Blueprints;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Mechanics.Actions;
@@ -11,23 +14,30 @@ using Kingmaker.UnitLogic.Mechanics.Components;
 using TabletopTweaks.Core.Utilities;
 using UnityEngine;
 
-namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
-{
-	internal class VampiricDrain
-	{
-		private static readonly Sprite Icon_VampiricTouch = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintBuff>("0dff842f06edace43baf8a2f44207045")).m_Icon;
+namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower;
 
-		public static void Add()
+internal class VampiricDrain
+{
+	private static readonly Sprite Icon_VampiricTouch = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintBuff>("0dff842f06edace43baf8a2f44207045"))?.m_Icon ?? ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintAbility>("6cbb040023868574b992677885390f92"))?.m_Icon;
+
+	public static void Add()
+	{
+		SpecialPowerSelection.AddToSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "VampiricDrain", delegate(BlueprintFeature bp)
 		{
-			SpecialPowerSelection.AddToDefenseSelection(Helpers.CreateBlueprint(Main.IsekaiContext, "VampiricDrain", delegate(BlueprintFeature bp)
+			bp.SetName(Main.IsekaiContext, "Special Power - Vampiric Drain");
+			bp.SetDescription(Main.IsekaiContext, "Your attacks thirst for the vital essence of your foes. \nBenefit: Whenever you strike a living creature with a weapon attack, you drain their vitality, healing for 1d6 plus a quarter of your character level in hit points.\nRequires character level 5.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_VampiricTouch;
+			bp.AddComponent(delegate(AddInitiatorAttackWithWeaponTrigger c)
 			{
-				bp.SetName(Main.IsekaiContext, "Special Power - Vampiric Drain");
-				bp.SetDescription(Main.IsekaiContext, "Your attacks thirst for the vital essence of your foes. \nBenefit: Whenever you strike a living creature with a weapon attack, you drain their vitality, healing for 1d6 plus half your character level in hit points.\nRequires character level 5.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_VampiricTouch;
-				bp.AddComponent(delegate(AddInitiatorAttackWithWeaponTrigger c)
+				c.OnlyHit = true;
+				c.Action = ActionFlow.DoSingle(delegate(Conditional cond)
 				{
-					c.OnlyHit = true;
-					c.Action = Helpers.CreateActionList(new ContextActionOnContextCaster
+					cond.ConditionsChecker = ActionFlow.IfSingle(delegate(ContextConditionTargetIsLiving chk)
+					{
+						chk.Not = false;
+					});
+					cond.IfFalse = ActionFlow.DoNothing();
+					cond.IfTrue = Helpers.CreateActionList(new ContextActionOnContextCaster
 					{
 						Actions = Helpers.CreateActionList(new ContextActionHealTarget
 						{
@@ -40,17 +50,18 @@ namespace IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower
 						})
 					});
 				});
-				bp.AddComponent(delegate(ContextRankConfig c)
-				{
-					c.m_Type = AbilityRankType.Default;
-					c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
-					c.m_Progression = ContextRankProgression.Div2;
-				});
-				bp.AddComponent(delegate(PrerequisiteCharacterLevel c)
-				{
-					c.Level = 9;
-				});
-			}));
-		}
+			});
+			bp.AddComponent(delegate(ContextRankConfig c)
+			{
+				c.m_Type = AbilityRankType.Default;
+				c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
+				c.m_Progression = ContextRankProgression.DivStep;
+				c.m_StepLevel = 4;
+			});
+			bp.AddComponent(delegate(PrerequisiteCharacterLevel c)
+			{
+				c.Level = 5;
+			});
+		}));
 	}
 }

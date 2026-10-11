@@ -1,8 +1,7 @@
-﻿using IsekaiMod.Utilities;
-using Kingmaker.Blueprints;
+using IsekaiMod.Config;
+using IsekaiMod.Utilities;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Facts;
-using Kingmaker.Designers.Mechanics.Buffs;
 using Kingmaker.Designers.Mechanics.Facts;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.Enums;
@@ -12,67 +11,68 @@ using Kingmaker.UnitLogic.Mechanics.Components;
 using TabletopTweaks.Core.Utilities;
 using UnityEngine;
 
-namespace IsekaiMod.Content.Heritages
+namespace IsekaiMod.Content.Heritages;
+
+internal class IsekaiHighElfHeritage
 {
-	internal class IsekaiHighElfHeritage
+	private static readonly Sprite Icon_TricksterCharmWhatever = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintAbility>("943328ac5bc8a734e85b5b2af3ae2bf7"))?.m_Icon;
+
+	public static void Add()
 	{
-		private static readonly BlueprintFeature DestinyBeyondBirthMythicFeat = BlueprintTools.GetBlueprint<BlueprintFeature>("325f078c584318849bfe3da9ea245b9d");
-
-		private static readonly Sprite Icon_TricksterCharmWhatever = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintAbility>("943328ac5bc8a734e85b5b2af3ae2bf7")).m_Icon;
-
-		public static void Add()
+		BlueprintFeature feature = Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiHighElfHeritage", delegate(BlueprintFeature bp)
 		{
-			BlueprintFeature feature = Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiHighElfHeritage", delegate(BlueprintFeature bp)
+			bp.SetName(Main.IsekaiContext, "Isekai High Elf");
+			bp.SetDescription(Main.IsekaiContext, "Otherworldly entities who are reincarnated into the world of Golarion as a High Elf have both extreme beauty and power. They are a refined and cultured reflection of the elven race.\nThe Isekai High Elf has a +4 racial {g|Encyclopedia:Bonus}bonus{/g} to {g|Encyclopedia:Wisdom}Wisdom{/g} and a +2 racial bonus to {g|Encyclopedia:Dexterity}Dexterity{/g} and {g|Encyclopedia:Intelligence}Intelligence{/g}, which replace the elf's ability score adjustments, and a +2 racial bonus on Knowledge (Arcana) and Use Magic Device checks. They have spell resistance equal to 10 + their character level.\nArcane Reserves: they can cast 1 more spell per day of each spell level from 1st to 9th.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_TricksterCharmWhatever;
+			bp.AddComponent(delegate(AddStatBonus c)
 			{
-				bp.SetName(Main.IsekaiContext, "Isekai High Elf");
-				bp.SetDescription(Main.IsekaiContext, "Otherworldly entities who are reincarnated into the world of Golarion as a High Elf have both extreme beauty and power. They are a refined and cultured reflection of the elven race.\nThe Isekai High Elf has a +4 racial {g|Encyclopedia:Bonus}bonus{/g} to {g|Encyclopedia:Wisdom}Wisdom{/g}, a +2 racial bonus to {g|Encyclopedia:Dexterity}Dexterity{/g} and {g|Encyclopedia:Intelligence}Intelligence{/g}, and a -2 penalty to Constitution. They have spell resistance equal to 10 + their character level. They can also cast 4 more spells per day for each spell rank.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_TricksterCharmWhatever;
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Racial;
-					c.Stat = StatType.Dexterity;
-					c.Value = 2;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Racial;
-					c.Stat = StatType.Intelligence;
-					c.Value = 2;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Racial;
-					c.Stat = StatType.Wisdom;
-					c.Value = 4;
-				});
-				bp.AddComponent(delegate(AddStatBonusIfHasFact c)
-				{
-					c.Descriptor = ModifierDescriptor.Racial;
-					c.Stat = StatType.Constitution;
-					c.Value = -2;
-					c.InvertCondition = true;
-					c.m_CheckedFacts = new BlueprintUnitFactReference[1] { DestinyBeyondBirthMythicFeat.ToReference<BlueprintUnitFactReference>() };
-				});
-				bp.AddComponent(delegate(AddSpellResistance c)
-				{
-					c.Value = Values.CreateContextRankValue(AbilityRankType.StatBonus);
-				});
-				bp.AddComponent(delegate(ContextRankConfig c)
-				{
-					c.m_Type = AbilityRankType.StatBonus;
-					c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
-					c.m_Progression = ContextRankProgression.BonusValue;
-					c.m_StepLevel = 10;
-				});
-				bp.AddComponent(delegate(AddSpellsPerDay c)
-				{
-					c.Amount = 4;
-					c.Levels = new int[10] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-				});
-				bp.Groups = new FeatureGroup[0];
-				bp.ReapplyOnLevelUp = true;
+				c.Descriptor = ModifierDescriptor.Racial;
+				c.Stat = StatType.Dexterity;
+				c.Value = 2;
 			});
-			FeatTools.Selections.ElvenHeritageSelection.AddToSelection(feature);
-		}
+			bp.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Racial;
+				c.Stat = StatType.Intelligence;
+				c.Value = 2;
+			});
+			bp.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Racial;
+				c.Stat = StatType.Wisdom;
+				c.Value = 4;
+			});
+			bp.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Racial;
+				c.Stat = StatType.SkillKnowledgeArcana;
+				c.Value = 2;
+			});
+			bp.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Racial;
+				c.Stat = StatType.SkillUseMagicDevice;
+				c.Value = 2;
+			});
+			bp.AddComponent(delegate(AddSpellResistance c)
+			{
+				c.Value = Values.CreateContextRankValue(AbilityRankType.StatBonus);
+			});
+			bp.AddComponent(delegate(ContextRankConfig c)
+			{
+				c.m_Type = AbilityRankType.StatBonus;
+				c.m_BaseValueType = ContextRankBaseValueType.CharacterLevel;
+				c.m_Progression = ContextRankProgression.BonusValue;
+				c.m_StepLevel = 10;
+			});
+			bp.AddComponent(delegate(AddSpellsPerDay c)
+			{
+				c.Amount = 1;
+				c.Levels = new int[9] { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+			});
+			bp.Groups = new FeatureGroup[0];
+			bp.ReapplyOnLevelUp = true;
+		});
+		ContentOffering.OfferInSelection(FeatTools.Selections.ElvenHeritageSelection, feature, OfferedContent.IsekaiHeritages);
 	}
 }

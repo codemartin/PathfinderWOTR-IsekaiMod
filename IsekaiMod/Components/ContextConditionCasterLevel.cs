@@ -1,27 +1,26 @@
-﻿using Kingmaker.Blueprints.JsonSystem;
+using IsekaiMod.Utilities;
+using Kingmaker.Blueprints.JsonSystem;
 using Kingmaker.EntitySystem.Entities;
-using Kingmaker.UnitLogic.Mechanics.Conditions;
 
-namespace IsekaiMod.Components
+namespace IsekaiMod.Components;
+
+[TypeId("9174128509ca4eb4a99182301cde9941")]
+public class ContextConditionCasterLevel : IsekaiContextCondition
 {
-	[TypeId("9174128509ca4eb4a99182301cde9941")]
-	public class ContextConditionCasterLevel : ContextCondition
+	public int MinLevel = 1;
+
+	public override string GetConditionCaption()
 	{
-		public int MinLevel = 1;
+		return $"Caster character level >= {MinLevel}";
+	}
 
-		public override string GetConditionCaption()
+	protected override bool CheckSafely()
+	{
+		UnitEntityData unitEntityData = base.Context?.MaybeCaster;
+		if (unitEntityData == null)
 		{
-			return $"Caster character level >= {MinLevel}";
+			return false;
 		}
-
-		public override bool CheckCondition()
-		{
-			UnitEntityData unitEntityData = base.Context?.MaybeCaster;
-			if (unitEntityData == null)
-			{
-				return false;
-			}
-			return (unitEntityData.Progression?.CharacterLevel ?? 1) >= MinLevel;
-		}
+		return (unitEntityData.Progression?.CharacterLevel ?? 1) >= MinLevel;
 	}
 }

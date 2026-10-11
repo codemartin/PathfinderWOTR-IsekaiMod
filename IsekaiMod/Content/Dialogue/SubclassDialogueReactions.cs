@@ -1,7 +1,10 @@
-﻿using System.Collections.Generic;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using IsekaiMod.Utilities;
-using Kingmaker.Blueprints;
 using Kingmaker.AreaLogic.Etudes;
+using Kingmaker.Blueprints;
+using Kingmaker.Blueprints.Area;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Designers.EventConditionActionSystem.Actions;
 using Kingmaker.Designers.EventConditionActionSystem.Conditions;
@@ -9,1207 +12,954 @@ using Kingmaker.Designers.EventConditionActionSystem.Evaluators;
 using Kingmaker.DialogSystem;
 using Kingmaker.DialogSystem.Blueprints;
 using Kingmaker.ElementsSystem;
+using Kingmaker.UnitLogic.Alignments;
 using Kingmaker.UnitLogic.Mechanics.Actions;
 using TabletopTweaks.Core.Utilities;
 
-namespace IsekaiMod.Content.Dialogue
+namespace IsekaiMod.Content.Dialogue;
+
+internal class SubclassDialogueReactions
 {
-	internal class SubclassDialogueReactions
+	internal const string GeneralAnswerGate = "IsekaiProficiencies";
+
+	internal static string GateFactFor(string proficiencyFactName)
 	{
-		private static BlueprintFeature GetRequiredDialogueFact(string factName)
+		if (!(proficiencyFactName == "IsekaiProficiencies"))
 		{
-			if (factName == "IsekaiProficiencies")
-			{
-				return BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "PlotArmor") ?? BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "IsekaiProficiencies");
-			}
-			return BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, factName);
+			return proficiencyFactName;
 		}
+		return "PlotArmor";
+	}
 
-		public static void Add()
+	private static Condition AnswerGate(string proficiencyFactName)
+	{
+		if (GateFactFor(proficiencyFactName) == "PlotArmor")
 		{
-			AddHulrunReactions();
-			AddMinaghoReactions();
-			AddDefendersHeartReactions();
-			AddWelcomeDialogueReactions();
-			AddMeetCameliaReactions();
-			AddMeetSeelahAneviaReactions();
-			AddMeetLannReactions();
-			AddWardstoneMythicReactions();
-			AddDesnaTempleNatureCommunion();
-			AddQueenGalfreyWarCampReactions();
-			AddRegillHellknightReactions();
-			AddZachariusLostChapelReactions();
-			AddDrezenCitadelProclamationReactions();
-			AddAreeluLabLoopTruthReactions();
-			AddBaphometConfrontationReactions();
-			AddNocticulaAudienceReactions();
-			AddDivineSummitGoddessesReactions();
-			AddThresholdGrandFinalEndingReactions();
+			return ExtensionMethods.PlotArmorCondition();
 		}
-
-		private static void AddHulrunReactions()
+		BlueprintFeature modBlueprint = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, proficiencyFactName);
+		if (modBlueprint == null)
 		{
-			BlueprintAnswersList answersList = BlueprintTools.GetBlueprint<BlueprintAnswersList>("e27807b731f3b1a4eb19c1a04fdfcf53");
-			BlueprintCue dontRememberCue = BlueprintTools.GetBlueprint<BlueprintCue>("ba9c82193a32275408973a8aebdb3a6d");
-			// The vanilla "I don't remember" answer starts this etude; the Aeon Kenabres flashback in chapter 5 reads it
-			// to replay the choice. The archetype answers rejoin that path, so they start it too.
-			BlueprintEtude dontRememberEtude = BlueprintTools.GetBlueprint<BlueprintEtude>("d6c6161d2cf0ac44786f9df67fca5ce9");
-			if (answersList != null && dontRememberCue != null)
+			return null;
+		}
+		return new HasFact
+		{
+			Unit = new PlayerCharacter(),
+			m_Fact = modBlueprint.ToReference<BlueprintUnitFactReference>()
+		};
+	}
+
+	public static void Add()
+	{
+		AddHulrunReactions();
+		AddMinaghoReactions();
+		AddDefendersHeartReactions();
+		AddWelcomeDialogueReactions();
+		AddMeetCameliaReactions();
+		AddMeetSeelahAneviaReactions();
+		AddMeetLannReactions();
+		AddWardstoneMythicReactions();
+		AddDesnaTempleNatureCommunion();
+		AddQueenGalfreyWarCampReactions();
+		AddRegillHellknightReactions();
+		AddZachariusLostChapelReactions();
+		AddDrezenCitadelProclamationReactions();
+		AddAreeluLabLoopTruthReactions();
+		AddBaphometConfrontationReactions();
+		AddNocticulaAudienceReactions();
+		AddDivineSummitGoddessesReactions();
+		AddThresholdGrandFinalEndingReactions();
+		AddLepersSmileBookEventReactions();
+		AddAngelMythicBookEventReactions();
+	}
+
+	private static void AddHulrunReactions()
+	{
+		BlueprintCue dontRememberCue = BlueprintTools.GetBlueprint<BlueprintCue>("ba9c82193a32275408973a8aebdb3a6d");
+		BlueprintEtude dontRememberEtude = BlueprintTools.GetBlueprint<BlueprintEtude>("d6c6161d2cf0ac44786f9df67fca5ce9");
+		BlueprintUnit hulrunUnit = BlueprintTools.GetBlueprint<BlueprintUnit>("77fbcde261cd4396bba5d9fe0b2c57c6");
+		if (dontRememberCue != null)
+		{
+			AddArchetypeHulrunAnswer("IsekaiHulrunPhantomBlade", "(Martial God) \"Lower that halberd, Prelate. I just woke up in this square, and waving polearms at recovering patients is hardly proper festival etiquette.\"", "{n}Hulrun's brows knit at your flippant tone.{/n} \"Woke up here? You were carried into this square half dead, stranger. Where were you before that? Who brought you to Kenabres?\" {n}You reach for the answer, but your memory gives you nothing.{/n}", "PhantomBladeProficiencies");
+			AddArchetypeHulrunAnswer("IsekaiHulrunGodEmperor", "(God Emperor) \"You speak to an emperor whose ascension will eclipse the heavens. Lower your halberd before your sovereign, Prelate, and remember your place.\"", "{n}Hulrun stumbles backward half a pace as a radiant, suffocating pressure radiates from your mantle.{/n} \"What madness is this... an emperor? In Kenabres? Then name your realm, your Majesty.\" {n}You open your mouth, but no name comes to you.{/n}", "GodEmperorProficiencies");
+			AddArchetypeHulrunAnswer("IsekaiHulrunOverlord", "(Overlord) \"You dare interrogate an Overlord, mortal? Be grateful my unfathomable mercy permits your insignificant spark of life to continue burning.\"", "{n}Hulrun shudders as a cold, necrotic chill sweeps across the stones of the square.{/n} \"Such insolence! By Iomedae's light, you speak like a tyrant from some forgotten age. Which land do you claim to rule?\" {n}The answer should be obvious, yet your memory offers only fog.{/n}", "OverlordProficiencies");
+			AddArchetypeHulrunAnswer("IsekaiHulrunDevourer", "(Slime) \"Easy with the polearm, sir! I just woke up starving after that terrible carriage accident. I came to the square looking for festival skewers and pastries, not an inquisition.\"", "{n}Hulrun glares at you with stern suspicion.{/n} \"Starving? You were dragged in with a wound in your chest and you think of pastries? A carriage, you say. Coming from where?\" {n}You try to recall the road, but nothing comes.{/n}", "DevourerProficiencies");
+			AddArchetypeHulrunAnswer("IsekaiHulrunShadowMonarch", "(Shadow Monarch) \"My pulse is steady and my memory is clearing, Prelate. The only shadows following me are the ones your festival banners cast on the cobblestones.\"", "{n}The shadows beneath Hulrun's boots seem to go still as you meet his gaze, and the veteran pauses.{/n} \"You speak quietly, yet there is an unnatural coldness in your eyes. Clearing, is it? Then tell me where you came from.\" {n}You search for the answer, but it slips away.{/n}", "ShadowMonarchProficiencies");
+			AddArchetypeHulrunAnswer("IsekaiHulrunHero", "(Hero) \"I came here to stand with the protectors of this city, not to cause trouble. Lower your halberd, Prelate. We should be celebrating with the townsfolk, not drawing steel.\"", "{n}Hulrun sighs heavily, lowering his halberd by a fraction of an inch.{/n} \"Idealistic words. Every young recruit arrives in Kenabres believing courage alone will win this crusade. Which order sent you, then? Who is your commander?\" {n}You try to answer, but the names will not come.{/n}", "HeroProficiencies");
+			AddArchetypeHulrunAnswer("IsekaiHulrunMastermind", "(Mastermind) \"Interrogating a concussed patient yields useless data, Prelate Hulrun. You have glanced at the city gates three times in a minute; your focus is wasted on an unarmed stranger.\"", "{n}Hulrun glares at you with suspicion, clearly unsettled by your clinical deduction.{/n} \"Deductions and statistics? You speak like an aloof scholar from some eastern academy. Which academy, then? And what is your name?\" {n}For all your clarity, you find no memory of either.{/n}", "MastermindProficiencies");
+		}
+		void AddArchetypeHulrunAnswer(string name, string text, string cueText, string proficiencyFactName)
+		{
+			Condition condition = AnswerGate(proficiencyFactName);
+			if (condition != null)
 			{
-				AddArchetypeHulrunAnswer("IsekaiHulrunGeneral", "(Isekai Protagonist) \"Who am I? To be completely honest, I don't think you'd believe me if I told you. Let's just say I took a wrong turn across realities and woke up bleeding on your cobblestones.\"", "{n}Hulrun narrows his cold eyes, scrutinizing your face with fierce intensity.{/n} \"'Across realities'? Either you're delirious from blood loss, or you're mocking an officer of the crusade. Terendelev vouched for you, so I will let it pass for now. Step aside.\"", "IsekaiProficiencies");
-				AddArchetypeHulrunAnswer("IsekaiHulrunMartialGod", "(Martial God) \"Lower that halberd, inquisitor. I just woke up in this square, and waving polearms at recovering patients is hardly proper festival etiquette.\"", "{n}Hulrun blinks rapidly, his knuckles whitening on his halberd.{/n} \"A speedster... and an arrogant one at that. I saw no dust from your stride. Either you are blessed by an astral wind, or you bear strange foreign sorcery...\"", "MartialGodProficiencies");
-				AddArchetypeHulrunAnswer("IsekaiHulrunGodEmperor", "(God Emperor) \"You speak to an emperor whose ascension will eclipse the heavens. Lower your halberd before your sovereign, inquisitor, and remember your place.\"", "{n}Hulrun stumbles backward half a pace as a radiant, suffocating pressure radiates from your mantle.{/n} \"What madness is this... an emperor? In Kenabres? The festival heat must be twisting mortal minds...\"", "GodEmperorProficiencies");
-				AddArchetypeHulrunAnswer("IsekaiHulrunOverlord", "(Overlord) \"You dare interrogate an Overlord, mortal? Be grateful my unfathomable mercy permits your insignificant spark of life to continue burning.\"", "{n}Hulrun shudders as a cold, necrotic chill sweeps across the stones of the square.{/n} \"Such insolence! Such unhallowed darkness! By Iomedae's light, you reek of a tyrant from some forgotten age... but Terendelev herself vouched for your recovery, so I will not arrest you on a festival day. Mind yourself!\"", "OverlordProficiencies");
-				AddArchetypeHulrunAnswer("IsekaiHulrunDevourer", "(Slime) \"Easy with the polearm, sir! I just woke up starving after that terrible carriage accident. I came to the square looking for festival skewers and pastries, not an inquisition.\"", "{n}Hulrun glares at you with stern suspicion.{/n} \"Starving? Looking for festival treats? You look completely hale thanks to Lady Terendelev, yet you speak like an insatiable wanderer. Keep your hands where the guards can see them.\"", "DevourerProficiencies");
-				AddArchetypeHulrunAnswer("IsekaiHulrunShadowMonarch", "(Shadow Monarch) \"My pulse is steady and my memory is clearing, inquisitor. The only shadows following me are the ones your festival banners cast on the cobblestones. There is no need for threats.\"", "{n}The shadows beneath Hulrun's boots seem to stillness as you meet his gaze, causing the veteran inquisitor to pause.{/n} \"You speak quietly, yet there is an unnatural coldness in your eyes. If Terendelev had not tended to you with her own hands, I would have you detained for questioning. Step aside.\"", "ShadowMonarchProficiencies");
-				AddArchetypeHulrunAnswer("IsekaiHulrunHero", "(Hero) \"I came here to stand with the protectors of this city, not cause trouble. Lower your halberd, inquisitor. We should be celebrating peace with the townsfolk, not drawing steel on innocent people.\"", "{n}Hulrun sighs heavily, lowering his halberd by a fraction of an inch.{/n} \"Idealistic words. Every young recruit arrives in Kenabres believing courage alone will win this crusade. But at least you speak with reverence for the peace we guard. Move along.\"", "HeroProficiencies");
-				AddArchetypeHulrunAnswer("IsekaiHulrunMastermind", "(Mastermind) \"Aggressive interrogations of recently healed concussion victims yield statistically useless data, Prelate Hulrun. You glanced toward the city gates three times in sixty seconds; your defensive focus is being wasted on an unarmed stranger.\"", "{n}Hulrun glares at you with suspicion, clearly unsettled by your clinical deduction.{/n} \"Deductions and statistics? You speak like an aloof scholar from an eastern academy. Terendelev ensured you can stand, so move along before my patience runs thin.\"", "MastermindProficiencies");
+				GraftedAnswer.Named(name).At(DialogueBeats.HulrunAsksWhoYouAre).Says(text)
+					.ShownWhen(condition)
+					.OnSelect((dontRememberEtude == null) ? null : new StartEtude
+					{
+						Etude = dontRememberEtude.ToReference<BlueprintEtudeReference>(),
+						Evaluate = false
+					})
+					.RepliedToBy(name + "Reply", cueText)
+					.SpokenBy(hulrunUnit)
+					.ThenContinueTo(dontRememberCue)
+					.Graft();
 			}
-			void AddArchetypeHulrunAnswer(string name, string text, string cueText, string proficiencyFactName)
+		}
+	}
+
+	private static void AddMinaghoReactions()
+	{
+		BlueprintCue thatsNotVeryNiceCue = BlueprintTools.GetBlueprint<BlueprintCue>("3bd9a4263d8064b49a9d1eec365807b9");
+		if (thatsNotVeryNiceCue != null)
+		{
+			AddArchetypeMinaghoAnswer("IsekaiMinaghoOverlord", "(Overlord) \"A mere regional general of the Abyss? You are an insignificant insect before the absolute sovereign of the Great Tomb. Kneel and prepare to be crushed.\"", "{n}Minagho's seductive sneer freezes, a flicker of genuine bewilderment and rage flashing across her demonic features.{/n} \"Sovereign? Tomb? You babble like a concussed peasant, mortal! When I tear your heart out, I will see what kingdom lies inside your ribs!\"", "OverlordProficiencies");
+			AddArchetypeMinaghoAnswer("IsekaiMinaghoGodEmperor", "(God Emperor) \"Your demonic corruption ends here, Minagho. The radiant mandate of my empire shall cleanse Kenabres and cast your filth back to the dark.\"", "{n}Minagho recoils slightly as the aura of divine sovereignty flares around you.{/n} \"An empire? Your miserable crusade has no empire left! Only ash and despair await you!\"", "GodEmperorProficiencies");
+			AddArchetypeMinaghoAnswer("IsekaiMinaghoDevourer", "(Slime) \"You carry a tremendous concentration of demonic energy. I was looking for a decent meal, and your aura smells surprisingly potent. Yield now, or you are going to become dessert.\"", "{n}Minagho recoils with disgust at your assessing, hungry gaze.{/n} \"Dessert?! What manner of repulsive creature are you?! Even the lowest dretches have more dignity than a ravenous mortal!\"", "DevourerProficiencies");
+			AddArchetypeMinaghoAnswer("IsekaiMinaghoShadowMonarch", "(Shadow Monarch) \"Enjoy your fleeting victory, Minagho. When your broken corpse lies at my feet, your soul will rise to serve as a soldier in my eternal shadow army.\"", "{n}Minagho narrows her eyes, sensing the cold abyss of souls slumbering in your shadow.{/n} \"You dare speak of enslaving a daughter of the Abyss?! You will die screaming in the dark!\"", "ShadowMonarchProficiencies");
+			AddArchetypeMinaghoAnswer("IsekaiMinaghoPhantomBlade", "(Martial God) \"You talk too much for someone whose head hasn't noticed it's already separated from her neck. Let's see if your magic can outpace a thought.\"", "{n}Minagho's lips curl into a vicious snarl.{/n} \"Fast words from meat that hasn't met the blade of Deskari! Let us see you outrun your own flayed skin!\"", "PhantomBladeProficiencies");
+			AddArchetypeMinaghoAnswer("IsekaiMinaghoHero", "(Hero) \"You can tear down our walls, Minagho, but you can never break our bond! My friends and I will fight until every corner of Kenabres is free!\"", "{n}Minagho laughs, high and shrill.{/n} \"Friendship! Love! How charmingly pathetic! I will make necklaces from the teeth of your 'friends' before this night ends!\"", "HeroProficiencies");
+			AddArchetypeMinaghoAnswer("IsekaiMinaghoMastermind", "(Mastermind) \"Your bluster cannot mask the flaws in your deployment, Minagho. You overextended your vanguard into Kenabres, and your lines are stretched far too thin to hold this garrison.\"", "{n}Minagho sneers coldly, though her demonic eyes dart to her flanks.{/n} \"Stretched thin? You arrogant little mortal! The Wardstone is in my grasp, and your pathetic crusade ends right here!\"", "MastermindProficiencies");
+		}
+		void AddArchetypeMinaghoAnswer(string name, string text, string cueText, string proficiencyFactName)
+		{
+			Condition condition = AnswerGate(proficiencyFactName);
+			if (condition != null)
 			{
-				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
-				if (proficiencyFact != null)
+				GraftedAnswer.Named(name).At(DialogueBeats.IrabethNamesMinagho).Says(text)
+					.ShownWhen(condition)
+					.RepliedToBy(name + "Reply", cueText)
+					.ThenContinueTo(thatsNotVeryNiceCue)
+					.Graft();
+			}
+		}
+	}
+
+	private static void AddDefendersHeartReactions()
+	{
+		BlueprintEtude chapter01 = BlueprintTools.GetBlueprint<BlueprintEtude>("df17ab913c348644b9bd3fe3f9781a84");
+		BlueprintEtude dhDefended = BlueprintTools.GetBlueprint<BlueprintEtude>("b4f7860936e1248468d7ec3583b7441e");
+		BlueprintEtude dhLost = BlueprintTools.GetBlueprint<BlueprintEtude>("11f47a92b8a99bf47a2a9a487433befd");
+		if (chapter01 != null)
+		{
+			AddArchetypeCouncilAnswer("IsekaiCouncilGodEmperor", "(God Emperor) \"Irabeth, Kenabres will not survive on desperate faith alone. My imperial treasury and celestial mandate shall fund the defense and steel the soldiers' wills.\"", "{n}Irabeth straightens her posture, visibly heartened by your commanding imperial confidence.{/n} \"Your resources and leadership have already kept this tavern standing. If you can organize the troops under such discipline, we might actually hold.\"", "GodEmperorProficiencies", beforeTheAssault: false);
+			AddArchetypeCouncilAnswer("IsekaiCouncilMastermind", "(Mastermind) \"Irabeth, I have analyzed the demon attack patterns against the Defender's Heart. Bottleneck them at the western barricade with incendiary alchemists, and casualties drop by 72%.\"", "{n}Irabeth studies your tactical diagrams with growing astonishment.{/n} \"This... this is brilliant. I don't know where you learned military logistics, but I will reposition our archers immediately.\"", "MastermindProficiencies", beforeTheAssault: true);
+		}
+		void AddArchetypeCouncilAnswer(string name, string text, string cueText, string proficiencyFactName, bool beforeTheAssault)
+		{
+			Condition condition = AnswerGate(proficiencyFactName);
+			if (condition != null)
+			{
+				List<Condition> list = new List<Condition>
 				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
+					condition,
+					new EtudeStatus
 					{
-						bp.SetText(Main.IsekaiContext, cueText);
-						bp.Continue = new CueSelection
-						{
-							Cues = new List<BlueprintCueBaseReference> { dontRememberCue.ToReference<BlueprintCueBaseReference>() },
-							Strategy = Strategy.First
-						};
-					});
-					BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
+						m_Etude = chapter01.ToReference<BlueprintEtudeReference>(),
+						Playing = true
+					}
+				};
+				if (beforeTheAssault)
+				{
+					BlueprintEtude[] array = new BlueprintEtude[2] { dhDefended, dhLost };
+					foreach (BlueprintEtude blueprintEtude in array)
 					{
-						bp.SetText(Main.IsekaiContext, text);
-						bp.NextCue = new CueSelection
+						if (blueprintEtude != null)
 						{
-							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
-							Strategy = Strategy.First
-						};
-						bp.ShowOnce = true;
-						bp.AddShowCondition(delegate(HasFact c)
-						{
-							c.Unit = new PlayerCharacter();
-							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
-						});
-						if (dontRememberEtude != null)
-						{
-							bp.OnSelect = ActionFlow.DoSingle(delegate(StartEtude c)
+							list.Add(new EtudeStatus
 							{
-								c.Etude = dontRememberEtude.ToReference<BlueprintEtudeReference>();
-								c.Evaluate = false;
+								Not = true,
+								m_Etude = blueprintEtude.ToReference<BlueprintEtudeReference>(),
+								Playing = true
 							});
 						}
-					});
-					answersList.InsertAnswer(answer);
-				}
-			}
-		}
-
-		private static void AddMinaghoReactions()
-		{
-			BlueprintAnswersList answersList = BlueprintTools.GetBlueprint<BlueprintAnswersList>("5acd8001d9f7d2443bd57fb1291a03e4");
-			BlueprintCue thatsNotVeryNiceCue = BlueprintTools.GetBlueprint<BlueprintCue>("3bd9a4263d8064b49a9d1eec365807b9");
-			if (answersList != null && thatsNotVeryNiceCue != null)
-			{
-				AddArchetypeMinaghoAnswer("IsekaiMinaghoOverlord", "(Overlord) \"A mere regional general of the Abyss? You are an insignificant insect before the absolute sovereign of the Great Tomb. Kneel and prepare to be crushed.\"", "{n}Minagho's seductive sneer freezes, a flicker of genuine bewilderment and rage flashing across her demonic features.{/n} \"Sovereign? Tomb? You babble like a concussed peasant, mortal! When I tear your heart out, I will see what kingdom lies inside your ribs!\"", "OverlordProficiencies");
-				AddArchetypeMinaghoAnswer("IsekaiMinaghoGodEmperor", "(God Emperor) \"Your demonic corruption ends here, Minagho. The radiant mandate of my empire shall cleanse Kenabres and cast your filth back to the dark.\"", "{n}Minagho recoils slightly as the aura of divine sovereignty flares around you.{/n} \"An empire? Your miserable crusade has no empire left! Only ash and despair await you!\"", "GodEmperorProficiencies");
-				AddArchetypeMinaghoAnswer("IsekaiMinaghoDevourer", "(Slime) \"You carry a tremendous concentration of demonic energy. I was looking for a decent meal to settle my appetite, and your magical aura smells surprisingly potent. Yield now, or you are going to become dessert.\"", "{n}Minagho recoils with disgust at your assessing, hungry gaze.{/n} \"Dessert?! What manner of repulsive creature are you?! Even the lowest dretches have more dignity than a ravenous mortal!\"", "DevourerProficiencies");
-				AddArchetypeMinaghoAnswer("IsekaiMinaghoShadowMonarch", "(Shadow Monarch) \"Enjoy your fleeting victory, Minagho. When your broken corpse lies at my feet, your soul will rise to serve as a soldier in my eternal shadow army.\"", "{n}Minagho narrows her eyes, sensing the cold abyss of souls slumbering in your shadow.{/n} \"You dare speak of enslaving a daughter of the Abyss?! You will die screaming in the dark!\"", "ShadowMonarchProficiencies");
-				AddArchetypeMinaghoAnswer("IsekaiMinaghoMartialGod", "(Martial God) \"You talk too much for someone whose head hasn't noticed it's already separated from her neck. Let's see if your magic can outpace a thought.\"", "{n}Minagho's lips curl into a vicious snarl.{/n} \"Fast words from meat that hasn't met the blade of Deskari! Let us see you outrun your own flayed skin!\"", "MartialGodProficiencies");
-				AddArchetypeMinaghoAnswer("IsekaiMinaghoHero", "(Hero) \"You can tear down our walls, Minagho, but you can never break our bond! My friends and I will fight until every corner of Kenabres is free!\"", "{n}Minagho laughs, high and shrill.{/n} \"Friendship! Love! How charmingly pathetic! I will make necklaces from the teeth of your 'friends' before this night ends!\"", "HeroProficiencies");
-				AddArchetypeMinaghoAnswer("IsekaiMinaghoMastermind", "(Mastermind) \"Your strategic bluster cannot mask the obvious flaws in your deployment, Minagho. You overextended your vanguard into Kenabres, and now you are cornered in this garrison with nowhere left to maneuver.\"", "{n}Minagho sneers coldly, though her demonic eyes dart to her flanks.{/n} \"Cornered? You arrogant little mortal! The Wardstone is in my grasp, and your pathetic crusade ends right here!\"", "MastermindProficiencies");
-			}
-			void AddArchetypeMinaghoAnswer(string name, string text, string cueText, string proficiencyFactName)
-			{
-				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
-				if (proficiencyFact != null)
-				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
-					{
-						bp.SetText(Main.IsekaiContext, cueText);
-						bp.Continue = new CueSelection
-						{
-							Cues = new List<BlueprintCueBaseReference> { thatsNotVeryNiceCue.ToReference<BlueprintCueBaseReference>() },
-							Strategy = Strategy.First
-						};
-					});
-					BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
-					{
-						bp.SetText(Main.IsekaiContext, text);
-						bp.NextCue = new CueSelection
-						{
-							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
-							Strategy = Strategy.First
-						};
-						bp.ShowOnce = true;
-						bp.AddShowCondition(delegate(HasFact c)
-						{
-							c.Unit = new PlayerCharacter();
-							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
-						});
-					});
-					answersList.InsertAnswer(answer);
-				}
-			}
-		}
-
-		private static void AddDefendersHeartReactions()
-		{
-			BlueprintAnswersList answersList = BlueprintTools.GetBlueprint<BlueprintAnswersList>("871af36f2ab2b1f40b5de77976c54276");
-			BlueprintUnit irabethUnit = BlueprintTools.GetBlueprint<BlueprintUnit>("e778129f817a5fa4286e64b061df84a5");
-			if (answersList != null)
-			{
-				AddArchetypeCouncilAnswer("IsekaiCouncilGodEmperor", "(God Emperor) \"Irabeth, Kenabres will not survive on desperate faith alone. My imperial treasury and celestial mandate shall fund the defense and steel the soldiers' wills.\"", "{n}Irabeth straightens her posture, visibly heartened by your commanding imperial confidence.{/n} \"Your resources and leadership have already kept this tavern standing. If you can organize the troops under such discipline, we might actually hold.\"", "GodEmperorProficiencies");
-				AddArchetypeCouncilAnswer("IsekaiCouncilMastermind", "(Mastermind) \"Irabeth, I have analyzed the demon attack patterns against Defender's Heart. If we bottleneck them at the western barricade and deploy incendiary alchemists, we reduce casualty rates by 72%.\"", "{n}Irabeth studies your tactical diagrams with growing astonishment.{/n} \"This... this is brilliant. I don't know where you learned military logistics, but I will reposition our archers immediately.\"", "MastermindProficiencies");
-			}
-			void AddArchetypeCouncilAnswer(string name, string text, string cueText, string proficiencyFactName)
-			{
-				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
-				if (proficiencyFact != null)
-				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
-					{
-						bp.SetText(Main.IsekaiContext, cueText);
-						if (irabethUnit != null)
-						{
-							bp.Speaker = new DialogSpeaker
-							{
-								m_Blueprint = irabethUnit.ToReference<BlueprintUnitReference>(),
-								MoveCamera = true
-							};
-						}
-						bp.SetAnswersList(answersList);
-					});
-					BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
-					{
-						bp.SetText(Main.IsekaiContext, text);
-						bp.NextCue = new CueSelection
-						{
-							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
-							Strategy = Strategy.First
-						};
-						bp.ShowOnce = true;
-						bp.AddShowCondition(delegate(HasFact c)
-						{
-							c.Unit = new PlayerCharacter();
-							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
-						});
-					});
-					answersList.InsertAnswer(answer);
-				}
-			}
-		}
-
-		private static void AddWelcomeDialogueReactions()
-		{
-			BlueprintAnswersList stretcherAnswersList = BlueprintTools.GetBlueprint<BlueprintAnswersList>("87997a477e6a58d4aae46e26a3712825");
-			BlueprintCue waterCue = BlueprintTools.GetBlueprint<BlueprintCue>("9ac3764dd79c3854e88d601e6162bfd1");
-			if (stretcherAnswersList != null && waterCue != null)
-			{
-				AddStretcherAnswer("IsekaiStretcherGeneral", "(Isekai Protagonist) \"Status Window... Open! Wait, where is my HUD? Where are my cheat skills?! Ugh, my chest hurts...\"", "{n}The lady in white leans over you with gentle concern, placing a cool flask of water to your lips.{/n} \"Hush now, traveler. Do not strain yourself speaking strange words from your homeland. Drink this water, and let me tend to your wounds.\"", "IsekaiProficiencies");
-				AddStretcherAnswer("IsekaiStretcherSlime", "(Slime) \"I'm not water... I'm a slime! ...Wait, my human hands are still here? Whew. But my throat is completely parched...\"", "{n}The noblewoman in white robes tilts her head with a faint, bemused smile, offering a flask of cool spring water.{/n} \"A slime? That blow to your chest has left you feverish, friend. Drink, and let divine grace mend your body.\"", "DevourerProficiencies");
-				AddStretcherAnswer("IsekaiStretcherOverlord", "(Overlord) \"Ugh... did the server shut down? Where are the Floor Guardians?! What is this fragile mortal body?!\"", "{n}The silver-haired lady softly places a soothing hand upon your brow.{/n} \"Rest easy, traveler. Your mind wanders in the grip of lethal poison. Drink this water while holy light restores your strength.\"", "OverlordProficiencies");
-				AddStretcherAnswer("IsekaiStretcherShadowMonarch", "(Shadow Monarch) \"The system... reawakened me here? What is this burning laceration across my chest...?\"", "{n}The healer in white robes offers a gentle, reassuring smile as she tilts a flask to your lips.{/n} \"Save your strength. Whatever darkness touched your heart, the dawn is near. Drink.\"", "ShadowMonarchProficiencies");
-			}
-			BlueprintAnswersList answersList = BlueprintTools.GetBlueprint<BlueprintAnswersList>("0f7dddeb3f77a4f408e7dc843b9c66fb");
-			BlueprintCue continueCue = BlueprintTools.GetBlueprint<BlueprintCue>("70cd3ebac6e5daa41b949c0347b6ba57");
-			if (answersList != null && continueCue != null)
-			{
-				BlueprintCue dejaVuReply = TTCoreExtensions.CreateCue("IsekaiWelcomeDejaVuReply", delegate(BlueprintCue bp)
-				{
-					bp.SetText(Main.IsekaiContext, "{n}The silver-haired noblewoman pauses, her eyes widening slightly in curious contemplation before she offers a serene, enigmatic smile.{/n} \"A sensation of having lived this moment before? Time flows in mysterious currents, stranger. Perhaps your destiny here was written long before today. Stand tall, for whatever cycle you have traversed, your journey in Kenabres begins anew.\"");
-					bp.Continue = new CueSelection
-					{
-						Cues = new List<BlueprintCueBaseReference> { continueCue.ToReference<BlueprintCueBaseReference>() },
-						Strategy = Strategy.First
-					};
-				});
-				BlueprintAnswer answer = TTCoreExtensions.CreateAnswer("IsekaiWelcomeDejaVu", delegate(BlueprintAnswer bp)
-				{
-					bp.SetText(Main.IsekaiContext, "[Deja Vu: Memory of Past Cycles] \"Wait... this square, the festival banner, your gentle touch... I remember this waking moment. I have walked this crusade before in another cycle. Am I trapped in an eternal loop?\"");
-					bp.NextCue = new CueSelection
-					{
-						Cues = new List<BlueprintCueBaseReference> { dejaVuReply.ToReference<BlueprintCueBaseReference>() },
-						Strategy = Strategy.First
-					};
-					bp.ShowOnce = true;
-					bp.AddShowCondition<ConditionHasPastCycles>();
-					bp.OnSelect = ActionFlow.DoSingle<ContextActionPastCycleReflectionBanter>();
-				});
-				answersList.InsertAnswer(answer);
-				AddWelcomeAnswer("IsekaiWelcomeGeneral", "(Isekai Protagonist) \"I'm alive...? I don't know what kind of miraculous field medicine you just used, my lady, but a moment ago I was coughing blood. Thank you. I owe you my life.\"", "{n}The silver-haired noblewoman in white robes smiles with serene warmth, her touch radiating a calming, gentle glow.{/n} \"You owe me nothing. In Kenabres, no one is left behind while hope still endures. Save your strength; the festival is just beginning.\"", "IsekaiProficiencies");
-				AddWelcomeAnswer("IsekaiWelcomeDevourer", "(Slime) \"Whoa... the burning agony in my stomach is completely gone. That soothing healing aura... you're a remarkably kind doctor, miss. Thank you for patching me up!\"", "{n}The lady in white smiles gently at your earnest relief, an amused twinkle in her pale eyes.{/n} \"A doctor? A flattering title. Rest easy, friend. Your vitality is remarkably resilient; whatever poison touched your chest has dissolved into nothing.\"", "DevourerProficiencies");
-				AddWelcomeAnswer("IsekaiWelcomeShadowMonarch", "(Shadow Monarch) \"The cold grip of death in my chest... lifted. Your restorative power was swift and absolute, my lady. I will remember this debt.\"", "{n}The noblewoman in white robes nods gently, her silver gaze holding ancient depth and compassion.{/n} \"Do not speak of debts, traveler. Kenabres stands united under the heavens. Stand tall and celebrate your recovery with our people.\"", "ShadowMonarchProficiencies");
-				AddWelcomeAnswer("IsekaiWelcomeMastermind", "(Mastermind) \"Cellular tissue restoration completed in under three seconds with zero scarring... Remarkable medical craft, my lady. My cognitive faculties are fully restored. I am in your debt.\"", "{n}The silver-haired lady blinks in bemusement at your clinical vocabulary, then smiles gracefully.{/n} \"Such clinical detachment for someone who just stared into the abyss! Keep that keen mind guarded; clarity is a rare and precious gift in these troubled times.\"", "MastermindProficiencies");
-				AddWelcomeAnswer("IsekaiWelcomeMartialGod", "(Martial God) \"Lethal chest laceration closed without a single suture... your triage technique is extraordinary, healer. Where I'm from, emergency rooms take hours to pull off miracles like this.\"", "{n}She tilts her head with an amused glimmer in her pale eyes.{/n} \"'Emergency rooms'? A curious term from distant lands. But I am pleased divine grace reached your heart in time.\"", "MartialGodProficiencies");
-				AddWelcomeAnswer("IsekaiWelcomeHero", "(Hero) \"Thank you... your gentle hands pulled me back from the brink. When I opened my eyes and saw you standing over me in radiant white robes, I thought an angel had descended from the heavens.\"", "{n}A soft blush touches the lady's fair cheeks as she gives a musical laugh.{/n} \"Hardly an angel! Just a guardian watching over this fair city. Take heart, brave soul! The festival needs such bright spirits.\"", "HeroProficiencies");
-				AddWelcomeAnswer("IsekaiWelcomeGodEmperor", "(God Emperor) \"A magnificent restoration. You possess hands blessed by true celestial grace, noble healer. When my sovereign dominion is established, your benevolence shall not be forgotten.\"", "{n}The lady in white arches an eyebrow with dignified amusement.{/n} \"A regal demeanor even with the dust of the road on your tunic! May your high ambitions serve peace and justice, young traveler.\"", "GodEmperorProficiencies");
-				AddWelcomeAnswer("IsekaiWelcomeOverlord", "(Overlord) \"To reverse fatal trauma with a mere touch... admirable proficiency, healer. You have preserved a vessel destined for supreme dominion.\"", "{n}She offers a calm, knowing smile, unfazed by your dark demeanor.{/n} \"Every life holds supreme destiny in the grand tapestry of fate. Go forth and use this second chance well.\"", "OverlordProficiencies");
-			}
-			void AddStretcherAnswer(string name, string text, string cueText, string proficiencyFactName)
-			{
-				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
-				if (proficiencyFact != null)
-				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
-					{
-						bp.SetText(Main.IsekaiContext, cueText);
-						bp.Continue = new CueSelection
-						{
-							Cues = new List<BlueprintCueBaseReference> { waterCue.ToReference<BlueprintCueBaseReference>() },
-							Strategy = Strategy.First
-						};
-					});
-					BlueprintAnswer answer2 = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
-					{
-						bp.SetText(Main.IsekaiContext, text);
-						bp.NextCue = new CueSelection
-						{
-							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
-							Strategy = Strategy.First
-						};
-						bp.ShowOnce = true;
-						bp.AddShowCondition(delegate(HasFact c)
-						{
-							c.Unit = new PlayerCharacter();
-							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
-						});
-					});
-					stretcherAnswersList.InsertAnswer(answer2);
-				}
-			}
-			void AddWelcomeAnswer(string name, string text, string cueText, string proficiencyFactName)
-			{
-				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
-				if (proficiencyFact != null)
-				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
-					{
-						bp.SetText(Main.IsekaiContext, cueText);
-						bp.Continue = new CueSelection
-						{
-							Cues = new List<BlueprintCueBaseReference> { continueCue.ToReference<BlueprintCueBaseReference>() },
-							Strategy = Strategy.First
-						};
-					});
-					BlueprintAnswer answer2 = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
-					{
-						bp.SetText(Main.IsekaiContext, text);
-						bp.NextCue = new CueSelection
-						{
-							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
-							Strategy = Strategy.First
-						};
-						bp.ShowOnce = true;
-						bp.AddShowCondition(delegate(HasFact c)
-						{
-							c.Unit = new PlayerCharacter();
-							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
-						});
-					});
-					answersList.InsertAnswer(answer2);
-				}
-			}
-		}
-
-		private static void AddMeetCameliaReactions()
-		{
-			BlueprintAnswersList answersList = BlueprintTools.GetBlueprint<BlueprintAnswersList>("1ca6cf08fceeac141a0df689cecc784a");
-			BlueprintUnitReference camelliaRef;
-			if (answersList != null)
-			{
-				camelliaRef = BlueprintTools.GetBlueprint<BlueprintUnit>("397b090721c41044ea3220445300e1b8")?.ToReference<BlueprintUnitReference>();
-				AddMeetCameliaAnswer("IsekaiCameliaGeneral", "(Isekai Protagonist) \"Did... did you see that giant silver dragon up there?! In my world, dragons are myths and fantasy legends! That thing was REAL! And that demon with the giant scythe... holy crap, are you alright?!\"", "{n}Camellia wipes a smudge of dirt from her pale cheek, giving you a cool, calculating look.{/n} \"Of course Terendelev was real. She was the ancient protector of Kenabres. But dwelling on her fall won't pull us out of this pit. Stand up; panicking like a startled peasant will get us killed down here.\"", "IsekaiProficiencies");
-				AddMeetCameliaAnswer("IsekaiCameliaDevourer", "(Slime) \"The ground collapsed... but more importantly, that giant demon lord just executed the nice lady who was also a dragon?! What kind of insane death world have I reincarnated into?!\"", "{n}Camellia shivers slightly, eyeing you with restrained disdain and curiosity.{/n} \"Reincarnated? You hit your head quite hard, didn't you? Get your bearings. We need to find a way back to the surface before whatever lurks down here smells our blood.\"", "DevourerProficiencies");
-				AddMeetCameliaAnswer("IsekaiCameliaShadowMonarch", "(Shadow Monarch) \"A mythical silver dragon slaughtered in seconds. The power scale in this realm is monstrous... but panic changes nothing. Are you able to walk?\"", "{n}Camellia arches an eyebrow, surprised by your sudden, chilling calm.{/n} \"A remarkably quick recovery from terror. Yes, I can walk. Follow me, and let us hope the rubble hasn't sealed every exit.\"", "ShadowMonarchProficiencies");
-				AddMeetCameliaAnswer("IsekaiCameliaMastermind", "(Mastermind) \"Subterranean stratum collapsed; draconic guardian decapitated by an abyssal sovereign in under forty seconds. Panic yields zero tactical value. Can you fight, or are you non-combatant personnel?\"", "{n}Camellia blinks, momentarily taken aback by your icy clinical composure.{/n} \"Non-combatant? I assure you, I am more than capable of defending myself. Keep that analytical tongue focused on finding our way out.\"", "MastermindProficiencies");
-				AddMeetCameliaAnswer("IsekaiCameliaHero", "(Hero) \"The lady who healed me... she gave her life protecting the whole city. I won't let her sacrifice be in vain. Don't worry, miss, I'll protect you until we find a way out!\"", "{n}Camellia smiles with faint, mocking amusement.{/n} \"How gallantly naive. I survived the fall without a scratch, 'hero.' Keep your blade ready for demons, not posturing.\"", "HeroProficiencies");
-			}
-			void AddMeetCameliaAnswer(string name, string text, string cueText, string proficiencyFactName)
-			{
-				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
-				if (proficiencyFact != null)
-				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
-					{
-						if (camelliaRef != null)
-						{
-							bp.Speaker = new DialogSpeaker
-							{
-								m_Blueprint = camelliaRef,
-								MoveCamera = true
-							};
-						}
-						bp.SetText(Main.IsekaiContext, cueText);
-						bp.SetAnswersList(answersList);
-					});
-					BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
-					{
-						bp.SetText(Main.IsekaiContext, text);
-						bp.NextCue = new CueSelection
-						{
-							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
-							Strategy = Strategy.First
-						};
-						bp.ShowOnce = true;
-						bp.AddShowCondition(delegate(HasFact c)
-						{
-							c.Unit = new PlayerCharacter();
-							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
-						});
-					});
-					answersList.InsertAnswer(answer);
-				}
-			}
-		}
-
-		private static void AddMeetSeelahAneviaReactions()
-		{
-			BlueprintAnswersList answersList = BlueprintTools.GetBlueprint<BlueprintAnswersList>("a55fc20c6f0ff56439b40d6ba53cb8d7");
-			BlueprintCue cue0012 = BlueprintTools.GetBlueprint<BlueprintCue>("36cac4b77d7e15e4e8c69a4340717cad");
-			if (answersList == null || cue0012 == null)
-			{
-				return;
-			}
-			BlueprintUnitReference seelahRef = BlueprintTools.GetBlueprint<BlueprintUnit>("54be53f0b35bf3c4592a97ae335fe765")?.ToReference<BlueprintUnitReference>();
-			BlueprintFeature generalProficiency = GetRequiredDialogueFact("IsekaiProficiencies");
-			if (generalProficiency != null)
-			{
-				BlueprintCue generalReply = TTCoreExtensions.CreateCue("IsekaiSeelahGeneralReply", delegate(BlueprintCue bp)
-				{
-					if (seelahRef != null)
-					{
-						bp.Speaker = new DialogSpeaker
-						{
-							m_Blueprint = seelahRef,
-							MoveCamera = true
-						};
 					}
-					bp.SetText(Main.IsekaiContext, "{n}Seelah grunts as she heaves against the stone, her eyes brimming with grief.{/n} \"Terendelev was our guardian... the shining soul of Kenabres. Seeing Deskari strike her down tore the heart out of every crusader in that square. But we can't let her sacrifice be in vain! On three... HEAVE!\"");
-					bp.Continue = new CueSelection
-					{
-						Cues = new List<BlueprintCueBaseReference> { cue0012.ToReference<BlueprintCueBaseReference>() },
-						Strategy = Strategy.First
-					};
-				});
-				BlueprintAnswer answer = TTCoreExtensions.CreateAnswer("IsekaiSeelahGeneral", delegate(BlueprintAnswer bp)
-				{
-					bp.SetText(Main.IsekaiContext, "(Isekai Protagonist) \"Hold on, let me help you lift that rock! But please tell me I didn't hallucinate that... the kind lady who healed me earlier was a literal SILVER DRAGON?! Dragons actually exist here?!\"");
-					bp.NextCue = new CueSelection
-					{
-						Cues = new List<BlueprintCueBaseReference> { generalReply.ToReference<BlueprintCueBaseReference>() },
-						Strategy = Strategy.First
-					};
-					bp.ShowOnce = true;
-					bp.AddShowCondition(delegate(HasFact c)
-					{
-						c.Unit = new PlayerCharacter();
-						c.m_Fact = generalProficiency.ToReference<BlueprintUnitFactReference>();
-					});
-				});
-				answersList.InsertAnswer(answer);
-			}
-			BlueprintFeature mastermindProficiency = GetRequiredDialogueFact("MastermindProficiencies");
-			if (mastermindProficiency != null)
-			{
-				BlueprintCue mastermindReply = TTCoreExtensions.CreateCue("IsekaiSeelahMastermindReply", delegate(BlueprintCue bp)
-				{
-					if (seelahRef != null)
-					{
-						bp.Speaker = new DialogSpeaker
-						{
-							m_Blueprint = seelahRef,
-							MoveCamera = true
-						};
-					}
-					bp.SetText(Main.IsekaiContext, "{n}Seelah stares at you in complete disbelief.{/n} \"'Tactical viability'?! Anevia's leg is crushed and Terendelev is dead, you clinical weirdo! Help me lift this damn rock already!\"");
-					bp.SetAnswersList(answersList);
-				});
-				BlueprintAnswer answer2 = TTCoreExtensions.CreateAnswer("IsekaiSeelahMastermind", delegate(BlueprintAnswer bp)
-				{
-					bp.SetText(Main.IsekaiContext, "(Mastermind) \"A silver dragon bisected by a demon lord of the outer rifts. The geopolitical balance of Kenabres collapsed in under forty seconds. We must extract the injured immediately to preserve tactical viability.\"");
-					bp.NextCue = new CueSelection
-					{
-						Cues = new List<BlueprintCueBaseReference> { mastermindReply.ToReference<BlueprintCueBaseReference>() },
-						Strategy = Strategy.First
-					};
-					bp.ShowOnce = true;
-					bp.AddShowCondition(delegate(HasFact c)
-					{
-						c.Unit = new PlayerCharacter();
-						c.m_Fact = mastermindProficiency.ToReference<BlueprintUnitFactReference>();
-					});
-				});
-				answersList.InsertAnswer(answer2);
-			}
-			BlueprintCue talkBackReply = TTCoreExtensions.CreateCue("IsekaiTalkBackStarsReply", delegate(BlueprintCue bp)
-			{
-				if (seelahRef != null)
-				{
-					bp.Speaker = new DialogSpeaker
-					{
-						m_Blueprint = seelahRef,
-						MoveCamera = true
-					};
 				}
-				bp.SetText(Main.IsekaiContext, "{n}Seelah glances up at the jagged cavern ceiling, then reaches out to touch your forehead with genuine concern.{/n} \"Whoa... hey, easy! You took a nasty blow to the skull when the square collapsed. There's nobody up there but limestone and dripping water. Stay with me, alright? Don't lose your mind now.\"\n\n{n}Camellia takes half a step back, her hand subtly resting near her rapier.{/n} \"Raving at unseen voices in the ceiling? How utterly unhinged... I had hoped for a competent guide, not a lunatic suffering from cranial fractures.\"\n\n{n}Anevia winces through her broken leg, offering a dry grimace.{/n} \"Voices in the sky betting on us? Honestly, kid, after seeing Deskari chop a dragon in half today, gods gambling on our corpses wouldn't even be in my top five weirdest crusader stories. Just help Seelah lift this rock.\"");
-				bp.SetAnswersList(answersList);
-			});
-			BlueprintAnswer answer3 = TTCoreExtensions.CreateAnswer("IsekaiTalkBackStarsAnswer", delegate(BlueprintAnswer bp)
+				GraftedAnswer.Named(name).At(DialogueBeats.IrabethDefendersHeartCouncil).Says(text)
+					.ShownWhen(list.ToArray())
+					.RepliedToBy(name + "Reply", cueText)
+					.ThenBackToTheList()
+					.Graft();
+			}
+		}
+	}
+
+	private static void AddWelcomeDialogueReactions()
+	{
+		BlueprintUnit terendelevUnit = BlueprintTools.GetBlueprint<BlueprintUnit>("045e2ea911644fa0abaa2f6c76b83feb");
+		GraftedAnswer.Named("IsekaiWelcomeDejaVu").At(DialogueBeats.TerendelevHasHealedYou).Says("[Deja Vu: Memory of Past Cycles] \"Wait... this square, the banners, your gentle touch... I remember this moment. I have walked this crusade before. Am I trapped in an eternal loop?\"")
+			.ShownWhen(new ConditionHasPastCycles())
+			.OnSelect(new ContextActionPastCycleReflectionBanter())
+			.RepliedToBy("IsekaiWelcomeDejaVuReply", "{n}The silver-haired noblewoman pauses, her eyes widening slightly in curious contemplation before she offers a serene, enigmatic smile.{/n} \"A sensation of having lived this moment before? Time flows in mysterious currents, stranger. Perhaps your destiny here was written long before today. Stand tall, for whatever cycle you have traversed, your journey in Kenabres begins anew.\"")
+			.SpokenBy(terendelevUnit)
+			.ThenBackToTheList()
+			.Graft();
+		AddWelcomeAnswer("IsekaiWelcomeGeneral", "(Isekai Protagonist) \"I'm alive...? I don't know what kind of miraculous field medicine you just used, my lady, but a moment ago I was coughing blood. Thank you. I owe you my life.\"", "{n}The silver-haired noblewoman in white robes smiles with serene warmth, her touch radiating a calming, gentle glow.{/n} \"You owe me nothing. In Kenabres, no one is left behind while hope still endures. Save your strength; the festival is just beginning.\"", "IsekaiProficiencies");
+		AddWelcomeAnswer("IsekaiWelcomeDevourer", "(Slime) \"Whoa... the burning agony in my stomach is completely gone. That soothing healing aura... you're a remarkably kind doctor, miss. Thank you for patching me up!\"", "{n}The lady in white smiles gently at your earnest relief, an amused twinkle in her pale eyes.{/n} \"A doctor? A flattering title. Rest easy, friend. Your vitality is remarkably resilient, though this wound is no ordinary one.\"", "DevourerProficiencies");
+		AddWelcomeAnswer("IsekaiWelcomeShadowMonarch", "(Shadow Monarch) \"The cold grip of death in my chest... lifted. Your restorative power was swift and absolute, my lady. I will remember this debt.\"", "{n}The noblewoman in white robes nods gently, her silver gaze holding ancient depth and compassion.{/n} \"Do not speak of debts, traveler. Kenabres stands united under the heavens. Stand tall and celebrate your recovery with our people.\"", "ShadowMonarchProficiencies");
+		AddWelcomeAnswer("IsekaiWelcomeMastermind", "(Mastermind) \"Cellular tissue restoration completed in under three seconds with zero scarring... Remarkable medical craft, my lady. My cognitive faculties are fully restored. I am in your debt.\"", "{n}The silver-haired lady blinks in bemusement at your clinical vocabulary, then smiles gracefully.{/n} \"Such clinical detachment for someone who just stared into the abyss! Keep that keen mind guarded; clarity is a rare and precious gift in these troubled times.\"", "MastermindProficiencies");
+		AddWelcomeAnswer("IsekaiWelcomePhantomBlade", "(Martial God) \"Lethal chest laceration closed without a single suture... your triage technique is extraordinary, healer. Where I'm from, emergency rooms take hours to pull off miracles like this.\"", "{n}She tilts her head with an amused glimmer in her pale eyes.{/n} \"'Emergency rooms'? A curious term from distant lands. But I am pleased divine grace reached your heart in time.\"", "PhantomBladeProficiencies");
+		AddWelcomeAnswer("IsekaiWelcomeHero", "(Hero) \"Thank you... your gentle hands pulled me back from the brink. When I opened my eyes and saw you standing over me in radiant white robes, I thought an angel had descended from the heavens.\"", "{n}A soft blush touches the lady's fair cheeks as she gives a musical laugh.{/n} \"Hardly an angel! Just a guardian watching over this fair city. Take heart, brave soul! The festival needs such bright spirits.\"", "HeroProficiencies");
+		AddWelcomeAnswer("IsekaiWelcomeGodEmperor", "(God Emperor) \"A magnificent restoration. You possess hands blessed by true celestial grace, noble healer. When my sovereign dominion is established, your benevolence shall not be forgotten.\"", "{n}The lady in white arches an eyebrow with dignified amusement.{/n} \"A regal demeanor even with the dust of the road on your tunic! May your high ambitions serve peace and justice, traveler.\"", "GodEmperorProficiencies");
+		AddWelcomeAnswer("IsekaiWelcomeOverlord", "(Overlord) \"To reverse fatal trauma with a mere touch... admirable proficiency, healer. You have preserved a vessel destined for supreme dominion.\"", "{n}She offers a calm, knowing smile, unfazed by your dark demeanor.{/n} \"Every life holds supreme destiny in the grand tapestry of fate. Go forth and use this second chance well.\"", "OverlordProficiencies");
+		void AddWelcomeAnswer(string name, string text, string cueText, string proficiencyFactName)
+		{
+			Condition condition = AnswerGate(proficiencyFactName);
+			if (condition != null)
 			{
-				bp.SetText(Main.IsekaiContext, "[Look Upward] \"Shut up, all of you! Stop betting coins on my survival like I'm a gladiator in your cosmic circus! I can hear you mocking me from the clouds!\"");
-				bp.NextCue = new CueSelection
+				GraftedAnswer.Named(name).At(DialogueBeats.TerendelevHasHealedYou).Says(text)
+					.ShownWhen(condition)
+					.RepliedToBy(name + "Reply", cueText)
+					.SpokenBy(terendelevUnit)
+					.ThenBackToTheList()
+					.Graft();
+			}
+		}
+	}
+
+	private static void AddMeetCameliaReactions()
+	{
+		BlueprintUnit camelliaUnit = BlueprintTools.GetBlueprint<BlueprintUnit>("397b090721c41044ea3220445300e1b8");
+		AddMeetCameliaAnswer("IsekaiCameliaGeneral", "(Isekai Protagonist) \"Did you see that giant silver dragon up there?! Where I'm from, dragons are myths! That thing was REAL! And that demon with the giant scythe... are you alright?!\"", "{n}Camellia wipes a smudge of dirt from her pale cheek, giving you a cool, calculating look.{/n} \"Of course Terendelev was real. She was the ancient protector of Kenabres. But dwelling on her fall won't pull us out of this pit. Stand up; panicking like a startled peasant will get us killed down here.\"", "IsekaiProficiencies");
+		AddMeetCameliaAnswer("IsekaiCameliaDevourer", "(Slime) \"The ground collapsed... but more importantly, that giant demon lord just struck down the nice lady who was also a dragon?! What kind of insane death world have I reincarnated into?!\"", "{n}Camellia shivers slightly, eyeing you with restrained disdain and curiosity.{/n} \"Reincarnated? You hit your head quite hard, didn't you? Get your bearings. We need to find a way back to the surface before whatever lurks down here smells our blood.\"", "DevourerProficiencies");
+		AddMeetCameliaAnswer("IsekaiCameliaShadowMonarch", "(Shadow Monarch) \"A mythical silver dragon struck down in seconds. The power scale in this realm is monstrous... but panic changes nothing. Are you able to walk?\"", "{n}Camellia arches an eyebrow, surprised by your sudden, chilling calm.{/n} \"A remarkably quick recovery from terror. Yes, I can walk. Follow me, and let us hope the rubble hasn't sealed every exit.\"", "ShadowMonarchProficiencies");
+		AddMeetCameliaAnswer("IsekaiCameliaMastermind", "(Mastermind) \"Subterranean stratum collapsed; draconic guardian struck down by an abyssal sovereign in under forty seconds. Panic yields zero tactical value. Can you fight?\"", "{n}Camellia blinks, momentarily taken aback by your icy clinical composure.{/n} \"Can I fight? I assure you, I am more than capable of defending myself. Keep that analytical tongue focused on finding our way out.\"", "MastermindProficiencies");
+		AddMeetCameliaAnswer("IsekaiCameliaHero", "(Hero) \"The lady who healed me... she gave her life protecting the whole city. I won't let her sacrifice be in vain. Don't worry, miss, I'll protect you until we find a way out!\"", "{n}Camellia smiles with faint, mocking amusement.{/n} \"How gallantly naive. I survived the fall on my own, 'hero.' Keep your blade ready for demons, not posturing.\"", "HeroProficiencies");
+		void AddMeetCameliaAnswer(string name, string text, string cueText, string proficiencyFactName)
+		{
+			Condition condition = AnswerGate(proficiencyFactName);
+			if (condition != null)
+			{
+				GraftedAnswer.Named(name).At(DialogueBeats.CamelliaIntroducesHerself).Says(text)
+					.ShownWhen(condition)
+					.RepliedToBy(name + "Reply", cueText)
+					.SpokenBy(camelliaUnit)
+					.ThenBackToTheList()
+					.Graft();
+			}
+		}
+	}
+
+	private static void AddMeetSeelahAneviaReactions()
+	{
+		BlueprintCue blueprint = BlueprintTools.GetBlueprint<BlueprintCue>("36cac4b77d7e15e4e8c69a4340717cad");
+		BlueprintUnit seelahUnit = BlueprintTools.GetBlueprint<BlueprintUnit>("54be53f0b35bf3c4592a97ae335fe765");
+		if (blueprint != null)
+		{
+			AddMeetSeelahAnswer("IsekaiSeelahGeneral", "(Isekai Protagonist) \"Hold on, I'll help with that rock! But tell me I didn't hallucinate it... the kind lady who healed me earlier was a literal SILVER DRAGON?! Dragons actually exist here?!\"", "{n}Seelah braces against the stone, her eyes brimming with grief.{/n} \"Terendelev was our guardian... the shining soul of Kenabres. Seeing Deskari strike her down tore the heart out of every crusader in that square. But we can't let her sacrifice be in vain. Now help me get Anevia out of there!\"", "IsekaiProficiencies");
+			AddMeetSeelahAnswer("IsekaiSeelahMastermind", "(Mastermind) \"A silver dragon struck down by a demon lord of the outer rifts. The balance of Kenabres collapsed in under forty seconds. We must extract the injured to preserve tactical viability.\"", "{n}Seelah stares at you in complete disbelief.{/n} \"'Tactical viability'?! Anevia's ankle is crushed and Terendelev is dead, you clinical weirdo! Help me lift this damn rock already!\"", "MastermindProficiencies");
+			GraftedAnswer.Named("IsekaiTalkBackStarsAnswer").At(DialogueBeats.SeelahAsksForHelpWithTheBoulder).Says("[Look Upward] \"Shut up, all of you! Stop betting coins on my survival like I'm a gladiator in your cosmic circus! I can hear you mocking me from the clouds!\"")
+				.OnSelect(new ContextActionAwardCosmicCoins
 				{
-					Cues = new List<BlueprintCueBaseReference> { talkBackReply.ToReference<BlueprintCueBaseReference>() },
+					Amount = 250,
+					Sponsor = "The Laughing King",
+					SceneKey = "TalkBackStars"
+				})
+				.Configure(delegate(BlueprintAnswer bp)
+				{
+					bp.RequirePlotArmor();
+				})
+				.RepliedToBy("IsekaiTalkBackStarsReply", "{n}Seelah glances up at the jagged cavern ceiling, then reaches out to touch your forehead.{/n} \"Whoa... hey, easy! You took a nasty blow to the skull when the square collapsed. There's nobody up there but limestone and dripping water. Stay with me, alright? Don't lose your mind now.\"\n\n{n}Anevia winces, her ankle still pinned under the stone, and offers a dry grimace.{/n} \"Voices in the sky betting on us? Honestly, kid, after seeing Deskari strike down a dragon today, gods gambling on our corpses wouldn't even make my top five weirdest crusader stories. Just help Seelah lift this rock.\"")
+				.SpokenBy(seelahUnit)
+				.ThenBackToTheList()
+				.Graft();
+			GraftedAnswer.Named("IsekaiSeelahDevourer").At(DialogueBeats.SeelahAsksForHelpWithTheBoulder).Says("(Slime) \"Stand back, let me handle this. [Your arm dissolves into a fluid ribbon of green slime, slipping under the boulder and pushing it upward with hydraulic pressure.]\"")
+				.ShownWhen(new HasFact
+				{
+					Unit = new PlayerCharacter(),
+					m_Fact = BlueprintTools.GetModBlueprintReference<BlueprintUnitFactReference>(Main.IsekaiContext, "DevourerProficiencies")
+				})
+				.OnSelect(new ContextActionSlimeRevealBanter())
+				.RepliedToBy("IsekaiSeelahDevourerReply", "{n}Seelah stumbles backward, her mouth falling open as your arm snaps back into solid flesh around the edge of the stone.{/n} \"By Iomedae's shield... did your arm just melt into green jelly?! What kind of creature are you?! You're not secretly some subterranean demon parasite, are you?!\"\n\n{n}Anevia laughs weakly through her pain.{/n} \"Seelah, stand down. If a friendly puddle of green ooze wants to lift a ton of limestone off my ankle, I'm not going to complain about its pedigree. Either that's the weirdest spell I've ever seen, or Kenabres just recruited the world's strangest crusader.\"")
+				.ThenContinueTo(blueprint)
+				.Graft();
+			GraftedAnswer.Named("IsekaiSeelahOverlord").At(DialogueBeats.SeelahAsksForHelpWithTheBoulder).Says("(Overlord) \"Step aside, crusader. Allow true necromantic might to handle this. [You grip the stone. For a split second your disguise flickers, revealing ivory bones and burning red eye sockets.]\"")
+				.ShownWhen(new HasFact
+				{
+					Unit = new PlayerCharacter(),
+					m_Fact = BlueprintTools.GetModBlueprintReference<BlueprintUnitFactReference>(Main.IsekaiContext, "OverlordProficiencies")
+				})
+				.OnSelect(new ContextActionOverlordRevealBanter())
+				.RepliedToBy("IsekaiSeelahOverlordReply", "{n}Seelah violently flinches back, her hand flying to the pommel of her holy sword, her eyes wide with terror.{/n} \"Your hands... your face! For a second you looked like... an undead skeleton! A walking corpse! What are you?!\"\n\n{n}Anevia groans under the shifting stone, waving her hand frantically.{/n} \"Seelah, sheath your steel! Look, they're flesh and blood again. An illusion, or some bizarre planar dust from the Worldwound... Either way, the dead usually try to chop off our heads, not heave boulders off our legs. Let's get out of these tunnels alive before we start a religious tribunal.\"")
+				.ThenContinueTo(blueprint)
+				.Graft();
+		}
+		void AddMeetSeelahAnswer(string name, string text, string cueText, string proficiencyFactName)
+		{
+			Condition condition = AnswerGate(proficiencyFactName);
+			if (condition != null)
+			{
+				GraftedAnswer.Named(name).At(DialogueBeats.SeelahAsksForHelpWithTheBoulder).Says(text)
+					.ShownWhen(condition)
+					.RepliedToBy(name + "Reply", cueText)
+					.SpokenBy(seelahUnit)
+					.ThenBackToTheList()
+					.Graft();
+			}
+		}
+	}
+
+	private static void AddMeetLannReactions()
+	{
+		BlueprintUnit lannUnit = BlueprintTools.GetBlueprint<BlueprintUnit>("cb29621d99b902e4da6f5d232352fbda");
+		AddMeetLannAnswer("IsekaiLannGeneral", "(Isekai Protagonist) \"Scales, horns, hooves and tails... honestly, after falling a mile into the earth and watching a dragon fight, beastfolk scouts don't even faze me. Greetings from the surface.\"", "{n}Lann blinks his reptilian eye in surprise, then grins lopsidedly.{/n} \"Well, that's refreshing! Usually surface dwellers scream, pray to Iomedae, or try to stab us. I'm Lann, by the way.\"", "IsekaiProficiencies");
+		AddMeetLannAnswer("IsekaiLannDevourer", "(Slime) \"Whoa, chimera-like anatomy! Are those scales adapted for subterranean dampness? Fascinating biology!\"", "{n}Lann scratches his scaled cheek, chuckling.{/n} \"'Fascinating biology'? First time anyone's called our cursed mongrel hides a scientific marvel! You're a weird one, surface-dweller.\"", "DevourerProficiencies");
+		void AddMeetLannAnswer(string name, string text, string cueText, string proficiencyFactName)
+		{
+			Condition condition = AnswerGate(proficiencyFactName);
+			if (condition != null)
+			{
+				GraftedAnswer.Named(name).At(DialogueBeats.LannAndWenduagFirstSighting).Says(text)
+					.ShownWhen(condition)
+					.RepliedToBy(name + "Reply", cueText)
+					.SpokenBy(lannUnit)
+					.ThenBackToTheList()
+					.Graft();
+			}
+		}
+	}
+
+	private static void AddWardstoneMythicReactions()
+	{
+		BlueprintCue continueCue = BlueprintTools.GetBlueprint<BlueprintCue>("e9b4e3d349a29b2449218b474cb78563");
+		BlueprintUnit minaghoUnit = BlueprintTools.GetBlueprint<BlueprintUnit>("bbcd85f6c1762364ba48be9f72f115ae");
+		if (continueCue != null)
+		{
+			AddWardstoneAnswer("IsekaiWardstoneMythicGeneral", "(Isekai Protagonist) [Channel Unscripted Power] \"You thought this was a predictable script? Let's rewrite it right here and now. Feel free to scream, Minagho.\"", "{n}The celestial flames and cosmic starlight swirl violently around your fingertips, shattering the ambient demonic miasma in the garrison hall with blinding brilliance. Minagho stumbles backward, her claws scraping futilely at her chest as raw terror drains the color from her face.{/n} \"What... what manner of power is this?! This wasn't supposed to happen! Who are you?!\"", "IsekaiProficiencies");
+			AddWardstoneAnswer("IsekaiWardstoneMythicGodEmperor", "(God Emperor) [Unleash Sovereign Radiance] \"Mortal, angel, demon, it matters not. Today, the mantle of absolute sovereignty descends upon this garrison. Kneel before your emperor, Minagho!\"", "{n}Blinding golden light erupts from your chest, towering above the fractured Wardstone in the form of a celestial throne and crown. Minagho shields her eyes with a shriek of agony, the holy radiance searing her fiendish skin.{/n} \"A crown?! An emperor?! What is this suffocating light?!\"", "GodEmperorProficiencies");
+			AddWardstoneAnswer("IsekaiWardstoneMythicDevourer", "(Slime) [Engulf the Cosmic Resonance] \"That obelisk contained so much concentrated essence... and now it's mine. Every demon in Kenabres is just calories waiting to be digested.\"", "{n}A vortex of pure, insatiable hunger spirals out from your open palm, pulling the demonic fog and magic of the room into your chest. Minagho recoils in horror as she feels her very soul being tugged toward the void.{/n} \"You... you aren't just resisting corruption... you're eating it?! What kind of monster are you?!\"", "DevourerProficiencies");
+			AddWardstoneAnswer("IsekaiWardstoneMythicShadowMonarch", "(Shadow Monarch) [Raise the Abyssal Veil] \"The Wardstone was a beacon of light. But true power awakens in the abyss between the stars. Rise, shadows of the fallen, and witness your monarch!\"", "{n}The bright flash of the Wardstone twists into chilling, pitch-black sovereign shade. The shadows cast by the pillars and fallen crusaders stand upright, kneeling toward you in silent loyalty. Minagho trembles violently.{/n} \"The shadows... they are obeying you?! This power has nothing to do with the heavens!\"", "ShadowMonarchProficiencies");
+			AddWardstoneAnswer("IsekaiWardstoneMythicOverlord", "(Overlord) [Proclaim Absolute Dominance] \"Did you truly believe you could corrupt an artifact in my presence? You are a pathetic ant crawling across my domain. Die, insect.\"", "{n}A crushing wave of tyrannical necrotic and celestial pressure slams Minagho against the flagstones, and she gasps for breath under your suffocating presence.{/n} \"Impossible... a mortal cannot possess such suffocating authority! Who gave you this strength?!\"", "OverlordProficiencies");
+			AddWardstoneAnswer("IsekaiWardstoneMythicMastermind", "(Mastermind) [Synthesize the Harmonic Paradox] \"Fascinating. 4,096 causal branches just collapsed into a single deterministic triumph. Your defeat was calculated before we breached the threshold, Minagho.\"", "{n}Geometrical matrices of luminous light hover around your eyes as the residual Wardstone energy synchronizes perfectly with your mental focus. Minagho clutches her head in pain.{/n} \"Matrices? Calculations?! You speak as if this whole battle was just an equation! Die, arrogant fool!\"", "MastermindProficiencies");
+			AddWardstoneAnswer("IsekaiWardstoneMythicHero", "(Hero) [Ignite the Beacon of Hope] \"The people of Kenabres bled for this stone, and their hope will not be snuffed out by demons! Together, we will cleanse every corner of this land!\"", "{n}A radiant pillar of pure dawnfire engulfs the room, washing away every trace of demon stench. Minagho howls in fury and dread.{/n} \"Hope?! That sentimental garbage is burning through my flesh! Stop it! Tear them to pieces!\"", "HeroProficiencies");
+		}
+		void AddWardstoneAnswer(string name, string text, string cueText, string proficiencyFactName)
+		{
+			Condition condition = AnswerGate(proficiencyFactName);
+			if (condition != null)
+			{
+				GraftedAnswer.Named(name).At(DialogueBeats.WardstoneTitanFeeling).Says(text)
+					.ShownWhen(condition)
+					.OnSelect(new ContextActionWardstoneMythicAwakening())
+					.RepliedToBy(name + "Reply", cueText)
+					.SpokenBy(minaghoUnit)
+					.ThenContinueTo(continueCue)
+					.Graft();
+			}
+		}
+	}
+
+	private static void AddDesnaTempleNatureCommunion()
+	{
+		AddDesnaAnswer("IsekaiDesnaCommunionDevourer", "(Slime) [Commune with the Song of Elysium] \"My slime core resonates with this melody... It's like the whispering winds and primeval beasts of Sarkoris are speaking to my living jelly.\"", "{n}Your gelatinous form trembles in resonance with the melody, and for a moment the spiritual remnants of Sarkorian beasts seem to stir in the Elysian light, dipping their heads in silent kinship with your hunger.{/n} \"The song echoes back from the wild steppes... Something out there heard you, and it answered.\"", "DevourerProficiencies", new ContextActionDesnaNatureCommunion());
+		AddDesnaAnswer("IsekaiDesnaCommunionOverlord", "(Overlord) [Subjugate the Resonance] \"An amusing little melody. Even the capricious spirits of the Sphere of Dreams must bow to true metaphysical authority.\"", "{n}The delicate melody wavers under your chilling magical pressure before snapping into a rigid, tolling cadence. A hollow, obedient echo rolls through the stone hall.{/n} \"The song... bent to you? I have never heard it sound like that. I am not sure I want to again.\"", "OverlordProficiencies");
+		AddDesnaAnswer("IsekaiDesnaCommunionShadowMonarch", "(Shadow Monarch) [Attune the Shadows] \"Where there is brilliant starlight, the shadows cast are absolute. Let the dusk embrace this song.\"", "{n}The flickering candlelight and celestial brilliance cast long, sentient silhouettes that bow in solemn formation across the shrine walls, deepening into a silent guard as they drink in the echoes of the melody.{/n} \"The shadows on the walls... are they bowing to you?\"", "ShadowMonarchProficiencies");
+		AddDesnaAnswer("IsekaiDesnaCommunionGeneral", "(Isekai Protagonist) [Hum an Otherworldly Melody] \"This melody reminds me of anime theme songs and fantasy tavern tunes from back home. Let's see if the song can carry my favorite chorus.\"", "{n}The melody ripples with sudden playful syncopation, matching your humming note for note. The priests stare at you in fascination as an otherworldly tune dances through the ancient temple.{/n} \"I have never heard the song take up a mortal's tune. It sounds... joyful!\"", "IsekaiProficiencies");
+		static void AddDesnaAnswer(string name, string text, string cueText, string proficiencyFactName, GameAction onSelect = null)
+		{
+			Condition condition = AnswerGate(proficiencyFactName);
+			if (condition != null)
+			{
+				GraftedAnswer.Named(name).At(DialogueBeats.DesnaAdeptsAskAboutTheSong).Says(text)
+					.ShownWhen(condition)
+					.OnSelect(onSelect)
+					.RepliedToBy(name + "Reply", cueText)
+					.ThenBackToTheList()
+					.Graft();
+			}
+		}
+	}
+
+	private static void AddQueenGalfreyWarCampReactions()
+	{
+		BlueprintUnit galfreyUnit = BlueprintTools.GetBlueprint<BlueprintUnit>("97d1c33c784100140b9fa317aef5a499");
+		BlueprintCue levyTakenReply = GraftedCue.Named("IsekaiWarCampLevyAlreadyTakenReply").Says("{n}Galfrey raises a hand before you have finished.{/n} \"Commander, the muster rolls closed on your name this morning. Every soul you brought me is already counted, armed and drilling in the lower field. I will not enter them twice and draw rations the crusade does not have. Keep whoever else answers your call, and bring them to Drezen's walls instead.\"").SpokenBy(galfreyUnit)
+			.ThenBackTo(DialogueBeats.QueenGalfreyForces)
+			.Blueprint;
+		AddWarCampAnswer("IsekaiWarCampOverlord", "(Overlord) [Summon Deathbound Legion] \"Your Majesty, mortal crusaders bleed and break. I have raised 10 Grave Knights from ancient sepulchers. They know no fear and obey without question.\"", "{n}Queen Galfrey stares at you in grim apprehension as cold, armored dread marshals beyond the perimeter.{/n} \"Grave Knights... Under any other commander, such blasphemy would see you executed on the spot. But if you can truly bind their dark wills to defend Mendev... I will not turn away steel when the realm is on the brink. Keep them on a tight leash, Commander.\"", "OverlordProficiencies", new ContextActionMobilizeSubclassArmy
+		{
+			ClaimKey = "WarCampLevy",
+			UnitGuid = "15c574688d6e44e79925411c5234765e",
+			Count = 10,
+			ArmyName = "Grave Knights"
+		});
+		AddWarCampAnswer("IsekaiWarCampShadowMonarch", "(Shadow Monarch) [Call the Shadowdancers] \"An army that leaves no corpses and needs no supply lines. 10 Shadowdancers wait in the camp's twilight, ready for the march on Drezen.\"", "{n}The Queen watches in awe as ten silent figures step out of the shadows of the crusade pavilions, their blades gleaming with cold voidfire.{/n} \"Shadowdancers... They move like living mirages. If they can strike behind demon lines without suffering attrition, Drezen's outer bastions will crumble far faster. See them deployed to the vanguard, Commander.\"", "ShadowMonarchProficiencies", new ContextActionMobilizeSubclassArmy
+		{
+			ClaimKey = "WarCampLevy",
+			UnitGuid = "5a49b18137ebd634e96f3dfba01b77f2",
+			Count = 10,
+			ArmyName = "Shadowdancers"
+		});
+		AddWarCampAnswer("IsekaiWarCampDevourer", "(Slime) [Summon the Beast Vanguard] \"The beasts of the Sarkorian wastes answered my call. 20 Wolf Riders have emerged, eager to tear through fiendish lines.\"", "{n}Feral howls echo across the hills as savage riders surge up to the camp boundaries, their wolves sniffing the air with predatory relish.{/n} \"Wolf riders from the Sarkorian wastes! We thought their packs had scattered when the Worldwound opened. Their ferocity in battle is legendary. Well done, Commander.\"", "DevourerProficiencies", new ContextActionMobilizeSubclassArmy
+		{
+			ClaimKey = "WarCampLevy",
+			UnitGuid = "c7904164350a4d5199c68da5c79aef74",
+			Count = 20,
+			ArmyName = "Wolf Riders"
+		});
+		AddWarCampAnswer("IsekaiWarCampHero", "(Hero) [Rally 50 Volunteer Crusaders] \"Word of our triumph in Kenabres has spread across the border provinces! 50 Shield Bearers have flocked to our banner to stand with us!\"", "{n}Queen Galfrey smiles with radiant hope as fresh ranks of resolute crusaders form up, their shields polished and eyes burning with righteous fervor.{/n} \"The morale of the crusade hasn't been this high in decades. With stalwarts like these rallying to your standard, I truly believe we can reclaim the Sword of Valor.\"", "HeroProficiencies", new ContextActionMobilizeSubclassArmy
+		{
+			ClaimKey = "WarCampLevy",
+			UnitGuid = "24ad1a10190de5c459a4521996dcec4b",
+			Count = 50,
+			ArmyName = "Shield Bearers"
+		});
+		AddWarCampAnswer("IsekaiWarCampGodEmperor", "(God Emperor) [Inspire Imperial Discipline] \"Your Majesty, I have drilled 50 Shield Bearers in imperial martial doctrine. The crusade does not merely fight; it conquers.\"", "{n}Galfrey nods with deep respect.{/n} \"Your military discipline and regal authority have united even the most unruly mercenaries into an iron fist. Lead them well, Commander.\"", "GodEmperorProficiencies", new ContextActionMobilizeSubclassArmy
+		{
+			ClaimKey = "WarCampLevy",
+			UnitGuid = "24ad1a10190de5c459a4521996dcec4b",
+			Count = 50,
+			ArmyName = "Shield Bearers"
+		});
+		AddWarCampAnswer("IsekaiWarCampMastermind", "(Mastermind) [Deploy Precision Vanguard] \"I have calculated the optimal force for breaching Drezen's outer trenchworks. 50 Shield Bearers have been assigned to specific breach coordinates.\"", "{n}Galfrey looks over your operational schematics with genuine admiration.{/n} \"The meticulous precision of your campaign plans is breathtaking. Every unit placed with surgical intent. Execute the plan, Commander.\"", "MastermindProficiencies", new ContextActionMobilizeSubclassArmy
+		{
+			ClaimKey = "WarCampLevy",
+			UnitGuid = "24ad1a10190de5c459a4521996dcec4b",
+			Count = 50,
+			ArmyName = "Shield Bearers"
+		});
+		AddWarCampAnswer("IsekaiWarCampMartialGod", "(Martial God) [Drill the Vanguard in the Way of the Blade] \"Your Majesty, I spent the march teaching 50 Shield Bearers to breathe, step and strike as one. None of them will flinch when the demons come.\"", "{n}Galfrey watches a line of shields move in perfect unison, each soldier's stance as steady as a temple bell.{/n} \"I have seen paladins train half their lives for that kind of calm. If you can teach it to raw recruits in a few weeks, Drezen's walls will not stand long. Keep drilling them, Commander.\"", "PhantomBladeProficiencies", new ContextActionMobilizeSubclassArmy
+		{
+			ClaimKey = "WarCampLevy",
+			UnitGuid = "24ad1a10190de5c459a4521996dcec4b",
+			Count = 50,
+			ArmyName = "Shield Bearers"
+		});
+		AddWarCampAnswer("IsekaiWarCampGeneral", "(Isekai Protagonist) [Rally the Survivors of Kenabres] \"Your Majesty, the people who crawled out of Kenabres keep asking where to sign up. I have gathered 50 Shield Bearers who want to fight beside us.\"", "{n}Queen Galfrey looks over the new recruits, many of them still wearing the ash of Kenabres on their tabards.{/n} \"People follow someone who walks out of the rubble and keeps walking. They will need steel and drilling, but their hearts are already in this fight. See them armed, Commander.\"", "IsekaiProficiencies", new ContextActionMobilizeSubclassArmy
+		{
+			ClaimKey = "WarCampLevy",
+			UnitGuid = "24ad1a10190de5c459a4521996dcec4b",
+			Count = 50,
+			ArmyName = "Shield Bearers"
+		});
+		void AddWarCampAnswer(string name, string text, string cueText, string proficiencyFactName, ContextActionMobilizeSubclassArmy mobilizeAction)
+		{
+			Condition condition = AnswerGate(proficiencyFactName);
+			if (condition != null)
+			{
+				bool claims = mobilizeAction != null && !string.IsNullOrEmpty(mobilizeAction.ClaimKey);
+				GraftedAnswer.Named(name).At(DialogueBeats.QueenGalfreyForces).Says(text)
+					.ShownWhen(condition)
+					.OnSelect(mobilizeAction)
+					.RepliedToBy(name + "Reply", cueText)
+					.SpokenBy(galfreyUnit)
+					.ConfigureReply(delegate(GraftedCue reply)
+					{
+						reply.ShownWhen(claims ? new ConditionWarCampLevyStillOwed
+						{
+							ClaimKey = mobilizeAction.ClaimKey
+						} : null);
+					})
+					.ThenBackToTheList()
+					.OrElseReply(claims ? levyTakenReply : null)
+					.Graft();
+			}
+		}
+	}
+
+	private static void AddRegillHellknightReactions()
+	{
+		AddRegillAnswer("IsekaiRegillMastermind", "(Mastermind) [Counter-Analyze Regill's Tactics] \"Your retreat into the canyon cut flanking angles by 63%, but your triage was poor. Crossbowmen on the eastern ridge would have cost you no Hellknights.\"", "{n}Regill narrows his golden eyes, studying you with razor-sharp analytical respect.{/n} \"A rigorous assessment. Most who witness our discipline see only cruelty; you see geometry and resource management. We may find common ground yet, Commander.\"", "MastermindProficiencies");
+		AddRegillAnswer("IsekaiRegillOverlord", "(Overlord) [Demonstrate Superior Authority] \"Your Order of the Godclaw prides itself on absolute order. But true order does not beg magistrates for legitimacy; it bends reality by supreme will.\"", "{n}Regill stands motionless under your dark gaze, his expression unyielding stone.{/n} \"A tyrant's philosophy. Yet the Worldwound is chaos incarnate; against utter disorder, absolute conviction is an acceptable weapon. Prove your supreme will on the march to Drezen.\"", "OverlordProficiencies");
+		AddRegillAnswer("IsekaiRegillShadowMonarch", "(Shadow Monarch) [Acknowledge Strategic Elimination] \"Sacrificing your wounded to preserve unit cohesion was brutal, but necessary. In the abyss of war, hesitation is the only true sin.\"", "{n}Regill nods once with crisp, measured approval.{/n} \"A rare spark of pragmatic clarity. Those who flinch from necessary amputations allow gangrene to consume the whole regiment. Remember that principle when you command the crusade.\"", "ShadowMonarchProficiencies");
+		AddRegillAnswer("IsekaiRegillGodEmperor", "(God Emperor) [Offer Imperial Commission] \"Paralictor Regill, your discipline is formidable, but incomplete without an emperor worthy of your service. Swear your legions to my imperial mandate.\"", "{n}Regill's jaw tightens with professional composure.{/n} \"The Order of the Godclaw serves no individual sovereign on whim. But if your imperial mandate enforces absolute law and eradicates the abyssal cancer, our hammers will march at your side.\"", "GodEmperorProficiencies");
+		AddRegillAnswer("IsekaiRegillDevourer", "(Slime) [Assess Gargoyle Caloric Density] \"Those gargoyles were surprisingly tough. Not much meat on them, mostly crunchy stone... but their magical essence made a decent post-battle snack.\"", "{n}Regill blinks once, his expression briefly flickering with profound bafflement before returning to stern discipline.{/n} \"...Consuming stony fiends for sustenance. Unorthodox. Biologically dubious. But if your digestion removes enemy combatants from the battlefield, I have no tactical objection.\"", "DevourerProficiencies");
+		static void AddRegillAnswer(string name, string text, string cueText, string proficiencyFactName)
+		{
+			Condition condition = AnswerGate(proficiencyFactName);
+			if (condition != null)
+			{
+				GraftedAnswer.Named(name).At(DialogueBeats.RegillSendsYakerOff).Says(text)
+					.ShownWhen(condition)
+					.RepliedToBy(name + "Reply", cueText)
+					.ThenBackToTheList()
+					.Graft();
+			}
+		}
+	}
+
+	private static void AddZachariusLostChapelReactions()
+	{
+		AddZachariusAnswer("IsekaiZachariusOverlord", "(Overlord) [Assert Arch-Lich Supremacy] \"You hide in a damp basement whimpering over an ancient defeat, Zacharius. Kneel before a true Sovereign of the Undead, or I will crush your soul into bone powder.\"", "{n}Zacharius reels back, the necrotic flames in his empty eye sockets flickering with genuine shock and primordial dread.{/n} \"What... what manner of entity are you?! The tyrannical death aura you emanate... it dwarfs even the archmages of ancient Geb!\" {n}He steadies himself.{/n} \"Very well, Sovereign. Then you understand why I must have my wand back.\"", "OverlordProficiencies");
+		AddZachariusAnswer("IsekaiZachariusDevourer", "(Slime) [Appraise Ancient Bone Calcium] \"Ooh, a talking skeleton! Are you preserved like magical jerky? You look like you've been curing down here for a century. How many calories is a lich anyway?\"", "{n}Zacharius recoils in utter disgust and disbelief.{/n} \"Calories?! Curing?! You insufferable, gelatinous monstrosity! I am Zacharius, hero of the First Crusade and master of death itself, not livestock for your gluttony! Keep your vile slime away from my robes!\"", "DevourerProficiencies");
+		AddZachariusAnswer("IsekaiZachariusShadowMonarch", "(Shadow Monarch) [Extract Soul Echo] \"Death is not your prison, Zacharius. In my kingdom of shadows, every soul finds its eternal purpose under my throne.\"", "{n}Zacharius tilts his skull, mesmerized by the deep sovereign darkness wrapping around your fingers.{/n} \"Fascinating... not mere necromancy, but the primal gravity of the endless void. Perhaps your descent into darkness will achieve what the paladins never could.\"", "ShadowMonarchProficiencies");
+		AddZachariusAnswer("IsekaiZachariusMastermind", "(Mastermind) [Diagnose Phylactery Deterioration] \"Your warding runes are failing, Zacharius. A century down here has worn them thin. You are in no position to make demands about this wand.\"", "{n}Zacharius's bony fingers tremble with rage and mortification.{/n} \"Failing?! Insolent whelp! My wards are... they are...\" {n}He glances anxiously at the flickering runes.{/n} \"...Curse your keen eyes. That changes nothing. The wand is mine, and I will have it back.\"", "MastermindProficiencies");
+		static void AddZachariusAnswer(string name, string text, string cueText, string proficiencyFactName)
+		{
+			Condition condition = AnswerGate(proficiencyFactName);
+			if (condition != null)
+			{
+				GraftedAnswer.Named(name).At(DialogueBeats.ZachariusDemandsHisWand).Says(text)
+					.ShownWhen(condition)
+					.RepliedToBy(name + "Reply", cueText)
+					.ThenBackToTheList()
+					.Graft();
+			}
+		}
+	}
+
+	private static void AddDrezenCitadelProclamationReactions()
+	{
+		AddProclamationAnswer("IsekaiDrezenProclamationSlime", "(Slime) [Proclaim the Tempest Multiverse Federation] \"Drezen is now the capital of the Tempest Multiverse Federation! Hot springs, good food, and a home for mortals, mongrels, and reformed fiends alike!\"", "{n}Queen Galfrey pauses, looking across the liberated citadel walls with a faint, bemused smile.{/n} \"A... multiverse federation? With hot springs and monster sanctuaries? Under any other crusader, I would consider this sheer madness. But your people adore you, and your strength retook these walls. Call your citadel what you like, so long as it holds. May your boundless ambition bring life back to these barren lands, Commander.\"", "DevourerProficiencies");
+		AddProclamationAnswer("IsekaiDrezenProclamationOverlord", "(Overlord) [Consecrate Exterior Bastion of the Great Tomb] \"Hear me, mortal Queen! Drezen is claimed as an exterior bastion of the Great Tomb. Death shall govern these ramparts with unwavering order.\"", "{n}Galfrey shivers as an icy, necromantic weight settles over the stone battlement, yet she holds your gaze with queenly resolve.{/n} \"An unyielding necropolis in the heart of the Worldwound... While I cannot officially endorse the worship of undeath in holy Mendev, the peace and discipline your forces maintain cannot be denied. Drezen is yours to command. Rule it with the justice you promised.\"", "OverlordProficiencies");
+		AddProclamationAnswer("IsekaiDrezenProclamationShadowMonarch", "(Shadow Monarch) [Raise the Citadel of Eternal Shadows] \"Let the sun set on the old world. Drezen is now the Citadel of Eternal Shadows, where the silent legion stands eternal guard over northern Avistan.\"", "{n}Galfrey looks out at the darkening towers, where silhouettes of shadow soldiers stand vigilant along the parapets.{/n} \"The demons took Drezen through light and fire, but they will never break through your shadows. The people feel protected, even if the cold chill in the air never quite fades. Drezen is safe in your shadow, Commander.\"", "ShadowMonarchProficiencies");
+		AddProclamationAnswer("IsekaiDrezenProclamationGodEmperor", "(God Emperor) [Declare the First Radiant Imperium] \"By divine right, I consecrate Drezen as the First Radiant Imperium! Here begins a golden age of law and solar prosperity for all Golarion!\"", "{n}Queen Galfrey bows her head with profound regal respect as radiant golden light bathes the citadel square.{/n} \"An Imperium born from the ashes of demon tyranny... The majesty of your presence inspires hope even in the most cynical crusaders. Lead your people wisely, Sovereign Commander.\"", "GodEmperorProficiencies");
+		AddProclamationAnswer("IsekaiDrezenProclamationHero", "(Hero) [Dedicate Drezen to Mortal Freedom] \"Drezen belongs to no tyrant, no god, and no demon! It belongs to the farmers, the knights, and the orphans who bled to take back their homes!\"", "{n}Galfrey smiles with radiant warmth.{/n} \"Spoken like a true champion of the people. For more than a century, we fought under the heavy shadow of despair. Today, your courage gave them back their future. Long live the Knight Commander!\"", "HeroProficiencies");
+		AddProclamationAnswer("IsekaiDrezenProclamationMastermind", "(Mastermind) [Establish the Grand Sovereign Nexus] \"Drezen is restructured into the nexus of our geopolitical board. Every resource route, intelligence bureau, and bastion is calibrated for total victory.\"", "{n}Galfrey reviews your architectural and strategic blueprints with awe.{/n} \"Incredible. In a few weeks, you have organized logistics that took our Royal Council months to debate. With your intellect guiding the crusade, the demons will find no flaws to exploit.\"", "MastermindProficiencies");
+		AddProclamationAnswer("IsekaiDrezenProclamationGeneral", "(Isekai Protagonist) [Proclaim the New Dawn of Drezen] \"We took back Drezen with our own hands, strange powers, and loyal friends. This fortress proves anything is possible when you refuse to surrender!\"", "{n}Galfrey nods with deep heartfelt sincerity.{/n} \"Indeed, Commander. You came from unknown origins and turned the tide of a war older than a century. Mendev salutes you, and the entire continent looks to your standard with hope.\"", "IsekaiProficiencies");
+		static void AddProclamationAnswer(string name, string text, string cueText, string proficiencyFactName)
+		{
+			Condition condition = AnswerGate(proficiencyFactName);
+			if (condition != null)
+			{
+				GraftedAnswer.Named(name).At(DialogueBeats.GalfreyPraisesDrezen).Says(text)
+					.ShownWhen(condition)
+					.RepliedToBy(name + "Reply", cueText)
+					.ThenBackToTheList()
+					.Graft();
+			}
+		}
+	}
+
+	private static void AddAreeluLabLoopTruthReactions()
+	{
+		BlueprintUnit sutureUnit = BlueprintTools.GetBlueprint<BlueprintUnit>("90215a976d13b254ab905d0d6f747deb");
+		AddLabTruthAnswer("IsekaiAreeluLabTruthGeneral", "(Isekai Protagonist) [Confront the Cosmic Glitch] \"Tell your mistress her ritual never pulled her child's soul. It cracked reality open, and Yog-Sothoth's loop dragged me in from another world!\"", "{n}The dretch freezes, his eyes darting from you to the purple shimmer of the book and back again.{/n} \"Another world? A loop? Heh... heh. My lady doesn't make mistakes. She doesn't!\" {n}He wrings his claws.{/n} \"But if she did... oh, she won't like that at all. Don't tell her I laughed.\"", "IsekaiProficiencies", new ContextActionAreeluLoopTruthBanter());
+		AddLabTruthAnswer("IsekaiAreeluLabTruthDevourer", "(Slime) [Digest the Planar Glitch] \"Your mistress's ritual was a dimensional vacuum cleaner! It sucked in an otherworldly slime instead of her kid, and now Yog-Sothoth's loop has us on playback!\"", "{n}Suture stares at you, then edges away from your quivering form.{/n} \"A slime? From another world? That's not in any of her notes, and I've read all her notes. Most of them.\" {n}He licks his lips nervously.{/n} \"Just... don't eat the book. She'd have my hide.\"", "DevourerProficiencies");
+		AddLabTruthAnswer("IsekaiAreeluLabTruthOverlord", "(Overlord) [Dissect the Flawed Incantation] \"Your mistress's rift was a pathetic miscalculation, dretch. It failed to tether her offspring and snagged an Overlord from beyond reality instead.\"", "{n}Suture cringes as an aura of supreme authority presses down on the laboratory.{/n} \"A miscalculation? My lady? Heh... you tell her that yourself, great one. I only fetch things and sweep up.\" {n}His gaze slides back to the book.{/n} \"But whatever you are, you'll want power worthy of you. Right there. Take it.\"", "OverlordProficiencies");
+		AddLabTruthAnswer("IsekaiAreeluLabTruthShadowMonarch", "(Shadow Monarch) [Reveal the Sovereign Truth] \"The void your mistress opened pulled the sovereign of shadows into Yog-Sothoth's loop. Her child is not here; only the monarch remains.\"", "{n}The shadows of the laboratory coil around your feet, and Suture scrambles back from them.{/n} \"Keep them off me! I'm useful! I'm very useful!\" {n}He swallows hard.{/n} \"A monarch, pulled through her rift... She'll want to know. She always wants to know. Take the book, and maybe she won't have to hear it from me.\"", "ShadowMonarchProficiencies");
+		AddLabTruthAnswer("IsekaiAreeluLabTruthMastermind", "(Mastermind) [Expose the Infinite Playback Algorithm] \"I reverse-engineered your mistress's ritual. Her child's soul never had a chance; Yog-Sothoth intercepted the breach to feed an endless broadcast.\"", "{n}Suture's eyes narrow into something almost clever.{/n} \"Never had a chance? You did her sums, just like that?\" {n}He lets out a dry, wheezing cackle that echoes through the laboratory.{/n} \"All those years, all those experiments... for a show. You see the whole board, don't you? Then you know that book is the next move.\"", "MastermindProficiencies");
+		AddLabTruthAnswer("IsekaiAreeluLabTruthHero", "(Hero) [Declare Moral Rejection of the Loop] \"Your mistress's grief swallowed an innocent soul from another world. I won't let Yog-Sothoth's loop or her obsession destroy Golarion. I will break this cycle!\"", "{n}Suture snorts, though he doesn't quite meet your eyes.{/n} \"Break the cycle, protect the people, save the world. Heroes all say the same things.\" {n}He glances toward the depths of the laboratory.{/n} \"She'd find you interesting, though. Plucked from your home and still fighting. Go on, then. Break it if you can.\"", "HeroProficiencies");
+		void AddLabTruthAnswer(string name, string text, string cueText, string proficiencyFactName, ContextAction extraAction = null)
+		{
+			Condition condition = AnswerGate(proficiencyFactName);
+			if (condition != null)
+			{
+				GraftedAnswer.Named(name).At(DialogueBeats.SutureOffersTheLexicon).Says(text)
+					.ShownWhen(condition)
+					.OnSelect(extraAction)
+					.RepliedToBy(name + "Reply", cueText)
+					.SpokenBy(sutureUnit)
+					.ThenBackToTheList()
+					.Graft();
+			}
+		}
+	}
+
+	private static void AddBaphometConfrontationReactions()
+	{
+		AddBaphometAnswer("IsekaiBaphometOverlord", "(Overlord) [Mock the Lord of the Labyrinth] \"You bellow like a slaughterhouse bull, Baphomet. In the Great Tomb, cattle know their place. Kneel, or I shall turn your horns into drinking goblets.\"", "{n}Baphomet's massive nostrils flare with blistering hellfire as he clutches his glaive in furious shock.{/n} \"Cattle?! Drinking goblets?! Incomprehensible worm! You stand before the Lord of Minotaurs, master of the Ivory Labyrinth! I shall grind your arrogant bones into dust... but speak, while your tongue is still yours.\"", "OverlordProficiencies", new ContextActionBaphometDefianceBanter
+		{
+			Line = "Did the Commander just threaten to turn the Lord of the Labyrinth's horns into drinking goblets?! Absolute legendary performance!"
+		});
+		AddBaphometAnswer("IsekaiBaphometDevourer", "(Slime) [Inspect Demon Lord Caloric Density] \"Whoa, fresh beef! I've eaten dretches, minotaurs, and balors, but a full Demon Lord? You must have enough magical calories to evolve my whole federation!\"", "{n}Baphomet reels back, staring in profound revulsion at your quivering, hungry form.{/n} \"Fresh beef?! Caloric density?! You gelatinous abomination, I am a Demon Lord of the Abyss, not livestock for your gluttony! I shall scorch your vile ooze into dry ash... but speak, while you still have a mouth to speak with.\"", "DevourerProficiencies", new ContextActionBaphometDefianceBanter
+		{
+			Line = "Did the Commander just call the Lord of the Labyrinth fresh beef, to his face?! Absolute legendary performance!"
+		});
+		AddBaphometAnswer("IsekaiBaphometShadowMonarch", "(Shadow Monarch) [Claim the Ivory Horns] \"Your labyrinth is just a maze of shadows, Baphomet. And in the dark, every shadow answers to me. Even the shadows of demon lords.\"", "{n}Baphomet grunts in fury as the darkness at his hooves twists and resists his commands.{/n} \"Shadows answering to a mortal?! Insolent wretch! My labyrinth is eternal, and your soul shall wander its twisting corridors forever... once I have heard what else you came to say.\"", "ShadowMonarchProficiencies");
+		AddBaphometAnswer("IsekaiBaphometGodEmperor", "(God Emperor) [Issue Imperial Extinction Decree] \"Baphomet, by decree of the Radiant Imperium, your reign of deceit is terminated. The light of the solar throne shall bleach your labyrinth to ash.\"", "{n}Baphomet roars, the cavern shaking as brimstone explodes from his cloven hooves.{/n} \"An emperor?! In my mines?! Your pathetic solar light will be swallowed by the eternal darkness of the Abyss! But go on, little emperor. Speak, while your tongue is still yours.\"", "GodEmperorProficiencies");
+		AddBaphometAnswer("IsekaiBaphometMastermind", "(Mastermind) [Deconstruct Baphomet's Strategy] \"You sacrificed your own daughter to test my defenses, Lord of the Labyrinth. A pedestrian gambit. Your failure rate in this encounter is already 100%.\"", "{n}Baphomet barks with guttural rage, his crimson eyes bulging with murderous fury.{/n} \"Pedestrian gambit?! Hepzamirah served her purpose! And your purpose is to die here at the bottom of the world, arrogant strategist... but speak, while your tongue is still yours.\"", "MastermindProficiencies");
+		AddBaphometAnswer("IsekaiBaphometHero", "(Hero) [Stand Resolute Against the Fiend] \"You betrayed your own blood and sacrificed countless lives for your labyrinth. Today, your cruelty ends, Baphomet. We aren't afraid of you!\"", "{n}Baphomet sneers with cruel, jagged teeth.{/n} \"Not afraid? You will learn terror when my glaive pins your heart to these caverns, righteous fool. But speak, while your tongue is still yours.\"", "HeroProficiencies");
+		static void AddBaphometAnswer(string name, string text, string cueText, string proficiencyFactName, ContextAction extraAction = null)
+		{
+			Condition condition = AnswerGate(proficiencyFactName);
+			if (condition != null)
+			{
+				GraftedAnswer.Named(name).At(DialogueBeats.BaphometTaunts).Says(text)
+					.ShownWhen(condition)
+					.OnSelect(extraAction)
+					.RepliedToBy(name + "Reply", cueText)
+					.ThenBackToTheList()
+					.Graft();
+			}
+		}
+	}
+
+	private static void AddNocticulaAudienceReactions()
+	{
+		BlueprintCue returnVisitCue = BlueprintTools.GetBlueprint<BlueprintCue>("e9a8471fdce2791498242f2ce0f6ecb3");
+		AddNocticulaAnswer("IsekaiNocticulaGeneral", "(Isekai Protagonist) [Resist Charm with Akashic Encryption] \"Drop the mental probes, Lady Nocticula. My soul has otherworldly Akashic encryption and a live audience of Constellations. No puppet here.\"", "{n}Nocticula raises a sculpted eyebrow, leaning back on her velvet cushions with a purr of genuine amusement.{/n} \"Akashic encryption... and a live celestial audience? How delightfully exotic. Most mortals who enter my palace fall weeping to their knees begging for a single touch. It seems the rumors of your otherworldly charm were not exaggerated, Commander. Let us speak as equals.\"", "IsekaiProficiencies");
+		AddNocticulaAnswer("IsekaiNocticulaOverlord", "(Overlord) [Establish Equal Planar Dominance] \"You rule an island of assassins and hedonists, Lady of Shadow. Do not mistake an Overlord for crusader clay, or silk will burn under tier 10 magic.\"", "{n}Nocticula's lips curve into a tantalizing, dangerous smile, unruffled by your chilling threat.{/n} \"Such delicious arrogance... and the terrifying magical aura to back it up. A ruler of death who bows to no god. I like you, Overlord. Alushinyrra is honored by your presence. Let us conduct our business with mutual respect.\"", "OverlordProficiencies");
+		AddNocticulaAnswer("IsekaiNocticulaDevourer", "(Slime) [Admire the Midnight Cuisine] \"Nice city you have here! The street food in the Lower City is fascinating. Any chance you'd trade some Midnight Isle recipes with the Tempest Federation?\"", "{n}Nocticula blinks once, then bursts into a melodious, sultry laugh that echoes through the House of Silken Shadows.{/n} \"Culinary recipes?! You tore through the Abyss, fought your way through Alushinyrra, marched into my royal palace... and your first request is Midnight Isle street food recipes?!\" {n}She claps her delicate hands, delighted.{/n} \"You are utterly charming, little slime. Consider my kitchen archives open to your federation.\"", "DevourerProficiencies");
+		AddNocticulaAnswer("IsekaiNocticulaShadowMonarch", "(Shadow Monarch) [Commune in Absolute Darkness] \"You call yourself Our Lady in Shadow, Nocticula. But you rule merely the shadows cast by flesh. I rule the void itself.\"", "{n}The shadows beneath Nocticula's throne ripple in harmonic resonance with your own sovereign aura.{/n} \"The primal void... Yes, I can feel it. You do not merely borrow the dark; you are its undisputed master. How refreshing to meet someone who understands the true elegance of shadow. Welcome to my court, Monarch.\"", "ShadowMonarchProficiencies");
+		AddNocticulaAnswer("IsekaiNocticulaMastermind", "(Mastermind) [Counter-Propose Planar Geopolitics] \"Impressive assassins, Lady Nocticula, but a fragile economy. Share Nahyndrian intelligence, and Alushinyrra gains 34% more trade after the war.\"", "{n}Nocticula leans forward, her golden eyes sparkling with sharp appreciation.{/n} \"A strategist who speaks in trade margins and economic dominance rather than righteous hymns. You truly are a breath of fresh air, Commander. Let us review your proposal.\"", "MastermindProficiencies");
+		void AddNocticulaAnswer(string name, string text, string cueText, string proficiencyFactName)
+		{
+			Condition condition = AnswerGate(proficiencyFactName);
+			if (condition != null)
+			{
+				GraftedAnswer.Named(name).At(DialogueBeats.NocticulaFirstAudience).Says(text)
+					.ShownWhen(condition)
+					.ShownWhen((returnVisitCue == null) ? new Condition[0] : new Condition[1]
+					{
+						new CueSeen
+						{
+							Not = true,
+							m_Cue = returnVisitCue.ToReference<BlueprintCueBaseReference>()
+						}
+					})
+					.RepliedToBy(name + "Reply", cueText)
+					.ThenBackToTheList()
+					.Graft();
+			}
+		}
+	}
+
+	private static void AddDivineSummitGoddessesReactions()
+	{
+		BlueprintUnit iomedaeUnit = BlueprintTools.GetBlueprint<BlueprintUnit>("9a1443603c9353d4194a583a31228c8b");
+		BlueprintUnit nocticulaUnit = BlueprintTools.GetBlueprint<BlueprintUnit>("0cca8c841d634d84fbec2609c8db3465");
+		BlueprintCue blueprint = GraftedCue.Named("IsekaiGoddessesSummitTricksterNocticulaReply").Says("{n}Nocticula smirks with wicked delight.{/n} \"I don't know what a live chat is, Commander, but I adore being the crowd favorite. Keep entertaining the cosmos!\"").SpokenBy(nocticulaUnit)
+			.ThenBackTo(DialogueBeats.GoddessesAwaitTheDecision)
+			.Blueprint;
+		BlueprintCue blueprint2 = GraftedCue.Named("IsekaiGoddessesSummitOverlordNocticulaReply").Says("\"Let {mf|him|her} speak, Inheritor! A tyrant who looks down on both heaven and hell is far more amusing than your pious sermons.\"").SpokenBy(nocticulaUnit)
+			.ThenBackTo(DialogueBeats.GoddessesAwaitTheDecision)
+			.Blueprint;
+		AddSummitAnswer("IsekaiGoddessesSummitLoopBreaker", "(Isekai Protagonist) [Reject Divine Scripts for Mortal Freedom] \"Neither blind faith nor abyssal chains! My power is my own, and my companions'. I reject both your scripts and will shatter this loop myself!\"", "{n}Iomedae stares at you in solemn, awe-struck sorrow, while Nocticula watches with breathless admiration.{/n} \"To reject both Heaven and the Abyss... to cast aside the divine design in the name of unguided mortal will. It is a path of terrible peril, Commander. Yet the purity of your conviction rivals that of the greatest martyrs of old. May your mortal spirit withstand the storm to come.\"", "IsekaiProficiencies", nocticulaSpeaks: false, null, new ContextActionLoopBreakerInsight());
+		AddSummitAnswer("IsekaiGoddessesSummitTrickster", "(Isekai Protagonist) [Check the Live Chat Banter] \"Hold on! Live chat is going wild! 40% for Iomedae, 50% for Nocticula, and 10% betting I flip both of you off! Let's give them a show!\"", "{n}Both deities pause in sheer, profound bewilderment as holographic reaction emojis and coin donations flash across the air.{/n} \"Live chat? Constellation betting pools? What manner of alien madness is this?!\"", "IsekaiProficiencies", nocticulaSpeaks: false, blueprint, new ContextActionGoddessesChatBanter());
+		AddSummitAnswer("IsekaiGoddessesSummitOverlord", "(Overlord) [Castigate Both Goddesses] \"A goddess preaching submission and a demon queen whispering seduction. Neither of you commands a Supreme Being. The Worldwound shall be sealed by my decree alone.\"", "{n}Iomedae's radiant sword blazes with righteous indignation, while Nocticula chuckles softly into her sleeve.{/n} \"Supreme Being? Your pride borders on the greatest heresies of the ancient world!\"", "OverlordProficiencies", nocticulaSpeaks: false, blueprint2);
+		AddSummitAnswer("IsekaiGoddessesSummitDevourer", "(Slime) [Proclaim the Tempest Way] \"Why must everything be an ultimatum? In the Tempest Federation we protect our friends, build cozy homes, and eat good food. Keep your dogmas; we're fixing this our way!\"", "{n}Iomedae blinks, momentarily disarmed by your earnest, cheerful declaration.{/n} \"A cozy home... and good food? You speak of simple mortal peace in the face of planar destruction. If your strange federation can truly restore peace to these tortured lands, then prove it at Threshold, Commander.\"", "DevourerProficiencies");
+		AddSummitAnswer("IsekaiGoddessesSummitGodEmperor", "(God Emperor) [Declare Sovereign Autarchy] \"The era of foreign gods deciding mortal destinies ends today. The Golden Throne of Sarkoris shall not kneel to Heaven nor Hell. My reign is absolute.\"", "{n}Iomedae looks upon you with solemn gravity.{/n} \"Many mortal kings have proclaimed absolute autarchy, only to fall to hubris. If you claim the throne of Sarkoris, rule with righteousness, not tyranny.\"", "GodEmperorProficiencies");
+		AddSummitAnswer("IsekaiGoddessesSummitMastermind", "(Mastermind) [Expose the Binary False Choice] \"A classic false dichotomy: sacrificial obsolescence or parasitic dependency. Both algorithms fail. I select Option Three: mortal transcendence.\"", "{n}Nocticula laughs with sharp, appreciative brilliance.{/n} \"Parasitic dependency? Oh, you wound me, Commander! But I cannot fault a mind so delightfully immune to divine coercion. Show us your Option Three, then!\"", "MastermindProficiencies", nocticulaSpeaks: true);
+		AddSummitAnswer("IsekaiGoddessesSummitShadowMonarch", "(Shadow Monarch) [Embrace the Sovereign Eclipse] \"Light and lust are equally fleeting. When the battle for Threshold begins, neither Heaven nor Alushinyrra will hold the line. My shadows will.\"", "{n}Iomedae tightens her grip on her holy blade as shadows swallow the stones of the summit.{/n} \"The dark power you harbor is perilous beyond measure, Commander. Do not let the shadows you command become your own tomb.\"", "ShadowMonarchProficiencies");
+		void AddSummitAnswer(string name, string text, string cueText, string proficiencyFactName, bool nocticulaSpeaks = false, BlueprintCue followUp = null, ContextAction extraAction = null)
+		{
+			Condition condition = AnswerGate(proficiencyFactName);
+			if (condition != null)
+			{
+				GraftedAnswer graftedAnswer = GraftedAnswer.Named(name).At(DialogueBeats.GoddessesAwaitTheDecision).Says(text)
+					.ShownWhen(condition)
+					.OnSelect(extraAction)
+					.RepliedToBy(name + "Reply", cueText)
+					.SpokenBy(nocticulaSpeaks ? nocticulaUnit : iomedaeUnit)
+					.ThenBackToTheList();
+				if (followUp != null)
+				{
+					graftedAnswer.ThenContinueTo(followUp);
+				}
+				graftedAnswer.Graft();
+			}
+		}
+	}
+
+	private static void AddThresholdGrandFinalEndingReactions()
+	{
+		List<BlueprintAnswer> endingAnswers = new List<BlueprintAnswer>();
+		AddEndingAnswer("IsekaiEndingUnwrittenDawn", "(Isekai Protagonist) [Shatter the Cosmic Loop: The Unwritten Dawn] \"I reach for the Keys of Causal Rupture! Yog-Sothoth, let us see whether your playback ends today!\"", "{n}The Keys of Causal Rupture stir in answer, straining against the invisible temporal anchors that hold this era in recurrence. Whether they break will be decided by everything you have done, not by what you say here.{/n}", "IsekaiProficiencies", "UnwrittenDawn", "The Unwritten Dawn");
+		AddEndingAnswer("IsekaiEndingInterdimensionalTraveler", "(Isekai Protagonist) [Slipstream Wanderer: The Interdimensional Traveler] \"When this is done, I step into the dimensional slipstream to explore the Great Beyond and leave Golarion in mortal hands.\"", "{n}The violet flames of the Wound bend around your otherworldly mana as you gather it for the crossing still to come. Beyond this last choice, the stars are waiting.{/n}", "IsekaiProficiencies", "InterdimensionalTraveler", "The Interdimensional Traveler");
+		AddEndingAnswer("IsekaiEndingEternalActor", "(Isekai Protagonist) [Surrender to the Broadcast: The Eternal Actor] \"Let the Constellations have their eternal show. When this era fades, let the causal clock rewind for another season.\"", "{n}You bow to the empty sky. Somewhere beyond it an unseen audience roars, and the causal clock begins, very quietly, to wind itself back.{/n}", "IsekaiProficiencies", "EternalActor", "The Eternal Actor");
+		AddEndingAnswer("IsekaiEndingPaxSepulchrum", "(Overlord) [Sovereign Protectorate: Pax Sepulchrum] \"Whatever becomes of the Wound, Sarkoris falls under the protectorate of the Great Tomb. The dead shall labor and defend so the living may prosper.\"", "{n}For a moment you glimpse the future you have claimed: disciplined death knights and bone laborers spread across Sarkoris, and an era of impeccable order, rich harvests and zero crime begins under the Supreme One's impartial gaze.{/n}", "OverlordProficiencies", "PaxSepulchrum", "Pax Sepulchrum - Guardian of the Great Tomb");
+		AddEndingAnswer("IsekaiEndingIronCitadel", "(Overlord) [Isolated Bastion: Dominion of the Iron Citadel] \"I will raise obsidian ramparts around Sarkoris and isolate our necropolis from the petty squabbles of the outside world.\"", "{n}You picture it clearly: obsidian walls closing around a silent necropolis. A sanctuary of undeath, and a quiet, lifeless prison of your own making.{/n}", "OverlordProficiencies", "IronCitadel", "Dominion of the Iron Citadel");
+		AddEndingAnswer("IsekaiEndingNecroTyrant", "(Overlord) [Total Harvest: The Eternal Necro-Tyrant] \"Mortal life is a fragile, chaotic disease. I will harvest every living soul in Avistan into a silent, disciplined undead legion.\"", "{n}A chilling vision sweeps over you: a necrotic storm across northern Avistan, life falling silent, and every soul rising in flawless, eternal obedience to the Great Tomb.{/n}", "OverlordProficiencies", "NecroTyrant", "The Eternal Necro-Tyrant");
+		AddEndingAnswer("IsekaiEndingTempestFederation", "(Slime) [Multiversal Haven: The Tempest Multiverse Federation] \"Whatever happens to the Wound, these scarred lands become the Tempest Multiverse Federation, where all beings live and feast together!\"", "{n}A profound, comforting warmth radiates from you as you picture it: monsters and mortals sharing one table, and hot springs steaming where the demons once marched.{/n}", "DevourerProficiencies", "TempestFederation", "The Tempest Multiverse Federation");
+		AddEndingAnswer("IsekaiEndingPrimevalMarsh", "(Slime) [Ancient Slumber: The Primeval Marsh] \"I will return Sarkoris to a wild primeval haven and curl up beneath the World Tree as Golarion's guardian beast-god.\"", "{n}The thought is strangely peaceful: a beast-god asleep beneath the World Tree, while the wild slowly reclaims Sarkoris around you.{/n}", "DevourerProficiencies", "PrimevalMarsh", "The Primeval Marsh");
+		AddEndingAnswer("IsekaiEndingAbyssalSingularity", "(Slime) [Infinite Gluttony: The Abyssal Singularity] \"I will dive straight into the Abyss and devour demon lords until I wake Azathoth, collapsing the timeline and resetting the loop!\"", "{n}A terrifying, cosmic hunger stirs in your core. If you devour the Abyss itself, the temporal cascade will unmake everything, and you find that you do not mind at all.{/n}", "DevourerProficiencies", "AbyssalSingularity", "The Abyssal Singularity");
+		AddEndingAnswer("IsekaiEndingEternalHope", "(Hero) [Celestial Nova: The Sovereign Beacon of Eternal Hope] \"I reach for the Triforce of Courage! I will channel the hope of every mortal who ever lived into an undying nova and ascend as the eternal protector of worlds!\"", "{n}An impossible, blinding light gathers around you, and the mark of Courage burns gold across the back of your hand. To become a beacon for all dimensions is an endless sacrifice, and you accept it gladly. Whichever path you swore to on the day you were called here, it is Courage that answers you at the end.{/n}", "HeroProficiencies", "EternalHope", "The Sovereign Beacon of Eternal Hope", AlignmentMaskType.Good);
+		AddEndingAnswer("IsekaiEndingRetiredLegend", "(Hero) [Humble Peace: The Retired Legend] \"I refuse godhood and crowns. The Triforce of Wisdom asks for neither courage nor power, only the sense to put the blade down. When this is over, I will open a cozy tavern and training hall in Kenabres and live a full mortal life.\"", "{n}After holding the power to shape reality, you find yourself dreaming of pouring ale and telling stories. Wisdom is the piece that never asked you to be the bravest or the strongest, and this is the best dream you have had in years.{/n}", "HeroProficiencies", "RetiredLegend", "The Retired Legend");
+		AddEndingAnswer("IsekaiEndingCorruptedChampion", "(Hero) [Fallen Paragon: The Corrupted Champion] \"I have lived long enough to become the villain. I close my hand on the Triforce of Power, and in the name of protecting everyone I will enforce absolute peace with an iron fist.\"", "{n}Something dark takes root beneath your righteousness as the mark of Power settles into your hand. Let them fear your goodness, just as they once feared the demons. Whichever path you swore to on the day you were called here, it is Power that answers you at the end.{/n}", "HeroProficiencies", "CorruptedChampion", "The Corrupted Champion", AlignmentMaskType.Evil);
+		AddEndingAnswer("IsekaiEndingPaxSolaris", "(God Emperor) [Solar Renaissance: Pax Solaris] \"I will ascend the Golden Throne of Sarkoris as God-King and usher in an era of solar technology, justice, and prosperity!\"", "{n}For a moment you glimpse the future you have claimed: radiant solar towers rising from Drezen to the World's Edge Mountains, and a Solar Commonwealth uniting the nations in an era of cultural and scientific enlightenment.{/n}", "GodEmperorProficiencies", "PaxSolaris", "Pax Solaris - The Golden Renaissance");
+		AddEndingAnswer("IsekaiEndingSarkorianImperium", "(God Emperor) [Iron Mandate: The Sarkorian Imperium] \"I will forge the Sarkorian Imperium and rule Avistan through unassailable military discipline and absolute law.\"", "{n}You see imperial legions marching to every border, bringing absolute stability and commercial dominance under your unwavering authority.{/n}", "GodEmperorProficiencies", "SarkorianImperium", "The Sarkorian Imperium");
+		AddEndingAnswer("IsekaiEndingDualThrone", "(God Emperor) [Conquest of Two Realms: The Dual Throne of Sun and Abyss] \"I will march the solar legions into the Abyss and bind mortal and fiend under the supremacy of the Dual Throne.\"", "{n}You see solar banners planted in abyssal magma, and mortals and demons alike kneeling before your absolute authority across two planes.{/n}", "GodEmperorProficiencies", "DualThrone", "The Dual Throne of Sun and Abyss");
+		AddEndingAnswer("IsekaiEndingSilentAegis", "(Shadow Monarch) [Watchers in the Dark: The Silent Aegis of Shadows] \"I will command the Legion of Shadows to shield Golarion, so night becomes a guardian rather than a terror.\"", "{n}You picture shadow soldiers standing silent, invisible guard over every road and hamlet, while innocents sleep peacefully under the sovereign darkness of the Netherworld.{/n}", "ShadowMonarchProficiencies", "SilentAegis", "The Silent Aegis of Shadows");
+		AddEndingAnswer("IsekaiEndingObsidianBastion", "(Shadow Monarch) [The Shadow Gate: The Obsidian Bastion] \"Whatever becomes of the Wound, I will raise the Shadow Gate and sit upon the threshold, so neither demon nor conqueror ever crosses.\"", "{n}You picture an immense black monolith at the boundary between planes, and yourself seated upon its obsidian throne, the eternal gatekeeper between realities.{/n}", "ShadowMonarchProficiencies", "ObsidianBastion", "The Obsidian Bastion");
+		AddEndingAnswer("IsekaiEndingNetherworldCataclysm", "(Shadow Monarch) [Eternal Void: The Netherworld Cataclysm] \"I will open the Netherworld across Avistan and drown the continent in an eternal black void where only shadows live.\"", "{n}A cold vision fills your mind: a sun that never rises again, and northern Avistan sinking into a silent realm where shadows walk the earth forever.{/n}", "ShadowMonarchProficiencies", "NetherworldCataclysm", "The Netherworld Cataclysm");
+		AddEndingAnswer("IsekaiEndingGrandArchitect", "(Mastermind) [Unseen Maestro: The Immortal Philanthropist] \"With my immortality and foresight, I will quietly resolve every crisis before blood is spilled and guide centuries of prosperity.\"", "{n}The board lays itself out before you: wars solved before they ignite, history guided from behind the curtain like a flawless game of chess, and centuries of quiet flourishing.{/n}", "MastermindProficiencies", "GrandArchitect", "The Immortal Philanthropist");
+		AddEndingAnswer("IsekaiEndingShadowSyndicate", "(Mastermind) [Information Sovereign: The Shadow Syndicate] \"I will erase every record of my existence and build an invisible broker network that keeps the world's economy and politics stable.\"", "{n}You picture your name vanishing from histories and songs, and an unassuming office in a peaceful city where you keep the ledger that discreetly governs world affairs.{/n}", "MastermindProficiencies", "ShadowSyndicate", "The Shadow Syndicate");
+		AddEndingAnswer("IsekaiEndingNpcSimulator", "(Mastermind) [Cold Simulation: The NPC Simulator] \"Mortals, demons, and gods are mere NPCs on a board. I will farm their interactions and treat this reality as my private playground.\"", "{n}Detached from mortal sentiment, you already see kingdoms and fiends as pieces to move for optimal entertainment, and the multiverse as a sandbox built for your amusement.{/n}", "MastermindProficiencies", "NpcSimulator", "The NPC Simulator");
+		AddEndingAnswer("IsekaiEndingInfiniteHorizons", "(Martial God) [Astral Severance: The Edge of Infinite Horizons] \"When this is done, my blade will cut a path into the Astral Plane, and I will ascend there as the God of the Sword!\"", "{n}Your phantom blade hums in its sheath. In a single transcendent draw you can already see the astral expanse opening, and yourself standing there as the supreme deity of the blade, guarding planar wanderers.{/n}", "PhantomBladeProficiencies", "InfiniteHorizons", "Astral Severance: The Edge of Infinite Horizons");
+		AddEndingAnswer("IsekaiEndingBoundaryHermit", "(Martial God) [Meditative Boundary: The Boundary Hermit] \"I will retire to a tranquil pocket dimension on the astral fringe and perfect the singular transcendent strike of true enlightenment.\"", "{n}You picture yourself seated in quiet contemplation between planes, refining the perfect cut until, at the moment of enlightenment, the cosmic clock chimes and time gently rewinds.{/n}", "PhantomBladeProficiencies", "BoundaryHermit", "Meditative Boundary: The Boundary Hermit");
+		AddEndingAnswer("IsekaiEndingSeveredHorizon", "(Martial God) [Reality Fracture: The Severed Horizon] \"I will strike reality too deeply, sever the metaphysical thread of Golarion, and watch existence dissolve into iridescent static.\"", "{n}For an instant you feel how the blade could cut too deep: the world unraveling like silk into glowing static, and you standing alone in the void.{/n}", "PhantomBladeProficiencies", "SeveredHorizon", "Reality Fracture: The Severed Horizon");
+		Condition[] values = ((IEnumerable<BlueprintAnswer>)endingAnswers).Select((Func<BlueprintAnswer, Condition>)((BlueprintAnswer other) => new AnswerSelected
+		{
+			Not = true,
+			m_Answer = other.ToReference<BlueprintAnswerReference>()
+		})).ToArray();
+		foreach (BlueprintAnswer item in endingAnswers)
+		{
+			item.ShowConditions.Conditions = item.ShowConditions.Conditions.AppendToArray(values);
+		}
+		void AddEndingAnswer(string name, string text, string cueText, string proficiencyFactName, string endingId, string endingTitle, AlignmentMaskType alignmentRequirement = AlignmentMaskType.None)
+		{
+			Condition condition = AnswerGate(proficiencyFactName);
+			if (condition != null)
+			{
+				BlueprintAnswer blueprintAnswer = GraftedAnswer.Named(name).At(DialogueBeats.DecisionAtTheWound).Says(text)
+					.ShownWhen(condition)
+					.ShownWhen((alignmentRequirement == AlignmentMaskType.None) ? new Condition[0] : new Condition[1]
+					{
+						new PlayerAlignmentIs
+						{
+							Alignment = alignmentRequirement
+						}
+					})
+					.OnSelect(new ContextActionTriggerIsekaiEnding
+					{
+						EndingId = endingId,
+						EndingTitle = endingTitle
+					})
+					.RepliedToBy(name + "Reply", cueText)
+					.ThenBackToTheList()
+					.Graft();
+				if (blueprintAnswer != null)
+				{
+					endingAnswers.Add(blueprintAnswer);
+				}
+			}
+		}
+	}
+
+	private static void AddAngelMythicBookEventReactions()
+	{
+		BlueprintBookPage blueprint = BlueprintTools.GetBlueprint<BlueprintBookPage>("ee776f7d205f3484e9def0e007c5623f");
+		BlueprintBookPage visionThoughtsPage = BlueprintTools.GetBlueprint<BlueprintBookPage>("2212f276d642d1d4fb8f93a0b74cb320");
+		BlueprintBookPage visionShadowPage = BlueprintTools.GetBlueprint<BlueprintBookPage>("77ec7207718bf02409322455b1fbbf6c");
+		BlueprintBookPage blueprint2 = BlueprintTools.GetBlueprint<BlueprintBookPage>("a6df6ed440dce0e499eb66b832243229");
+		BlueprintBookPage visionClosingPage = BlueprintTools.GetBlueprint<BlueprintBookPage>("d1da445d30718914a8b7794864af8039");
+		BlueprintEtude salvationEtude = BlueprintTools.GetBlueprint<BlueprintEtude>("4cefa6f7338ff6744b04179320a3cecb");
+		BlueprintEtude retributionEtude = BlueprintTools.GetBlueprint<BlueprintEtude>("893252fb235b69a47b86b404e1d8accd");
+		if (blueprint != null && visionThoughtsPage != null && visionShadowPage != null && blueprint2 != null && visionClosingPage != null && salvationEtude != null && retributionEtude != null)
+		{
+			BlueprintAnswer recognizeAnswer = TTCoreExtensions.CreateAnswer("IsekaiAngelVisionRecognizeAnswer", delegate(BlueprintAnswer blueprintAnswer)
+			{
+				blueprintAnswer.SetText(Main.IsekaiContext, "(Isekai Protagonist) \"...stop fighting the memory and let it land. [You died once already. You know exactly what this is: a life ending, and its last thought looking for somewhere to go.]\"");
+				blueprintAnswer.NextCue = new CueSelection
+				{
+					Cues = new List<BlueprintCueBaseReference> { visionThoughtsPage.ToReference<BlueprintCueBaseReference>() },
 					Strategy = Strategy.First
 				};
-				bp.ShowOnce = true;
-				bp.OnSelect = ActionFlow.DoSingle(delegate(ContextActionAwardCosmicCoins a)
+				blueprintAnswer.ShowOnce = true;
+				blueprintAnswer.OnSelect = Helpers.CreateActionList(Start(salvationEtude), new ContextActionAngelVisionBanter
 				{
-					a.Amount = 250;
-					a.Sponsor = "The Laughing King";
-				});
-				bp.RequirePlotArmor();
+					Devoured = false
+				}, IsekaiPrologueExpansions.StorybookReward("IsekaiStorybookPage1DualAction", IsekaiPrologueExpansions.PageOneRewardLine));
+				blueprintAnswer.RequirePlotArmor();
 			});
-			answersList.InsertAnswer(answer3);
-			BlueprintCue slimeReply = TTCoreExtensions.CreateCue("IsekaiSeelahDevourerReply", delegate(BlueprintCue bp)
+			BlueprintAnswer devourAnswer = TTCoreExtensions.CreateAnswer("IsekaiAngelVisionDevourAnswer", delegate(BlueprintAnswer blueprintAnswer)
 			{
-				if (seelahRef != null)
+				blueprintAnswer.SetText(Main.IsekaiContext, "(Slime) \"...swallow the memory whole. [Your core closes around the foreign thoughts the way it closes around anything else, and begins, patiently, to digest a dead man's last hour.]\"");
+				blueprintAnswer.NextCue = new CueSelection
 				{
-					bp.Speaker = new DialogSpeaker
-					{
-						m_Blueprint = seelahRef,
-						MoveCamera = true
-					};
-				}
-				bp.SetText(Main.IsekaiContext, "{n}Seelah stumbles backward, her mouth falling open in utter disbelief as your arm briefly turns into a fluid ribbon of green slime, slipping beneath the boulder with effortless hydraulic power.{/n} \"By Iomedae's shield... did your arm just melt into emerald jelly?! What kind of creature are you?! You're not secretly some subterranean demon parasite, are you?! Stand back, let me help you lift! On three... HEAVE!\"");
-				bp.Continue = new CueSelection
-				{
-					Cues = new List<BlueprintCueBaseReference> { cue0012.ToReference<BlueprintCueBaseReference>() },
+					Cues = new List<BlueprintCueBaseReference> { visionThoughtsPage.ToReference<BlueprintCueBaseReference>() },
 					Strategy = Strategy.First
 				};
-			});
-			BlueprintAnswer answer4 = TTCoreExtensions.CreateAnswer("IsekaiSeelahDevourer", delegate(BlueprintAnswer bp)
-			{
-				bp.SetText(Main.IsekaiContext, "(Slime) \"Stand back, let me handle this. [Your arm briefly dissolves into a fluid ribbon of green slime, slipping under the boulder and heaving it upward with effortless hydraulic pressure.]\"");
-				bp.NextCue = new CueSelection
+				blueprintAnswer.ShowOnce = true;
+				blueprintAnswer.OnSelect = Helpers.CreateActionList(Start(retributionEtude), new ContextActionAngelVisionBanter
 				{
-					Cues = new List<BlueprintCueBaseReference> { slimeReply.ToReference<BlueprintCueBaseReference>() },
+					Devoured = true
+				}, IsekaiPrologueExpansions.StorybookReward("IsekaiStorybookPage1DualAction", IsekaiPrologueExpansions.PageOneRewardLine));
+				blueprintAnswer.ShowConditions.Conditions = blueprintAnswer.ShowConditions.Conditions.AppendToArray(new HasFact
+				{
+					Unit = new PlayerCharacter(),
+					m_Fact = BlueprintTools.GetModBlueprintReference<BlueprintUnitFactReference>(Main.IsekaiContext, "DevourerProficiencies")
+				});
+			});
+			BlueprintCue bp = TTCoreExtensions.CreateCue("IsekaiAngelVisionRecognizeCue", delegate(BlueprintCue blueprintCue)
+			{
+				blueprintCue.SetText(Main.IsekaiContext, "{n}You stop resisting, and the torrent stops battering you and simply arrives, the way you once arrived: whole, uninvited and far too fast. Lariel's grief becomes something you are holding rather than something hitting you, and for one breath you feel both deaths at once, his and your own. Through his eyes, the wounded girl's gaze finds yours.{/n} \"You... you're not him,\" she whispers. \"But you came anyway.\"");
+				blueprintCue.Speaker = new DialogSpeaker
+				{
+					NoSpeaker = true
+				};
+				blueprintCue.TurnSpeaker = false;
+				blueprintCue.Conditions.Conditions = blueprintCue.Conditions.Conditions.AppendToArray(new AnswerSelected
+				{
+					Not = false,
+					m_Answer = recognizeAnswer.ToReference<BlueprintAnswerReference>()
+				});
+			});
+			BlueprintCue bp2 = TTCoreExtensions.CreateCue("IsekaiAngelVisionDevourCue", delegate(BlueprintCue blueprintCue)
+			{
+				blueprintCue.SetText(Main.IsekaiContext, "{n}You do to the vision what you do to everything: you take it in. Lariel's fury dissolves into your core and comes apart into pieces you can name, and what settles at the bottom is a list. The half-elf with his hair twisted into a knot. The two standing behind him. The name they were promised everything by. You have eaten a stranger's death and kept the receipt.{/n}");
+				blueprintCue.Speaker = new DialogSpeaker
+				{
+					NoSpeaker = true
+				};
+				blueprintCue.TurnSpeaker = false;
+				blueprintCue.Conditions.Conditions = blueprintCue.Conditions.Conditions.AppendToArray(new AnswerSelected
+				{
+					Not = false,
+					m_Answer = devourAnswer.ToReference<BlueprintAnswerReference>()
+				});
+			});
+			BlueprintAnswer outsiderAnswer = TTCoreExtensions.CreateAnswer("IsekaiAngelVisionOutsiderAnswer", delegate(BlueprintAnswer blueprintAnswer)
+			{
+				blueprintAnswer.SetText(Main.IsekaiContext, "(Isekai Protagonist) But this mind was not born on this world, and the vision finds nothing in it shaped to take hold of.");
+				blueprintAnswer.NextCue = new CueSelection
+				{
+					Cues = new List<BlueprintCueBaseReference> { visionShadowPage.ToReference<BlueprintCueBaseReference>() },
 					Strategy = Strategy.First
 				};
-				bp.ShowOnce = true;
-				bp.AddShowCondition(delegate(HasFact c)
+				blueprintAnswer.ShowOnce = true;
+				blueprintAnswer.OnSelect = Helpers.CreateActionList(new ContextActionAwardCosmicCoins
 				{
-					c.Unit = new PlayerCharacter();
-					c.m_Fact = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "DevourerProficiencies")?.ToReference<BlueprintUnitFactReference>();
-				});
-				bp.OnSelect = ActionFlow.DoSingle<ContextActionSlimeRevealBanter>();
+					Amount = 250,
+					Sponsor = "The Key and the Gate",
+					SceneKey = "AngelVisionOutsider"
+				}, IsekaiPrologueExpansions.StorybookReward("IsekaiStorybookPage12SoulAegis", IsekaiPrologueExpansions.PageTwelveRewardLine, withCoins: false));
+				blueprintAnswer.RequirePlotArmor();
 			});
-			answersList.InsertAnswer(answer4);
-			BlueprintCue overlordReply = TTCoreExtensions.CreateCue("IsekaiSeelahOverlordReply", delegate(BlueprintCue bp)
+			BlueprintCue bp3 = TTCoreExtensions.CreateCue("IsekaiAngelVisionOutsiderCue", delegate(BlueprintCue blueprintCue)
 			{
-				if (seelahRef != null)
+				blueprintCue.SetText(Main.IsekaiContext, "{n}The attack arrives and finds the wrong shape. Terror, grief, an angel's dying certainty: all of it is built for a soul that grew up on this world, and yours did not. It passes through you like weather through an open window and leaves you standing, unhurt and obscurely ashamed of it. The one who sent the vision is not so fortunate. He is broken and exhausted.{/n}");
+				blueprintCue.Speaker = new DialogSpeaker
 				{
-					bp.Speaker = new DialogSpeaker
-					{
-						m_Blueprint = seelahRef,
-						MoveCamera = true
-					};
-				}
-				bp.SetText(Main.IsekaiContext, "{n}Seelah violently flinches back, her hand instantly flying to the pommel of her holy sword with wide, terrified eyes as skeletal ivory hands grip the underside of the boulder.{/n} \"Your hands... your face! For a second you looked like... a walking skeleton! What kind of dark sorcery is this?! Stand back before... wait, you're heaving the entire rock off her! On three... HEAVE!\"");
-				bp.Continue = new CueSelection
+					NoSpeaker = true
+				};
+				blueprintCue.TurnSpeaker = false;
+				blueprintCue.Conditions.Conditions = blueprintCue.Conditions.Conditions.AppendToArray(new AnswerSelected
 				{
-					Cues = new List<BlueprintCueBaseReference> { cue0012.ToReference<BlueprintCueBaseReference>() },
+					Not = false,
+					m_Answer = outsiderAnswer.ToReference<BlueprintAnswerReference>()
+				});
+			});
+			BlueprintAnswer rewriteAnswer = TTCoreExtensions.CreateAnswer("IsekaiAngelVisionRewriteAnswer", delegate(BlueprintAnswer blueprintAnswer)
+			{
+				blueprintAnswer.SetText(Main.IsekaiContext, "(Isekai Protagonist) \"...and rewrite the ending. I have already read how this story goes. I am not leaving it that way.\"");
+				blueprintAnswer.NextCue = new CueSelection
+				{
+					Cues = new List<BlueprintCueBaseReference> { visionClosingPage.ToReference<BlueprintCueBaseReference>() },
 					Strategy = Strategy.First
 				};
-			});
-			BlueprintAnswer answer5 = TTCoreExtensions.CreateAnswer("IsekaiSeelahOverlord", delegate(BlueprintAnswer bp)
-			{
-				bp.SetText(Main.IsekaiContext, "(Overlord) \"Step aside, crusader. Your mortal straining is inefficient. Allow true necromantic might to handle this. [You grip the stone. For a split second, your mortal disguise flickers, revealing cold ivory bones and burning red eye sockets heaving the rock aside.]\"");
-				bp.NextCue = new CueSelection
+				blueprintAnswer.ShowOnce = true;
+				blueprintAnswer.OnSelect = Helpers.CreateActionList(Start(salvationEtude), new ContextActionAngelVisionBanter
 				{
-					Cues = new List<BlueprintCueBaseReference> { overlordReply.ToReference<BlueprintCueBaseReference>() },
-					Strategy = Strategy.First
+					Devoured = false
+				}, IsekaiPrologueExpansions.StorybookReward("IsekaiStorybookPage33DualCovenant", IsekaiPrologueExpansions.PageThirtyThreeRewardLine));
+				blueprintAnswer.RequirePlotArmor();
+			});
+			BlueprintCue bp4 = TTCoreExtensions.CreateCue("IsekaiAngelVisionRewriteCue", delegate(BlueprintCue blueprintCue)
+			{
+				blueprintCue.SetText(Main.IsekaiContext, "{n}You do not repeat the angel's last words. You answer them. Somewhere behind your ribs, the thing that pulled you out of one death and dropped you into this world turns over and listens. The vow is not a crusader's: not vengeance, not even mercy, but a flat refusal to let an ending stand as written. The heat in your chest goes quiet, as though something very large has accepted the terms.{/n}");
+				blueprintCue.Speaker = new DialogSpeaker
+				{
+					NoSpeaker = true
 				};
-				bp.ShowOnce = true;
-				bp.AddShowCondition(delegate(HasFact c)
+				blueprintCue.TurnSpeaker = false;
+				blueprintCue.Conditions.Conditions = blueprintCue.Conditions.Conditions.AppendToArray(new AnswerSelected
 				{
-					c.Unit = new PlayerCharacter();
-					c.m_Fact = BlueprintTools.GetModBlueprint<BlueprintFeature>(Main.IsekaiContext, "OverlordProficiencies")?.ToReference<BlueprintUnitFactReference>();
+					Not = false,
+					m_Answer = rewriteAnswer.ToReference<BlueprintAnswerReference>()
 				});
-				bp.OnSelect = ActionFlow.DoSingle<ContextActionOverlordRevealBanter>();
 			});
-			answersList.InsertAnswer(answer5);
+			blueprint.Answers?.Insert(0, recognizeAnswer.ToReference<BlueprintAnswerBaseReference>());
+			blueprint.Answers?.Insert(0, devourAnswer.ToReference<BlueprintAnswerBaseReference>());
+			visionThoughtsPage.Cues?.Insert(0, bp.ToReference<BlueprintCueBaseReference>());
+			visionThoughtsPage.Cues?.Insert(0, bp2.ToReference<BlueprintCueBaseReference>());
+			visionThoughtsPage.Answers?.Insert(0, outsiderAnswer.ToReference<BlueprintAnswerBaseReference>());
+			visionShadowPage.Cues?.Insert(0, bp3.ToReference<BlueprintCueBaseReference>());
+			blueprint2.Answers?.Insert(0, rewriteAnswer.ToReference<BlueprintAnswerBaseReference>());
+			visionClosingPage.Cues?.Add(bp4.ToReference<BlueprintCueBaseReference>());
 		}
-
-		private static void AddMeetLannReactions()
+		static StartEtude Start(BlueprintEtude etude)
 		{
-			BlueprintAnswersList answersList = BlueprintTools.GetBlueprint<BlueprintAnswersList>("61ba231b3ad6b144a918c88ca49cb92a");
-			BlueprintUnitReference lannRef;
-			if (answersList != null)
+			return new StartEtude
 			{
-				lannRef = BlueprintTools.GetBlueprint<BlueprintUnit>("cb29621d99b902e4da6f5d232352fbda")?.ToReference<BlueprintUnitReference>();
-				AddMeetLannAnswer("IsekaiLannGeneral", "(Isekai Protagonist) \"Lizard scales, feathers, and horns... honestly, after falling a mile into the earth and watching a dragon fight, beastfolk scouts don't even phase me. Greetings from the surface.\"", "{n}Lann blinks his reptilian eye in surprise, then grins lopsidedly.{/n} \"Well, that's refreshing! Usually surface dwellers scream, pray to Iomedae, or try to stab us. I'm Lann, by the way.\"", "IsekaiProficiencies");
-				AddMeetLannAnswer("IsekaiLannDevourer", "(Slime) \"Whoa, chimera-like anatomy! Are those scales adapted for subterranean dampness? Fascinating biology!\"", "{n}Lann scratches his scaled cheek, chuckling.{/n} \"'Fascinating biology'? First time anyone's called our cursed mongrel hides a scientific marvel! You're a weird one, surface-dweller.\"", "DevourerProficiencies");
-			}
-			void AddMeetLannAnswer(string name, string text, string cueText, string proficiencyFactName)
-			{
-				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
-				if (proficiencyFact != null)
-				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
-					{
-						if (lannRef != null)
-						{
-							bp.Speaker = new DialogSpeaker
-							{
-								m_Blueprint = lannRef,
-								MoveCamera = true
-							};
-						}
-						bp.SetText(Main.IsekaiContext, cueText);
-						bp.SetAnswersList(answersList);
-					});
-					BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
-					{
-						bp.SetText(Main.IsekaiContext, text);
-						bp.NextCue = new CueSelection
-						{
-							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
-							Strategy = Strategy.First
-						};
-						bp.ShowOnce = true;
-						bp.AddShowCondition(delegate(HasFact c)
-						{
-							c.Unit = new PlayerCharacter();
-							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
-						});
-					});
-					answersList.InsertAnswer(answer);
-				}
-			}
+				Etude = etude.ToReference<BlueprintEtudeReference>(),
+				Evaluate = false
+			};
 		}
+	}
 
-		private static void AddWardstoneMythicReactions()
+	private static void AddLepersSmileBookEventReactions()
+	{
+		BlueprintBookPage blueprint = BlueprintTools.GetBlueprint<BlueprintBookPage>("ab8c9446c25e3c54cac6d74f90535741");
+		BlueprintBookPage bookPage39 = BlueprintTools.GetBlueprint<BlueprintBookPage>("a688fdddddca15a42b54265829a17b3d");
+		BlueprintCue blueprint2 = BlueprintTools.GetBlueprint<BlueprintCue>("66df3b129e5421f4caa72c25e4f6f4cd");
+		BlueprintCue blueprint3 = BlueprintTools.GetBlueprint<BlueprintCue>("ed4baea51c56e104e9b34c8503ffd951");
+		BlueprintCue blueprint4 = BlueprintTools.GetBlueprint<BlueprintCue>("0cb0717a22bd0a54e84a39af95d50052");
+		if (blueprint == null || bookPage39 == null)
 		{
-			BlueprintAnswersList answersList = BlueprintTools.GetBlueprint<BlueprintAnswersList>("be1fcfe08bbae9a46b5105c4d1e4be7c");
-			BlueprintCue continueCue = BlueprintTools.GetBlueprint<BlueprintCue>("8b9d4bbc8ac6cb74fb75a37fe28a6431");
-			if (answersList != null && continueCue != null)
-			{
-				AddWardstoneAnswer("IsekaiWardstoneMythicGeneral", "(Isekai Protagonist) [Channel Unscripted Power] \"You thought this was a predictable script? Let's rewrite it right here and now. Feel free to scream, Minagho.\"", "{n}The celestial flames and cosmic starlight swirl violently around your fingertips, shattering the ambient demonic miasma in the garrison hall with blinding brilliance. Minagho stumbles backward, her claws scraping futilely at her chest as raw terror drains the color from her face.{/n} \"What... what manner of power is this?! This wasn't supposed to happen! Who are you?!\"", "IsekaiProficiencies");
-				AddWardstoneAnswer("IsekaiWardstoneMythicGodEmperor", "(God Emperor) [Unleash Sovereign Radiance] \"Mortal, angel, demon, it matters not. Today, the mantle of absolute sovereignty descends upon this garrison. Kneel before your emperor, Minagho!\"", "{n}Blinding golden light erupts from your chest, towering above the fractured Wardstone in the form of a celestial throne and crown. Minagho shields her eyes with a shriek of agony, the holy radiance searing her fiendish skin.{/n} \"A crown?! An emperor?! What is this suffocating light?!\"", "GodEmperorProficiencies");
-				AddWardstoneAnswer("IsekaiWardstoneMythicDevourer", "(Slime) [Engulf the Cosmic Resonance] \"That obelisk contained so much concentrated essence... and now it's mine. Every demon in Kenabres is just calories waiting to be digested.\"", "{n}A vortex of pure, insatiable hunger spirals out from your open palm, pulling the demonic fog and magic of the room into your chest. Minagho recoils in horror as she feels her very soul being tugged toward the void.{/n} \"You... you aren't just resisting corruption... you're eating it?! What kind of monster are you?!\"", "DevourerProficiencies");
-				AddWardstoneAnswer("IsekaiWardstoneMythicShadowMonarch", "(Shadow Monarch) [Raise the Abyssal Veil] \"The Wardstone was a beacon of light. But true power awakens in the abyss between the stars. Rise, shadows of the fallen, and witness your monarch!\"", "{n}The bright flash of the Wardstone twists into chilling, pitch-black sovereign shade. The shadows cast by the pillars and fallen crusaders stand upright, kneeling toward you in silent loyalty. Minagho trembles violently.{/n} \"The shadows... they are obeying you?! This power has nothing to do with the heavens!\"", "ShadowMonarchProficiencies");
-				AddWardstoneAnswer("IsekaiWardstoneMythicOverlord", "(Overlord) [Proclaim Absolute Dominance] \"Did you truly believe you could corrupt an artifact in my presence? You are a pathetic ant crawling across my domain. Die, insect.\"", "{n}A crushing wave of tyrannical necrotic and celestial pressure slams Minagho into the flagstones. Her knees shatter against the stone as she gasps for breath under your suffocating presence.{/n} \"Impossible... a mortal cannot possess such suffocating authority! Who gave you this strength?!\"", "OverlordProficiencies");
-				AddWardstoneAnswer("IsekaiWardstoneMythicMastermind", "(Mastermind) [Synthesize the Harmonic Paradox] \"Fascinating. 4,096 causal branches just collapsed into a singular deterministic triumph. Your defeat was calculated before we breached the threshold, Minagho.\"", "{n}Geometrical matrices of luminous light hover around your eyes as the residual Wardstone energy synchronizes perfectly with your mental focus. Minagho clutches her head in pain.{/n} \"Matrices? Calculations?! You speak as if this whole battle was just an equation! Die, arrogant fool!\"", "MastermindProficiencies");
-				AddWardstoneAnswer("IsekaiWardstoneMythicHero", "(Hero) [Ignite the Beacon of Hope] \"The people of Kenabres bled for this stone, and their hope will not be snuffed out by demons! Together, we will cleanse every corner of this land!\"", "{n}A radiant pillar of pure dawnfire engulfs the room, washing away every trace of demon stench and mending the crusaders' wounds. Minagho howls in fury and dread.{/n} \"Hope?! That sentimental garbage is burning through my flesh! Stop it! Tear them to pieces!\"", "HeroProficiencies");
-			}
-			void AddWardstoneAnswer(string name, string text, string cueText, string proficiencyFactName)
-			{
-				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
-				if (proficiencyFact != null)
-				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
-					{
-						bp.SetText(Main.IsekaiContext, cueText);
-						bp.Continue = new CueSelection
-						{
-							Cues = new List<BlueprintCueBaseReference> { continueCue.ToReference<BlueprintCueBaseReference>() },
-							Strategy = Strategy.First
-						};
-					});
-					BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
-					{
-						bp.SetText(Main.IsekaiContext, text);
-						bp.NextCue = new CueSelection
-						{
-							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
-							Strategy = Strategy.First
-						};
-						bp.ShowOnce = true;
-						bp.AddShowCondition(delegate(HasFact c)
-						{
-							c.Unit = new PlayerCharacter();
-							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
-						});
-						bp.OnSelect = ActionFlow.DoSingle<ContextActionWardstoneMythicAwakening>();
-					});
-					answersList.InsertAnswer(answer);
-				}
-			}
+			return;
 		}
-
-		private static void AddDesnaTempleNatureCommunion()
+		BlueprintAnswer shieldAnswer = TTCoreExtensions.CreateAnswer("IsekaiSwarmShieldAnswer", delegate(BlueprintAnswer blueprintAnswer)
 		{
-			BlueprintAnswersList answersList = BlueprintTools.GetBlueprint<BlueprintAnswersList>("16d9e0a48d5746a4fbb1497e4ee4cf81");
-			if (answersList != null)
+			blueprintAnswer.SetText(Main.IsekaiContext, "(Isekai Protagonist) [Absolute Aegis] \"...Deploy an otherworldly absolute barrier. No soldier dies today under my command.\"");
+			blueprintAnswer.NextCue = new CueSelection
 			{
-				AddDesnaAnswer("IsekaiDesnaCommunionDevourer", "(Slime) [Commune with the Song of Elysium] \"My slime core resonates with this melody... It's like the whispering winds and primeval beasts of Sarkoris are speaking to my living jelly.\"", "{n}As your gelatinous form trembles in harmonic resonance with the shrine's chimes, the spiritual remnants of Sarkorian beasts stir in Elysian light. A primal pack of phantom predators dips their heads in silent kinship with your predatory hunger, swearing to heed your banner when the march across the Wounded Lands begins.{/n} \"The song echoes back from the wild steppes... A pack of Sarkorian beast vanguards has answered your call!\"", "DevourerProficiencies", new ContextActionDesnaNatureCommunion());
-				AddDesnaAnswer("IsekaiDesnaCommunionOverlord", "(Overlord) [Subjugate the Resonance] \"An amusing little melody. Even the capricious spirits of the Sphere of Dreams must bow to true metaphysical authority.\"", "{n}The delicate song momentarily wavers under your chilling magical pressure before snapping into rigid cadence. The spectral chimes ring out like tolling iron bells.{/n} \"A hollow, obedient echo resonates through the stone hall... even dream spirits acknowledge supreme dominion.\"", "OverlordProficiencies");
-				AddDesnaAnswer("IsekaiDesnaCommunionShadowMonarch", "(Shadow Monarch) [Attune the Shadows] \"Where there is brilliant starlight, the shadows cast are absolute. Let the dusk embrace this song.\"", "{n}The flickering candlelight and celestial brilliance cast long, sentient silhouettes that bow in solemn formation across the shrine walls.{/n} \"The shadows deepen into a silent guard, absorbing the echoes of the celestial melody.\"", "ShadowMonarchProficiencies");
-				AddDesnaAnswer("IsekaiDesnaCommunionGeneral", "(Isekai Protagonist) [Hum an Otherworldly Melody] \"This melody reminds me of anime theme songs and fantasy tavern tunes from back home. Let's see if the bells can play my favorite chorus.\"", "{n}The chimes ripple with sudden playful syncopation, matching your humming note-for-note. The priests stare at you with jaw-dropped fascination as an otherworldly tune dances through the ancient temple.{/n} \"The shrine chimes with vibrant, unmistakable joy!\"", "IsekaiProficiencies");
-			}
-			void AddDesnaAnswer(string name, string text, string cueText, string proficiencyFactName, GameAction onSelect = null)
-			{
-				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
-				if (proficiencyFact != null)
-				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
-					{
-						bp.SetText(Main.IsekaiContext, cueText);
-						bp.SetAnswersList(answersList);
-					});
-					BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
-					{
-						bp.SetText(Main.IsekaiContext, text);
-						bp.NextCue = new CueSelection
-						{
-							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
-							Strategy = Strategy.First
-						};
-						bp.ShowOnce = true;
-						bp.AddShowCondition(delegate(HasFact c)
-						{
-							c.Unit = new PlayerCharacter();
-							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
-						});
-						if (onSelect != null)
-						{
-							bp.OnSelect = Helpers.CreateActionList(onSelect);
-						}
-					});
-					answersList.InsertAnswer(answer);
-				}
-			}
-		}
-
-		private static void AddQueenGalfreyWarCampReactions()
+				Cues = new List<BlueprintCueBaseReference> { bookPage39.ToReference<BlueprintCueBaseReference>() },
+				Strategy = Strategy.First
+			};
+			blueprintAnswer.ShowOnce = true;
+			blueprintAnswer.RequirePlotArmor();
+		});
+		string[][] obj = new string[3][]
 		{
-			BlueprintAnswersList answersList = BlueprintTools.GetBlueprint<BlueprintAnswersList>("eae6ac8c30bb31249aa266b2e0a87fb9");
-			BlueprintUnit galfreyUnit = BlueprintTools.GetBlueprint<BlueprintUnit>("97d1c33c784100140b9fa317aef5a499");
-			if (answersList != null)
+			new string[2] { "4e30b6b69abc1b24ba38f211f98b9da2", "c623317974582b04589d98fc346f2384" },
+			new string[2] { "30f9530e73f479244a31e313186aead0", "fd0fcafbbf3c44a469cb997472651b1f" },
+			new string[2] { "9ae9fa0d32654284d901cef12e8e2ccf", "0e24c5f356b7bf046a6b5eefc09af230" }
+		};
+		List<GameAction> recordSuccess = new List<GameAction>();
+		string[][] array = obj;
+		foreach (string[] obj2 in array)
+		{
+			BlueprintAnswer blueprint5 = BlueprintTools.GetBlueprint<BlueprintAnswer>(obj2[0]);
+			BlueprintUnlockableFlag blueprint6 = BlueprintTools.GetBlueprint<BlueprintUnlockableFlag>(obj2[1]);
+			if (blueprint5 != null && blueprint6 != null)
 			{
-				AddWarCampAnswer("IsekaiWarCampOverlord", "(Overlord) [Summon Deathbound Legion] \"Your Majesty, mortal crusaders bleed and break. I have summoned 30 Graveknights from the sepulchers of the ancient world. They know no fear, require no rations, and obey without hesitation.\"", "{n}Queen Galfrey stares at you in grim apprehension as cold, armored dread marshals beyond the perimeter.{/n} \"Graveknights... Under any other commander, such blasphemy would see you executed on the spot. But if you can truly bind their dark wills to defend Mendev... I will not turn away steel when the realm is on the brink. Keep them on a tight leash, Commander.\"", "OverlordProficiencies", new ContextActionMobilizeSubclassArmy
+				recordSuccess.Add(new Conditional
 				{
-					UnitGuid = "15c574688d6e44e79925411c5234765e",
-					Count = 30,
-					ArmyName = "Graveknights"
-				});
-				AddWarCampAnswer("IsekaiWarCampShadowMonarch", "(Shadow Monarch) [Raise 50 Shadow Soldiers] \"An army that leaves no corpses and requires no supply lines. 50 Shadow Soldiers stand assembled in the camp's twilight, awaiting the march on Drezen.\"", "{n}The Queen watches in awe as fifty silent silhouettes rise up from the shadows of the crusade pavilions, their spectral blades gleaming with cold voidfire.{/n} \"Shadow soldiers... They move like living mirages. If they can strike behind demon lines without suffering attrition, Drezen's outer bastions will crumble far faster. See them deployed to the vanguard, Commander.\"", "ShadowMonarchProficiencies", new ContextActionMobilizeSubclassArmy
-				{
-					UnitGuid = "5a49b18137ebd634e96f3dfba01b77f2",
-					Count = 50,
-					ArmyName = "Shadow Soldiers"
-				});
-				AddWarCampAnswer("IsekaiWarCampDevourer", "(Slime) [Summon Tempest Beast Vanguard] \"My communion with the spirits at Desna's shrine paid off. 20 Sarkorian Tempest Beast Riders have emerged from the wastes, eager to tear through fiendish lines.\"", "{n}Feral howls echo across the hills as savage beast riders surge up to the camp boundaries, their mounts sniffing the air with predatory relish.{/n} \"Sarkorian beast riders! We thought their breeds were extinct after the opening of the Worldwound. Their ferocity in battle is legendary. Well done, Commander.\"", "DevourerProficiencies", new ContextActionMobilizeSubclassArmy
-				{
-					UnitGuid = "c7904164350a4d5199c68da5c79aef74",
-					Count = 20,
-					ArmyName = "Tempest Beast Riders"
-				});
-				AddWarCampAnswer("IsekaiWarCampHero", "(Hero) [Rally 50 Volunteer Crusaders] \"Word of our triumph in Kenabres has spread across the border provinces! 50 heavily armored veteran crusaders have flocked to our banner to stand with us!\"", "{n}Queen Galfrey smiles with radiant hope as fresh ranks of resolute crusaders form up, their shields polished and eyes burning with righteous fervor.{/n} \"The morale of the crusade hasn't been this high in seventy years. With stalwarts like these rallying to your standard, I truly believe we can reclaim the Sword of Valor.\"", "HeroProficiencies", new ContextActionMobilizeSubclassArmy
-				{
-					UnitGuid = "24ad1a10190de5c459a4521996dcec4b",
-					Count = 50,
-					ArmyName = "Heavy Infantry Crusaders"
-				});
-				AddWarCampAnswer("IsekaiWarCampGodEmperor", "(God Emperor) [Inspire Imperial Discipline] \"Your Majesty, I have restructured the vanguard logistics and infused the ranks with imperial martial doctrine. The crusade does not merely fight; it conquers.\"", "{n}Galfrey nods with deep respect.{/n} \"Your military discipline and regal authority have united even the most unruly mercenaries into an iron fist. Lead them well, Commander.\"", "GodEmperorProficiencies", new ContextActionMobilizeSubclassArmy
-				{
-					UnitGuid = "24ad1a10190de5c459a4521996dcec4b",
-					Count = 50,
-					ArmyName = "Imperial Heavy Legionnaires"
-				});
-				AddWarCampAnswer("IsekaiWarCampMastermind", "(Mastermind) [Deploy Precision Vanguard] \"I have calculated the optimal army configuration for breaching Drezen's outer trenchworks. 50 disciplined vanguard infantry have been assigned to specific breach coordinates.\"", "{n}Galfrey looks over your operational schematics with genuine admiration.{/n} \"The meticulous precision of your campaign plans is breathtaking. Every unit placed with surgical intent. Execute the plan, Commander.\"", "MastermindProficiencies", new ContextActionMobilizeSubclassArmy
-				{
-					UnitGuid = "24ad1a10190de5c459a4521996dcec4b",
-					Count = 50,
-					ArmyName = "Precision Vanguard Infantry"
+					Comment = "Isekai shield route: the squad's commander returns with every soldier",
+					ConditionsChecker = ActionFlow.IfAll(new AnswerSelected
+					{
+						m_Answer = blueprint5.ToReference<BlueprintAnswerReference>()
+					}),
+					IfTrue = Helpers.CreateActionList(new UnlockFlag
+					{
+						m_flag = blueprint6.ToReference<BlueprintUnlockableFlagReference>(),
+						flagValue = 1
+					}),
+					IfFalse = ActionFlow.DoNothing()
 				});
 			}
-			void AddWarCampAnswer(string name, string text, string cueText, string proficiencyFactName, ContextActionMobilizeSubclassArmy mobilizeAction)
+		}
+		BlueprintCue bp = TTCoreExtensions.CreateCue("IsekaiSwarmShieldCue", delegate(BlueprintCue blueprintCue2)
+		{
+			blueprintCue2.SetText(Main.IsekaiContext, "{n}Drawing upon power from beyond this realm, you erect an impenetrable crystalline barrier of radiant force across the canyon. The swarming vescavors throw themselves against the light, their mandibles shattering on impact before bursting into harmless cinder. Not a single crusader is lost as the army marches safely past, staring in awe at your godlike protection.{/n}");
+			blueprintCue2.Speaker = new DialogSpeaker
 			{
-				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
-				if (proficiencyFact != null)
+				NoSpeaker = true
+			};
+			blueprintCue2.TurnSpeaker = false;
+			blueprintCue2.OnShow = Helpers.CreateActionList(recordSuccess.ToArray());
+			blueprintCue2.Conditions.Conditions = blueprintCue2.Conditions.Conditions.AppendToArray(new AnswerSelected
+			{
+				Not = false,
+				m_Answer = shieldAnswer.ToReference<BlueprintAnswerReference>()
+			});
+		});
+		blueprint.Answers?.Insert(0, shieldAnswer.ToReference<BlueprintAnswerBaseReference>());
+		bookPage39.Cues?.Insert(0, bp.ToReference<BlueprintCueBaseReference>());
+		BlueprintCue[] array2 = new BlueprintCue[3] { blueprint2, blueprint3, blueprint4 };
+		foreach (BlueprintCue blueprintCue in array2)
+		{
+			if (blueprintCue?.Conditions != null)
+			{
+				blueprintCue.Conditions.Conditions = (blueprintCue.Conditions.Conditions ?? new Condition[0]).AppendToArray(new AnswerSelected
 				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
-					{
-						bp.SetText(Main.IsekaiContext, cueText);
-						if (galfreyUnit != null)
-						{
-							bp.Speaker = new DialogSpeaker
-							{
-								m_Blueprint = galfreyUnit.ToReference<BlueprintUnitReference>(),
-								MoveCamera = true
-							};
-						}
-						bp.SetAnswersList(answersList);
-					});
-					BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
-					{
-						bp.SetText(Main.IsekaiContext, text);
-						bp.NextCue = new CueSelection
-						{
-							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
-							Strategy = Strategy.First
-						};
-						bp.ShowOnce = true;
-						bp.AddShowCondition(delegate(HasFact c)
-						{
-							c.Unit = new PlayerCharacter();
-							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
-						});
-						if (mobilizeAction != null)
-						{
-							bp.OnSelect = Helpers.CreateActionList(mobilizeAction);
-						}
-					});
-					answersList.InsertAnswer(answer);
-				}
+					Not = true,
+					m_Answer = shieldAnswer.ToReference<BlueprintAnswerReference>()
+				});
 			}
 		}
+		KeepTheCanyonBodyOffTheShieldRoute(shieldAnswer);
+	}
 
-		private static void AddRegillHellknightReactions()
+	private static void KeepTheCanyonBodyOffTheShieldRoute(BlueprintAnswer shieldAnswer)
+	{
+		BlueprintScriptZone blueprint = BlueprintTools.GetBlueprint<BlueprintScriptZone>("0bc7507dbf7893545aab5c15122e9272");
+		if (blueprint?.EnterActions != null)
 		{
-			BlueprintAnswersList answersList = BlueprintTools.GetBlueprint<BlueprintAnswersList>("5128a604b13cf554a846ab7c16054cbf");
-			BlueprintUnit regillUnit = BlueprintTools.GetBlueprint<BlueprintUnit>("68d4a5b150c7c2c42aeea6f24044113a");
-			if (answersList != null)
+			blueprint.EnterActions = Helpers.CreateActionList(new Conditional
 			{
-				AddRegillAnswer("IsekaiRegillMastermind", "(Mastermind) [Counter-Analyze Regill's Tactics] \"Your retreat into the canyon minimized flanking angles by 63%, but your casualty triage was suboptimal. If you had deployed cross-firing crossbowmen on the eastern ridge, you would have suffered zero Hellknight losses.\"", "{n}Regill narrows his golden eyes, studying you with razor-sharp analytical respect.{/n} \"A rigorous assessment. Most who witness our discipline see only cruelty; you see geometry and resource management. We may find common ground yet, Commander.\"", "MastermindProficiencies");
-				AddRegillAnswer("IsekaiRegillOverlord", "(Overlord) [Demonstrate Superior Authority] \"Your Order of the Godclaw prides itself on absolute order. But true order does not beg mortal magistrates for legitimacy; it bends reality by supreme will.\"", "{n}Regill stands motionless under your dark gaze, his expression unyielding stone.{/n} \"A tyrant's philosophy. Yet the Worldwound is chaos incarnate; against utter disorder, absolute conviction is an acceptable weapon. Prove your supreme will on the march to Drezen.\"", "OverlordProficiencies");
-				AddRegillAnswer("IsekaiRegillShadowMonarch", "(Shadow Monarch) [Acknowledge Strategic Elimination] \"Sacrificing your wounded to preserve unit cohesion was brutal, but necessary. In the abyss of war, hesitation is the only true sin.\"", "{n}Regill nods once with crisp, measured approval.{/n} \"A rare spark of pragmatic clarity. Those who flinch from necessary amputations allow gangrene to consume the whole regiment. Remember that principle when you command the crusade.\"", "ShadowMonarchProficiencies");
-				AddRegillAnswer("IsekaiRegillGodEmperor", "(God Emperor) [Offer Imperial Commission] \"Paralictor Regill, your discipline is formidable, but incomplete without an emperor worthy of your service. Swear your legions to my imperial mandate, and we shall forge an eternal realm.\"", "{n}Regill's jaw tightens with professional composure.{/n} \"The Order of the Godclaw serves no individual sovereign on whim. But if your imperial mandate enforces absolute law and eradicates the abyssal cancer, our hammers will march at your side.\"", "GodEmperorProficiencies");
-				AddRegillAnswer("IsekaiRegillDevourer", "(Slime) [Assess Gargoyle Caloric Density] \"Those gargoyles were surprisingly tough. Not much meat on them, mostly crunchy stone... but their magical essence made a decent post-battle snack.\"", "{n}Regill blinks once, his expression briefly flickering with profound bafflement before returning to stern discipline.{/n} \"...Consuming stony fiends for sustenance. Unorthodox. Biologically dubious. But if your digestion removes enemy combatants from the battlefield, I have no tactical objection.\"", "DevourerProficiencies");
-			}
-			void AddRegillAnswer(string name, string text, string cueText, string proficiencyFactName)
-			{
-				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
-				if (proficiencyFact != null)
+				Comment = "Isekai shield route: no one from the diversion squad dies",
+				ConditionsChecker = ActionFlow.IfAll(new AnswerSelected
 				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
-					{
-						bp.SetText(Main.IsekaiContext, cueText);
-						if (regillUnit != null)
-						{
-							bp.Speaker = new DialogSpeaker
-							{
-								m_Blueprint = regillUnit.ToReference<BlueprintUnitReference>(),
-								MoveCamera = true
-							};
-						}
-						bp.SetAnswersList(answersList);
-					});
-					BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
-					{
-						bp.SetText(Main.IsekaiContext, text);
-						bp.NextCue = new CueSelection
-						{
-							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
-							Strategy = Strategy.First
-						};
-						bp.ShowOnce = true;
-						bp.AddShowCondition(delegate(HasFact c)
-						{
-							c.Unit = new PlayerCharacter();
-							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
-						});
-					});
-					answersList.InsertAnswer(answer);
-				}
-			}
-		}
-
-		private static void AddZachariusLostChapelReactions()
-		{
-			BlueprintAnswersList answersList = BlueprintTools.GetBlueprint<BlueprintAnswersList>("16f23cbdc188b3348a47531d2bb747c2");
-			BlueprintUnit zachariusUnit = BlueprintTools.GetBlueprint<BlueprintUnit>("d67527d9c2246734baffc69808d40b01");
-			if (answersList != null)
-			{
-				AddZachariusAnswer("IsekaiZachariusOverlord", "(Overlord) [Assert Arch-Lich Supremacy] \"You hide in a damp basement whimpering over an ancient defeat, Zacharius. Kneel before a true Sovereign of the Undead and surrender your phylactery, or I will crush your soul into bone powder.\"", "{n}Zacharius reels back, the necrotic flames in his empty eye sockets flickering with genuine shock and primordial dread.{/n} \"What... what manner of entity are you?! The tyrannical death aura you emanate... it dwarfs even the archmages of ancient Geb! I... I yield to your absolute supremacy, Sovereign! Take what you will, only grant me passage into your grand design!\"", "OverlordProficiencies");
-				AddZachariusAnswer("IsekaiZachariusDevourer", "(Slime) [Appraise Ancient Bone Calcium] \"Ooh, a talking skeleton! Are you preserved with ancient magical jerky? You look like you've been curing down here for a century. How many calories is a lich anyway?\"", "{n}Zacharius recoils in utter disgust and disbelief.{/n} \"Calories?! Curing?! You insufferable, gelatinous monstrosity! I am Zacharius, hero of the Second Crusade and master of death itself, not livestock for your gluttony! Keep your vile slime away from my robes!\"", "DevourerProficiencies");
-				AddZachariusAnswer("IsekaiZachariusShadowMonarch", "(Shadow Monarch) [Extract Soul Echo] \"Death is not your prison, Zacharius. In my kingdom of shadows, every soul finds its eternal purpose under my throne.\"", "{n}Zacharius tilts his skull, mesmerized by the deep sovereign darkness wrapping around your fingers.{/n} \"Fascinating... not mere necromancy, but the primal gravity of the endless void. Perhaps your descent into darkness will achieve what the paladins never could.\"", "ShadowMonarchProficiencies");
-				AddZachariusAnswer("IsekaiZachariusMastermind", "(Mastermind) [Diagnose Phylactery Deterioration] \"Your warding runes have degraded by 41% over seventy years. Your eternal preservation is decaying into senility. Hand over the Wand of Zacharius before your enchantments suffer critical collapse.\"", "{n}Zacharius's bony fingers tremble with rage and mortification.{/n} \"Degraded?! Insolent whelp! My wards are... they are... {n}he glances anxiously at the flickering runes{/n} ...Curse your keen eyes. Take the wand and begone from my sanctuary!\"", "MastermindProficiencies");
-			}
-			void AddZachariusAnswer(string name, string text, string cueText, string proficiencyFactName)
-			{
-				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
-				if (proficiencyFact != null)
-				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
-					{
-						bp.SetText(Main.IsekaiContext, cueText);
-						if (zachariusUnit != null)
-						{
-							bp.Speaker = new DialogSpeaker
-							{
-								m_Blueprint = zachariusUnit.ToReference<BlueprintUnitReference>(),
-								MoveCamera = true
-							};
-						}
-						bp.SetAnswersList(answersList);
-					});
-					BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
-					{
-						bp.SetText(Main.IsekaiContext, text);
-						bp.NextCue = new CueSelection
-						{
-							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
-							Strategy = Strategy.First
-						};
-						bp.ShowOnce = true;
-						bp.AddShowCondition(delegate(HasFact c)
-						{
-							c.Unit = new PlayerCharacter();
-							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
-						});
-					});
-					answersList.InsertAnswer(answer);
-				}
-			}
-		}
-
-		private static void AddDrezenCitadelProclamationReactions()
-		{
-			BlueprintAnswersList answersList = BlueprintTools.GetBlueprint<BlueprintAnswersList>("44704bddb6223b84989dd26bcf20b601");
-			BlueprintUnit galfreyUnit = BlueprintTools.GetBlueprint<BlueprintUnit>("97d1c33c784100140b9fa317aef5a499");
-			if (answersList != null)
-			{
-				AddProclamationAnswer("IsekaiDrezenProclamationSlime", "(Slime) [Proclaim the Tempest Multiverse Federation] \"From this day forth, Drezen stands as the sovereign capital of the Tempest Multiverse Federation! A realm of boundless innovation, hot-spring resorts, culinary delights, and sanctuary for mortals, mongrels, and reformed fiends alike!\"", "{n}Queen Galfrey pauses, looking across the liberated citadel walls with a faint, bemused smile.{/n} \"A... multiverse federation? With hot springs and monster sanctuaries? Under any other crusader, I would consider this sheer madness. But your people adore you, and your strength retook these walls. As Queen of Mendev, I officially recognize the Tempest Federation of Drezen. May your boundless ambition bring life back to these barren lands, Commander.\"", "DevourerProficiencies");
-				AddProclamationAnswer("IsekaiDrezenProclamationOverlord", "(Overlord) [Consecrate Exterior Bastion of the Great Tomb] \"Hear me, mortal Queen! Drezen is claimed as an exterior bastion of the Great Tomb. Death shall govern these ramparts with absolute, unwavering order. Let all who dwell here serve with supreme devotion.\"", "{n}Galfrey shivers as an icy, necromantic weight settles over the stone battlement, yet she holds your gaze with queenly resolve.{/n} \"An unyielding necropolis in the heart of the Worldwound... While I cannot officially endorse the worship of undeath in holy Mendev, the peace and discipline your forces maintain cannot be denied. Drezen is yours to command. Rule it with the justice you promised.\"", "OverlordProficiencies");
-				AddProclamationAnswer("IsekaiDrezenProclamationShadowMonarch", "(Shadow Monarch) [Raise the Citadel of Eternal Shadows] \"Let the sun set on the old world. Drezen is now the Citadel of Eternal Shadows. An unbreachable bastion where the silent legion stands eternal guard over northern Avistan.\"", "{n}Galfrey looks out at the darkening towers, where silhouettes of shadow soldiers stand vigilant along the parapets.{/n} \"The demons took Drezen through light and fire, but they will never break through your shadows. The people feel protected, even if the cold chill in the air never quite fades. Drezen is safe in your shadow, Commander.\"", "ShadowMonarchProficiencies");
-				AddProclamationAnswer("IsekaiDrezenProclamationGodEmperor", "(God Emperor) [Declare the First Radiant Imperium] \"By divine right and unshakeable will, I consecrate Drezen as the First Radiant Imperium! Here begins the golden age of civilization, law, and solar prosperity that will illuminate all of Golarion!\"", "{n}Queen Galfrey bows her head with profound regal respect as radiant golden light bathes the citadel square.{/n} \"An Imperium born from the ashes of demon tyranny... The majesty of your presence inspires hope even in the most cynical crusaders. Lead your people wisely, Sovereign Commander.\"", "GodEmperorProficiencies");
-				AddProclamationAnswer("IsekaiDrezenProclamationHero", "(Hero) [Dedicate Drezen to Mortal Freedom] \"Drezen belongs to no tyrant, no god, and no demon! It belongs to the farmers, the knights, and the orphans who bled to take back their homes. Drezen is the beacon of mortal freedom!\"", "{n}A thunderous cheer erupts from the assembled crusaders below as Galfrey smiles with radiant warmth.{/n} \"Spoken like a true champion of the people. For seventy years, we fought under the heavy shadow of despair. Today, your courage gave them back their future. Long live the Knight Commander!\"", "HeroProficiencies");
-				AddProclamationAnswer("IsekaiDrezenProclamationMastermind", "(Mastermind) [Establish the Grand Sovereign Nexus] \"Drezen is restructured into the central nexus of our grand geopolitical board. Every resource route, intelligence bureau, and bastion is calibrated to mathematically guarantee total victory.\"", "{n}Galfrey reviews your architectural and strategic blueprints with awe.{/n} \"Incredible. In a matter of hours, you have organized logistics that took our Royal Council months to debate. With your intellect guiding the crusade, the demons will find no flaws to exploit.\"", "MastermindProficiencies");
-				AddProclamationAnswer("IsekaiDrezenProclamationGeneral", "(Isekai Protagonist) [Proclaim the New Dawn of Drezen] \"We took back Drezen with our own hands, strange powers, and loyal friends. This fortress is now a symbol that anything is possible when you refuse to surrender!\"", "{n}Galfrey nods with deep heartfelt sincerity.{/n} \"Indeed, Commander. You came from unknown origins and turned the tide of an eighty-year war. Mendev salutes you, and the entire continent looks to your standard with hope.\"", "IsekaiProficiencies");
-			}
-			void AddProclamationAnswer(string name, string text, string cueText, string proficiencyFactName)
-			{
-				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
-				if (proficiencyFact != null)
-				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
-					{
-						bp.SetText(Main.IsekaiContext, cueText);
-						if (galfreyUnit != null)
-						{
-							bp.Speaker = new DialogSpeaker
-							{
-								m_Blueprint = galfreyUnit.ToReference<BlueprintUnitReference>(),
-								MoveCamera = true
-							};
-						}
-						bp.SetAnswersList(answersList);
-					});
-					BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
-					{
-						bp.SetText(Main.IsekaiContext, text);
-						bp.NextCue = new CueSelection
-						{
-							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
-							Strategy = Strategy.First
-						};
-						bp.ShowOnce = true;
-						bp.AddShowCondition(delegate(HasFact c)
-						{
-							c.Unit = new PlayerCharacter();
-							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
-						});
-					});
-					answersList.InsertAnswer(answer);
-				}
-			}
-		}
-
-		private static void AddAreeluLabLoopTruthReactions()
-		{
-			BlueprintAnswersList answersList = BlueprintTools.GetBlueprint<BlueprintAnswersList>("cd9c9facc3a8ded4e9683cde8958295e");
-			BlueprintUnit areeluUnit = BlueprintTools.GetBlueprint<BlueprintUnit>("92f29ae2c49edb74f8943d30ea788dd0");
-			if (answersList != null)
-			{
-				AddLabTruthAnswer("IsekaiAreeluLabTruthGeneral", "(Isekai Protagonist) [Confront the Cosmic Glitch] \"Your ritual didn't pull your child's soul, Areelu. It cracked open reality just wide enough for Yog-Sothoth's temporal loop to siphon me in from another world! This entire crusade is an otherworldly replay loop, broadcast to cosmic entities!\"", "{n}Areelu Vorlesh's spectral projection halts. Her analytical gaze widens with profound, disturbing shock as she calculates the metaphysical equations.{/n} \"An anomaly from beyond... Yog-Sothoth's causal loop? {n}Her fingers twitch against her staff as runes spiral around her{/n} ...I felt the dimensional drag during the rift ritual, but I assumed... no. The Akashic signature is completely alien to Golarion! You are telling the truth. My child's soul was not the payload... an entire otherworldly protagonist was caught in the tear!\"", "IsekaiProficiencies", new ContextActionAreeluLoopTruthBanter());
-				AddLabTruthAnswer("IsekaiAreeluLabTruthDevourer", "(Slime) [Digest the Planar Glitch] \"Your summoning ritual was basically a giant dimensional vacuum cleaner! Instead of your kid, you sucked in an otherworldly slime with cheat digestion skills. And now Yog-Sothoth's loop has us all on playback!\"", "{n}Areelu stares at you in complete disbelief and horror.{/n} \"A slime... an otherworldly, morphic digestive organism with impossible cellular density. The ritual pulled a conceptual predator through the void instead of my child... {n}she touches her forehead, trembling{/n} The cosmic irony is suffocating. Yet your growth exceeds even my wildest laboratory models...\"", "DevourerProficiencies", new ContextActionAreeluLoopTruthBanter());
-				AddLabTruthAnswer("IsekaiAreeluLabTruthOverlord", "(Overlord) [Dissect the Flawed Incantation] \"A pathetic miscalculation, witch. Your amateurish rift failed to tether your offspring. Instead, your dimensional tear snagged an Overlord from beyond reality into Yog-Sothoth's recurring cycle. Bow before your superior.\"", "{n}Areelu Vorlesh staggers back as an aura of supreme tier authority presses against her laboratory projection.{/n} \"Amateurish?! I spent decades... {n}she stops, her breath catching as she senses the unfathomable depth of your soul matrix{/n} ...By the Abyss. The soul anchored in this flesh belongs to no mortal offspring. You are a supreme sovereign entity ensnared by the cosmic loop. What have I unleashed upon the planes...?\"", "OverlordProficiencies", new ContextActionAreeluLoopTruthBanter());
-				AddLabTruthAnswer("IsekaiAreeluLabTruthShadowMonarch", "(Shadow Monarch) [Reveal the Sovereign Truth] \"The void you opened reached far beyond the Worldwound. It pulled the sovereign of shadows into Yog-Sothoth's playback loop. Your child is not here; only the monarch remains.\"", "{n}The shadows in the laboratory coil and bow before you as Areelu looks on in silent terror.{/n} \"The primordial void... not death, but the ancient monarch of darkness. The rift didn't retrieve my child; it tore open the gates to the Netherworld and siphoned its king. The calculations were doomed from the start.\"", "ShadowMonarchProficiencies", new ContextActionAreeluLoopTruthBanter());
-				AddLabTruthAnswer("IsekaiAreeluLabTruthMastermind", "(Mastermind) [Expose the Infinite Playback Algorithm] \"I reverse-engineered your ritual matrices, Vorlesh. The probability of your child's soul traversing the rift was zero. Yog-Sothoth intercepted your dimensional breach to feed an infinite spectator broadcast for cosmic entities.\"", "{n}Areelu's eyes narrow as she watches you mentally dismantle her life's work.{/n} \"Zero probability... an intercepted broadcast? {n}She lets out a dry, bitter laugh that echoes through the laboratory{/n} All my suffering, all my meticulous sacrifices... hijacked by an Outer God to produce cosmic entertainment for the stars. And you... you see the entire board, don't you, Commander?\"", "MastermindProficiencies", new ContextActionAreeluLoopTruthBanter());
-				AddLabTruthAnswer("IsekaiAreeluLabTruthHero", "(Hero) [Declare Moral Rejection of the Loop] \"Your grief opened a wound that swallowed an innocent soul from another world. But I won't let Yog-Sothoth's loop or your obsession destroy Golarion. I will protect these people, and I will break this cycle!\"", "{n}Areelu smiles faintly, a bittersweet sadness softening her demonic features.{/n} \"Such unwavering, stubborn courage... even when knowing you were plucked from your home to dance on a celestial stage. Perhaps that unyielding spirit is why the rift chose you. Break the loop if you can, hero. I will be watching.\"", "HeroProficiencies", new ContextActionAreeluLoopTruthBanter());
-			}
-			void AddLabTruthAnswer(string name, string text, string cueText, string proficiencyFactName, ContextAction extraAction = null)
-			{
-				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
-				if (proficiencyFact != null)
-				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
-					{
-						bp.SetText(Main.IsekaiContext, cueText);
-						if (areeluUnit != null)
-						{
-							bp.Speaker = new DialogSpeaker
-							{
-								m_Blueprint = areeluUnit.ToReference<BlueprintUnitReference>(),
-								MoveCamera = true
-							};
-						}
-						bp.SetAnswersList(answersList);
-					});
-					BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
-					{
-						bp.SetText(Main.IsekaiContext, text);
-						bp.NextCue = new CueSelection
-						{
-							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
-							Strategy = Strategy.First
-						};
-						bp.ShowOnce = true;
-						bp.AddShowCondition(delegate(HasFact c)
-						{
-							c.Unit = new PlayerCharacter();
-							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
-						});
-						if (extraAction != null)
-						{
-							bp.OnSelect = Helpers.CreateActionList(extraAction);
-						}
-					});
-					answersList.InsertAnswer(answer);
-				}
-			}
-		}
-
-		private static void AddBaphometConfrontationReactions()
-		{
-			BlueprintAnswersList answersList = BlueprintTools.GetBlueprint<BlueprintAnswersList>("9ab9ad8f6e11d67499b48fd595e50972");
-			BlueprintUnit baphometUnit = BlueprintTools.GetBlueprint<BlueprintUnit>("f8007503fe211da4eb027e070eeb3f8c");
-			if (answersList != null)
-			{
-				AddBaphometAnswer("IsekaiBaphometOverlord", "(Overlord) [Mock the Lord of the Labyrinth] \"You swagger into this mine bellowing like a slaughterhouse bull, Baphomet. In the Great Tomb, cattle know their place. Kneel before supreme tier magic, or I shall turn your horns into drinking goblets.\"", "{n}Baphomet's massive nostrils flare with blistering hellfire as he clutches his glaive in furious shock.{/n} \"Cattle?! Drinking goblets?! Incomprehensible worm! You stand before the Lord of Minotaurs, master of the Ivory Labyrinth! I shall tear your flesh and grind your arrogant bones into dust!\"", "OverlordProficiencies", new ContextActionBaphometDefianceBanter());
-				AddBaphometAnswer("IsekaiBaphometDevourer", "(Slime) [Inspect Demon Lord Caloric Density] \"Whoa, fresh beef! I've eaten dretches, minotaurs, and balors, but a full Demon Lord? You must have enough magical calories to evolve my entire federation! Come here!\"", "{n}Baphomet reels back, staring in profound revulsion at your quivering, hungry form.{/n} \"Fresh beef?! Caloric density?! You gelatinous abomination, I am a Demon Lord of the Abyss, not livestock for your gluttony! I shall scorch your vile ooze into dry ash!\"", "DevourerProficiencies", new ContextActionBaphometDefianceBanter());
-				AddBaphometAnswer("IsekaiBaphometShadowMonarch", "(Shadow Monarch) [Claim the Ivory Horns] \"Your labyrinth is just a maze of shadows, Baphomet. And in the dark, every shadow answers to me. Even the shadows of demon lords.\"", "{n}Baphomet grunts in fury as the darkness at his hooves twists and resists his commands.{/n} \"Shadows answering to a mortal?! Insolent wretch! My labyrinth is eternal, and your soul shall wander its twisting corridors screaming forever!\"", "ShadowMonarchProficiencies", new ContextActionBaphometDefianceBanter());
-				AddBaphometAnswer("IsekaiBaphometGodEmperor", "(God Emperor) [Issue Imperial Extinction Decree] \"Baphomet, by decree of the Radiant Imperium, your reign of deceit is terminated. The light of the solar throne shall bleach your labyrinth to ash.\"", "{n}Baphomet roars, the cavern shaking as brimstone explodes from his cloven hooves.{/n} \"An emperor?! In my mines?! Your pathetic solar light will be swallowed by the eternal darkness of the Abyss! Die!\"", "GodEmperorProficiencies", new ContextActionBaphometDefianceBanter());
-				AddBaphometAnswer("IsekaiBaphometMastermind", "(Mastermind) [Deconstruct Baphomet's Strategy] \"You sacrificed your own daughter to test my defenses, Lord of the Labyrinth. A remarkably pedestrian gambit. Your tactical failure rate in this encounter is already 100%.\"", "{n}Baphomet barks with guttural rage, his crimson eyes bulging with murderous fury.{/n} \"Pedestrian gambit?! Hepzamirah served her purpose! And your purpose is to die here at the bottom of the world, arrogant strategist!\"", "MastermindProficiencies", new ContextActionBaphometDefianceBanter());
-				AddBaphometAnswer("IsekaiBaphometHero", "(Hero) [Stand Resolute Against the Fiend] \"You betrayed your own blood and sacrificed countless lives for your labyrinth. Today, your cruelty ends, Baphomet. We aren't afraid of you!\"", "{n}Baphomet sneers with cruel, jagged teeth.{/n} \"Not afraid? You will learn terror when my glaive pins your heart to these caverns, righteous fool!\"", "HeroProficiencies", new ContextActionBaphometDefianceBanter());
-			}
-			void AddBaphometAnswer(string name, string text, string cueText, string proficiencyFactName, ContextAction extraAction = null)
-			{
-				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
-				if (proficiencyFact != null)
-				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
-					{
-						bp.SetText(Main.IsekaiContext, cueText);
-						if (baphometUnit != null)
-						{
-							bp.Speaker = new DialogSpeaker
-							{
-								m_Blueprint = baphometUnit.ToReference<BlueprintUnitReference>(),
-								MoveCamera = true
-							};
-						}
-						bp.SetAnswersList(answersList);
-					});
-					BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
-					{
-						bp.SetText(Main.IsekaiContext, text);
-						bp.NextCue = new CueSelection
-						{
-							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
-							Strategy = Strategy.First
-						};
-						bp.ShowOnce = true;
-						bp.AddShowCondition(delegate(HasFact c)
-						{
-							c.Unit = new PlayerCharacter();
-							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
-						});
-						if (extraAction != null)
-						{
-							bp.OnSelect = Helpers.CreateActionList(extraAction);
-						}
-					});
-					answersList.InsertAnswer(answer);
-				}
-			}
-		}
-
-		private static void AddNocticulaAudienceReactions()
-		{
-			BlueprintAnswersList answersList = BlueprintTools.GetBlueprint<BlueprintAnswersList>("75678bafb5e33854baaee17ee6eaf69c");
-			BlueprintUnit nocticulaUnit = BlueprintTools.GetBlueprint<BlueprintUnit>("0cca8c841d634d84fbec2609c8db3465");
-			if (answersList != null)
-			{
-				AddNocticulaAnswer("IsekaiNocticulaGeneral", "(Isekai Protagonist) [Resist Charm with Akashic Encryption] \"You can drop the mental probes, Lady Nocticula. My soul is backed by otherworldly Akashic encryption and live-broadcast to millions of Constellations. You won't find a puppet here.\"", "{n}Nocticula raises a sculpted eyebrow, leaning back on her velvet cushions with a purr of genuine amusement.{/n} \"Akashic encryption... and a live celestial audience? How delightfully exotic. Most mortals who enter my palace fall weeping to their knees begging for a single touch. It seems the rumors of your otherworldly charm were not exaggerated, Commander. Let us speak as equals.\"", "IsekaiProficiencies");
-				AddNocticulaAnswer("IsekaiNocticulaOverlord", "(Overlord) [Establish Equal Planar Dominance] \"You rule an island of assassins and hedonists, Lady of the Shadow. Entertaining, but do not mistake an Overlord for mortal crusader clay. Speak with dignity, or we shall find how silk burns under tier 10 magic.\"", "{n}Nocticula's lips curve into a tantalizing, dangerous smile, unruffled by your chilling threat.{/n} \"Such delicious arrogance... and the terrifying magical aura to back it up. A ruler of death who bows to no god. I like you, Overlord. Alushinyrra is honored by your presence. Let us conduct our business with mutual respect.\"", "OverlordProficiencies");
-				AddNocticulaAnswer("IsekaiNocticulaDevourer", "(Slime) [Admire the Midnight Cuisine] \"Nice city you have here! The architecture is a bit edgy, but the street food in the Lower City is fascinating. Any chance you'd trade some Midnight Isle culinary recipes with the Tempest Federation?\"", "{n}Nocticula blinks once, then bursts into a melodious, sultry laugh that echoes through the House of Silken Shadows.{/n} \"Culinary recipes?! You tore through the Abyss, defeated Hepzamirah, marched into my royal palace... and your first request is Midnight Isle street food recipes?! {n}She claps her delicate hands, delighted{/n} You are utterly charming, little slime. Consider my kitchen archives open to your federation.\"", "DevourerProficiencies");
-				AddNocticulaAnswer("IsekaiNocticulaShadowMonarch", "(Shadow Monarch) [Commune in Absolute Darkness] \"You call yourself Our Lady in Shadow, Nocticula. But you rule merely the shadows cast by flesh. I rule the void itself.\"", "{n}The shadows beneath Nocticula's throne ripple in harmonic resonance with your own sovereign aura.{/n} \"The primal void... Yes, I can feel it. You do not merely borrow the dark; you are its undisputed master. How refreshing to meet someone who understands the true elegance of shadow. Welcome to my court, Monarch.\"", "ShadowMonarchProficiencies");
-				AddNocticulaAnswer("IsekaiNocticulaMastermind", "(Mastermind) [Counter-Propose Planar Geopolitics] \"Your assassination network is impressive, Lady Nocticula, but economically fragile. If you supply our crusade with Nahyndrian intelligence, I can guarantee Alushinyrra a 34% increase in illicit planar trade routes post-war.\"", "{n}Nocticula leans forward, her golden eyes sparkling with sharp appreciation.{/n} \"A strategist who speaks in trade margins and economic dominance rather than righteous hymns. You truly are a breath of fresh air, Commander. Let us review your proposal.\"", "MastermindProficiencies");
-			}
-			void AddNocticulaAnswer(string name, string text, string cueText, string proficiencyFactName)
-			{
-				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
-				if (proficiencyFact != null)
-				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
-					{
-						bp.SetText(Main.IsekaiContext, cueText);
-						if (nocticulaUnit != null)
-						{
-							bp.Speaker = new DialogSpeaker
-							{
-								m_Blueprint = nocticulaUnit.ToReference<BlueprintUnitReference>(),
-								MoveCamera = true
-							};
-						}
-						bp.SetAnswersList(answersList);
-					});
-					BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
-					{
-						bp.SetText(Main.IsekaiContext, text);
-						bp.NextCue = new CueSelection
-						{
-							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
-							Strategy = Strategy.First
-						};
-						bp.ShowOnce = true;
-						bp.AddShowCondition(delegate(HasFact c)
-						{
-							c.Unit = new PlayerCharacter();
-							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
-						});
-					});
-					answersList.InsertAnswer(answer);
-				}
-			}
-		}
-
-		private static void AddDivineSummitGoddessesReactions()
-		{
-			BlueprintAnswersList answersList = BlueprintTools.GetBlueprint<BlueprintAnswersList>("e3a71f123c7aae7409d08855827dbea5");
-			BlueprintUnit iomedaeUnit = BlueprintTools.GetBlueprint<BlueprintUnit>("9a1443603c9353d4194a583a31228c8b");
-			if (answersList != null)
-			{
-				AddSummitAnswer("IsekaiGoddessesSummitLoopBreaker", "(Isekai Protagonist) [Reject Divine Scripts for Mortal Freedom] \"Iomedae demands blind faith, and Nocticula offers abyssal chains. Neither of you understands: this power was forged by my own choices, my companions, and mortal will! I reject both your scripts. Golarion's future belongs to mortals, and I will shatter this causal loop with my own hands!\"", "{n}Iomedae stares at you in solemn, awe-struck sorrow, while Nocticula watches with breathless admiration.{/n} {b}Iomedae:{/b} \"To reject both Heaven and the Abyss... to cast aside the divine design in the name of unguided mortal will. It is a path of terrifying peril, Commander. Yet... the purity of your conviction rivals that of the greatest martyrs of old. May your mortal spirit withstand the storm to come.\"", "IsekaiProficiencies", new ContextActionLoopBreakerInsight());
-				AddSummitAnswer("IsekaiGoddessesSummitTrickster", "(Isekai Protagonist) [Mock Both Pantheons] \"Hold on, wait a moment! Look at the two of you posing like rival divas on opening night! Half the watching gods in the celestial sphere want Iomedae's righteousness, the other half want Nocticula's wicked charm, and I'm just here enjoying the greatest celestial spectacle in planar history! Why choose when we can keep everyone guessing?\"", "{n}Both deities pause in sheer, disarmed bewilderment as starlight ripples across the air in amused celestial harmony.{/n} {b}Iomedae:{/b} \"Rival divas?! Opening night?! You treat the fate of mortal souls like an evening tavern play!\" {b}Nocticula:{/b} {n}smirking with wicked delight{/n} \"A theatrical spectacle... oh, Commander, your insolence is positively intoxicating. Let the celestial gallery watch!\"", "IsekaiProficiencies", new ContextActionGoddessesChatBanter());
-				AddSummitAnswer("IsekaiGoddessesSummitOverlord", "(Overlord) [Castigate Both Goddesses] \"An insolent goddess preaching submission and a demon queen whispering seduction. Neither of you commands a Supreme Being. The Great Tomb bows to no deity. The Worldwound shall be sealed by my sovereign decree alone.\"", "{n}Iomedae's radiant sword blazes with righteous indignation, while Nocticula chuckles softly into her sleeve.{/n} {b}Iomedae:{/b} \"Supreme Being? Your pride borders on the greatest heresies of the ancient world!\" {b}Nocticula:{/b} \"Let him speak, Inheritor! A tyrant who looks down on both heaven and hell is far more amusing than your pious sermons.\"", "OverlordProficiencies", new ContextActionGoddessesChatBanter());
-				AddSummitAnswer("IsekaiGoddessesSummitDevourer", "(Slime) [Proclaim the Tempest Way] \"Why does everything have to be an ultimatum? In the Tempest Federation, we don't force people to throw away their strength or become monsters. We protect our friends, build cozy homes, and eat good food. Keep your dogmas; we're fixing this our way!\"", "{n}Iomedae blinks, momentarily disarmed by your earnest, cheerful declaration.{/n} {b}Iomedae:{/b} \"A cozy home... and good food? You speak of simple mortal peace in the face of planar destruction. If your strange federation can truly restore peace to these tortured lands, then prove it at Threshold, Commander.\"", "DevourerProficiencies", new ContextActionGoddessesChatBanter());
-				AddSummitAnswer("IsekaiGoddessesSummitGodEmperor", "(God Emperor) [Declare Sovereign Autarchy] \"The era of foreign gods deciding mortal destinies ends today. The Golden Throne of Sarkoris shall not kneel to Heaven nor Hell. My imperial reign is absolute.\"", "{n}Iomedae looks upon you with solemn gravity.{/n} {b}Iomedae:{/b} \"Many mortal kings have proclaimed absolute autarchy, only to fall to hubris. If you claim the throne of Sarkoris, rule with righteousness, not tyranny.\"", "GodEmperorProficiencies", new ContextActionGoddessesChatBanter());
-				AddSummitAnswer("IsekaiGoddessesSummitMastermind", "(Mastermind) [Expose the Binary False Choice] \"A classic false dichotomy. Iomedae offers sacrificial obsolescence; Nocticula offers parasitic dependency. Both algorithms lead to systemic failure. I select Option Three: mortal transcendence.\"", "{n}Nocticula laughs with sharp, appreciative brilliance.{/n} {b}Nocticula:{/b} \"Parasitic dependency? Oh, you wound me, Commander! But I cannot fault a mind so delightfully immune to divine coercion. Show us your Option Three, then!\"", "MastermindProficiencies", new ContextActionGoddessesChatBanter());
-				AddSummitAnswer("IsekaiGoddessesSummitShadowMonarch", "(Shadow Monarch) [Embrace the Sovereign Eclipse] \"Light and lust are equally fleeting. When the battle for Threshold begins, neither Heaven nor Alushinyrra will hold the line. My legion of shadows shall swallow the Abyss whole.\"", "{n}Iomedae tightens her grip on her holy blade as shadows swallow the stones of the summit.{/n} {b}Iomedae:{/b} \"The dark power you harbor is perilous beyond measure, Commander. Do not let the shadows you command become your own tomb.\"", "ShadowMonarchProficiencies", new ContextActionGoddessesChatBanter());
-			}
-			void AddSummitAnswer(string name, string text, string cueText, string proficiencyFactName, ContextAction extraAction = null)
-			{
-				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
-				if (proficiencyFact != null)
-				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
-					{
-						bp.SetText(Main.IsekaiContext, cueText);
-						if (iomedaeUnit != null)
-						{
-							bp.Speaker = new DialogSpeaker
-							{
-								m_Blueprint = iomedaeUnit.ToReference<BlueprintUnitReference>(),
-								MoveCamera = true
-							};
-						}
-						bp.SetAnswersList(answersList);
-					});
-					BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
-					{
-						bp.SetText(Main.IsekaiContext, text);
-						bp.NextCue = new CueSelection
-						{
-							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
-							Strategy = Strategy.First
-						};
-						bp.ShowOnce = true;
-						bp.AddShowCondition(delegate(HasFact c)
-						{
-							c.Unit = new PlayerCharacter();
-							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
-						});
-						if (extraAction != null)
-						{
-							bp.OnSelect = Helpers.CreateActionList(extraAction);
-						}
-					});
-					answersList.InsertAnswer(answer);
-				}
-			}
-		}
-
-		private static void AddThresholdGrandFinalEndingReactions()
-		{
-			BlueprintAnswersList answersList = BlueprintTools.GetBlueprint<BlueprintAnswersList>("1dd910a1bafd4af4f818b65a5eed2a46");
-			BlueprintCue continueCue = BlueprintTools.GetBlueprint<BlueprintCue>("91e29e9f52c11c841bcdb271f44400a3");
-			if (answersList != null)
-			{
-				AddEndingAnswer("IsekaiEndingUnwrittenDawn", "(Isekai Protagonist) [Shatter the Cosmic Loop: The Unwritten Dawn] \"I invoke the four Keys of Causal Rupture! Yog-Sothoth, your recurring playback ends today! The loop is broken, and Golarion and Earth are forever linked!\"", "{n}The four Keys of Causal Rupture ignite in brilliant, unearthly light, shattering the invisible temporal anchors holding the Worldwound in recurrence. Reality fractures and reforms into an open, boundless dawn.{/n} \"The cycle is unchained. An open sky awaits.\"", "IsekaiProficiencies", "UnwrittenDawn", "The Unwritten Dawn", checkKeys: true);
-				AddEndingAnswer("IsekaiEndingInterdimensionalTraveler", "(Isekai Protagonist) [Slipstream Wanderer: The Interdimensional Traveler] \"I seal the Worldwound and step into the dimensional slipstream to explore the Great Beyond, leaving Golarion in mortal hands.\"", "{n}With a calm smile, you seal the tear from within the slipstream and set forth into the endless multiverse, roaming the astral currents as an eternal wanderer.{/n}", "IsekaiProficiencies", "InterdimensionalTraveler", "The Interdimensional Traveler", checkKeys: false);
-				AddEndingAnswer("IsekaiEndingEternalActor", "(Isekai Protagonist) [Surrender to the Broadcast: The Eternal Actor] \"Let the Constellations have their eternal show. When this era fades, let the causal clock rewind for another season.\"", "{n}You bow to the watching stars, accepting the warm embrace of celebrity and comfort as the celestial audience applauds the final act of this run.{/n}", "IsekaiProficiencies", "EternalActor", "The Eternal Actor", checkKeys: false);
-				AddEndingAnswer("IsekaiEndingPaxSepulchrum", "(Overlord) [Sovereign Protectorate: Pax Sepulchrum] \"I claim Sarkoris under the eternal protectorate of the Great Tomb. The dead shall labor and defend, and mortal citizens shall live in unprecedented prosperity.\"", "{n}An army of disciplined deathknights and bone laborers spreads out across Sarkoris, establishing an era of impeccable order, rich harvests, and zero crime under the Supreme One's impartial gaze.{/n}", "OverlordProficiencies", "PaxSepulchrum", "Pax Sepulchrum - Guardian of the Great Tomb", checkKeys: true);
-				AddEndingAnswer("IsekaiEndingIronCitadel", "(Overlord) [Isolated Bastion: Dominion of the Iron Citadel] \"I raise obsidian ramparts around Sarkoris, isolating our necropolis from the petty squabbles of the outside world.\"", "{n}Massive black stone towers seal the borders of Sarkoris, establishing an impregnable, quiet sanctuary of undeath where no outsider dares tread.{/n}", "OverlordProficiencies", "IronCitadel", "Dominion of the Iron Citadel", checkKeys: false);
-				AddEndingAnswer("IsekaiEndingNecroTyrant", "(Overlord) [Total Harvest: The Eternal Necro-Tyrant] \"Mortal life is a fragile, chaotic disease. I harvest all living souls in Avistan into the silent, disciplined undead legion.\"", "{n}A chilling, necrotic storm sweeps across northern Avistan. Life falls silent; every soul rises in flawless, eternal obedience to the Great Tomb.\"", "OverlordProficiencies", "NecroTyrant", "The Eternal Necro-Tyrant", checkKeys: false);
-				AddEndingAnswer("IsekaiEndingTempestFederation", "(Slime) [Multiversal Haven: The Tempest Multiverse Federation] \"I metabolize the Worldwound into pure fertile mana and establish the Tempest Multiverse Federation for all beings to live and feast together!\"", "{n}The demonic rift dissolves into a sea of radiant, fertile mana. The Jura Forest blooms where the scar once bled, founding a paradise of hot-spring resorts, culinary marvels, and peaceful co-existence.{/n}", "DevourerProficiencies", "TempestFederation", "The Tempest Multiverse Federation", checkKeys: true);
-				AddEndingAnswer("IsekaiEndingPrimevalMarsh", "(Slime) [Ancient Slumber: The Primeval Marsh] \"I return Sarkoris to a wild primeval haven, curling up beneath the World Tree as Golarion's guardian beast-god.\"", "{n}Nature reclaims the scorched plains. Curling into a tranquil, living sphere at the roots of the World Tree, you sleep in harmony with the wild beasts of the world.{/n}", "DevourerProficiencies", "PrimevalMarsh", "The Primeval Marsh", checkKeys: false);
-				AddEndingAnswer("IsekaiEndingAbyssalSingularity", "(Slime) [Infinite Gluttony: The Abyssal Singularity] \"I dive straight into the Abyss to devour demon lords and planar rifts until Azathoth stirs in fitful slumber, forcing Yog-Sothoth to trigger an emergency temporal reset!\"", "{n}Your bottomless stomach devours abyssal layers and dimensional fabric alike. As your hunger begins to disturb the nuclear chaos of Azathoth at the center of infinity, a panicked Yog-Sothoth triggers an emergency temporal failsafe, snapping reality back to the start of the loop!{/n}", "DevourerProficiencies", "AbyssalSingularity", "The Abyssal Singularity", checkKeys: false);
-				AddEndingAnswer("IsekaiEndingEternalHope", "(Hero) [Celestial Nova: The Sovereign Beacon of Eternal Hope] \"I channel the collective hope of every mortal who ever lived into an undying nova, ascending as the eternal protector of worlds!\"", "{n}A brilliant, golden star blazes where the Worldwound used to fester. You ascend as the wandering guardian spirit who answers innocent prayers across all dimensions.{/n}", "HeroProficiencies", "EternalHope", "The Sovereign Beacon of Eternal Hope", checkKeys: true);
-				AddEndingAnswer("IsekaiEndingRetiredLegend", "(Hero) [Humble Peace: The Retired Legend] \"I refuse godhood and crowns. I will open a cozy tavern and training hall in Kenabres, living a fulfilled mortal life.\"", "{n}Laying down your legendary weapons, you hang a simple wooden sign over a Kenabres tavern, training new generations and sharing laughter with beloved companions.{/n}", "HeroProficiencies", "RetiredLegend", "The Retired Legend", checkKeys: false);
-				AddEndingAnswer("IsekaiEndingCorruptedChampion", "(Hero) [Fallen Paragon: The Corrupted Champion] \"I have lived long enough to become the villain. In the name of protecting everyone, I shall enforce absolute peace with an iron fist.\"", "{n}Driven by paranoia and the unbearable weight of sacrifice, your crusade for good hardens into ruthless, despotic tyranny until the world trembles before your conviction.{/n}", "HeroProficiencies", "CorruptedChampion", "The Corrupted Champion", checkKeys: false);
-				AddEndingAnswer("IsekaiEndingPaxSolaris", "(God Emperor) [Solar Renaissance: Pax Solaris] \"I ascend the Golden Throne of Sarkoris as the eternal God-King, ushering in an era of solar technology, justice, and prosperity!\"", "{n}Radiant solar towers rise from Drezen to the World's Edge Mountains. The Solar Commonwealth unites all nations in an era of unprecedented cultural and scientific enlightenment.{/n}", "GodEmperorProficiencies", "PaxSolaris", "Pax Solaris - The Golden Renaissance", checkKeys: true);
-				AddEndingAnswer("IsekaiEndingSarkorianImperium", "(God Emperor) [Iron Mandate: The Sarkorian Imperium] \"I forge the Sarkorian Imperium, ruling Avistan through unassailable military discipline and absolute law.\"", "{n}An imperial legion marches to every border, establishing absolute stability and commercial dominance through unwavering military authority.{/n}", "GodEmperorProficiencies", "SarkorianImperium", "The Sarkorian Imperium", checkKeys: false);
-				AddEndingAnswer("IsekaiEndingDualThrone", "(God Emperor) [Conquest of Two Realms: The Dual Throne of Sun and Abyss] \"I march the solar legions into the Abyss, binding mortal and fiend under the undisputed supremacy of the Dual Throne.\"", "{n}Solar banners are planted into abyssal magma. Dissent is eradicated across two planes as both mortals and demons kneel before your absolute authority.{/n}", "GodEmperorProficiencies", "DualThrone", "The Dual Throne of Sun and Abyss", checkKeys: false);
-				AddEndingAnswer("IsekaiEndingSilentAegis", "(Shadow Monarch) [Watchers in the Dark: The Silent Aegis of Shadows] \"I command the Legion of Shadows to shield Golarion from the dark, ensuring night becomes a guardian rather than a terror.\"", "{n}Shadow soldiers stand silent, invisible guard over every road and hamlet. Innocents sleep peacefully, protected by the sovereign darkness of the Netherworld.{/n}", "ShadowMonarchProficiencies", "SilentAegis", "The Silent Aegis of Shadows", checkKeys: true);
-				AddEndingAnswer("IsekaiEndingObsidianBastion", "(Shadow Monarch) [The Shadow Gate: The Obsidian Bastion] \"I transform the Worldwound into the Shadow Gate, sitting upon the threshold so neither demon nor conqueror ever crosses.\"", "{n}An immense black monolith seals the boundary between planes. Seated upon the obsidian throne, you remain the eternal gatekeeper between realities.{/n}", "ShadowMonarchProficiencies", "ObsidianBastion", "The Obsidian Bastion", checkKeys: false);
-				AddEndingAnswer("IsekaiEndingNetherworldCataclysm", "(Shadow Monarch) [Eternal Void: The Netherworld Cataclysm] \"I open the Netherworld wide across Avistan, drowning the continent in an eternal black void where only shadows live.\"", "{n}The sun never rises again. Cold, abyssal darkness submerges northern Avistan, turning Golarion into a silent realm where shadows walk the earth forever.{/n}", "ShadowMonarchProficiencies", "NetherworldCataclysm", "The Netherworld Cataclysm", checkKeys: false);
-				AddEndingAnswer("IsekaiEndingGrandArchitect", "(Mastermind) [The Grand Architect] \"Using my immortality and foresight, I shall weave an unseen web across centuries, guiding nations toward quiet prosperity from the shadows.\"", "{n}Operating from behind the velvet curtain, you gently orchestrate history like a grand symphony of statecraft, nurturing centuries of enlightened human flourishing.{/n}", "MastermindProficiencies", "GrandArchitect", "The Grand Architect", checkKeys: true);
-				AddEndingAnswer("IsekaiEndingPuppetParliament", "(Mastermind) [The Puppet Parliament] \"I install figureheads across every throne in Avistan, pulling the geopolitical strings of kings and archbishops as a secret shadow government.\"", "{n}Crowns and miters bow to invisible strings. In a quiet, candlelit chamber, your council of shadows directs the destinies of empires without a single mortal suspecting who truly rules.{/n}", "MastermindProficiencies", "PuppetParliament", "The Puppet Parliament", checkKeys: false);
-				AddEndingAnswer("IsekaiEndingChessboardApocalypse", "(Mastermind) [The Chessboard Apocalypse] \"Mortals, demons, and gods are mere pawns on my board. I sacrifice whole civilizations to see what patterns emerge from the chaos.\"", "{n}Detached from mortal sentiment, you orchestrate devastating continental conflicts and planar collapses purely for your intellectual amusement, observing the slaughter like a game of speed chess.{/n}", "MastermindProficiencies", "ChessboardApocalypse", "The Chessboard Apocalypse", checkKeys: false, forceShatter: true);
-				AddEndingAnswer("IsekaiEndingInfiniteHorizons", "(Martial God) [Infinite Horizon: Sovereign Ki Ascension] \"My Ki is sovereign, and my martial will transcends cosmic cycles. I slice through Yog-Sothoth's causal anchors with one infinite strike!\"", "{n}Your radiant Ki surges to an unbearable crescendo, slicing the very fabric of the causal loop in twain. The infinite horizons of the cosmos lie open before you.{/n}", "MartialGodProficiencies", "InfiniteHorizons", "The Edge of Infinite Horizons", checkKeys: true);
-				AddEndingAnswer("IsekaiEndingBoundaryHermit", "(Martial God) [Meditative Boundary: The Boundary Hermit] \"I retire to a tranquil pocket dimension on the astral fringe, meditating upon the eternal Dao of Ki until the causal loop resets.\"", "{n}Seated in quiet contemplation between planes, you refine your internal Ki and cultivate the eternal Dao. At the moment of ultimate enlightenment, the cosmic clock chimes and time gently rewinds.{/n}", "MartialGodProficiencies", "BoundaryHermit", "The Boundary Hermit", checkKeys: false);
-				AddEndingAnswer("IsekaiEndingSeveredHorizon", "(Martial God) [Reality Fracture: The Severed Horizon] \"I unleash an unrestrained eruption of Ki that strikes reality too deeply, collapsing the dimensional boundaries of Golarion!\"", "{n}The boundless Ki detonates beyond all containment, shattering the foundational tapestry of existence. The world collapses into glowing static, leaving you standing alone in the void.{/n}", "MartialGodProficiencies", "SeveredHorizon", "The Severed Horizon", checkKeys: false, forceShatter: true);
-			}
-			void AddEndingAnswer(string name, string text, string cueText, string proficiencyFactName, string endingId, string endingTitle, bool checkKeys, bool forceShatter = false)
-			{
-				BlueprintFeature proficiencyFact = GetRequiredDialogueFact(proficiencyFactName);
-				if (proficiencyFact != null)
-				{
-					BlueprintCue reply = TTCoreExtensions.CreateCue(name + "Reply", delegate(BlueprintCue bp)
-					{
-						bp.SetText(Main.IsekaiContext, cueText);
-						if (continueCue != null)
-						{
-							bp.Continue = new CueSelection
-							{
-								Cues = new List<BlueprintCueBaseReference> { continueCue.ToReference<BlueprintCueBaseReference>() },
-								Strategy = Strategy.First
-							};
-						}
-					});
-					BlueprintAnswer answer = TTCoreExtensions.CreateAnswer(name, delegate(BlueprintAnswer bp)
-					{
-						bp.SetText(Main.IsekaiContext, text);
-						bp.NextCue = new CueSelection
-						{
-							Cues = new List<BlueprintCueBaseReference> { reply.ToReference<BlueprintCueBaseReference>() },
-							Strategy = Strategy.First
-						};
-						bp.ShowOnce = true;
-						bp.AddShowCondition(delegate(HasFact c)
-						{
-							c.Unit = new PlayerCharacter();
-							c.m_Fact = proficiencyFact.ToReference<BlueprintUnitFactReference>();
-						});
-						bp.OnSelect = Helpers.CreateActionList(new ContextActionTriggerIsekaiEnding
-						{
-							EndingId = endingId,
-							EndingTitle = endingTitle,
-							CheckLoopBreakerKeys = checkKeys,
-							ForceLoopShatter = forceShatter
-						});
-					});
-					answersList.InsertAnswer(answer);
-				}
-			}
+					Not = true,
+					m_Answer = shieldAnswer.ToReference<BlueprintAnswerReference>()
+				}),
+				IfTrue = blueprint.EnterActions,
+				IfFalse = ActionFlow.DoNothing()
+			});
 		}
 	}
 }

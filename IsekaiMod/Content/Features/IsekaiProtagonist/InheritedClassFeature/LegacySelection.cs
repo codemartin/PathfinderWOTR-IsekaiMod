@@ -1,12 +1,13 @@
-﻿using IsekaiMod.Content.Classes.IsekaiProtagonist;
+using IsekaiMod.Content.Classes.IsekaiProtagonist;
 using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Devourer;
 using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.GodEmperor;
 using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Hero;
-using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.MartialGod;
 using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Mastermind;
 using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.Overlord;
+using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.PhantomBlade;
 using IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.ShadowMonarch;
 using IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility;
+using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Prerequisites;
@@ -15,267 +16,251 @@ using Kingmaker.Blueprints.Facts;
 using TabletopTweaks.Core.Utilities;
 using UnityEngine;
 
-namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature
+namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature;
+
+internal class LegacySelection
 {
-	internal class LegacySelection
+	private static readonly Sprite Icon_AllSkilled = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintFeature>("f3bc6f9c855b2fb4e9aea364b8163aca"))?.m_Icon;
+
+	private static BlueprintFeatureSelection ClassSelection;
+
+	private static BlueprintFeatureSelection AbilitySelection;
+
+	private static BlueprintProgression[] registered = new BlueprintProgression[0];
+
+	public static void ConfigureStep1()
 	{
-		private static readonly Sprite Icon_AllSkilled = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintFeature>("f3bc6f9c855b2fb4e9aea364b8163aca")).m_Icon;
-
-		private static BlueprintFeatureSelection ClassSelection;
-
-		private static BlueprintFeatureSelection AbilitySelection;
-
-		private static BlueprintProgression[] registered = new BlueprintProgression[0];
-
-		public static void ConfigureStep1()
+		if (ClassSelection != null)
 		{
-			if (ClassSelection != null)
-			{
-				Main.IsekaiContext.Logger.LogWarning("repeated configuration of =LegacyClassSelection");
-				return;
-			}
-			ClassSelection = Helpers.CreateBlueprint(Main.IsekaiContext, "LegacyClassSelection", delegate(BlueprintFeatureSelection bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Legacy");
-				bp.SetDescription(Main.IsekaiContext, "If not for the gods reincarnating you as an Isekai Hero with great mystic power you would have been...");
-				((BlueprintUnitFact)bp).m_Icon = Icon_AllSkilled;
-				bp.Ranks = 1;
-				bp.IsClassFeature = true;
-				bp.IgnorePrerequisites = false;
-				bp.m_AllFeatures = new BlueprintFeatureReference[0];
-				bp.m_Features = new BlueprintFeatureReference[0];
-			});
-			AbilitySelection = Helpers.CreateBlueprint(Main.IsekaiContext, "LegacyAbilitySelection", delegate(BlueprintFeatureSelection bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Dual Legacy");
-				bp.SetDescription(Main.IsekaiContext, "First, I joined the bardic college of Wintermoon. \nThen 3 years later, when I got bored with that, I accidentally stumbled into the theives' guild of Whitesnow...\nWhatever the backstory is, you get access to another legacy class feature.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_AllSkilled;
-				bp.Ranks = 1;
-				bp.IsClassFeature = true;
-				bp.IgnorePrerequisites = false;
-				bp.m_AllFeatures = new BlueprintFeatureReference[0];
-				bp.m_Features = new BlueprintFeatureReference[0];
-			});
-			AbilitySelection.AddComponent(delegate(PrerequisiteNoFeature c)
-			{
-				c.m_Feature = AbilitySelection.ToReference<BlueprintFeatureReference>();
-			});
-			MartialGodLegacySelection.Configure();
-			GodEmperorLegacySelection.Configure();
-			HeroLegacySelection.Configure();
-			MastermindLegacySelection.Configure();
-			OverlordLegacySelection.Configure();
-			ShadowMonarchLegacySelection.Configure();
-			DevourerLegacySelection.Configure();
-			TriLegacySelection.Configure();
+			Main.IsekaiContext.Logger.LogWarning("repeated configuration of =LegacyClassSelection");
+			return;
 		}
-
-		public static BlueprintFeatureSelection GetClassFeature()
+		ClassSelection = Helpers.CreateBlueprint(Main.IsekaiContext, "LegacyClassSelection", delegate(BlueprintFeatureSelection bp)
 		{
-			if (ClassSelection != null)
-			{
-				return ClassSelection;
-			}
-			return BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "LegacyClassSelection");
-		}
-
-		public static BlueprintFeatureSelection GetOverwhelmingFeature()
+			bp.SetName(Main.IsekaiContext, "Legacy");
+			bp.SetDescription(Main.IsekaiContext, "If not for the gods reincarnating you as an Isekai Hero with great mystic power you would have been...");
+			((BlueprintUnitFact)bp).m_Icon = Icon_AllSkilled;
+			bp.Ranks = 1;
+			bp.IsClassFeature = true;
+			bp.IgnorePrerequisites = false;
+			bp.m_AllFeatures = new BlueprintFeatureReference[0];
+			bp.m_Features = new BlueprintFeatureReference[0];
+		});
+		AbilitySelection = Helpers.CreateBlueprint(Main.IsekaiContext, "LegacyAbilitySelection", delegate(BlueprintFeatureSelection bp)
 		{
-			if (AbilitySelection != null)
-			{
-				return AbilitySelection;
-			}
-			return BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "LegacyAbilitySelection");
-		}
-
-		public static void RegisterForFeat(BlueprintProgression prog)
+			bp.SetName(Main.IsekaiContext, "Dual Legacy");
+			bp.SetDescription(Main.IsekaiContext, "First, I joined the bardic college of Wintermoon. \nThen 3 years later, when I got bored with that, I accidentally stumbled into the theives' guild of Whitesnow...\nWhatever the backstory is, you get access to another legacy class feature.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_AllSkilled;
+			bp.Ranks = 1;
+			bp.IsClassFeature = true;
+			bp.IgnorePrerequisites = false;
+			bp.m_AllFeatures = new BlueprintFeatureReference[0];
+			bp.m_Features = new BlueprintFeatureReference[0];
+		});
+		AbilitySelection.AddComponent(delegate(PrerequisiteNoFeature c)
 		{
-			if (prog != null)
-			{
-				AbilitySelection?.AddFeatures(prog);
-			}
-		}
-
-		public static void Register(BlueprintProgression prog)
+			c.m_Feature = AbilitySelection.ToReference<BlueprintFeatureReference>();
+		});
+		PhantomBladeLegacySelection.Configure();
+		GodEmperorLegacySelection.Configure();
+		HeroLegacySelection.Configure();
+		MastermindLegacySelection.Configure();
+		OverlordLegacySelection.Configure();
+		ShadowMonarchLegacySelection.Configure();
+		DevourerLegacySelection.Configure();
+		TriLegacySelection.Configure();
+		BlueprintFeatureSelection[] array = new BlueprintFeatureSelection[10]
 		{
-			if (prog != null)
-			{
-				registered = registered.AppendToArray(prog);
-			}
-		}
-
-		public static void ConfigureStep2()
+			ClassSelection,
+			AbilitySelection,
+			PhantomBladeLegacySelection.getClassFeature(),
+			GodEmperorLegacySelection.getClassFeature(),
+			HeroLegacySelection.getClassFeature(),
+			MastermindLegacySelection.getClassFeature(),
+			OverlordLegacySelection.getClassFeature(),
+			ShadowMonarchLegacySelection.getClassFeature(),
+			DevourerLegacySelection.getClassFeature(),
+			TriLegacySelection.Get()
+		};
+		for (int num = 0; num < array.Length; num++)
 		{
-			ArcanistBasicLegacy.Configure();
-			ArcanistBrownFurLegacy.Configure();
-			ArcanistEldritchFontLegacy.Configure();
-			BarbarianLegacy.Configure();
-			BardLegacy.Configure();
-			BloodragerChimeraLegacy.Configure();
-			CavalierBasicLegacy.Configure();
-			CavalierKnightOfWall.Configure();
-			CavalierStandardBearerLegacy.Configure();
-			DreadKnightLegacy.Configure();
-			DruidBaseLegacy.Configure();
-			FighterBasicLegacy.Configure();
-			Fighter2HandedLegacy.Configure();
-			FighterShieldLegacy.Configure();
-			InquisitorTacticianLegacy.Configure();
-			InquisitorJudgeLegacy.Configure();
-			InquisitorDomainLordLegacy.Configure();
-			KineticLegacy.Configure();
-			KineticKnightLegacy.Configure();
-			KineticOverwhelmingSoulLegacy.Configure();
-			KineticDarkElementalistLegacy.Configure();
-			KineticPsychoLegacy.Configure();
-			MagusBasicLegacy.Configure();
-			MagusArcherLegacy.Configure();
-			MagusDancerLegacy.Configure();
-			MagusSpellbladeLegacy.Configure();
-			MonkLegacy.Configure();
-			MonkScaledFistLegacy.Configure();
-			OracleLegacy.Configure();
-			PaladinBaseLegacy.Configure();
-			PlayerComputerNerdLegacy.Configure();
-			PlayerPartTimeWorkerLegacy.Configure();
-			RogueLegacy.Configure();
-			ShamanLegacy.Configure();
-			ShifterLegacy.Configure();
-			ShifterBaseLegacy.Configure();
-			ShifterStingerLegacy.Configure();
-			ShifterDragonLegacy.Configure();
-			ShifterGriffonLegacy.Configure();
-			ShifterHolyLegacy.Configure();
-			SkaldBaseLegacy.Configure();
-			SkaldSilverTongueLegacy.Configure();
-			SkaldVoiceLegacy.Configure();
-			SorcererLegacy.Configure();
-			WitchBaseLegacy.Configure();
-			AlchemistLegacy.Configure();
-			ClericLegacy.Configure();
-			HunterLegacy.Configure();
-			RangerLegacy.Configure();
-			SlayerLegacy.Configure();
-			WarpriestLegacy.Configure();
-			WizardLegacy.Configure();
-			SummonerEvolutionLegacy.Configure();
-			TwinSummonerLegacy.Configure();
-			ArcanaSelection.Configure();
-			OverpoweredAbilitySelection.AddToSelection(GetOverwhelmingFeature());
+			LegacySelectionOrderPatch.Register(array[num]);
 		}
+	}
 
-		public static void ConfigureStep3()
+	public static BlueprintFeatureSelection GetClassFeature()
+	{
+		if (ClassSelection != null)
 		{
-			ArcanistBasicLegacy.PatchProgression();
-			ArcanistBrownFurLegacy.PatchProgression();
-			ArcanistEldritchFontLegacy.PatchProgression();
-			BarbarianLegacy.PatchProgression();
-			BardLegacy.PatchProgression();
-			BloodragerChimeraLegacy.PatchProgression();
-			CavalierBasicLegacy.PatchProgression();
-			CavalierKnightOfWall.PatchProgression();
-			CavalierStandardBearerLegacy.PatchProgression();
-			DreadKnightLegacy.PatchProgression();
-			DruidBaseLegacy.PatchProgression();
-			FighterBasicLegacy.PatchProgression();
-			Fighter2HandedLegacy.PatchProgression();
-			FighterShieldLegacy.PatchProgression();
-			InquisitorTacticianLegacy.PatchProgression();
-			InquisitorJudgeLegacy.PatchProgression();
-			InquisitorDomainLordLegacy.PatchProgression();
-			KineticLegacy.PatchProgression();
-			KineticKnightLegacy.PatchProgression();
-			KineticOverwhelmingSoulLegacy.PatchProgression();
-			KineticDarkElementalistLegacy.PatchProgression();
-			KineticPsychoLegacy.PatchProgression();
-			MagusBasicLegacy.PatchProgression();
-			MagusArcherLegacy.PatchProgression();
-			MagusDancerLegacy.PatchProgression();
-			MagusSpellbladeLegacy.PatchProgression();
-			MonkLegacy.PatchProgression();
-			MonkScaledFistLegacy.PatchProgression();
-			OracleLegacy.PatchProgression();
-			PaladinBaseLegacy.PatchProgression();
-			PlayerComputerNerdLegacy.PatchProgression();
-			PlayerPartTimeWorkerLegacy.PatchProgression();
-			RogueLegacy.PatchProgression();
-			ShamanLegacy.PatchProgression();
-			ShifterLegacy.PatchProgression();
-			ShifterBaseLegacy.PatchProgression();
-			ShifterStingerLegacy.PatchProgression();
-			ShifterDragonLegacy.PatchProgression();
-			ShifterGriffonLegacy.PatchProgression();
-			ShifterHolyLegacy.PatchProgression();
-			SkaldBaseLegacy.PatchProgression();
-			SkaldSilverTongueLegacy.PatchProgression();
-			SkaldVoiceLegacy.PatchProgression();
-			SorcererLegacy.PatchProgression();
-			WitchBaseLegacy.PatchProgression();
-			AlchemistLegacy.PatchProgression();
-			ClericLegacy.PatchProgression();
-			HunterLegacy.PatchProgression();
-			RangerLegacy.PatchProgression();
-			SlayerLegacy.PatchProgression();
-			WarpriestLegacy.PatchProgression();
-			WizardLegacy.PatchProgression();
-			SummonerEvolutionLegacy.PatchProgression();
-			TwinSummonerLegacy.PatchProgression();
-			PatchAllRegisteredLegacies();
-			Finish();
-			MastermindLegacySelection.Finish();
-			OverlordLegacySelection.Finish();
-			MartialGodLegacySelection.Finish();
-			HeroLegacySelection.Finish();
-			GodEmperorLegacySelection.Finish();
-			ShadowMonarchLegacySelection.Finish();
-			DevourerLegacySelection.Finish();
+			return ClassSelection;
 		}
+		return BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "LegacyClassSelection");
+	}
 
-		public static void Finish()
+	public static BlueprintFeatureSelection GetOverwhelmingFeature()
+	{
+		if (AbilitySelection != null)
 		{
-			AbilitySelection.AddPrerequisite(delegate(PrerequisiteClassLevel c)
-			{
-				c.m_CharacterClass = IsekaiProtagonistClass.GetReference();
-				c.Level = 5;
-			});
-			BlueprintProgression[] array = registered;
-			foreach (BlueprintFeature blueprintFeature in array)
-			{
-				ClassSelection.AddFeatures(blueprintFeature);
-			}
-			TriLegacySelection.Finish();
+			return AbilitySelection;
 		}
+		return BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "LegacyAbilitySelection");
+	}
 
-		// Generic pass over every registered legacy progression. Archetype-based and separately assembled
-		// legacies only walked the archetype's added features, so retained base-class features, nested
-		// selections, resources and level-gated facts never got the Isekai class. Each legacy progression
-		// carries a ClassLevelsForPrerequisites component naming its source class, which tells the walker
-		// what to patch against. The walker is idempotent, so legacies that already walked are unaffected.
-		public static void PatchAllRegisteredLegacies()
+	public static void RegisterForFeat(BlueprintProgression prog)
+	{
+		if (prog != null)
 		{
-			System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
-			BlueprintCharacterClassReference isekai = Classes.IsekaiProtagonist.IsekaiProtagonistClass.GetReference();
-			int walked = 0;
-			foreach (BlueprintProgression prog in registered)
-			{
-				if (prog == null)
-				{
-					continue;
-				}
-				foreach (Kingmaker.Designers.Mechanics.Facts.ClassLevelsForPrerequisites component in prog.GetComponents<Kingmaker.Designers.Mechanics.Facts.ClassLevelsForPrerequisites>())
-				{
-					BlueprintCharacterClassReference source = component.m_FakeClass;
-					if (source == null || source.Equals(isekai) || source.Get() == null)
-					{
-						continue;
-					}
-					Utilities.PatchTools.PatchProgressionFeaturesBasedOnReferenceClass(prog, isekai, source);
-					walked++;
-				}
-			}
-			stopwatch.Stop();
-			Main.IsekaiContext.Logger.Log($"Legacy generic pass: walked {walked} legacy progression(s) in {stopwatch.ElapsedMilliseconds} ms");
-			Utilities.PatchTools.ReportWalkStatistics("class and legacy setup");
+			AbilitySelection?.AddFeatures(prog);
 		}
+	}
+
+	public static void Register(BlueprintProgression prog)
+	{
+		if (prog != null)
+		{
+			registered = registered.AppendToArray(prog);
+		}
+	}
+
+	public static BlueprintProgression[] GetRegistered()
+	{
+		return registered;
+	}
+
+	public static void ConfigureStep2()
+	{
+		TwinSummonerLegacy.Configure();
+		ArcanistBasicLegacy.Configure();
+		ArcanistBrownFurLegacy.Configure();
+		ArcanistEldritchFontLegacy.Configure();
+		BarbarianLegacy.Configure();
+		BardLegacy.Configure();
+		BloodragerChimeraLegacy.Configure();
+		CavalierBasicLegacy.Configure();
+		CavalierKnightOfWall.Configure();
+		CavalierStandardBearerLegacy.Configure();
+		DreadKnightLegacy.Configure();
+		DruidBaseLegacy.Configure();
+		FighterBasicLegacy.Configure();
+		Fighter2HandedLegacy.Configure();
+		FighterShieldLegacy.Configure();
+		InquisitorTacticianLegacy.Configure();
+		InquisitorJudgeLegacy.Configure();
+		InquisitorDomainLordLegacy.Configure();
+		KineticLegacy.Configure();
+		KineticKnightLegacy.Configure();
+		KineticOverwhelmingSoulLegacy.Configure();
+		KineticDarkElementalistLegacy.Configure();
+		KineticPsychoLegacy.Configure();
+		MagusBasicLegacy.Configure();
+		MagusArcherLegacy.Configure();
+		MagusDancerLegacy.Configure();
+		MagusSpellbladeLegacy.Configure();
+		MonkLegacy.Configure();
+		MonkScaledFistLegacy.Configure();
+		OracleLegacy.Configure();
+		PaladinBaseLegacy.Configure();
+		PlayerComputerNerdLegacy.Configure();
+		RogueLegacy.Configure();
+		ShamanLegacy.Configure();
+		ShifterLegacy.Configure();
+		ShifterBaseLegacy.Configure();
+		ShifterStingerLegacy.Configure();
+		ShifterDragonLegacy.Configure();
+		ShifterGriffonLegacy.Configure();
+		ShifterHolyLegacy.Configure();
+		SkaldBaseLegacy.Configure();
+		SkaldSilverTongueLegacy.Configure();
+		SkaldVoiceLegacy.Configure();
+		SorcererLegacy.Configure();
+		WitchBaseLegacy.Configure();
+		AlchemistLegacy.Configure();
+		ClericLegacy.Configure();
+		HunterLegacy.Configure();
+		RangerLegacy.Configure();
+		SlayerLegacy.Configure();
+		WarpriestLegacy.Configure();
+		WizardLegacy.Configure();
+		ArcanaSelection.Configure();
+		OverpoweredAbilitySelection.AddToSelection(GetOverwhelmingFeature());
+	}
+
+	public static void ConfigureStep3()
+	{
+		TwinSummonerLegacy.PatchProgression();
+		ArcanistBasicLegacy.PatchProgression();
+		ArcanistBrownFurLegacy.PatchProgression();
+		ArcanistEldritchFontLegacy.PatchProgression();
+		BarbarianLegacy.PatchProgression();
+		BardLegacy.PatchProgression();
+		BloodragerChimeraLegacy.PatchProgression();
+		CavalierBasicLegacy.PatchProgression();
+		CavalierKnightOfWall.PatchProgression();
+		CavalierStandardBearerLegacy.PatchProgression();
+		DreadKnightLegacy.PatchProgression();
+		DruidBaseLegacy.PatchProgression();
+		FighterBasicLegacy.PatchProgression();
+		Fighter2HandedLegacy.PatchProgression();
+		FighterShieldLegacy.PatchProgression();
+		InquisitorTacticianLegacy.PatchProgression();
+		InquisitorJudgeLegacy.PatchProgression();
+		InquisitorDomainLordLegacy.PatchProgression();
+		KineticLegacy.PatchProgression();
+		KineticKnightLegacy.PatchProgression();
+		KineticOverwhelmingSoulLegacy.PatchProgression();
+		KineticDarkElementalistLegacy.PatchProgression();
+		KineticPsychoLegacy.PatchProgression();
+		MagusBasicLegacy.PatchProgression();
+		MagusArcherLegacy.PatchProgression();
+		MagusDancerLegacy.PatchProgression();
+		MagusSpellbladeLegacy.PatchProgression();
+		MonkLegacy.PatchProgression();
+		MonkScaledFistLegacy.PatchProgression();
+		OracleLegacy.PatchProgression();
+		PaladinBaseLegacy.PatchProgression();
+		PlayerComputerNerdLegacy.PatchProgression();
+		RogueLegacy.PatchProgression();
+		ShamanLegacy.PatchProgression();
+		ShifterLegacy.PatchProgression();
+		ShifterBaseLegacy.PatchProgression();
+		ShifterStingerLegacy.PatchProgression();
+		ShifterDragonLegacy.PatchProgression();
+		ShifterGriffonLegacy.PatchProgression();
+		ShifterHolyLegacy.PatchProgression();
+		SkaldBaseLegacy.PatchProgression();
+		SkaldSilverTongueLegacy.PatchProgression();
+		SkaldVoiceLegacy.PatchProgression();
+		SorcererLegacy.PatchProgression();
+		WitchBaseLegacy.PatchProgression();
+		AlchemistLegacy.PatchProgression();
+		ClericLegacy.PatchProgression();
+		HunterLegacy.PatchProgression();
+		RangerLegacy.PatchProgression();
+		SlayerLegacy.PatchProgression();
+		WarpriestLegacy.PatchProgression();
+		WizardLegacy.PatchProgression();
+		Finish();
+		MastermindLegacySelection.Finish();
+		OverlordLegacySelection.Finish();
+		PhantomBladeLegacySelection.Finish();
+		HeroLegacySelection.Finish();
+		GodEmperorLegacySelection.Finish();
+		ShadowMonarchLegacySelection.Finish();
+		DevourerLegacySelection.Finish();
+	}
+
+	public static void Finish()
+	{
+		AbilitySelection.AddPrerequisite(delegate(PrerequisiteClassLevel c)
+		{
+			c.m_CharacterClass = IsekaiProtagonistClass.GetReference();
+			c.Level = 5;
+		});
+		BlueprintProgression[] array = registered;
+		foreach (BlueprintFeature blueprintFeature in array)
+		{
+			ClassSelection.AddFeatures(blueprintFeature);
+		}
+		TriLegacySelection.Finish();
 	}
 }

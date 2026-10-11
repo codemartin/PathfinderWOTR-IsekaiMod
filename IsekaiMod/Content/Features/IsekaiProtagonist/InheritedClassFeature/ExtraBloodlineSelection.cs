@@ -1,72 +1,53 @@
-﻿using IsekaiMod.Utilities;
+using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes.Selection;
 using TabletopTweaks.Core.Utilities;
 
-namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature
+namespace IsekaiMod.Content.Features.IsekaiProtagonist.InheritedClassFeature;
+
+internal class ExtraBloodlineSelection
 {
-	internal class ExtraBloodlineSelection
+	private static BlueprintFeatureSelection IsekaiSorcererSelection;
+
+	public static void Configure()
 	{
-		private static BlueprintFeatureSelection IsekaiSorcererSelection;
-
-		private static BlueprintFeatureSelection IsekaiBloodlineSelection;
-
-		public static void Configure()
+		BlueprintFeatureSelection IsekaiBloodlineSelection = Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiBloodlineSelection", delegate(BlueprintFeatureSelection bp)
 		{
-			IsekaiBloodlineSelection = Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiBloodlineSelection", delegate(BlueprintFeatureSelection bp)
+			bp.SetName(Main.IsekaiContext, "Bloodline");
+			bp.SetDescription(Main.IsekaiContext, "You can pick additional bloodlines as your chimera blood becomes stronger.");
+			bp.Ranks = 4;
+			bp.IsClassFeature = true;
+			bp.IgnorePrerequisites = true;
+			bp.m_AllFeatures = StaticReferences.SorcererBloodlineSelection.m_AllFeatures;
+			bp.m_Features = (BlueprintFeatureReference[])bp.m_AllFeatures.Clone();
+		});
+		IsekaiSorcererSelection = Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiSorcererSelection", delegate(BlueprintFeatureSelection bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Bloodline Evolution");
+			bp.SetDescription(Main.IsekaiContext, "As your chimera blood evolves you can pick a new bloodline feat or a new bloodline.");
+			bp.Ranks = 7;
+			bp.IsClassFeature = true;
+			bp.m_AllFeatures = new BlueprintFeatureReference[3]
 			{
-				bp.SetName(Main.IsekaiContext, "Bloodline");
-				bp.SetDescription(Main.IsekaiContext, "You can pick additional bloodlines as your chimera blood becomes stronger.");
-				bp.Ranks = 4;
-				bp.IsClassFeature = true;
-				bp.IgnorePrerequisites = true;
-				bp.m_AllFeatures = StaticReferences.SorcererBloodlineSelection.m_AllFeatures;
-				bp.m_Features = bp.m_AllFeatures;
-			});
-			MirroredSelections.Register(IsekaiBloodlineSelection, StaticReferences.SorcererBloodlineSelection);
-			IsekaiSorcererSelection = Helpers.CreateBlueprint(Main.IsekaiContext, "IsekaiSorcererSelection", delegate(BlueprintFeatureSelection bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Bloodline Evolution");
-				bp.SetDescription(Main.IsekaiContext, "As your chimera blood evolves you can pick a new bloodline feat or a new bloodline.");
-				bp.Ranks = 7;
-				bp.IsClassFeature = true;
-				bp.m_AllFeatures = new BlueprintFeatureReference[3]
-				{
-					IsekaiBloodlineSelection.ToReference<BlueprintFeatureReference>(),
-					FeatTools.Selections.SorcererBonusFeat.ToReference<BlueprintFeatureReference>(),
-					FeatTools.Selections.SorcererFeatSelection.ToReference<BlueprintFeatureReference>()
-				};
-				bp.m_Features = bp.m_AllFeatures;
-			});
-		}
+				IsekaiBloodlineSelection.ToReference<BlueprintFeatureReference>(),
+				FeatTools.Selections.SorcererBonusFeat.ToReference<BlueprintFeatureReference>(),
+				FeatTools.Selections.SorcererFeatSelection.ToReference<BlueprintFeatureReference>()
+			};
+			bp.m_Features = (BlueprintFeatureReference[])bp.m_AllFeatures.Clone();
+		});
+	}
 
-		public static void PatchPrerequisiteCompatibility()
+	public static BlueprintFeatureSelection Get()
+	{
+		if (IsekaiSorcererSelection != null)
 		{
-			PrerequisiteAlternatives.Add(BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("ce85aee1726900641ab53ede61ac5c19"), StaticReferences.SorcererBloodlineSelection, GetBloodline());
-			PrerequisiteAlternatives.Add(BlueprintTools.GetBlueprint<BlueprintFeatureSelection>("3cf2ab2c320b73347a7c21cf0d0995bd"), StaticReferences.SorcererBloodlineSelection, GetBloodline());
+			return IsekaiSorcererSelection;
 		}
+		return BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "IsekaiSorcererSelection");
+	}
 
-		public static BlueprintFeatureSelection GetBloodline()
-		{
-			if (IsekaiBloodlineSelection != null)
-			{
-				return IsekaiBloodlineSelection;
-			}
-			return BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "IsekaiBloodlineSelection");
-		}
-
-		public static BlueprintFeatureSelection Get()
-		{
-			if (IsekaiSorcererSelection != null)
-			{
-				return IsekaiSorcererSelection;
-			}
-			return BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "IsekaiSorcererSelection");
-		}
-
-		public static BlueprintFeatureReference GetReference()
-		{
-			return Get().ToReference<BlueprintFeatureReference>();
-		}
+	public static BlueprintFeatureReference GetReference()
+	{
+		return Get().ToReference<BlueprintFeatureReference>();
 	}
 }

@@ -1,4 +1,5 @@
-﻿using IsekaiMod.Utilities;
+using IsekaiMod.Content.Features.IsekaiProtagonist.SpecialPower;
+using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Prerequisites;
@@ -17,172 +18,172 @@ using Kingmaker.UnitLogic.FactLogic;
 using Kingmaker.UnitLogic.Mechanics;
 using Kingmaker.UnitLogic.Mechanics.Actions;
 using Kingmaker.UnitLogic.Mechanics.Components;
+using Kingmaker.UnitLogic.Mechanics.Properties;
 using Kingmaker.Utility;
 using TabletopTweaks.Core.Utilities;
 using UnityEngine;
 
-namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility
-{
-	internal class SovereignsDread
-	{
-		private static readonly Sprite Icon_Dread = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintAbility>("4c349361d720e844e846ad8c19959b1e"))?.m_Icon;
+namespace IsekaiMod.Content.Features.IsekaiProtagonist.OverpoweredAbility;
 
-		public static void Add()
+internal class SovereignsDread
+{
+	private static readonly Sprite Icon_Dread = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintAbility>("4c349361d720e844e846ad8c19959b1e"))?.m_Icon;
+
+	public static void Add()
+	{
+		BlueprintBuff SovereignsDreadPressureBuff = TTCoreExtensions.CreateBuff("SovereignsDreadPressureBuff", delegate(BlueprintBuff bp)
 		{
-			BlueprintBuff SovereignsDreadPressureBuff = TTCoreExtensions.CreateBuff("SovereignsDreadPressureBuff", delegate(BlueprintBuff bp)
+			bp.SetName(Main.IsekaiContext, "Sovereign Pressure");
+			bp.SetDescription(Main.IsekaiContext, "Crushed by absolute sovereign majesty, you suffer a -2 penalty to attack rolls, AC, and saving throws, and are Shaken (the condition brings its own penalty on top).");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Dread;
+			bp.IsClassFeature = true;
+			bp.AddComponent(delegate(AddStatBonus c)
 			{
-				bp.SetName(Main.IsekaiContext, "Sovereign Pressure");
-				bp.SetDescription(Main.IsekaiContext, "Crushed by absolute sovereign majesty, you suffer a -4 penalty to attack rolls, AC, and saving throws.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Dread;
-				bp.IsClassFeature = true;
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Penalty;
-					c.Stat = StatType.AdditionalAttackBonus;
-					c.Value = -4;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Penalty;
-					c.Stat = StatType.AC;
-					c.Value = -4;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Penalty;
-					c.Stat = StatType.SaveFortitude;
-					c.Value = -4;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Penalty;
-					c.Stat = StatType.SaveReflex;
-					c.Value = -4;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Penalty;
-					c.Stat = StatType.SaveWill;
-					c.Value = -4;
-				});
-				bp.AddComponent(delegate(AddCondition c)
-				{
-					c.Condition = UnitCondition.Shaken;
-				});
+				c.Descriptor = ModifierDescriptor.Penalty;
+				c.Stat = StatType.AdditionalAttackBonus;
+				c.Value = -2;
 			});
-			BlueprintBuff SovereignsDreadCollapseBuff = TTCoreExtensions.CreateBuff("SovereignsDreadCollapseBuff", delegate(BlueprintBuff bp)
+			bp.AddComponent(delegate(AddStatBonus c)
 			{
-				bp.SetName(Main.IsekaiContext, "Sovereign Submission");
-				bp.SetDescription(Main.IsekaiContext, "Forced to kneel before an otherworldly sovereign. You are Cowering and Prone.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Dread;
-				bp.IsClassFeature = true;
-				bp.AddComponent(delegate(AddCondition c)
-				{
-					c.Condition = UnitCondition.Cowering;
-				});
-				bp.AddComponent(delegate(AddCondition c)
-				{
-					c.Condition = UnitCondition.Prone;
-				});
+				c.Descriptor = ModifierDescriptor.Penalty;
+				c.Stat = StatType.AC;
+				c.Value = -2;
 			});
-			BlueprintAbilityAreaEffect SovereignsDreadArea = Helpers.CreateBlueprint(Main.IsekaiContext, "SovereignsDreadArea", delegate(BlueprintAbilityAreaEffect bp)
+			bp.AddComponent(delegate(AddStatBonus c)
 			{
-				bp.m_TargetType = BlueprintAbilityAreaEffect.TargetType.Enemy;
-				bp.Shape = AreaEffectShape.Cylinder;
-				bp.Size = new Feet(30f);
-				bp.AffectEnemies = true;
-				bp.Fx = new PrefabLink();
-				bp.AddComponent(delegate(ContextCalculateAbilityParams c)
+				c.Descriptor = ModifierDescriptor.Penalty;
+				c.Stat = StatType.SaveFortitude;
+				c.Value = -2;
+			});
+			bp.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Penalty;
+				c.Stat = StatType.SaveReflex;
+				c.Value = -2;
+			});
+			bp.AddComponent(delegate(AddStatBonus c)
+			{
+				c.Descriptor = ModifierDescriptor.Penalty;
+				c.Stat = StatType.SaveWill;
+				c.Value = -2;
+			});
+			bp.AddComponent(delegate(AddCondition c)
+			{
+				c.Condition = UnitCondition.Shaken;
+			});
+		});
+		BlueprintBuff SovereignsDreadCollapseBuff = TTCoreExtensions.CreateBuff("SovereignsDreadCollapseBuff", delegate(BlueprintBuff bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Sovereign Submission");
+			bp.SetDescription(Main.IsekaiContext, "Forced to kneel before an otherworldly sovereign. You are Cowering and Prone.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Dread;
+			bp.IsClassFeature = true;
+			bp.AddComponent(delegate(AddCondition c)
+			{
+				c.Condition = UnitCondition.Cowering;
+			});
+			bp.AddComponent(delegate(AddCondition c)
+			{
+				c.Condition = UnitCondition.Prone;
+			});
+		});
+		BlueprintUnitProperty SovereignsDreadDCLevelProperty = Values.CreateHalfLevelProperty("SovereignsDreadDCLevelProperty");
+		BlueprintAbilityAreaEffect SovereignsDreadArea = Helpers.CreateBlueprint(Main.IsekaiContext, "SovereignsDreadArea", delegate(BlueprintAbilityAreaEffect bp)
+		{
+			bp.m_TargetType = BlueprintAbilityAreaEffect.TargetType.Enemy;
+			bp.Shape = AreaEffectShape.Cylinder;
+			bp.Size = new Feet(30f);
+			bp.AffectEnemies = true;
+			bp.Fx = new PrefabLink();
+			bp.AddComponent(delegate(ContextCalculateAbilityParams c)
+			{
+				c.UseKineticistMainStat = false;
+				c.StatType = StatType.Charisma;
+				c.ReplaceSpellLevel = true;
+				c.SpellLevel = Values.CreateContextCasterCustomPropertyValue(SovereignsDreadDCLevelProperty);
+			});
+			bp.AddComponent(delegate(AbilityAreaEffectRunAction c)
+			{
+				c.UnitEnter = Helpers.CreateActionList(new ContextActionApplyBuff
 				{
-					c.UseKineticistMainStat = false;
-					c.StatType = StatType.Charisma;
-				});
-				bp.AddComponent(delegate(AbilityAreaEffectRunAction c)
+					m_Buff = SovereignsDreadPressureBuff.ToReference<BlueprintBuffReference>(),
+					Permanent = true,
+					DurationValue = Values.Duration.Zero
+				}, new ContextActionSavingThrow
 				{
-					c.UnitEnter = Helpers.CreateActionList(new ContextActionApplyBuff
+					Type = SavingThrowType.Will,
+					Actions = ActionFlow.DoSingle(delegate(ContextActionConditionalSaved s)
 					{
-						m_Buff = SovereignsDreadPressureBuff.ToReference<BlueprintBuffReference>(),
-						Permanent = true,
-						DurationValue = Values.Duration.Zero
-					}, new ContextActionSavingThrow
-					{
-						Type = SavingThrowType.Will,
-						Actions = ActionFlow.DoSingle(delegate(ContextActionConditionalSaved s)
+						s.Failed = ActionFlow.DoSingle(delegate(ContextActionApplyBuff b)
 						{
-							s.Failed = ActionFlow.DoSingle(delegate(ContextActionApplyBuff b)
+							b.m_Buff = SovereignsDreadCollapseBuff.ToReference<BlueprintBuffReference>();
+							b.Permanent = false;
+							b.DurationValue = new ContextDurationValue
 							{
-								b.m_Buff = SovereignsDreadCollapseBuff.ToReference<BlueprintBuffReference>();
-								b.Permanent = false;
-								b.DurationValue = new ContextDurationValue
-								{
-									Rate = DurationRate.Rounds,
-									DiceType = DiceType.Zero,
-									BonusValue = 1
-								};
-							});
-						})
-					});
-					c.UnitExit = Helpers.CreateActionList(new ContextActionRemoveBuff
-					{
-						m_Buff = SovereignsDreadPressureBuff.ToReference<BlueprintBuffReference>(),
-						OnlyFromCaster = true
-					});
-					c.UnitMove = ActionFlow.DoNothing();
-					c.Round = Helpers.CreateActionList(new ContextActionSavingThrow
-					{
-						Type = SavingThrowType.Will,
-						Actions = ActionFlow.DoSingle(delegate(ContextActionConditionalSaved s)
-						{
-							s.Failed = ActionFlow.DoSingle(delegate(ContextActionApplyBuff b)
-							{
-								b.m_Buff = SovereignsDreadCollapseBuff.ToReference<BlueprintBuffReference>();
-								b.Permanent = false;
-								b.DurationValue = new ContextDurationValue
-								{
-									Rate = DurationRate.Rounds,
-									DiceType = DiceType.Zero,
-									BonusValue = 1
-								};
-							});
-						})
-					});
+								Rate = DurationRate.Rounds,
+								DiceType = DiceType.Zero,
+								BonusValue = 1
+							};
+						});
+					})
 				});
-			});
-			BlueprintBuff SovereignsDreadAreaBuff = TTCoreExtensions.CreateBuff("SovereignsDreadAreaBuff", delegate(BlueprintBuff bp)
-			{
-				bp.SetName(Main.IsekaiContext, "Overpowered Ability - Sovereign's Dread");
-				bp.SetDescription(Main.IsekaiContext, "You radiate the overwhelming gravitational spiritual pressure of a true supreme sovereign (Conqueror's Haki / Despair Aura). Enemies within 30 feet suffer a -4 penalty to attack rolls, Armor Class, and saving throws. Furthermore, each round enemies in the aura must succeed at a Will saving throw (DC = 10 + 1/2 character level + Charisma modifier) or collapse Prone and become Cowering for 1 round under your sovereign majesty.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Dread;
-				bp.IsClassFeature = true;
-				bp.m_Flags = BlueprintBuff.Flags.HiddenInUi;
-				bp.AddComponent(delegate(AddAreaEffect c)
+				c.UnitExit = Helpers.CreateActionList(new ContextActionRemoveBuff
 				{
-					c.m_AreaEffect = SovereignsDreadArea.ToReference<BlueprintAbilityAreaEffectReference>();
+					m_Buff = SovereignsDreadPressureBuff.ToReference<BlueprintBuffReference>(),
+					OnlyFromCaster = true
 				});
+				c.UnitMove = ActionFlow.DoNothing();
+				c.Round = ActionFlow.DoNothing();
 			});
-			BlueprintActivatableAbility SovereignsDreadAbility = TTCoreExtensions.CreateActivatableAbility("SovereignsDreadAbility", delegate(BlueprintActivatableAbility bp)
+		});
+		BlueprintBuff SovereignsDreadAreaBuff = TTCoreExtensions.CreateBuff("SovereignsDreadAreaBuff", delegate(BlueprintBuff bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Overpowered Ability - Sovereign's Dread");
+			bp.SetDescription(Main.IsekaiContext, "You radiate the overwhelming gravitational spiritual pressure of a true supreme sovereign (Conqueror's Haki / Despair Aura). Enemies within 30 feet suffer a -2 penalty to attack rolls, Armor Class, and saving throws, and become Shaken (the condition brings its own penalty on top). An enemy that enters the aura must succeed at a Will saving throw (DC = 10 + 1/2 character level + Charisma modifier) or collapse Prone and become Cowering for 1 round under your sovereign majesty. This aura cannot be maintained alongside Killing Intent.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Dread;
+			bp.IsClassFeature = true;
+			bp.m_Flags = BlueprintBuff.Flags.HiddenInUi;
+			bp.AddComponent(delegate(AddAreaEffect c)
 			{
-				bp.SetName(Main.IsekaiContext, "Overpowered Ability - Sovereign's Dread");
-				bp.SetDescription(Main.IsekaiContext, "You radiate the overwhelming gravitational spiritual pressure of a true supreme sovereign (Conqueror's Haki / Despair Aura). Enemies within 30 feet suffer a -4 penalty to attack rolls, Armor Class, and saving throws. Furthermore, each round enemies in the aura must succeed at a Will saving throw (DC = 10 + 1/2 character level + Charisma modifier) or collapse Prone and become Cowering for 1 round under your sovereign majesty.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Dread;
-				bp.m_Buff = SovereignsDreadAreaBuff.ToReference<BlueprintBuffReference>();
-				bp.DoNotTurnOffOnRest = true;
+				c.m_AreaEffect = SovereignsDreadArea.ToReference<BlueprintAbilityAreaEffectReference>();
 			});
-			BlueprintFeature blueprintFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "SovereignsDreadFeature", delegate(BlueprintFeature bp)
+		});
+		BlueprintActivatableAbility SovereignsDreadAbility = TTCoreExtensions.CreateActivatableAbility("SovereignsDreadAbility", delegate(BlueprintActivatableAbility bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Overpowered Ability - Sovereign's Dread");
+			bp.SetDescription(Main.IsekaiContext, "You radiate the overwhelming gravitational spiritual pressure of a true supreme sovereign (Conqueror's Haki / Despair Aura). Enemies within 30 feet suffer a -2 penalty to attack rolls, Armor Class, and saving throws, and become Shaken (the condition brings its own penalty on top). An enemy that enters the aura must succeed at a Will saving throw (DC = 10 + 1/2 character level + Charisma modifier) or collapse Prone and become Cowering for 1 round under your sovereign majesty. This aura cannot be maintained alongside Killing Intent.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Dread;
+			bp.m_Buff = SovereignsDreadAreaBuff.ToReference<BlueprintBuffReference>();
+			bp.DoNotTurnOffOnRest = true;
+		});
+		BlueprintFeature SovereignsDreadFeature = Helpers.CreateBlueprint(Main.IsekaiContext, "SovereignsDreadFeature", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Overpowered Ability - Sovereign's Dread");
+			bp.SetDescription(Main.IsekaiContext, "You radiate the overwhelming gravitational spiritual pressure of a true supreme sovereign (Conqueror's Haki / Despair Aura). Enemies within 30 feet suffer a -2 penalty to attack rolls, Armor Class, and saving throws, and become Shaken (the condition brings its own penalty on top). An enemy that enters the aura must succeed at a Will saving throw (DC = 10 + 1/2 character level + Charisma modifier) or collapse Prone and become Cowering for 1 round under your sovereign majesty. This aura cannot be maintained alongside Killing Intent.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Dread;
+			bp.AddComponent(delegate(AddFacts c)
 			{
-				bp.SetName(Main.IsekaiContext, "Overpowered Ability - Sovereign's Dread");
-				bp.SetDescription(Main.IsekaiContext, "You radiate the overwhelming gravitational spiritual pressure of a true supreme sovereign (Conqueror's Haki / Despair Aura). Enemies within 30 feet suffer a -4 penalty to attack rolls, Armor Class, and saving throws. Furthermore, each round enemies in the aura must succeed at a Will saving throw (DC = 10 + 1/2 character level + Charisma modifier) or collapse Prone and become Cowering for 1 round under your sovereign majesty.");
-				((BlueprintUnitFact)bp).m_Icon = Icon_Dread;
-				bp.AddComponent(delegate(AddFacts c)
-				{
-					c.m_Facts = new BlueprintUnitFactReference[1] { SovereignsDreadAbility.ToReference<BlueprintUnitFactReference>() };
-				});
+				c.m_Facts = new BlueprintUnitFactReference[1] { SovereignsDreadAbility.ToReference<BlueprintUnitFactReference>() };
 			});
-			blueprintFeature.AddComponent(delegate(PrerequisiteCharacterLevel c)
+			bp.AddComponent(delegate(PrerequisiteCharacterLevel c)
 			{
 				c.Level = 10;
 			});
-			OverpoweredAbilitySelection.AddToSelection(blueprintFeature);
+		});
+		BlueprintFeature killingIntent = KillingIntent.KillingIntentFeature;
+		if (killingIntent != null)
+		{
+			SovereignsDreadFeature.AddComponent(delegate(PrerequisiteNoFeature c)
+			{
+				c.m_Feature = killingIntent.ToReference<BlueprintFeatureReference>();
+				c.Group = Prerequisite.GroupType.All;
+			});
+			killingIntent.AddComponent(delegate(PrerequisiteNoFeature c)
+			{
+				c.m_Feature = SovereignsDreadFeature.ToReference<BlueprintFeatureReference>();
+				c.Group = Prerequisite.GroupType.All;
+			});
 		}
+		OverpoweredAbilitySelection.AddToSelection(SovereignsDreadFeature);
 	}
 }

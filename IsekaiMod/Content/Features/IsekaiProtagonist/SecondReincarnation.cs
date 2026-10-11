@@ -1,7 +1,6 @@
-﻿using IsekaiMod.Utilities;
+using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
-using Kingmaker.Blueprints.Classes.Spells;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.Designers.Mechanics.Facts;
 using Kingmaker.Localization;
@@ -13,74 +12,63 @@ using Kingmaker.UnitLogic.Mechanics.Components;
 using TabletopTweaks.Core.Utilities;
 using UnityEngine;
 
-namespace IsekaiMod.Content.Features.IsekaiProtagonist
-{
-	internal class SecondReincarnation
-	{
-		private static readonly Sprite Icon_SecondReincarnation = AssetLoader.LoadInternal(Main.IsekaiContext, "Features", "ICON_SECOND_REINCARNATION.png");
+namespace IsekaiMod.Content.Features.IsekaiProtagonist;
 
-		public static void Add()
+internal class SecondReincarnation
+{
+	private static readonly Sprite Icon_SecondReincarnation = AssetLoader.LoadInternal(Main.IsekaiContext, "Features", "ICON_SECOND_REINCARNATION.png");
+
+	public static void Add()
+	{
+		LocalizedString SecondReincarnationDesc = Helpers.CreateString(Main.IsekaiContext, "SecondReincarnation.Description", "Your attacks ignore damage reduction and your spells ignore spell resistance and spell immunity.\nOnce per day, when your {g|Encyclopedia:HP}HP{/g} drops to 0, you are resurrected to full health.");
+		BlueprintBuff SecondReincarnationBuff = TTCoreExtensions.CreateBuff("SecondReincarnationBuff", delegate(BlueprintBuff bp)
 		{
-			LocalizedString SecondReincarnationDesc = Helpers.CreateString(Main.IsekaiContext, "SecondReincarnation.Description", "Your attacks ignore damage reduction and your spells ignore spell resistance, spell immunity, and energy resistance and immunity.\nOnce per day, when your {g|Encyclopedia:HP}HP{/g} drops to 0, you are resurrected to full health.");
-			BlueprintBuff SecondReincarnationBuff = TTCoreExtensions.CreateBuff("SecondReincarnationBuff", delegate(BlueprintBuff bp)
+			bp.SetName(Main.IsekaiContext, "Second Reincarnation");
+			bp.SetDescription(SecondReincarnationDesc);
+			((BlueprintUnitFact)bp).m_Icon = Icon_SecondReincarnation;
+			bp.Ranks = 1;
+			bp.IsClassFeature = true;
+			bp.AddComponent(delegate(DeathActions c)
 			{
-				bp.SetName(Main.IsekaiContext, "Second Reincarnation");
-				bp.SetDescription(SecondReincarnationDesc);
-				((BlueprintUnitFact)bp).m_Icon = Icon_SecondReincarnation;
-				bp.Ranks = 1;
-				bp.IsClassFeature = true;
-				bp.AddComponent(delegate(DeathActions c)
+				c.CheckResource = false;
+				c.Actions = Helpers.CreateActionList(new ContextActionResurrect
 				{
-					c.CheckResource = false;
-					// The default trigger only fires on actual death. Party members at 0 HP usually go unconscious
-					// instead, so the "when your HP drops to 0" promise never came true. Fire on the life-state
-					// change and include unconsciousness; Resurrect clears the damage either way.
-					c.m_DeathTrigger = DeathActions.DeathTrigger.OnUnitLifeState;
-					c.m_WithUnconsciousLifeState = true;
-					c.Actions = Helpers.CreateActionList(new ContextActionResurrect
+					FullRestore = true
+				}, new ContextActionSpawnFx
+				{
+					PrefabLink = new PrefabLink
 					{
-						FullRestore = true
-					}, new ContextActionSpawnFx
-					{
-						PrefabLink = new PrefabLink
-						{
-							AssetId = "749ad3759dc93d64dba70a84d48135b5"
-						}
-					}, new ContextActionRemoveSelf());
+						AssetId = "749ad3759dc93d64dba70a84d48135b5"
+					}
+				}, new ContextActionRemoveSelf());
+			});
+		});
+		Helpers.CreateBlueprint(Main.IsekaiContext, "SecondReincarnation", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Second Reincarnation");
+			bp.SetDescription(SecondReincarnationDesc);
+			((BlueprintUnitFact)bp).m_Icon = Icon_SecondReincarnation;
+			bp.AddComponent<IgnoreDamageReductionOnAttack>();
+			SpellImmunityBypass.Add(bp);
+			bp.AddComponent(delegate(IgnoreSpellResistanceForSpells c)
+			{
+				c.m_AbilityList = new BlueprintAbilityReference[0];
+				c.AllSpells = true;
+			});
+			bp.AddComponent(delegate(AddRestTrigger c)
+			{
+				c.Action = ActionFlow.DoSingle(delegate(ContextActionApplyBuff contextActionApplyBuff)
+				{
+					contextActionApplyBuff.m_Buff = SecondReincarnationBuff.ToReference<BlueprintBuffReference>();
+					contextActionApplyBuff.Permanent = true;
+					contextActionApplyBuff.IsFromSpell = false;
 				});
 			});
-			Helpers.CreateBlueprint(Main.IsekaiContext, "SecondReincarnation", delegate(BlueprintFeature bp)
+			bp.AddComponent(delegate(AddFacts c)
 			{
-				bp.SetName(Main.IsekaiContext, "Second Reincarnation");
-				bp.SetDescription(SecondReincarnationDesc);
-				((BlueprintUnitFact)bp).m_Icon = Icon_SecondReincarnation;
-				bp.AddComponent<IgnoreDamageReductionOnAttack>();
-				// IgnoreSpellImmunity only removes the owner's own immunities and did nothing with descriptor None;
-				// the caster-side bypass the description promises is IgnoreTargetSpellImmunity.
-				bp.AddComponent<IsekaiMod.Components.IgnoreTargetSpellImmunity>();
-				// Energy immunity (a demon's immunity to electricity) is a damage rule, not spell immunity, but it is
-				// what players run into. Matches the Ascendant Element mythic ability, for every energy type.
-				bp.AddComponent<IsekaiMod.Components.IgnoreEnergyResistanceAndImmunity>();
-				bp.AddComponent(delegate(IgnoreSpellResistanceForSpells c)
-				{
-					c.m_AbilityList = new BlueprintAbilityReference[0];
-					c.AllSpells = true;
-				});
-				bp.AddComponent(delegate(AddRestTrigger c)
-				{
-					c.Action = ActionFlow.DoSingle(delegate(ContextActionApplyBuff contextActionApplyBuff)
-					{
-						contextActionApplyBuff.m_Buff = SecondReincarnationBuff.ToReference<BlueprintBuffReference>();
-						contextActionApplyBuff.Permanent = true;
-						contextActionApplyBuff.IsFromSpell = false;
-					});
-				});
-				bp.AddComponent(delegate(AddFacts c)
-				{
-					c.m_Facts = new BlueprintUnitFactReference[1] { SecondReincarnationBuff.ToReference<BlueprintUnitFactReference>() };
-					c.DoNotRestoreMissingFacts = true;
-				});
+				c.m_Facts = new BlueprintUnitFactReference[1] { SecondReincarnationBuff.ToReference<BlueprintUnitFactReference>() };
+				c.DoNotRestoreMissingFacts = true;
 			});
-		}
+		});
 	}
 }

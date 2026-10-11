@@ -1,16 +1,13 @@
-﻿namespace IsekaiMod.Content.Constellations
+namespace IsekaiMod.Content.Constellations;
+
+public enum ConstellationCategory
 {
-	public enum ConstellationCategory
-	{
-		All,
-		Prologue,
-		Subclass,
-		AlignmentShift,
-		DeityPatron,
-		MetaLoop,
-		Combat,
-		Quest,
-		MainCampaign,
-		Companion
-	}
+	All,
+	Prologue,
+	Subclass,
+	AlignmentShift,
+	DeityPatron,
+	MetaLoop,
+	Combat,
+	Quest
 }

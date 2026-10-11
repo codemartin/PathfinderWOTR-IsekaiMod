@@ -1,178 +1,224 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using Microsoft.Win32;
 using Newtonsoft.Json.Linq;
+using UnityEngine;
 
-namespace IsekaiMod.Content.KingmakerIntegration
+namespace IsekaiMod.Content.KingmakerIntegration;
+
+public static class KingmakerCrossSaveManager
 {
-	public static class KingmakerCrossSaveManager
+	private static bool? _savesFound;
+
+	private static bool _loggedNotDetected;
+
+	private static List<string> _availableRulerNames;
+
+	private static string _selectedRulerName;
+
+	internal const string DefaultRulerName = "the Sovereign of the Stolen Lands";
+
+	public static bool IsKingmakerInstalled
 	{
-		private static bool? _isKingmakerInstalled;
-
-		private static List<string> _availableRulerNames;
-
-		private static string _selectedRulerName;
-
-		private static readonly string DefaultRulerName = "the Sovereign of the Stolen Lands";
-
-		public static bool IsKingmakerInstalled
+		get
 		{
-			get
+			bool valueOrDefault = Main.IsekaiContext?.AddedContent?.IOwnKingmaker == true;
+			if (!_savesFound.HasValue)
 			{
-				if (!_isKingmakerInstalled.HasValue)
-				{
-					_isKingmakerInstalled = CheckKingmakerInstalled();
-				}
-				return _isKingmakerInstalled.Value;
+				_savesFound = KingmakerSavesFound();
+			}
+			bool num = IsKingmakerDetected(valueOrDefault, _savesFound.Value);
+			if (!num && !_loggedNotDetected)
+			{
+				_loggedNotDetected = true;
+				Main.IsekaiContext.Logger.Log("[KingmakerCrossSave] Pathfinder: Kingmaker not detected: no .zks save in " + (GetKingmakerSaveDirectory() ?? DefaultSaveDirectory() ?? "the Kingmaker save folder") + " and the \"I own Pathfinder: Kingmaker\" setting is off. The Sylvan Fey Alliance quest will not start and the Treaty of the Stolen Lands is offered only once that quest has started. Switch the setting on if you own Kingmaker and your saves are elsewhere.");
+			}
+			return num;
+		}
+	}
+
+	public static string SelectedRulerName => GetRulerName();
+
+	internal static bool SavesScanned => _availableRulerNames != null;
+
+	internal static bool IsKingmakerDetected(bool manualOverride, bool savesFound)
+	{
+		return manualOverride | savesFound;
+	}
+
+	internal static string NewestSaveFile(IEnumerable<KeyValuePair<string, DateTime>> files)
+	{
+		if (files == null)
+		{
+			return null;
+		}
+		string text = null;
+		DateTime dateTime = DateTime.MinValue;
+		foreach (KeyValuePair<string, DateTime> file in files)
+		{
+			if (!string.IsNullOrEmpty(file.Key) && file.Key.EndsWith(".zks", StringComparison.OrdinalIgnoreCase) && (text == null || file.Value > dateTime))
+			{
+				text = file.Key;
+				dateTime = file.Value;
 			}
 		}
+		return text;
+	}
 
-		public static string SelectedRulerName
+	public static void ResetSelectedRuler()
+	{
+		_selectedRulerName = null;
+	}
+
+	public static string GetRulerNameForBlueprint()
+	{
+		if (!string.IsNullOrEmpty(_selectedRulerName))
 		{
-			get
-			{
-				return GetRulerName();
-			}
-			set
-			{
-				SetRulerName(value);
-			}
+			return _selectedRulerName;
 		}
+		return "the Sovereign of the Stolen Lands";
+	}
 
-		public static string GetRulerName()
+	public static string GetRulerName()
+	{
+		if (!string.IsNullOrEmpty(_selectedRulerName))
 		{
-			if (!string.IsNullOrEmpty(_selectedRulerName))
-			{
-				return _selectedRulerName;
-			}
-			List<string> availableRulerNames = GetAvailableRulerNames();
-			if (availableRulerNames.Count > 0)
-			{
-				_selectedRulerName = availableRulerNames[0];
-				return _selectedRulerName;
-			}
-			return DefaultRulerName;
+			return _selectedRulerName;
 		}
-
-		public static void SetRulerName(string name)
+		List<string> availableRulerNames = GetAvailableRulerNames();
+		if (availableRulerNames.Count > 0)
 		{
-			if (!string.IsNullOrEmpty(name))
-			{
-				_selectedRulerName = name;
-				Main.IsekaiContext.Logger.Log("[KingmakerCrossSave] Selected canon Stolen Lands ruler: " + _selectedRulerName);
-			}
+			_selectedRulerName = availableRulerNames[0];
+			return _selectedRulerName;
 		}
+		return "the Sovereign of the Stolen Lands";
+	}
 
-		public static List<string> GetAvailableRulerNames()
+	public static List<string> GetAvailableRulerNames()
+	{
+		if (_availableRulerNames != null)
 		{
-			if (_availableRulerNames != null)
+			return _availableRulerNames;
+		}
+		_availableRulerNames = new List<string>();
+		try
+		{
+			string kingmakerSaveDirectory = GetKingmakerSaveDirectory();
+			if (string.IsNullOrEmpty(kingmakerSaveDirectory))
 			{
 				return _availableRulerNames;
 			}
-			_availableRulerNames = new List<string>();
+			string text = NewestSaveFile(from f in new DirectoryInfo(kingmakerSaveDirectory).GetFiles("*.zks")
+				select new KeyValuePair<string, DateTime>(f.FullName, f.LastWriteTimeUtc));
+			if (text == null)
+			{
+				return _availableRulerNames;
+			}
 			try
 			{
-				string kingmakerSaveDirectory = GetKingmakerSaveDirectory();
-				if (string.IsNullOrEmpty(kingmakerSaveDirectory) || !Directory.Exists(kingmakerSaveDirectory))
+				using ZipArchive zipArchive = ZipFile.OpenRead(text);
+				ZipArchiveEntry entry = zipArchive.GetEntry("header.json");
+				if (entry != null)
 				{
-					return _availableRulerNames;
-				}
-				List<FileInfo> list = (from f in new DirectoryInfo(kingmakerSaveDirectory).GetFiles("*.zks")
-					orderby f.LastWriteTimeUtc descending
-					select f).ToList();
-				HashSet<string> hashSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-				foreach (FileInfo item in list)
-				{
-					try
+					using Stream stream = entry.Open();
+					using StreamReader streamReader = new StreamReader(stream);
+					string text2 = (string)JObject.Parse(streamReader.ReadToEnd())["GameName"];
+					if (!string.IsNullOrEmpty(text2))
 					{
-						using ZipArchive zipArchive = ZipFile.OpenRead(item.FullName);
-						ZipArchiveEntry entry = zipArchive.GetEntry("header.json");
-						if (entry == null)
-						{
-							continue;
-						}
-						using Stream stream = entry.Open();
-						using StreamReader streamReader = new StreamReader(stream);
-						string text = (string)JObject.Parse(streamReader.ReadToEnd())["GameName"];
-						if (!string.IsNullOrEmpty(text) && !hashSet.Contains(text))
-						{
-							hashSet.Add(text);
-							_availableRulerNames.Add(text);
-						}
+						_availableRulerNames.Add(text2);
 					}
-					catch (Exception ex)
-					{
-						Main.IsekaiContext.Logger.Log("[KingmakerCrossSave] Notice: skipping save " + item.Name + ": " + ex.Message);
-					}
-				}
-			}
-			catch (Exception arg)
-			{
-				Main.IsekaiContext.Logger.LogError($"[KingmakerCrossSave] Error scanning saves: {arg}");
-			}
-			return _availableRulerNames;
-		}
-
-		private static bool CheckKingmakerInstalled()
-		{
-			try
-			{
-				string[] array = new string[6] { "Z:\\SteamLibrary\\steamapps\\common\\Pathfinder Kingmaker", "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Pathfinder Kingmaker", "D:\\SteamLibrary\\steamapps\\common\\Pathfinder Kingmaker", "E:\\SteamLibrary\\steamapps\\common\\Pathfinder Kingmaker", "C:\\GOG Games\\Pathfinder Kingmaker", "D:\\GOG Games\\Pathfinder Kingmaker" };
-				foreach (string text in array)
-				{
-					if (Directory.Exists(text) && (File.Exists(Path.Combine(text, "Kingmaker.exe")) || Directory.Exists(Path.Combine(text, "Kingmaker_Data"))))
-					{
-						Main.IsekaiContext.Logger.Log("[KingmakerCrossSave] Detected Pathfinder Kingmaker installation at: " + text);
-						return true;
-					}
-				}
-				try
-				{
-					using RegistryKey registryKey = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Steam App 640820");
-					if (registryKey != null)
-					{
-						string text2 = registryKey.GetValue("InstallLocation") as string;
-						if (!string.IsNullOrEmpty(text2) && Directory.Exists(text2))
-						{
-							Main.IsekaiContext.Logger.Log("[KingmakerCrossSave] Detected Kingmaker via Steam registry at: " + text2);
-							return true;
-						}
-					}
-				}
-				catch
-				{
-				}
-				string kingmakerSaveDirectory = GetKingmakerSaveDirectory();
-				if (!string.IsNullOrEmpty(kingmakerSaveDirectory) && Directory.Exists(kingmakerSaveDirectory) && Directory.EnumerateFiles(kingmakerSaveDirectory, "*.zks").Any())
-				{
-					Main.IsekaiContext.Logger.Log("[KingmakerCrossSave] Detected Kingmaker save files in user profile.");
-					return true;
 				}
 			}
 			catch (Exception ex)
 			{
-				Main.IsekaiContext.Logger.LogError("[KingmakerCrossSave] Safe check failed: " + ex.Message);
+				Main.IsekaiContext.Logger.Log("[KingmakerCrossSave] Notice: could not read the ruler's name from " + Path.GetFileName(text) + ": " + ex.Message);
 			}
-			return false;
 		}
+		catch (Exception arg)
+		{
+			Main.IsekaiContext.Logger.LogError($"[KingmakerCrossSave] Error reading the Kingmaker save folder: {arg}");
+		}
+		return _availableRulerNames;
+	}
 
-		public static string GetKingmakerSaveDirectory()
+	private static bool KingmakerSavesFound()
+	{
+		try
+		{
+			string kingmakerSaveDirectory = GetKingmakerSaveDirectory();
+			if (!string.IsNullOrEmpty(kingmakerSaveDirectory) && Directory.EnumerateFiles(kingmakerSaveDirectory, "*.zks").Any())
+			{
+				Main.IsekaiContext.Logger.Log("[KingmakerCrossSave] Detected Pathfinder: Kingmaker saves in " + kingmakerSaveDirectory);
+				return true;
+			}
+		}
+		catch (Exception ex)
+		{
+			Main.IsekaiContext.Logger.LogError("[KingmakerCrossSave] Checking the Kingmaker save folder failed: " + ex.Message);
+		}
+		return false;
+	}
+
+	private static string DefaultSaveDirectory()
+	{
+		try
+		{
+			return SaveDirectoryUnder(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
+		}
+		catch
+		{
+			return null;
+		}
+	}
+
+	internal static string SaveDirectoryUnder(string userProfile)
+	{
+		if (string.IsNullOrEmpty(userProfile))
+		{
+			return null;
+		}
+		return Path.Combine(userProfile, "AppData", "LocalLow", "Owlcat Games", "Pathfinder Kingmaker", "Saved Games");
+	}
+
+	internal static string SaveDirectoryBeside(string wrathPersistentDataPath)
+	{
+		if (string.IsNullOrEmpty(wrathPersistentDataPath))
+		{
+			return null;
+		}
+		string directoryName = Path.GetDirectoryName(wrathPersistentDataPath.TrimEnd('/', '\\'));
+		if (string.IsNullOrEmpty(directoryName))
+		{
+			return null;
+		}
+		return Path.Combine(directoryName, "Pathfinder Kingmaker", "Saved Games");
+	}
+
+	public static string GetKingmakerSaveDirectory()
+	{
+		List<string> list = new List<string> { DefaultSaveDirectory() };
+		try
+		{
+			list.Add(SaveDirectoryBeside(Application.persistentDataPath));
+		}
+		catch
+		{
+		}
+		foreach (string item in list)
 		{
 			try
 			{
-				string text = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "AppData\\LocalLow\\Owlcat Games\\Pathfinder Kingmaker\\Saved Games");
-				if (Directory.Exists(text))
+				if (!string.IsNullOrEmpty(item) && Directory.Exists(item))
 				{
-					return text;
+					return item;
 				}
 			}
 			catch
 			{
 			}
-			return null;
 		}
+		return null;
 	}
 }

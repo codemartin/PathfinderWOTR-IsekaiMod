@@ -1,77 +1,61 @@
-﻿using Kingmaker.Blueprints;
-using Kingmaker.ResourceLinks;
+using IsekaiMod.Utilities;
+using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Facts;
 using Kingmaker.EntitySystem.Stats;
 using Kingmaker.Enums;
 using Kingmaker.UnitLogic.Abilities.Blueprints;
-using Kingmaker.UnitLogic.Abilities.Components;
 using Kingmaker.UnitLogic.Commands.Base;
 using Kingmaker.UnitLogic.FactLogic;
-using Kingmaker.Utility;
 using Kingmaker.Visual.Animation.Kingmaker.Actions;
 using TabletopTweaks.Core.Utilities;
+using UnityEngine;
 
-namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.ShadowMonarch
+namespace IsekaiMod.Content.Features.IsekaiProtagonist.Archetypes.ShadowMonarch;
+
+internal class ShadowExchange
 {
-	internal class ShadowExchange
-	{
-		private static readonly BlueprintAbility DimensionDoor = BlueprintTools.GetBlueprint<BlueprintAbility>("5bdc37e4acfa209408334326076a43bc");
+	private static readonly BlueprintAbility DimensionDoor = BlueprintTools.GetBlueprint<BlueprintAbility>("5bdc37e4acfa209408334326076a43bc");
 
-		public static void Add()
+	private static readonly Sprite Icon_Exchange = ((BlueprintUnitFact)BlueprintTools.GetBlueprint<BlueprintAbility>("237427308e48c3341b3d532b9d3a001f"))?.m_Icon ?? ((BlueprintUnitFact)DimensionDoor)?.m_Icon;
+
+	public static void Add()
+	{
+		BlueprintAbility ShadowExchangeAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "ShadowExchangeAbility", delegate(BlueprintAbility bp)
 		{
-			BlueprintAbility ShadowExchangeAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "ShadowExchangeAbility", delegate(BlueprintAbility bp)
+			bp.SetName(Main.IsekaiContext, "Shadow Exchange");
+			bp.SetDescription(Main.IsekaiContext, "As a swift action, the Shadow Monarch swaps coordinates with the shadow realm, teleporting up to 40 feet away to escape danger or reposition behind enemy ranks.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Exchange;
+			bp.Type = AbilityType.Supernatural;
+			bp.Range = AbilityRange.Medium;
+			bp.CanTargetPoint = true;
+			bp.CanTargetSelf = true;
+			bp.ActionType = UnitCommand.CommandType.Swift;
+			bp.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Omni;
+			bp.AddComponent(TeleportMechanics.CasterOnlyTeleport());
+		});
+		Helpers.CreateBlueprint(Main.IsekaiContext, "ShadowExchangeFeature", delegate(BlueprintFeature bp)
+		{
+			bp.SetName(Main.IsekaiContext, "Shadow Exchange & Intercept");
+			bp.SetDescription(Main.IsekaiContext, "At 15th level, the Shadow Monarch can instantly swap positions through shadows as a swift action. Furthermore, the Monarch's connection with their shadow legion grants a +4 dodge bonus to Armor Class and Reflex saves.");
+			((BlueprintUnitFact)bp).m_Icon = Icon_Exchange;
+			bp.IsClassFeature = true;
+			bp.AddComponent(delegate(AddStatBonus c)
 			{
-				bp.SetName(Main.IsekaiContext, "Shadow Exchange");
-				bp.SetDescription(Main.IsekaiContext, "As a swift action, the Shadow Monarch swaps coordinates with the shadow realm, teleporting up to 60 feet away to escape danger or reposition behind enemy ranks.");
-				((BlueprintUnitFact)bp).m_Icon = ((BlueprintUnitFact)DimensionDoor)?.m_Icon;
-				bp.Type = AbilityType.Supernatural;
-				bp.Range = AbilityRange.Medium;
-				bp.CanTargetPoint = true;
-				bp.CanTargetSelf = true;
-				bp.ActionType = UnitCommand.CommandType.Swift;
-				bp.Animation = UnitAnimationActionCastSpell.CastAnimationStyle.Omni;
-				bp.AddComponent(delegate(AbilityCustomDimensionDoor c)
-				{
-					c.Radius = new Feet(0f);
-					c.PortalFromPrefab = DimensionDoor?.GetComponent<AbilityCustomDimensionDoor>()?.PortalFromPrefab;
-					c.PortalToPrefab = DimensionDoor?.GetComponent<AbilityCustomDimensionDoor>()?.PortalToPrefab;
-					c.PortalBone = DimensionDoor?.GetComponent<AbilityCustomDimensionDoor>()?.PortalBone ?? "";
-					c.CasterDisappearFx = DimensionDoor?.GetComponent<AbilityCustomDimensionDoor>()?.CasterDisappearFx;
-					c.CasterAppearFx = DimensionDoor?.GetComponent<AbilityCustomDimensionDoor>()?.CasterAppearFx;
-					// Every PrefabLink on this component is loaded during delivery; a null one throws and the teleport
-					// silently never happens. Copy the side effects too and fall back to empty links.
-					c.SideDisappearFx = DimensionDoor?.GetComponent<AbilityCustomDimensionDoor>()?.SideDisappearFx ?? new PrefabLink();
-					c.SideAppearFx = DimensionDoor?.GetComponent<AbilityCustomDimensionDoor>()?.SideAppearFx ?? new PrefabLink();
-					c.PortalFromPrefab = c.PortalFromPrefab ?? new PrefabLink();
-					c.PortalToPrefab = c.PortalToPrefab ?? new PrefabLink();
-					c.CasterDisappearFx = c.CasterDisappearFx ?? new PrefabLink();
-					c.CasterAppearFx = c.CasterAppearFx ?? new PrefabLink();
-				});
+				c.Descriptor = ModifierDescriptor.Dodge;
+				c.Stat = StatType.AC;
+				c.Value = 4;
 			});
-			Helpers.CreateBlueprint(Main.IsekaiContext, "ShadowExchangeFeature", delegate(BlueprintFeature bp)
+			bp.AddComponent(delegate(AddStatBonus c)
 			{
-				bp.SetName(Main.IsekaiContext, "Shadow Exchange & Intercept");
-				bp.SetDescription(Main.IsekaiContext, "At 15th level, the Shadow Monarch can instantly swap positions through shadows as a swift action. Furthermore, the Monarch's connection with their shadow legion grants a +4 dodge bonus to Armor Class and Reflex saves.");
-				((BlueprintUnitFact)bp).m_Icon = ((BlueprintUnitFact)DimensionDoor).m_Icon;
-				bp.IsClassFeature = true;
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Dodge;
-					c.Stat = StatType.AC;
-					c.Value = 4;
-				});
-				bp.AddComponent(delegate(AddStatBonus c)
-				{
-					c.Descriptor = ModifierDescriptor.Dodge;
-					c.Stat = StatType.SaveReflex;
-					c.Value = 4;
-				});
-				bp.AddComponent(delegate(AddFacts c)
-				{
-					c.m_Facts = new BlueprintUnitFactReference[1] { ShadowExchangeAbility.ToReference<BlueprintUnitFactReference>() };
-				});
+				c.Descriptor = ModifierDescriptor.Dodge;
+				c.Stat = StatType.SaveReflex;
+				c.Value = 4;
 			});
-		}
+			bp.AddComponent(delegate(AddFacts c)
+			{
+				c.m_Facts = new BlueprintUnitFactReference[1] { ShadowExchangeAbility.ToReference<BlueprintUnitFactReference>() };
+			});
+		});
 	}
 }
