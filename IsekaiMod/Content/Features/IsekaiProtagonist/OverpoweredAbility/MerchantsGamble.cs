@@ -1,4 +1,5 @@
 using IsekaiMod.Content.Classes.IsekaiProtagonist;
+using IsekaiMod.Components;
 using IsekaiMod.Utilities;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Classes;
@@ -78,17 +79,14 @@ internal class MerchantsGamble
 			{
 				c.Condition = UnitCondition.TrueSeeing;
 			});
-			bp.AddComponent(delegate(ModifyD20 c)
+			// ModifyD20 with RuleType.All ran a per-roll handler on every d20 in combat and stalled it;
+			// ChanceRollBonusAndReroll gives the same 20% reroll-take-best on the consuming rule instead.
+			// 6.5 grants no flat bonus here, so Bonus stays 0.
+			bp.AddComponent(delegate(ChanceRollBonusAndReroll c)
 			{
-				c.Rule = RuleType.All;
-				c.TakeBest = true;
-				c.RollsAmount = 1;
-				c.WithChance = true;
-				c.Chance = new ContextValue
-				{
-					ValueType = ContextValueType.Simple,
-					Value = 20
-				};
+				c.Chance = 20;
+				c.Bonus = 0;
+				c.RerollTakeBest = true;
 			});
 		});
 		BlueprintAbility MerchantsGambleAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "MerchantsGambleAbility", delegate(BlueprintAbility bp)

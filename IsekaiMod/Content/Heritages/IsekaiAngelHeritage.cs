@@ -27,7 +27,13 @@ internal class IsekaiAngelHeritage
 {
 	public static void Add()
 	{
-		BlueprintAbilityResource AasimarSpellLikeResource = BlueprintTools.GetBlueprint<BlueprintAbilityResource>("a4ea5b9becd98dd47b51c8742aeb70ec");
+		// USES-PER-DAY FIX: the ability used to spend the base-game aasimar spell-like resource, which
+		// this heritage never grants, so an Isekai character had no pool and the ability was unusable.
+		// Dedicated once-per-day resource, granted on the heritage feature below.
+		BlueprintAbilityResource AngelicBoltResource = Helpers.CreateBlueprint(Main.IsekaiContext, "AngelicBoltResource", delegate(BlueprintAbilityResource bp)
+		{
+			bp.m_MaxAmount = DailyUses.Amount(1);
+		});
 		BlueprintAbility AngelBoltOfJusticeAbility = BlueprintTools.GetBlueprint<BlueprintAbility>("c82168800b665324f8b4807b531fea46");
 		BlueprintFeature AngelWingsFeature = BlueprintTools.GetBlueprint<BlueprintFeature>("d9bd0fde6deb2e44a93268f2dfb3e169");
 		BlueprintActivatableAbility BlackWingsAbility = BlueprintTools.GetModBlueprint<BlueprintActivatableAbility>(Main.IsekaiContext, "BlackWingsAbility");
@@ -85,14 +91,7 @@ internal class IsekaiAngelHeritage
 				c.ReplaceCasterLevel = false;
 				c.ReplaceSpellLevel = false;
 			});
-			bp.AddComponent(delegate(AbilityResourceLogic c)
-			{
-				c.m_RequiredResource = AasimarSpellLikeResource.ToReference<BlueprintAbilityResourceReference>();
-				c.m_IsSpendResource = true;
-				c.Amount = 1;
-				c.ResourceCostIncreasingFacts = new List<BlueprintUnitFactReference>();
-				c.ResourceCostDecreasingFacts = new List<BlueprintUnitFactReference>();
-			});
+			DailyUses.Limit(bp, AngelicBoltResource);
 			bp.Type = AbilityType.SpellLike;
 			bp.Range = AbilityRange.Long;
 			bp.CanTargetEnemies = true;
@@ -160,6 +159,7 @@ internal class IsekaiAngelHeritage
 			{
 				c.Descriptor = SpellDescriptor.Petrified;
 			});
+			DailyUses.Grant(bp, AngelicBoltResource);
 			bp.AddComponent(delegate(AddFacts c)
 			{
 				c.m_Facts = new BlueprintUnitFactReference[4]

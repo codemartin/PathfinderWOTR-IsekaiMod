@@ -34,7 +34,6 @@ internal class IsekaiSuccubusHeritage
 
 	private static readonly BlueprintBuff DominatePersonBuff = BlueprintTools.GetBlueprint<BlueprintBuff>("c0f4e1c24c9cd334ca988ed1bd9d201f");
 
-	private static readonly BlueprintAbilityResource TieflingSpellLikeResource = BlueprintTools.GetBlueprint<BlueprintAbilityResource>("803d7e39e05fa2a47a7e2424d0e4b623");
 
 	public static void Add()
 	{
@@ -52,6 +51,10 @@ internal class IsekaiSuccubusHeritage
 			});
 			bp.BaseValue = 10;
 			bp.OperationOnComponents = BlueprintUnitProperty.MathOperation.Sum;
+		});
+		BlueprintAbilityResource SuccubusCharmResource = Helpers.CreateBlueprint(Main.IsekaiContext, "SuccubusCharmResource", delegate(BlueprintAbilityResource bp)
+		{
+			bp.m_MaxAmount = DailyUses.Amount(1);
 		});
 		BlueprintAbility SuccubusCharmAbility = Helpers.CreateBlueprint(Main.IsekaiContext, "SuccubusCharmAbility", delegate(BlueprintAbility bp)
 		{
@@ -105,15 +108,10 @@ internal class IsekaiSuccubusHeritage
 				c.ReplaceCasterLevel = false;
 				c.ReplaceSpellLevel = false;
 			});
-			bp.AddComponent(delegate(AbilityResourceLogic c)
-			{
-				c.m_RequiredResource = TieflingSpellLikeResource.ToReference<BlueprintAbilityResourceReference>();
-				c.m_IsSpendResource = true;
-				c.CostIsCustom = false;
-				c.Amount = 1;
-				c.ResourceCostIncreasingFacts = new List<BlueprintUnitFactReference>();
-				c.ResourceCostDecreasingFacts = new List<BlueprintUnitFactReference>();
-			});
+			// USES-PER-DAY FIX: the ability used to spend the base-game tiefling spell-like resource,
+			// which this heritage never grants, so an Isekai character had no pool and the ability was
+			// unusable. Dedicated once-per-day resource, granted on the heritage feature below.
+			DailyUses.Limit(bp, SuccubusCharmResource);
 			bp.Type = AbilityType.SpellLike;
 			bp.Range = AbilityRange.Medium;
 			bp.CanTargetEnemies = true;
@@ -198,6 +196,7 @@ internal class IsekaiSuccubusHeritage
 			{
 				c.Descriptor = SpellDescriptor.Poison;
 			});
+			DailyUses.Grant(bp, SuccubusCharmResource);
 			bp.AddComponent(delegate(AddFacts c)
 			{
 				c.m_Facts = new BlueprintUnitFactReference[4]
