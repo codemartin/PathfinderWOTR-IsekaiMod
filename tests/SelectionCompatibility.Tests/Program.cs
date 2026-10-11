@@ -31,4 +31,24 @@ Check(!PrerequisiteAlternatives.Add(null, source, equivalent), "null target is h
 var selection = new BlueprintFeatureSelection { m_AllFeatures = [source.ToReference<BlueprintFeatureReference>(), null, source.ToReference<BlueprintFeatureReference>()] };
 PrerequisiteAlternatives.RequireUnownedChoices(selection); PrerequisiteAlternatives.RequireUnownedChoices(selection);
 Check(source.GetComponents<PrerequisiteNoFeature>().Count() == 1, "ownership guard is null-safe and idempotent");
+
+
+var standardExceptional = new BlueprintFeatureSelection {name="ExceptionalFeatSelection",AssetGuid="exceptional-standard"};
+var bonusExceptional = new BlueprintFeatureSelection {name="ExceptionalFeatBonusSelection",AssetGuid="exceptional-bonus"};
+var basic = new BlueprintFeatureSelection { name="Basic", AssetGuid="basic", m_AllFeatures=[standardExceptional.ToReference<BlueprintFeatureReference>(),source.ToReference<BlueprintFeatureReference>()] };
+var bonusMenu = new BlueprintFeatureSelection { name="IsekaiBonusFeatSelection", AssetGuid="bonus-menu", m_AllFeatures=[bonusExceptional.ToReference<BlueprintFeatureReference>(),source.ToReference<BlueprintFeatureReference>()] };
+FeatTools.Selections.BasicFeatSelection=basic;
+BlueprintTools.Blueprints[standardExceptional.name]=standardExceptional;
+BonusFeatListRefresh.Snapshot(bonusMenu.name);
+// A late mod adds a feat, while the current menu already contains both Exceptional wrappers.
+basic.m_AllFeatures=[..basic.m_AllFeatures, other.ToReference<BlueprintFeatureReference>()];
+bonusMenu.m_AllFeatures=[..bonusMenu.m_AllFeatures,standardExceptional.ToReference<BlueprintFeatureReference>()];
+BonusFeatListRefresh.Refresh(bonusMenu);
+Check(bonusMenu.m_AllFeatures.Select(f=>f.Guid).SequenceEqual(new[]{"exceptional-bonus","source","other"}), "refresh removes standard wrapper but preserves bonus wrapper and late feats");
+BonusFeatListRefresh.Refresh(bonusMenu);
+Check(bonusMenu.m_AllFeatures.Length==3 && bonusMenu.m_Features.Select(f=>f.Guid).SequenceEqual(bonusMenu.m_AllFeatures.Select(f=>f.Guid)), "repeated refresh keeps both menu arrays consistent without duplicates");
+Check(basic.m_AllFeatures.Any(f=>f.Guid=="exceptional-standard"), "standard feat menu retains its Exceptional choice");
+var solo=new BlueprintFeatureSelection {name="SoloSovereignFeatSelection",m_AllFeatures=basic.m_AllFeatures};
+BonusFeatListRefresh.Snapshot(solo.name);BonusFeatListRefresh.Refresh(solo);
+Check(solo.m_AllFeatures.Any(f=>f.Guid=="exceptional-standard"), "Solo Sovereign retains the standard wrapper");
 Console.WriteLine($"{checks} behavior checks passed. Uses API stubs; does not simulate the game runtime.");

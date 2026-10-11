@@ -22,7 +22,7 @@ internal static class BonusFeatListRefresh
 		}
 	}
 
-	internal static T[] Merge<T>(IEnumerable<T> own, IEnumerable<T> snapshot, IEnumerable<T> basicNow, Func<T, T, bool> same) where T : class
+	internal static T[] Merge<T>(IEnumerable<T> own, IEnumerable<T> snapshot, IEnumerable<T> basicNow, Func<T, T, bool> same, Func<T, bool> include = null) where T : class
 	{
 		List<T> list = new List<T>();
 		List<T> original = (snapshot ?? Enumerable.Empty<T>()).Where((T o) => o != null).ToList();
@@ -48,7 +48,7 @@ internal static class BonusFeatListRefresh
 		List<T> second2 = now.Where((T n) => !original.Any((T o) => same(o, n))).ToList();
 		foreach (T option2 in list2.Concat(second).Concat(second2).Concat(list3))
 		{
-			if (option2 != null && !list.Any((T existing) => same(existing, option2)))
+			if (option2 != null && (include == null || include(option2)) && !list.Any((T existing) => same(existing, option2)))
 			{
 				list.Add(option2);
 			}
@@ -60,7 +60,15 @@ internal static class BonusFeatListRefresh
 	{
 		if (selection != null && BasicFeats?.m_AllFeatures != null && s_Snapshots.TryGetValue(selection.name, out var value))
 		{
-			selection.m_Features = (BlueprintFeatureReference[])(selection.m_AllFeatures = Merge(selection.m_AllFeatures, value, BasicFeats.m_AllFeatures, (BlueprintFeatureReference a, BlueprintFeatureReference b) => a != null && b != null && a.Equals(b))).Clone();
+            // The Isekai bonus list substitutes its own Exceptional Feats wrapper.
+            // A refresh must not restore the standard wrapper from BasicFeatSelection.
+            var standardExceptional = selection.name == "IsekaiBonusFeatSelection"
+                ? BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "ExceptionalFeatSelection")
+                : null;
+            selection.m_AllFeatures = Merge(selection.m_AllFeatures, value, BasicFeats.m_AllFeatures,
+                (BlueprintFeatureReference a, BlueprintFeatureReference b) => a != null && b != null && a.Guid == b.Guid,
+                option => standardExceptional == null || option.Guid != standardExceptional.AssetGuid);
+            selection.m_Features = (BlueprintFeatureReference[])selection.m_AllFeatures.Clone();
 			s_Snapshots[selection.name] = (BlueprintFeatureReference[])BasicFeats.m_AllFeatures.Clone();
 		}
 	}
