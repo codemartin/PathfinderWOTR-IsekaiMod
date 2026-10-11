@@ -1,0 +1,11 @@
+Reward equipment fix, 2026-10-10
+
+Player.log recorded ActionGiveOtherworlderRewards 'Port62:SquareAwakening' failing in BlueprintItemEquipmentSimple.CollectEnchantments because m_Enchantments was null. That dialogue awards ItemSilverDragonShard.
+
+Port62Rewards.Keep now initializes a null enchantment array on each reward blueprint derived from BlueprintItemEquipmentSimple. Existing arrays and enchantments are preserved. This covers Silver Dragon Shard and other reward necklaces, rings and similar simple equipment produced through the same helper.
+
+Validation: Release build passed with 0 errors and 12 existing warnings. The game's decompiled CollectEnchantments method confirms it unconditionally enumerates this exact field. Runtime inventory creation remains untested because the current game session still has the prior DLL loaded.
+
+This does not replay already-claimed dialogue rewards. SquareAwakening records its claim before granting items, so the missed shard requires separate recovery; replaying the full reward would risk paying coins or other rewards twice.
+
+Other reviewed Isekai messages: late spell merge added 8 spells; Kingmaker cross-save quest gating is intentional; large-selection traversal skips are defensive behavior, not logged crashes. The ToyBox logging exceptions, SpellbookSync failures and TabletopTweaks registrations were not attributed to Isekai by their available traces and were not changed.

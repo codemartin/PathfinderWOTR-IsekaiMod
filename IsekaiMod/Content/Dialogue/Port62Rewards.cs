@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using HarmonyLib;
+using Kingmaker.Blueprints.Items.Ecnchantments;
 using IsekaiMod.Components;
 using IsekaiMod.Content.Constellations;
 using IsekaiMod.Utilities;
@@ -359,10 +361,17 @@ internal static class Port62Rewards
 		return null;
 	}
 
+    private static readonly AccessTools.FieldRef<BlueprintItemEquipmentSimple, BlueprintEquipmentEnchantmentReference[]> EquipmentEnchantments =
+        AccessTools.FieldRefAccess<BlueprintItemEquipmentSimple, BlueprintEquipmentEnchantmentReference[]>("m_Enchantments");
+
 	private static T Keep<T>(T blueprint) where T : BlueprintScriptableObject
 	{
 		if (blueprint != null)
 		{
+            // The engine enumerates this serialized array when creating an inventory item.
+            // New reward equipment has no donor blueprint to initialize it for us.
+            if (blueprint is BlueprintItemEquipmentSimple equipment)
+                EquipmentEnchantments(equipment) ??= Array.Empty<BlueprintEquipmentEnchantmentReference>();
 			s_Created[blueprint.name] = blueprint;
 		}
 		return blueprint;
