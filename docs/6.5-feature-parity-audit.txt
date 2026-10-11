@@ -1,0 +1,66 @@
+Isekai 6.5 missing-content audit
+Compared old installed custom 6.3 decompilation with current local 6.5 source at ab4252e.
+Date: 2026-10-10. Static audit only. No in-game level-up or combat verification.
+
+CONFIRMED FEAT/MENU DIFFERENCES
+
+1. Repeatable selection ranks were lost.
+Both main and bonus variants changed:
+ExceptionalFeatSelection: 20 -> 1.
+EffectImmunitySelection: 33 -> 1.
+ExceptionalWeaponSelection: 5 -> 1.
+ExceptionalSummoningSelection: 10 -> 1.
+Evidence: matching files under Content/Features/ExceptionalFeats in new source and IsekaiMod.Content.Features.ExceptionalFeats in old decompilation.
+These are confirmed configured rank changes. Their effect on each nested level-up route needs a live test. The previous Exceptional refresh commit only restores list refresh, not these ranks.
+
+2. Two choices disappeared from Effect Immunity.
+Old array has 33 entries, new array has 31.
+ProneImmunity was created and offered in the old build; absent from the new feature source.
+StatDamageNegativeLevelImmunity still gets created and is used by NascentApotheosis, but is no longer included in EffectImmunityList. Thus the standalone Exceptional selection option is missing even though the blueprint exists.
+New source: Content/Features/ExceptionalFeats/EffectImmunitySelection.cs, lines 22 and 60-120.
+Old same-named source: ProneImmunity creation at line 60; both choices included at the end of the array.
+
+3. General late selection synchronization is missing.
+Old MirroredSelections registered Sorcerer bloodlines, Oracle curses/mysteries, Shaman hexes/spirits, familiars, extra special powers, Wizard schools, and Trickster/Azata/Lich/Angel blessing selections, as well as normal and Exceptional feats.
+New BonusFeatListRefresh.RefreshAll handles only IsekaiBonusFeatSelection and SoloSovereignFeatSelection.
+New custom ab4252e adds Exceptional main/bonus refresh, but does not add the other old registrations.
+The bloodline, Oracle, Shaman and blessing implementations copy source arrays during configuration and do not have the old later synchronization. An option added after that copy can be absent. This does not mean every mod-added option is missing; load timing determines it.
+Wizard no longer uses the custom school wrapper, so its old mirroring should not be pasted back without checking the direct school selection route.
+
+4. Wrapper prerequisite compatibility patches are missing.
+Old PrerequisiteAlternatives adds Isekai selection facts as accepted alternatives to vanilla prerequisites. Calls existed in ExtraBloodlineSelection, ExtraOracleSelection, ShamanSelection, WitchPatronSelection, BloodragerChimeraLegacy, InquisitorDomainLordLegacy and InquisitorTacticianLegacy.
+Old Bloodrager code also added ownership checks to prevent selecting already-owned choices.
+These calls/helper are absent in the new source. New LegacySelectionOrderPatch and LegacySelectionNestingPatch control order/parent tracking, not those prerequisite alternatives. ClassLevelsForPrerequisites in PatchTools addresses class levels, not selection-fact prerequisites.
+Likely symptom: a follow-up feat requiring a vanilla bloodline/mystery/hex/domain selection may not recognize the Isekai substitute. Exact availability requires testing against installed game/mod prerequisites. Do not claim every listed feat fails.
+
+ACCEPTED 6.5 DESIGN CHANGES, EXCLUDED FROM RESTORATION
+
+5. SummonerEvolutionLegacy and SummonerEvolutionSelection are absent. The user considers this a design change; preserve the 6.5 design.
+Old LegacySelection called both Configure and PatchProgression. The old module supplied ten evolution choices plus Summoner Bond/Aspect benefits.
+Old choices: Pounce, Reinforced Carapace, Elemental Infusion, Primal Caustic Breath, Rending Talons, Colossal Might, Planar Wings, Spell Ward Carapace, Rapid Cellular Regeneration, Spatiotemporal Phase Shift.
+6.5 has a rewritten TwinSummonerLegacy with Twin Avatar Evolution. Its effects are applied to the twin through AddFactsToPetSelfHealing. This is a different progression and does not restore the old selectable legacy or its character benefits. Some individual benefits overlap elsewhere.
+
+6. ParallelMetamagicResonance is absent. The user considers this a design change; preserve the 6.5 design.
+Old selectable Overpowered Ability required level 5, Parallel Processing and an Auto Metamagic ability. It granted +2 caster level, +1 spell DC and spell damage-die promotion (minimum d10, or +1 per die under the component's rules).
+New ParallelProcessing is a quicken/extra-attack stance and does not include that bundle. Other new abilities use PromoteSpellDices, so the individual damage mechanic is not unique or universally unavailable. The old selectable synergy ability itself is gone.
+
+OTHER LOST SAFETY PATCHES / UNRESOLVED PARITY
+
+The old global Harmony protections AreaEffectActionSafety, CriticalConfirmationBonusValueSafety, DerivativeStatBonusTurnOffSafety, EquipmentEntitySafety, TargetsAroundConditionSafety and UsableItemBeltPrefabSafety are absent by implementation/name. Searches of new Utilities did not find replacement patches for those target methods. These guarded malformed/null state or caught exceptions. Their absence does not establish a current crash and does not justify restoring broad exception suppression blindly.
+Old QuestObjectiveListSafety globally filled null objective collections; that helper is absent. New quest construction may initialize its own fields. This is not classified as a confirmed quest failure.
+Old PrerequisiteSymmetry globally added reverse exclusions between offered progressions. New code contains explicit exclusions and regression checks, but not the same global pass. A pair-by-pair audit/runtime selection test is needed before asserting a specific illegal combination remains.
+Old custom IsekaiWizardSchoolSelection wrapper is gone. New WizardLegacy patches the reference progression and uses new nested-selection ordering. Wrapper removal alone is not proof that school choice is broken.
+Old EpicArchetypeFeatures, MartialGod mechanics, guardian epic features and several item/ability names were replaced or rebalanced alongside Phantom Blade, Ascendant, epic prestige and the guardian rewrite. Removed registry names were not counted as automatically missing content. A full balance/value parity audit is outside this confirmed omission list.
+
+ALREADY RESTORED / NOT NEW OMISSIONS
+
+Second Reincarnation, related Cheat Death trigger, armor recalculation throttle, level-up rank fallback, Part Timer extra legacy choices, duplicate mythic spellbook filtering and late spell-list merge are in the previously installed local-fixes build.
+Exceptional late-feat refresh is committed as ab4252e and built, but has NOT been installed. Wrath process 278024 remained running at the audit check.
+6.5 already refreshes the two normal bonus-feat lists and includes its own spellbook conversion/guard policy; the old redirection policy is not an exact equivalent and was deliberately not copied wholesale.
+
+LIMITATIONS AND NEXT REPAIR PRIORITY
+
+This audit inspected old/new selection implementations, removed source modules, registration sites, shared patch helpers and relevant history. It does not certify every feature in either build or the effects of all 62 installed mods.
+Recommended next fixes: restore appropriate repeatable selection ranks, restore the two missing immunity menu choices, expand late selection synchronization, then port wrapper prerequisite compatibility with validation. Do not restore Summoner Evolution or Parallel Metamagic Resonance. They are accepted design changes. The other recommendations remain audit findings, not implemented fixes.
+No source edits or installation were performed during this audit. The repository was clean at ab4252e.
+
