@@ -66,6 +66,7 @@ internal class CheatDeath
 			bp.AddComponent(delegate(DeathActions c)
 			{
 				c.CheckResource = false;
+			c.m_DeathTrigger = DeathActions.DeathTrigger.OnUnitLifeState;
 				c.Actions = actions;
 			});
 		});

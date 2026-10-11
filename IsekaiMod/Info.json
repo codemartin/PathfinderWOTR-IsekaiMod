@@ -1,10 +1,12 @@
 {
   "Id": "IsekaiMod",
-  "DisplayName": "Isekai Reimagined",
+  "DisplayName": "Isekai Reimagined (local fixes)",
   "Author": "JohN100x1",
   "Version": "6.5.0",
   "ManagerVersion": "0.24.0",
-  "Requirements": [ "TabletopTweaks-Core-0.7.14" ],
+  "Requirements": [
+    "TabletopTweaks-Core-0.7.14"
+  ],
   "AssemblyName": "IsekaiMod.dll",
   "EntryMethod": "IsekaiMod.Main.Load",
   "LoadAfter": [

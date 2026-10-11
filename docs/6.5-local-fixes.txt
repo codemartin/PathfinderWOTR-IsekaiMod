@@ -1,0 +1,18 @@
+Selected local fixes restored on Isekai Reimagined 6.5
+
+- Second Reincarnation: caster-side target spell-immunity bypass, ability energy-resistance/immunity bypass, and OnUnitLifeState resurrection trigger. English description updated. Other features retain 6.5 SpellImmunityBypass behavior.
+- Cheat Death: same OnUnitLifeState resurrection trigger, preserving its 6.5 payload.
+- ArmorRecalculationThrottle: skip MaxDexBonusIncrease recalculation when ability scores and equipped armor/shield have not changed.
+- ContextRankConfigBaseValueSafety: log rank-evaluation exceptions and use zero rather than propagating the error through level-up. Zero remains a fallback and can give incorrect scaling for the failing feature.
+- PlayerPartTimeWorkerLegacy: register the restored progression in general/feat/archetype selections, with additional Legacy picks at 5/10/15 and its registered GUID. The existing local implementation is restored, including Shadow Monarch and Devourer selection availability.
+- MythicSpellbookSelectionDeduplication: retain the first entry per blueprint, preserving default entries without a blueprint. No old spellbook redirect or cleanup is ported.
+- LateSpellListMergePatch: repeat the supported 6.5 merge and refresh Mastermind at GameStarter.FixTMPAssets, respecting MergeIsekaiSpellList. Keep 6.5 registration/deduplication and spellbook guards. Late hooks from other mods running after this pass still require verification.
+
+Validation before deployment
+- Baseline and customized net481 Release builds: 0 errors, 12 warnings from baseline unused/decompiled members.
+- Cecil metadata inspection against installed game assemblies: all 6 restored Harmony targets resolve, including exact overload signatures where specified; no duplicate serialized TypeId values among 133 annotated types.
+- Original release assets retained; customization source diff limited to the named fixes, registry/localization, and display label.
+- No in-game test, save load, combat test, or 6.5 self-test harness execution. Compilation and metadata validation do not prove runtime behavior or Harmony application.
+
+Repository note
+Before this import, git bundle --all and git bundle HEAD failed with an unreadable historical object c9a917981f080713af34f993c11b70574a119d8d. git fsck also found missing historical blobs. The current HEAD source was archived and ZIP integrity checked. backup/before-6.5-2026-10-10 preserves the original commit reference. Existing history corruption is not repaired by these commits.

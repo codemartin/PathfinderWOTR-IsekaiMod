@@ -20,7 +20,7 @@ internal class SecondReincarnation
 
 	public static void Add()
 	{
-		LocalizedString SecondReincarnationDesc = Helpers.CreateString(Main.IsekaiContext, "SecondReincarnation.Description", "Your attacks ignore damage reduction and your spells ignore spell resistance and spell immunity.\nOnce per day, when your {g|Encyclopedia:HP}HP{/g} drops to 0, you are resurrected to full health.");
+		LocalizedString SecondReincarnationDesc = Helpers.CreateString(Main.IsekaiContext, "SecondReincarnation.Description", "Your attacks ignore damage reduction and your spells ignore spell resistance, spell immunity, energy resistance, and energy immunity.\nOnce per day, when your {g|Encyclopedia:HP}HP{/g} drops to 0, you are resurrected to full health.");
 		BlueprintBuff SecondReincarnationBuff = TTCoreExtensions.CreateBuff("SecondReincarnationBuff", delegate(BlueprintBuff bp)
 		{
 			bp.SetName(Main.IsekaiContext, "Second Reincarnation");
@@ -31,6 +31,7 @@ internal class SecondReincarnation
 			bp.AddComponent(delegate(DeathActions c)
 			{
 				c.CheckResource = false;
+			c.m_DeathTrigger = DeathActions.DeathTrigger.OnUnitLifeState;
 				c.Actions = Helpers.CreateActionList(new ContextActionResurrect
 				{
 					FullRestore = true
@@ -49,7 +50,8 @@ internal class SecondReincarnation
 			bp.SetDescription(SecondReincarnationDesc);
 			((BlueprintUnitFact)bp).m_Icon = Icon_SecondReincarnation;
 			bp.AddComponent<IgnoreDamageReductionOnAttack>();
-			SpellImmunityBypass.Add(bp);
+			bp.AddComponent<IsekaiMod.Components.IgnoreTargetSpellImmunity>();
+			bp.AddComponent<IsekaiMod.Components.IgnoreEnergyResistanceAndImmunity>();
 			bp.AddComponent(delegate(IgnoreSpellResistanceForSpells c)
 			{
 				c.m_AbilityList = new BlueprintAbilityReference[0];

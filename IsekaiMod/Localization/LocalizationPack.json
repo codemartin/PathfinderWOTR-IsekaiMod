@@ -31871,7 +31871,7 @@
       "Key": "c23372f42a4a4eed8ff9105fce53cdae",
       "SimpleName": "SecondReincarnation.Description",
       "ProcessTemplates": false,
-      "enGB": "Your attacks ignore damage reduction and your spells ignore spell resistance and spell immunity.\nOnce per day, when your {g|Encyclopedia:HP}HP{/g} drops to 0, you are resurrected to full health.",
+      "enGB": "Your attacks ignore damage reduction and your spells ignore spell resistance, spell immunity, energy resistance, and energy immunity.\nOnce per day, when your {g|Encyclopedia:HP}HP{/g} drops to 0, you are resurrected to full health.",
       "ruRU": "Ваши атаки игнорируют снижение урона, а ваши заклинания - сопротивление магии и иммунитет к заклинаниям. Раз в день, когда ваше {g|Encyclopedia:HP}здоровье{/g} достигает нуля, вы воскрешаетесь с максимум здоровья.",
       "deDE": "Deine Angriffe ignorieren Schadensreduktion und deine Zauber ignorieren Zauberresistenz und Zaubimmunität. Einmal pro Tag, wenn deine {g|Encyclopedia:HP}HP{/g} auf 0 fallen, wirst du mit voller Gesundheit wiederbelebt.",
       "frFR": "Vos attaques ignorent la réduction de dégâts et vos sorts ignorent la résistance aux sorts et l'immunité aux sorts. Une fois par jour, lorsque vos {g|Encyclopedia:HP}points de vie{/g} tombent à 0, vous êtes ressuscité en pleine santé.",

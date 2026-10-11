@@ -161,6 +161,7 @@ internal class LegacySelection
 		OracleLegacy.Configure();
 		PaladinBaseLegacy.Configure();
 		PlayerComputerNerdLegacy.Configure();
+		PlayerPartTimeWorkerLegacy.Configure();
 		RogueLegacy.Configure();
 		ShamanLegacy.Configure();
 		ShifterLegacy.Configure();
@@ -219,6 +220,7 @@ internal class LegacySelection
 		OracleLegacy.PatchProgression();
 		PaladinBaseLegacy.PatchProgression();
 		PlayerComputerNerdLegacy.PatchProgression();
+		PlayerPartTimeWorkerLegacy.PatchProgression();
 		RogueLegacy.PatchProgression();
 		ShamanLegacy.PatchProgression();
 		ShifterLegacy.PatchProgression();
