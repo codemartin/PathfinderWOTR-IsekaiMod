@@ -70,6 +70,7 @@ internal static class FinalPatcher
 			SafeStep("HumanHeritageSelection.Patch", HumanHeritageSelection.Patch);
 		}
 		SafeStep("LegacySelection.ConfigureStep3", LegacySelection.ConfigureStep3);
+		SafeStep("LateSelectionCompatibility.Refresh", LateSelectionCompatibility.Refresh);
 		SafeStep("PrebuildIsekaiProtagonistFeatureList.PatchLegacySelection", PrebuildIsekaiProtagonistFeatureList.PatchLegacySelection);
 		SafeStep("ArcanistPatcher", delegate
 		{
@@ -96,6 +97,7 @@ internal static class FinalPatcher
 		{
 			SafeStep("PatchTableTopTweakCore", PatchTableTopTweakCore);
 		}
+		SafeStep("QuestObjectiveListSafety", QuestObjectiveListSafety.FillAllLoaded);
 		SafeStep("RegressionSanityCheck.RunAfterFinalPatch", RegressionSanityCheck.RunAfterFinalPatch);
 	}
 

@@ -37,7 +37,7 @@ internal class ExceptionalFeatSelection
 		{
 			bp.SetName(Main.IsekaiContext, "Exceptional Feats");
 			bp.SetDescription(exceptionalFeatDescription);
-			bp.Ranks = 1;
+			bp.Ranks = 20;
 			bp.IsClassFeature = true;
 			((BlueprintUnitFact)bp).m_Icon = Icon_ExceptionalFeat;
 			bp.AddComponent(delegate(PureRecommendation c)
@@ -51,7 +51,7 @@ internal class ExceptionalFeatSelection
 		{
 			bp.SetName(Main.IsekaiContext, "Exceptional Feats");
 			bp.SetDescription(exceptionalFeatDescription);
-			bp.Ranks = 1;
+			bp.Ranks = 20;
 			bp.IsClassFeature = true;
 			((BlueprintUnitFact)bp).m_Icon = Icon_ExceptionalFeat;
 			bp.AddComponent(delegate(PureRecommendation c)

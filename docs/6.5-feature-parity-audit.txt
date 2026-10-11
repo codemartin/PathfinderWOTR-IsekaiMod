@@ -1,3 +1,30 @@
+FOLLOW-UP IMPLEMENTATION, 2026-10-10
+
+Completed in the audit-fixes source update:
+- Restored both variants of the four repeatable Exceptional selection menus to ranks 20/33/5/10.
+- Restored Prone Immunity (condition and trip maneuver) and the selectable ability damage/negative-level immunity option. Preserved the known ProneImmunity GUID.
+- Added final and late refresh for Sorcerer/Bloodrager bloodlines, Oracle curses/mysteries, Shaman hexes/spirits, Witch patrons, familiars, Inquisitor domains, extra special powers and four mythic blessing menus. Existing normal and Exceptional feat refresh remains active. New inherited options are passed through 6.5 class-scaling conversion.
+- Restored prerequisite alternatives for the audited vanilla follow-up selections. One-of alternatives preserve their original prerequisite group, progression check and visibility. Multi-fact lists are skipped with a warning to avoid double counting equivalent facts. Restored Bloodrager ownership guards and symmetric progression exclusions.
+- Restored six narrow null-state Harmony guards and the quest-objective collection initializer. These do not indiscriminately suppress exceptions.
+
+Second-pass findings:
+- Energy Immunity is explicitly limited to two selections in 6.5, with a matching description and PrerequisiteFeatureRankBelow. Preserved this balance change.
+- Auto Metamagic is explicitly capped at three selections in both variants, with matching enforcement. Preserved this balance change.
+- Extra Special Power already had an initialization resync in 6.5. The added late refresh extends its timing; its initial refresh was not missing.
+- Exceptional Weapon's old-only GUID references are icon replacements, not removed enchantment choices. All five enchantments remain.
+- WizardLegacy uses the original Wizard progression's school selection, which is patched recursively by PatchTools. Kept that direct route and the new ordering patches instead of restoring a redundant school wrapper. In-game level-up remains unverified.
+- New quest builders already initialize several objective collections. The restored global null-list pass retains old defensive coverage for other loaded objectives.
+- Preserved Summoner Evolution/Twin Avatar and Parallel Metamagic Resonance design decisions as requested. Preserved Ascendant, Phantom Blade, guardian, spellbook and other 6.5 content reworks.
+
+Validation:
+Release build: 0 errors, 12 pre-existing warnings.
+13 behavior checks exercise the actual prerequisite helper against API stubs, covering AND/OR preservation, alternative qualification, repeated refresh, duplicate ownership guards and multi-fact rejection. These are not gameplay tests.
+Cecil validation resolves 16 restored Harmony targets and finds no duplicate serialized IDs among 133 IDs.
+No further confirmed missing Exceptional menu choices were identified in the second pass. This does not certify all mod content or compatibility with all installed mods.
+Deployment remains pending while Wrath is running. No in-game validation of this build has occurred.
+
+ORIGINAL AUDIT BELOW (historical observations before the fixes above)
+
 Isekai 6.5 missing-content audit
 Compared old installed custom 6.3 decompilation with current local 6.5 source at ab4252e.
 Date: 2026-10-10. Static audit only. No in-game level-up or combat verification.

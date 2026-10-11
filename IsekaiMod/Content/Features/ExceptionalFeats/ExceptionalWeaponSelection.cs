@@ -54,7 +54,7 @@ internal class ExceptionalWeaponSelection
 			bp.SetName(Main.IsekaiContext, "Exceptional Weapon");
 			bp.SetDescription(ExceptionalWeaponSelectionDesc);
 			((BlueprintUnitFact)bp).m_Icon = Icon_ArcaneWeapon;
-			bp.Ranks = 1;
+			bp.Ranks = 5;
 			bp.IsClassFeature = true;
 			bp.m_AllFeatures = ExceptionalWeaponFeatures;
 			bp.m_Features = ExceptionalWeaponFeatures;
@@ -64,7 +64,7 @@ internal class ExceptionalWeaponSelection
 			bp.SetName(Main.IsekaiContext, "Exceptional Weapon");
 			bp.SetDescription(ExceptionalWeaponSelectionDesc);
 			((BlueprintUnitFact)bp).m_Icon = Icon_ArcaneWeapon;
-			bp.Ranks = 1;
+			bp.Ranks = 5;
 			bp.IsClassFeature = true;
 			bp.m_AllFeatures = ExceptionalWeaponFeatures;
 			bp.m_Features = ExceptionalWeaponFeatures;

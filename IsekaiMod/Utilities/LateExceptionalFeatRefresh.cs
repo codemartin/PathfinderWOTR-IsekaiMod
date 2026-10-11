@@ -17,10 +17,11 @@ internal static class LateExceptionalFeatRefresh
         try
         {
             ExceptionalFeatSelection.RefreshLateFeats();
+            LateSelectionCompatibility.Refresh();
         }
         catch (Exception ex)
         {
-            Main.LogError($"Late Exceptional feat refresh failed: {ex}");
+            Main.LogError($"Late feat and selection refresh failed: {ex}");
         }
     }
 }

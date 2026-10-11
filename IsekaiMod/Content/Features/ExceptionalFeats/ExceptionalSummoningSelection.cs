@@ -200,7 +200,7 @@ internal class ExceptionalSummoningSelection
 			bp.SetName(Main.IsekaiContext, "Exceptional Summoning");
 			bp.SetDescription(ExceptionalSummoningDesc);
 			((BlueprintUnitFact)bp).m_Icon = Icon_ExceptionalSummoning;
-			bp.Ranks = 1;
+			bp.Ranks = 10;
 			bp.IsClassFeature = true;
 			bp.m_AllFeatures = ExceptionalSummoingFeatures;
 			bp.m_Features = ExceptionalSummoingFeatures;
@@ -210,7 +210,7 @@ internal class ExceptionalSummoningSelection
 			bp.SetName(Main.IsekaiContext, "Exceptional Summoning");
 			bp.SetDescription(ExceptionalSummoningDesc);
 			((BlueprintUnitFact)bp).m_Icon = Icon_ExceptionalSummoning;
-			bp.Ranks = 1;
+			bp.Ranks = 10;
 			bp.IsClassFeature = true;
 			bp.m_AllFeatures = ExceptionalSummoingFeatures;
 			bp.m_Features = ExceptionalSummoingFeatures;

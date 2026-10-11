@@ -6,6 +6,8 @@ using Kingmaker.Blueprints.Classes;
 using Kingmaker.Blueprints.Classes.Selection;
 using Kingmaker.Blueprints.Classes.Spells;
 using Kingmaker.EntitySystem.Stats;
+using Kingmaker.RuleSystem.Rules;
+using Kingmaker.Designers.Mechanics.Facts;
 using Kingmaker.Localization;
 using Kingmaker.UnitLogic;
 using Kingmaker.UnitLogic.FactLogic;
@@ -19,7 +21,7 @@ internal class EffectImmunitySelection
 
 	public static void Add()
 	{
-		Helpers.CreateBlueprint(Main.IsekaiContext, "StatDamageNegativeLevelImmunity", delegate(BlueprintFeature bp)
+		BlueprintFeature statImmunity = Helpers.CreateBlueprint(Main.IsekaiContext, "StatDamageNegativeLevelImmunity", delegate(BlueprintFeature bp)
 		{
 			bp.SetName(Main.IsekaiContext, "Ability Damage and Negative Level Immunity");
 			bp.SetDescription(Main.IsekaiContext, "You gain immunity to ability score damage and negative levels.");
@@ -50,7 +52,12 @@ internal class EffectImmunitySelection
 			bp.SetDescription(Main.IsekaiContext, "You gain immunity to critical hits.");
 			bp.AddComponent<AddImmunityToCriticalHits>();
 		});
-		BlueprintFeature[] source = new BlueprintFeature[31]
+		BlueprintFeature proneImmunity = CreateImmunity("ProneImmunity", "You gain immunity to being tripped and falling prone.", delegate(BlueprintFeature bp)
+        {
+            bp.AddComponent(delegate(AddConditionImmunity c) { c.Condition = UnitCondition.Prone; });
+            bp.AddComponent(delegate(ManeuverImmunity c) { c.Type = CombatManeuver.Trip; });
+        });
+        BlueprintFeature[] source = new BlueprintFeature[33]
 		{
 			CreateImmunity("BlindImmunity", "You gain immunity to blindness.", UnitCondition.Blindness, SpellDescriptor.Blindness),
 			CreateImmunity("NauseatedImmunity", "You gain immunity to the nauseated condition.", UnitCondition.Nauseated, SpellDescriptor.Nauseated),
@@ -97,6 +104,8 @@ internal class EffectImmunitySelection
 					c.Descriptor = SpellDescriptor.Hex;
 				});
 			}),
+			proneImmunity,
+			statImmunity,
 			blueprintFeature,
 			blueprintFeature2
 		};
@@ -106,7 +115,7 @@ internal class EffectImmunitySelection
 		{
 			bp.SetName(Main.IsekaiContext, "Effect Immunity");
 			bp.SetDescription(EffectImmunitySelectionDesc);
-			bp.Ranks = 1;
+			bp.Ranks = 33;
 			bp.IsClassFeature = true;
 			bp.m_Features = EffectImmunityList;
 			bp.m_AllFeatures = EffectImmunityList;
@@ -115,7 +124,7 @@ internal class EffectImmunitySelection
 		{
 			bp.SetName(Main.IsekaiContext, "Effect Immunity");
 			bp.SetDescription(EffectImmunitySelectionDesc);
-			bp.Ranks = 1;
+			bp.Ranks = 33;
 			bp.IsClassFeature = true;
 			bp.m_Features = EffectImmunityList;
 			bp.m_AllFeatures = EffectImmunityList;
