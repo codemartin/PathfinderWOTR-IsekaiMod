@@ -81,6 +81,27 @@ internal class ExceptionalFeatSelection
 		}
 	}
 
+	// Keep local Isekai choices and append feats added to the mythic list after Add().
+	public static void RefreshLateFeats()
+	{
+		if (MythicFeatSelection?.m_AllFeatures == null) return;
+		foreach (string name in new[] { "ExceptionalFeatSelection", "ExceptionalFeatBonusSelection" })
+		{
+			var selection = BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, name);
+			if (selection == null) continue;
+			var current = selection.m_AllFeatures ?? new BlueprintFeatureReference[0];
+			var merged = current.Concat(MythicFeatSelection.m_AllFeatures)
+				.Where(f => f != null
+					&& (ExtraFeatMythicFeat == null || f.Guid != ExtraFeatMythicFeat.AssetGuid)
+					&& (ExtraMythicAbilityMythicFeat == null || f.Guid != ExtraMythicAbilityMythicFeat.AssetGuid))
+				.GroupBy(f => f.Guid).Select(group => group.First()).ToArray();
+			int added = merged.Count(f => !current.Any(existing => existing != null && existing.Guid == f.Guid));
+			selection.m_AllFeatures = merged;
+			selection.m_Features = (BlueprintFeatureReference[])merged.Clone();
+			Main.Log($"Exceptional feat refresh: {name} added {added} late feat(s), {merged.Length} total choices");
+		}
+	}
+
 	public static BlueprintFeatureSelection Get()
 	{
 		return BlueprintTools.GetModBlueprint<BlueprintFeatureSelection>(Main.IsekaiContext, "ExceptionalFeatSelection");

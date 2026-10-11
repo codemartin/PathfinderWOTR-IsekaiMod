@@ -59,6 +59,7 @@ internal static class FinalPatcher
 			});
 		}
 		SafeStep("BonusFeatListRefresh", BonusFeatListRefresh.RefreshAll);
+		SafeStep("ExceptionalFeatSelection.RefreshLateFeats", IsekaiMod.Content.Features.ExceptionalFeats.ExceptionalFeatSelection.RefreshLateFeats);
 		SafeStep("FlushHeritageOffers", delegate
 		{
 			ContentOffering.FlushHeritageOffers();
