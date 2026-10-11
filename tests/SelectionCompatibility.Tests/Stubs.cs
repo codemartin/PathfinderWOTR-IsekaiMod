@@ -30,3 +30,14 @@ namespace TabletopTweaks.Core.Utilities {
   public static T GetModBlueprint<T>(object context,string name) where T:class => Blueprints.TryGetValue(name,out var bp) ? bp as T : null;
  }
 }
+
+namespace Kingmaker.Blueprints.Classes {
+ public class BlueprintRace : BlueprintFeature { public Kingmaker.Blueprints.BlueprintFeatureReference[] m_Features; }
+}
+namespace Kingmaker.EntitySystem.Entities {
+ public class UnitEntityData { public Descriptor Descriptor = new(); public string CharacterName="Twin"; public Progression Progression => Descriptor.Progression; }
+ public class Descriptor { public Progression Progression=new(); public bool HasFact(Kingmaker.Blueprints.Classes.BlueprintFeature f)=>Progression.Features.Granted.Contains(f); }
+ public class Progression { public Kingmaker.Blueprints.Classes.BlueprintRace Race; public int CharacterLevel=2; public FeatureCollection Features=new(); }
+ public class FeatureCollection { public List<Kingmaker.Blueprints.Classes.BlueprintFeature> Granted=new(); public void AddFeature(Kingmaker.Blueprints.Classes.BlueprintFeature f)=>Granted.Add(f); }
+}
+namespace Kingmaker.UnitLogic { }

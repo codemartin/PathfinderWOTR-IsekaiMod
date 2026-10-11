@@ -1,0 +1,9 @@
+Twin Avatar / Ascendant Succubus compatibility
+
+The old SyncTwin set only m_Race and visual data. Auto_266.zks showed Chance at Guardian level 2 with the Ascendant Succubus race ID but no racial progression component or first/second milestones. Mahi had both milestones.
+
+TwinRacialCompatibility now adds missing non-selection BlueprintFeature entries from the Ascendant Succubus race to the matching Twin Avatar. This includes the root feature that owns NocticulaLevelProgression. That component calculates milestones from its owner's CharacterLevel, so the twin advances at its own Guardian level. No master class levels, selected feats or earned milestone facts are copied. Other races are unchanged. Existing race-level stat modifiers and natural-attack configuration are outside this targeted progression fix.
+
+The existing appearance synchronization invokes this on activation and area load, even when the race ID already matches. Existing twins therefore receive the missing facts after loading an area. HasFact checks prevent duplicate grants. The Succubus mod remains an optional dependency; no direct assembly reference or Succubus repository edit was added.
+
+Validation: Release build passed with 0 errors and 12 existing warnings. 21 behavior checks passed, including four new checks of the actual helper against API stubs covering missing-fact grants, repeat invocation, Guardian level preservation and race gating. These checks do not emulate Unity or confirm the Succubus component's runtime milestones. In-game save-load and level-up validation remains pending.

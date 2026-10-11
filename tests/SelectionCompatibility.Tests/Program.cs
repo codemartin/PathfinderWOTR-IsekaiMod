@@ -51,4 +51,22 @@ Check(basic.m_AllFeatures.Any(f=>f.Guid=="exceptional-standard"), "standard feat
 var solo=new BlueprintFeatureSelection {name="SoloSovereignFeatSelection",m_AllFeatures=basic.m_AllFeatures};
 BonusFeatListRefresh.Snapshot(solo.name);BonusFeatListRefresh.Refresh(solo);
 Check(solo.m_AllFeatures.Any(f=>f.Guid=="exceptional-standard"), "Solo Sovereign retains the standard wrapper");
+
+
+var racialRoot=F("racial-root");
+var racialPassive=F("racial-passive");
+var racialSelection=new BlueprintFeatureSelection {AssetGuid="racial-selection"};
+var race=new BlueprintRace {AssetGuid="566c822788d4483d8c9d984d0e03aeb0",m_Features=[racialRoot.ToReference<BlueprintFeatureReference>(),racialPassive.ToReference<BlueprintFeatureReference>(),racialSelection.ToReference<BlueprintFeatureReference>(),null]};
+var twin=new Kingmaker.EntitySystem.Entities.UnitEntityData();twin.Progression.Race=race;
+IsekaiMod.Components.TwinRacialCompatibility.Sync(race,twin);
+Check(twin.Progression.Features.Granted.SequenceEqual(new[]{racialRoot,racialPassive}), "twin receives racial roots but no selections or null entries");
+IsekaiMod.Components.TwinRacialCompatibility.Sync(race,twin);
+Check(twin.Progression.Features.Granted.Count==2, "existing twin racial facts are not duplicated on area reload");
+Check(twin.Progression.CharacterLevel==2, "racial synchronization does not alter Guardian level");
+var otherRace=new BlueprintRace {AssetGuid="another-race",m_Features=race.m_Features};
+var otherTwin=new Kingmaker.EntitySystem.Entities.UnitEntityData();otherTwin.Progression.Race=otherRace;
+IsekaiMod.Components.TwinRacialCompatibility.Sync(otherRace,otherTwin);
+IsekaiMod.Components.TwinRacialCompatibility.Sync(race,otherTwin);
+IsekaiMod.Components.TwinRacialCompatibility.Sync(null,otherTwin);
+Check(otherTwin.Progression.Features.Granted.Count==0, "other races and mismatched race metadata are unchanged");
 Console.WriteLine($"{checks} behavior checks passed. Uses API stubs; does not simulate the game runtime.");

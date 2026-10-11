@@ -81,6 +81,7 @@ public class CopyMasterAppearanceToPet : UnitFactComponentDelegate, ISubscriber,
 		{
 			unitProgressionData.m_Race = blueprintRace;
 		}
+		TwinRacialCompatibility.Sync(blueprintRace, pet);
 		if (flag && pet.Get<UnitPartDollData>()?.Default?.RacePreset == null)
 		{
 			unitPartDollData.CopyTo(pet);
